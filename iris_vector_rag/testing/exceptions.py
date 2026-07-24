@@ -11,55 +11,65 @@ Feature: 035-make-2-modes
 
 class BackendModeError(Exception):
     """Base exception for all backend mode-related errors."""
+
     pass
 
 
 # Configuration Errors
 class ConfigurationError(BackendModeError):
     """Raised when backend mode configuration is invalid."""
+
     pass
 
 
 # Edition Detection Errors
 class EditionDetectionError(BackendModeError):
     """Raised when IRIS edition cannot be detected."""
+
     pass
 
 
 class EditionMismatchError(BackendModeError):
     """Raised when configured backend mode doesn't match detected IRIS edition."""
+
     pass
 
 
 # iris-devtools Errors
 class IrisDevtoolsError(BackendModeError):
     """Base exception for iris-devtools related errors."""
+
     pass
 
 
 class IrisDevtoolsMissingError(IrisDevtoolsError):
     """Raised when iris-devtools is not found at expected path."""
+
     pass
 
 
 class IrisDevtoolsImportError(IrisDevtoolsError):
     """Raised when iris-devtools import fails."""
+
     pass
 
 
 # Connection Pool Errors
 class ConnectionPoolError(BackendModeError):
     """Base exception for connection pool errors."""
+
     pass
 
 
 class ConnectionPoolTimeout(ConnectionPoolError):
     """Raised when connection pool acquisition times out."""
+
     pass
 
 
 class ConnectionLimitExceeded(ConnectionPoolError):
     """Raised when connection limit is exceeded."""
+
     pass
 
 

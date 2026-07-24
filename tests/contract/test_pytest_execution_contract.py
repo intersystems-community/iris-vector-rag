@@ -88,7 +88,15 @@ except Exception:
 def test_pytest_markers_configured():
     """REQ-5: pytest markers are properly configured."""
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "--markers", "--override-ini=addopts=", "-c", "pytest.ini"],
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "--markers",
+            "--override-ini=addopts=",
+            "-c",
+            "pytest.ini",
+        ],
         capture_output=True,
         text=True,
     )
@@ -108,7 +116,9 @@ def test_pytest_markers_configured():
             content = f.read()
         assert "e2e:" in content, "e2e marker must be configured in pytest.ini"
         assert "integration:" in content, "integration marker must be configured"
-        assert "requires_database:" in content, "requires_database marker must be configured"
+        assert (
+            "requires_database:" in content
+        ), "requires_database marker must be configured"
         assert "unit:" in content, "unit marker must be configured"
     else:
         assert "e2e:" in result.stdout, "e2e marker must be configured"
@@ -124,7 +134,16 @@ def test_test_suite_execution_time():
     start = time.time()
 
     subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/unit/", "-p", "no:randomly", "-q", "--tb=no"],
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/unit/",
+            "-p",
+            "no:randomly",
+            "-q",
+            "--tb=no",
+        ],
         capture_output=True,
         text=True,
     )

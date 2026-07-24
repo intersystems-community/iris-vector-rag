@@ -8,7 +8,6 @@ import pytest
 from pathlib import Path
 from typing import List, Set
 
-
 # Track contract test files
 _contract_tests: Set[str] = set()
 
@@ -17,15 +16,14 @@ def pytest_configure(config):
     """Register markers and configure plugin."""
     config.addinivalue_line(
         "markers",
-        "contract: mark test as a contract test that must fail before implementation"
+        "contract: mark test as a contract test that must fail before implementation",
+    )
+    config.addinivalue_line(
+        "markers", "tdd_compliant: mark test as following TDD workflow"
     )
     config.addinivalue_line(
         "markers",
-        "tdd_compliant: mark test as following TDD workflow"
-    )
-    config.addinivalue_line(
-        "markers",
-        "implementation_commit(commit_sha): mark the commit where implementation was added"
+        "implementation_commit(commit_sha): mark the commit where implementation was added",
     )
 
 
@@ -83,10 +81,12 @@ class ContractTestHelper:
     @staticmethod
     def assert_will_fail(test_func):
         """Decorator to verify test fails without implementation."""
+
         @pytest.mark.contract
         def wrapper(*args, **kwargs):
             # This is a placeholder - actual validation happens in standalone script
             return test_func(*args, **kwargs)
+
         return wrapper
 
 
@@ -100,7 +100,7 @@ def pytest_report_header(config):
     if contract_count > 0:
         return [
             f"TDD Contract Tests: {contract_count} files tracked",
-            "Run scripts/validate_tdd_compliance.py to verify TDD workflow"
+            "Run scripts/validate_tdd_compliance.py to verify TDD workflow",
         ]
 
 
@@ -109,22 +109,15 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     if _contract_tests and config.option.verbose > 0:
         terminalreporter.section("TDD Compliance Reminder")
         terminalreporter.write_line(
-            "Contract tests detected. Remember to:",
-            yellow=True
+            "Contract tests detected. Remember to:", yellow=True
         )
         terminalreporter.write_line(
-            "  1. Write failing contract tests first",
-            yellow=True
+            "  1. Write failing contract tests first", yellow=True
+        )
+        terminalreporter.write_line("  2. Commit the failing tests", yellow=True)
+        terminalreporter.write_line(
+            "  3. Implement features to make tests pass", yellow=True
         )
         terminalreporter.write_line(
-            "  2. Commit the failing tests",
-            yellow=True
-        )
-        terminalreporter.write_line(
-            "  3. Implement features to make tests pass",
-            yellow=True
-        )
-        terminalreporter.write_line(
-            "  4. Run validate_tdd_compliance.py in CI",
-            yellow=True
+            "  4. Run validate_tdd_compliance.py in CI", yellow=True
         )

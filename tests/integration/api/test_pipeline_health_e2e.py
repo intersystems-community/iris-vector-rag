@@ -35,6 +35,7 @@ def client():
 def auth_header():
     """Authorization header with valid API key."""
     import base64
+
     credentials = base64.b64encode(b"test-id:test-secret").decode()
     return {"Authorization": f"ApiKey {credentials}"}
 

@@ -9,10 +9,9 @@ from iris_vector_rag.api.routes.pipeline import create_pipeline_router
 from iris_vector_rag.api.routes.document import create_document_router
 from iris_vector_rag.api.routes.health import create_health_router
 
-
 __all__ = [
     "create_query_router",
     "create_pipeline_router",
     "create_document_router",
-    "create_health_router"
+    "create_health_router",
 ]

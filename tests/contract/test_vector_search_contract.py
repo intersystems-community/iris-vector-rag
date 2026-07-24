@@ -28,8 +28,9 @@ class TestVectorSearchContract:
         query = "What are the symptoms of diabetes?"
         result = graphrag_pipeline.query(query)
 
-        assert len(result['contexts']) > 0, \
-            f"Vector search returned 0 results for query: {query}"
+        assert (
+            len(result["contexts"]) > 0
+        ), f"Vector search returned 0 results for query: {query}"
 
     def test_vector_search_respects_top_k(self, graphrag_pipeline):
         """
@@ -43,8 +44,9 @@ class TestVectorSearchContract:
         result = graphrag_pipeline.query(query)
 
         # Default K=10
-        assert len(result['contexts']) <= 10, \
-            f"Vector search returned {len(result['contexts'])} > 10 documents (top_k violation)"
+        assert (
+            len(result["contexts"]) <= 10
+        ), f"Vector search returned {len(result['contexts'])} > 10 documents (top_k violation)"
 
     def test_vector_search_results_have_scores(self, graphrag_pipeline):
         """
@@ -57,13 +59,16 @@ class TestVectorSearchContract:
         query = "What are the symptoms of diabetes?"
         result = graphrag_pipeline.query(query)
 
-        for i, doc in enumerate(result['contexts']):
-            assert hasattr(doc, 'similarity_score'), \
-                f"Document {i} missing similarity_score attribute"
-            assert doc.similarity_score is not None, \
-                f"Document {i} has null similarity_score"
-            assert isinstance(doc.similarity_score, float), \
-                f"Document {i} similarity_score is not float: {type(doc.similarity_score)}"
+        for i, doc in enumerate(result["contexts"]):
+            assert hasattr(
+                doc, "similarity_score"
+            ), f"Document {i} missing similarity_score attribute"
+            assert (
+                doc.similarity_score is not None
+            ), f"Document {i} has null similarity_score"
+            assert isinstance(
+                doc.similarity_score, float
+            ), f"Document {i} similarity_score is not float: {type(doc.similarity_score)}"
 
     def test_vector_search_results_sorted_descending(self, graphrag_pipeline):
         """
@@ -76,11 +81,12 @@ class TestVectorSearchContract:
         query = "What are the symptoms of diabetes?"
         result = graphrag_pipeline.query(query)
 
-        scores = [doc.similarity_score for doc in result['contexts']]
+        scores = [doc.similarity_score for doc in result["contexts"]]
 
         for i in range(len(scores) - 1):
-            assert scores[i] >= scores[i+1], \
-                f"Scores not sorted DESC: score[{i}]={scores[i]:.4f} < score[{i+1}]={scores[i+1]:.4f}"
+            assert (
+                scores[i] >= scores[i + 1]
+            ), f"Scores not sorted DESC: score[{i}]={scores[i]:.4f} < score[{i+1}]={scores[i+1]:.4f}"
 
     def test_vector_search_returns_relevant_documents(self, graphrag_pipeline):
         """
@@ -93,11 +99,12 @@ class TestVectorSearchContract:
         query = "What are the symptoms of diabetes?"
         result = graphrag_pipeline.query(query)
 
-        assert len(result['contexts']) > 0, "No documents retrieved"
+        assert len(result["contexts"]) > 0, "No documents retrieved"
 
-        top_score = result['contexts'][0].similarity_score
-        assert top_score > 0.3, \
-            f"Top result score {top_score:.4f} <= 0.3 (not relevant)"
+        top_score = result["contexts"][0].similarity_score
+        assert (
+            top_score > 0.3
+        ), f"Top result score {top_score:.4f} <= 0.3 (not relevant)"
 
     def test_vector_search_works_with_384d_embeddings(self, graphrag_pipeline):
         """
@@ -113,5 +120,6 @@ class TestVectorSearchContract:
         result = graphrag_pipeline.query(query)
 
         # If retrieval works, dimensions match implicitly
-        assert len(result['contexts']) > 0, \
-            "Vector search failed (possible dimension mismatch)"
+        assert (
+            len(result["contexts"]) > 0
+        ), "Vector search failed (possible dimension mismatch)"

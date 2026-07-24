@@ -30,7 +30,7 @@ class TestCoreModelsMassive(unittest.TestCase):
             "tags": ["AI", "ML", "tech"],
             "score": 9.5,
             "published": True,
-            "nested": {"key": "value", "number": 42}
+            "nested": {"key": "value", "number": 42},
         }
         doc2 = Document(page_content="Complex document", metadata=complex_metadata)
         self.assertEqual(doc2.metadata["tags"], ["AI", "ML", "tech"])
@@ -79,7 +79,7 @@ class TestCoreModelsMassive(unittest.TestCase):
                 end_offset=11,
                 source_document_id="doc_1",
                 metadata={"source": "test"},
-                id="entity_1"
+                id="entity_1",
             )
 
             self.assertEqual(entity1.id, "entity_1")
@@ -99,9 +99,9 @@ class TestCoreModelsMassive(unittest.TestCase):
                     "founded": "2020",
                     "employees": 1000,
                     "locations": ["USA", "Europe"],
-                    "public": True
+                    "public": True,
                 },
-                id="entity_2"
+                id="entity_2",
             )
             self.assertEqual(entity2.metadata["employees"], 1000)
 
@@ -113,7 +113,7 @@ class TestCoreModelsMassive(unittest.TestCase):
                 confidence=0.9,
                 source_document_id="doc_1",
                 metadata={"since": "2022", "position": "Engineer"},
-                id="rel_1"
+                id="rel_1",
             )
             self.assertEqual(rel1.source_entity_id, "entity_1")
             self.assertEqual(rel1.target_entity_id, "entity_2")
@@ -136,58 +136,48 @@ class TestConfigManagerMassiveExtended(unittest.TestCase):
 
         # Test with comprehensive configuration data
         comprehensive_config = {
-            'database': {
-                'iris': {
-                    'host': 'localhost',
-                    'port': 1972,
-                    'namespace': 'USER',
-                    'username': 'test_user',
-                    'password': 'test_pass',
-                    'timeout': 30,
-                    'ssl_enabled': True,
-                    'connection_pool': {
-                        'min_size': 5,
-                        'max_size': 20
-                    }
+            "database": {
+                "iris": {
+                    "host": "localhost",
+                    "port": 1972,
+                    "namespace": "USER",
+                    "username": "test_user",
+                    "password": "test_pass",
+                    "timeout": 30,
+                    "ssl_enabled": True,
+                    "connection_pool": {"min_size": 5, "max_size": 20},
                 }
             },
-            'vector_store': {
-                'table_name': 'documents',
-                'embedding_dimension': 384,
-                'similarity_metric': 'COSINE',
-                'index_type': 'HNSW',
-                'index_parameters': {
-                    'm': 16,
-                    'ef_construction': 200,
-                    'ef_search': 100
-                }
+            "vector_store": {
+                "table_name": "documents",
+                "embedding_dimension": 384,
+                "similarity_metric": "COSINE",
+                "index_type": "HNSW",
+                "index_parameters": {"m": 16, "ef_construction": 200, "ef_search": 100},
             },
-            'llm': {
-                'provider': 'openai',
-                'model': 'gpt-3.5-turbo',
-                'api_key': 'sk-test-key',
-                'temperature': 0.7,
-                'max_tokens': 1000,
-                'retry_config': {
-                    'max_retries': 3,
-                    'backoff_factor': 2.0
-                }
+            "llm": {
+                "provider": "openai",
+                "model": "gpt-3.5-turbo",
+                "api_key": "sk-test-key",
+                "temperature": 0.7,
+                "max_tokens": 1000,
+                "retry_config": {"max_retries": 3, "backoff_factor": 2.0},
             },
-            'embedding_model': 'sentence-transformers/all-MiniLM-L6-v2',
-            'chunk_size': 1000,
-            'chunk_overlap': 200,
-            'max_results': 10,
-            'performance': {
-                'cache_enabled': True,
-                'batch_size': 32,
-                'parallel_processing': True
+            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "chunk_size": 1000,
+            "chunk_overlap": 200,
+            "max_results": 10,
+            "performance": {
+                "cache_enabled": True,
+                "batch_size": 32,
+                "parallel_processing": True,
             },
-            'features': {
-                'entity_extraction': True,
-                'relationship_extraction': True,
-                'graph_visualization': True,
-                'analytics': False
-            }
+            "features": {
+                "entity_extraction": True,
+                "relationship_extraction": True,
+                "graph_visualization": True,
+                "analytics": False,
+            },
         }
 
         config_manager._config = comprehensive_config
@@ -195,53 +185,49 @@ class TestConfigManagerMassiveExtended(unittest.TestCase):
         # Test all nested key access patterns
         test_cases = [
             # Simple keys
-            ('embedding_model', 'sentence-transformers/all-MiniLM-L6-v2'),
-            ('chunk_size', 1000),
-            ('max_results', 10),
-
+            ("embedding_model", "sentence-transformers/all-MiniLM-L6-v2"),
+            ("chunk_size", 1000),
+            ("max_results", 10),
             # Nested database configuration
-            ('database:iris:host', 'localhost'),
-            ('database:iris:port', 1972),
-            ('database:iris:timeout', 30),
-            ('database:iris:ssl_enabled', True),
-            ('database:iris:connection_pool:min_size', 5),
-            ('database:iris:connection_pool:max_size', 20),
-
+            ("database:iris:host", "localhost"),
+            ("database:iris:port", 1972),
+            ("database:iris:timeout", 30),
+            ("database:iris:ssl_enabled", True),
+            ("database:iris:connection_pool:min_size", 5),
+            ("database:iris:connection_pool:max_size", 20),
             # Vector store configuration
-            ('vector_store:table_name', 'documents'),
-            ('vector_store:embedding_dimension', 384),
-            ('vector_store:similarity_metric', 'COSINE'),
-            ('vector_store:index_parameters:m', 16),
-            ('vector_store:index_parameters:ef_construction', 200),
-
+            ("vector_store:table_name", "documents"),
+            ("vector_store:embedding_dimension", 384),
+            ("vector_store:similarity_metric", "COSINE"),
+            ("vector_store:index_parameters:m", 16),
+            ("vector_store:index_parameters:ef_construction", 200),
             # LLM configuration
-            ('llm:provider', 'openai'),
-            ('llm:model', 'gpt-3.5-turbo'),
-            ('llm:temperature', 0.7),
-            ('llm:retry_config:max_retries', 3),
-            ('llm:retry_config:backoff_factor', 2.0),
-
+            ("llm:provider", "openai"),
+            ("llm:model", "gpt-3.5-turbo"),
+            ("llm:temperature", 0.7),
+            ("llm:retry_config:max_retries", 3),
+            ("llm:retry_config:backoff_factor", 2.0),
             # Performance configuration
-            ('performance:cache_enabled', True),
-            ('performance:batch_size', 32),
-            ('performance:parallel_processing', True),
-
+            ("performance:cache_enabled", True),
+            ("performance:batch_size", 32),
+            ("performance:parallel_processing", True),
             # Feature flags
-            ('features:entity_extraction', True),
-            ('features:relationship_extraction', True),
-            ('features:analytics', False),
-
+            ("features:entity_extraction", True),
+            ("features:relationship_extraction", True),
+            ("features:analytics", False),
             # Missing keys with defaults
-            ('missing:key', 'default_value', 'default_value'),
-            ('database:missing:key', 42, 42),
-            ('completely:missing:nested:key', None, None),
+            ("missing:key", "default_value", "default_value"),
+            ("database:missing:key", 42, 42),
+            ("completely:missing:nested:key", None, None),
         ]
 
         for test_case in test_cases:
             if len(test_case) == 3:
                 key, expected, default = test_case
                 result = config_manager.get(key, default)
-                self.assertEqual(result, expected, f"Failed for key: {key} with default: {default}")
+                self.assertEqual(
+                    result, expected, f"Failed for key: {key} with default: {default}"
+                )
             else:
                 key, expected = test_case
                 result = config_manager.get(key)
@@ -253,28 +239,20 @@ class TestConfigManagerMassiveExtended(unittest.TestCase):
 
         config_manager = ConfigurationManager.__new__(ConfigurationManager)
         config_manager._config = {
-            'database': {
-                'iris': {'host': 'localhost', 'port': 1972}
-            },
-            'vector_store': {
-                'table_name': 'docs',
-                'embedding_dimension': 384
-            },
-            'embedding_model': 'test-model',
-            'llm': {
-                'provider': 'openai',
-                'model': 'gpt-3.5-turbo'
-            }
+            "database": {"iris": {"host": "localhost", "port": 1972}},
+            "vector_store": {"table_name": "docs", "embedding_dimension": 384},
+            "embedding_model": "test-model",
+            "llm": {"provider": "openai", "model": "gpt-3.5-turbo"},
         }
 
         # Test all specialized getters that might exist
         specialized_methods = [
-            'get_database_config',
-            'get_vector_index_config',
-            'get_embedding_config',
-            'get_llm_config',
-            'get_pipeline_config',
-            'get_performance_config'
+            "get_database_config",
+            "get_vector_index_config",
+            "get_embedding_config",
+            "get_llm_config",
+            "get_pipeline_config",
+            "get_performance_config",
         ]
 
         for method_name in specialized_methods:
@@ -282,7 +260,9 @@ class TestConfigManagerMassiveExtended(unittest.TestCase):
                 method = getattr(config_manager, method_name)
                 try:
                     result = method()
-                    self.assertIsInstance(result, (dict, str, int, float, bool, type(None)))
+                    self.assertIsInstance(
+                        result, (dict, str, int, float, bool, type(None))
+                    )
                 except Exception as e:
                     # Some methods might require additional setup
                     self.assertIsInstance(e, Exception)
@@ -295,40 +275,40 @@ class TestConfigManagerMassiveExtended(unittest.TestCase):
         config_manager = ConfigurationManager.__new__(ConfigurationManager)
         config_manager._config = {}
 
-        if hasattr(config_manager, '_load_env_variables'):
+        if hasattr(config_manager, "_load_env_variables"):
             # Test comprehensive environment variable patterns
             env_test_cases = [
                 # Basic nested structures
                 {
-                    'RAG_DATABASE__IRIS__HOST': 'env-host',
-                    'RAG_DATABASE__IRIS__PORT': '3306',
-                    'RAG_SIMPLE_VALUE': 'simple'
+                    "RAG_DATABASE__IRIS__HOST": "env-host",
+                    "RAG_DATABASE__IRIS__PORT": "3306",
+                    "RAG_SIMPLE_VALUE": "simple",
                 },
                 # Complex nested structures
                 {
-                    'RAG_VECTOR__STORE__TABLE': 'env_table',
-                    'RAG_VECTOR__STORE__DIMENSION': '512',
-                    'RAG_LLM__PROVIDER': 'anthropic',
-                    'RAG_LLM__CONFIG__TEMPERATURE': '0.8'
+                    "RAG_VECTOR__STORE__TABLE": "env_table",
+                    "RAG_VECTOR__STORE__DIMENSION": "512",
+                    "RAG_LLM__PROVIDER": "anthropic",
+                    "RAG_LLM__CONFIG__TEMPERATURE": "0.8",
                 },
                 # Type conversion test cases
                 {
-                    'RAG_NUMERIC_INT': '42',
-                    'RAG_NUMERIC_FLOAT': '3.14159',
-                    'RAG_BOOLEAN_TRUE': 'true',
-                    'RAG_BOOLEAN_FALSE': 'false',
-                    'RAG_BOOLEAN_YES': 'yes',
-                    'RAG_BOOLEAN_NO': 'no',
-                    'RAG_BOOLEAN_1': '1',
-                    'RAG_BOOLEAN_0': '0'
+                    "RAG_NUMERIC_INT": "42",
+                    "RAG_NUMERIC_FLOAT": "3.14159",
+                    "RAG_BOOLEAN_TRUE": "true",
+                    "RAG_BOOLEAN_FALSE": "false",
+                    "RAG_BOOLEAN_YES": "yes",
+                    "RAG_BOOLEAN_NO": "no",
+                    "RAG_BOOLEAN_1": "1",
+                    "RAG_BOOLEAN_0": "0",
                 },
                 # Edge cases
                 {
-                    'RAG_EMPTY_STRING': '',
-                    'RAG_WHITESPACE': '   ',
-                    'RAG_SPECIAL_CHARS': 'test@example.com',
-                    'RAG_UNICODE': 'tëst_ünïcödë'
-                }
+                    "RAG_EMPTY_STRING": "",
+                    "RAG_WHITESPACE": "   ",
+                    "RAG_SPECIAL_CHARS": "test@example.com",
+                    "RAG_UNICODE": "tëst_ünïcödë",
+                },
             ]
 
             for env_vars in env_test_cases:
@@ -349,17 +329,19 @@ class TestValidationMassive(unittest.TestCase):
     def test_validation_requirements_comprehensive(self):
         """Test validation requirements comprehensively."""
         try:
-            from iris_vector_rag.validation.requirements import get_pipeline_requirements
+            from iris_vector_rag.validation.requirements import (
+                get_pipeline_requirements,
+            )
 
             # Test all known pipeline types
             pipeline_types = [
-                'basic',
-                'graphrag',
-                'hybrid_graphrag',
-                'crag',
-                'basic_rerank',
-                'colbert',
-                'unknown_pipeline'
+                "basic",
+                "graphrag",
+                "hybrid_graphrag",
+                "crag",
+                "basic_rerank",
+                "colbert",
+                "unknown_pipeline",
             ]
 
             for pipeline_type in pipeline_types:
@@ -369,20 +351,26 @@ class TestValidationMassive(unittest.TestCase):
                     self.assertIsNotNone(requirements)
 
                     # Should have an object that can be introspected
-                    self.assertTrue(hasattr(requirements, '__dict__'))
+                    self.assertTrue(hasattr(requirements, "__dict__"))
 
                     # Test that the requirements object has some structure
                     # Even if empty, it should be a valid requirements object
                     obj_type = type(requirements).__name__
-                    self.assertTrue(obj_type.endswith('Requirements'),
-                                    f"Expected requirements object for {pipeline_type}, got {obj_type}")
+                    self.assertTrue(
+                        obj_type.endswith("Requirements"),
+                        f"Expected requirements object for {pipeline_type}, got {obj_type}",
+                    )
 
                 except Exception as e:
                     # Some pipeline types might not be implemented
                     error_msg = str(e).lower()
                     expected_errors = [
-                        'not found', 'not implemented', 'unknown', 'invalid',
-                        'not supported', 'missing'
+                        "not found",
+                        "not implemented",
+                        "unknown",
+                        "invalid",
+                        "not supported",
+                        "missing",
                     ]
                     is_expected = any(err in error_msg for err in expected_errors)
                     if not is_expected:
@@ -401,13 +389,13 @@ class TestValidationMassive(unittest.TestCase):
 
             # Test validator creation for different types
             validator_types = [
-                'config',
-                'pipeline',
-                'database',
-                'requirements',
-                'schema',
-                'performance',
-                'unknown_type'
+                "config",
+                "pipeline",
+                "database",
+                "requirements",
+                "schema",
+                "performance",
+                "unknown_type",
             ]
 
             for validator_type in validator_types:
@@ -420,11 +408,18 @@ class TestValidationMassive(unittest.TestCase):
                     # Some validator types might not be implemented
                     error_msg = str(e).lower()
                     expected_errors = [
-                        'not found', 'not implemented', 'unknown', 'invalid',
-                        'not supported', 'factory'
+                        "not found",
+                        "not implemented",
+                        "unknown",
+                        "invalid",
+                        "not supported",
+                        "factory",
                     ]
                     is_expected = any(err in error_msg for err in expected_errors)
-                    self.assertTrue(is_expected, f"Unexpected factory error for {validator_type}: {e}")
+                    self.assertTrue(
+                        is_expected,
+                        f"Unexpected factory error for {validator_type}: {e}",
+                    )
 
         except ImportError:
             self.skipTest("Validation factory module not available")
@@ -443,17 +438,32 @@ class TestPipelineInitMassive(unittest.TestCase):
         mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=MagicMock())
         mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
 
-        for pipeline_type in ['basic', 'unknown_pipeline']:
+        for pipeline_type in ["basic", "unknown_pipeline"]:
             try:
-                create_pipeline(pipeline_type, validate_requirements=False,
-                                external_connection=mock_conn)
+                create_pipeline(
+                    pipeline_type,
+                    validate_requirements=False,
+                    external_connection=mock_conn,
+                )
             except Exception as e:
                 error_msg = str(e).lower()
-                expected = ['not found', 'not implemented', 'unknown', 'invalid',
-                            'import', 'module', 'dependency', 'connection',
-                            'database', 'configuration', 'requirements']
-                self.assertTrue(any(e in error_msg for e in expected),
-                                f"Unexpected error for {pipeline_type}: {e}")
+                expected = [
+                    "not found",
+                    "not implemented",
+                    "unknown",
+                    "invalid",
+                    "import",
+                    "module",
+                    "dependency",
+                    "connection",
+                    "database",
+                    "configuration",
+                    "requirements",
+                ]
+                self.assertTrue(
+                    any(e in error_msg for e in expected),
+                    f"Unexpected error for {pipeline_type}: {e}",
+                )
 
     def test_pipeline_availability_check(self):
         """Test pipeline availability checking."""
@@ -469,7 +479,7 @@ class TestPipelineInitMassive(unittest.TestCase):
         except Exception as e:
             # Expected infrastructure failures
             error_msg = str(e).lower()
-            expected_errors = ['connection', 'database', 'import', 'dependency']
+            expected_errors = ["connection", "database", "import", "dependency"]
             is_expected = any(err in error_msg for err in expected_errors)
             self.assertTrue(is_expected, f"Unexpected availability check error: {e}")
 
@@ -483,12 +493,12 @@ class TestUtilsMassive(unittest.TestCase):
             from iris_vector_rag.common.utils import get_llm_func
 
             # Test LLM function retrieval
-            llm_func = get_llm_func(provider='stub')
+            llm_func = get_llm_func(provider="stub")
             self.assertIsNotNone(llm_func)
             self.assertTrue(callable(llm_func))
 
             # Test with different providers
-            providers = ['openai', 'anthropic', 'stub', 'invalid_provider']
+            providers = ["openai", "anthropic", "stub", "invalid_provider"]
             for provider in providers:
                 try:
                     llm_func = get_llm_func(provider=provider)
@@ -498,9 +508,15 @@ class TestUtilsMassive(unittest.TestCase):
                     # Expected for invalid providers or missing API keys
                     error_msg = str(e).lower()
                     expected_errors = [
-                        'provider', 'invalid', 'not found', 'api key',
-                        'authentication', 'unsupported', 'openai_api_key',
-                        'anthropic_api_key', 'environment variable',
+                        "provider",
+                        "invalid",
+                        "not found",
+                        "api key",
+                        "authentication",
+                        "unsupported",
+                        "openai_api_key",
+                        "anthropic_api_key",
+                        "environment variable",
                     ]
                     is_expected = any(err in error_msg for err in expected_errors)
                     self.assertTrue(is_expected, f"Unexpected LLM provider error: {e}")
@@ -516,9 +532,7 @@ class TestUtilsMassive(unittest.TestCase):
             # Test vector index creation (should handle mocked calls gracefully)
             try:
                 create_vector_index(
-                    table_name='test_table',
-                    dimension=384,
-                    metric='COSINE'
+                    table_name="test_table", dimension=384, metric="COSINE"
                 )
                 # Should return some result or handle gracefully
 
@@ -526,8 +540,13 @@ class TestUtilsMassive(unittest.TestCase):
                 # Expected database connection failures
                 error_msg = str(e).lower()
                 expected_errors = [
-                    'connection', 'database', 'table', 'index',
-                    'permission', 'timeout', 'iris'
+                    "connection",
+                    "database",
+                    "table",
+                    "index",
+                    "permission",
+                    "timeout",
+                    "iris",
                 ]
                 is_expected = any(err in error_msg for err in expected_errors)
                 self.assertTrue(is_expected, f"Unexpected vector utils error: {e}")
@@ -536,5 +555,5 @@ class TestUtilsMassive(unittest.TestCase):
             self.skipTest("Vector utils module not available")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -270,7 +270,7 @@ class TestChecksumValidation:
         error = ChecksumMismatchError(
             fixture_name="test-fixture",
             expected="sha256:expected123",
-            actual="sha256:actual456"
+            actual="sha256:actual456",
         )
 
         error_msg = str(error)
@@ -300,8 +300,8 @@ class TestChecksumSkipping:
         # Check method signature
         sig = inspect.signature(manager.load_fixture)
 
-        assert 'validate_checksum' in sig.parameters
-        assert sig.parameters['validate_checksum'].default is True
+        assert "validate_checksum" in sig.parameters
+        assert sig.parameters["validate_checksum"].default is True
 
 
 @pytest.mark.unit

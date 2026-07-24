@@ -11,7 +11,6 @@ import pytest
 from unittest.mock import Mock, patch
 import numpy as np
 
-
 # ==============================================================================
 # FIXTURES
 # ==============================================================================
@@ -49,8 +48,11 @@ def embedding_generator(mock_sentence_transformer):
     from tests.fixtures.embedding_generator import EmbeddingGenerator
 
     # Mock the import inside _load_model
-    with patch('tests.fixtures.embedding_generator._MODEL_CACHE', {}):
-        with patch('sentence_transformers.SentenceTransformer', return_value=mock_sentence_transformer):
+    with patch("tests.fixtures.embedding_generator._MODEL_CACHE", {}):
+        with patch(
+            "sentence_transformers.SentenceTransformer",
+            return_value=mock_sentence_transformer,
+        ):
             generator = EmbeddingGenerator(
                 model_name="all-MiniLM-L6-v2",
                 dimension=384,
@@ -74,7 +76,9 @@ class TestEmbeddingGeneratorConstructor:
         mock_model = Mock()
         mock_model.encode = Mock(return_value=np.array([[0.1] * 384]))
 
-        with patch('sentence_transformers.SentenceTransformer', return_value=mock_model):
+        with patch(
+            "sentence_transformers.SentenceTransformer", return_value=mock_model
+        ):
             generator = EmbeddingGenerator(model_name="all-MiniLM-L6-v2")
             assert generator.model_name == "all-MiniLM-L6-v2"
 
@@ -85,7 +89,9 @@ class TestEmbeddingGeneratorConstructor:
         mock_model = Mock()
         mock_model.encode = Mock(return_value=np.array([[0.1] * 384]))
 
-        with patch('sentence_transformers.SentenceTransformer', return_value=mock_model):
+        with patch(
+            "sentence_transformers.SentenceTransformer", return_value=mock_model
+        ):
             generator = EmbeddingGenerator(dimension=384)
             assert generator.dimension == 384
 
@@ -96,7 +102,9 @@ class TestEmbeddingGeneratorConstructor:
         mock_model = Mock()
         mock_model.encode = Mock(return_value=np.array([[0.1] * 384]))
 
-        with patch('sentence_transformers.SentenceTransformer', return_value=mock_model):
+        with patch(
+            "sentence_transformers.SentenceTransformer", return_value=mock_model
+        ):
             generator = EmbeddingGenerator()
             assert generator.dimension == 384
 
@@ -105,11 +113,16 @@ class TestEmbeddingGeneratorConstructor:
         from tests.fixtures.embedding_generator import EmbeddingGenerator
 
         mock_model = Mock()
-        mock_model.encode = Mock(return_value=np.array([[0.1] * 512]))  # Different dimension to test validation
+        mock_model.encode = Mock(
+            return_value=np.array([[0.1] * 512])
+        )  # Different dimension to test validation
 
-        with patch('sentence_transformers.SentenceTransformer', return_value=mock_model):
+        with patch(
+            "sentence_transformers.SentenceTransformer", return_value=mock_model
+        ):
             # This will raise DimensionMismatchError because model returns 512 but we expect 384
             from tests.fixtures.embedding_generator import DimensionMismatchError
+
             with pytest.raises(DimensionMismatchError):
                 EmbeddingGenerator(model_name="test-model", dimension=384)
 
@@ -123,7 +136,9 @@ class TestEmbeddingGeneratorConstructor:
 class TestGenerateDocumentEmbeddings:
     """Unit tests for generate_document_embeddings()."""
 
-    def test_generates_embeddings_for_source_documents(self, embedding_generator, mock_connection):
+    def test_generates_embeddings_for_source_documents(
+        self, embedding_generator, mock_connection
+    ):
         """✅ Generates embeddings for RAG.SourceDocuments."""
         # Setup mock cursor to return documents
         mock_cursor = mock_connection.cursor()
@@ -131,10 +146,12 @@ class TestGenerateDocumentEmbeddings:
         # Mock fetchone for COUNT(*) and fetchall for SELECT with LIMIT/OFFSET
         # The implementation uses: while offset < total_rows, so it will loop twice (0 < 2, 32 < 2 is False)
         mock_cursor.fetchone = Mock(return_value=(2,))
-        mock_cursor.fetchall = Mock(return_value=[
-            ("doc1", "Sample document text"),
-            ("doc2", "Another document"),
-        ])
+        mock_cursor.fetchall = Mock(
+            return_value=[
+                ("doc1", "Sample document text"),
+                ("doc2", "Another document"),
+            ]
+        )
 
         # Generate embeddings
         count = embedding_generator.populate_table_embeddings(
@@ -147,7 +164,9 @@ class TestGenerateDocumentEmbeddings:
 
         assert count == 2
 
-    def test_uses_to_vector_function_for_updates(self, embedding_generator, mock_connection):
+    def test_uses_to_vector_function_for_updates(
+        self, embedding_generator, mock_connection
+    ):
         """✅ Uses TO_VECTOR() for embedding updates per constitution."""
         mock_cursor = mock_connection.cursor()
 
@@ -155,9 +174,11 @@ class TestGenerateDocumentEmbeddings:
         mock_cursor.fetchone = Mock(return_value=(1,))
 
         # SELECT query
-        mock_cursor.fetchall = Mock(return_value=[
-            ("doc1", "Sample text"),
-        ])
+        mock_cursor.fetchall = Mock(
+            return_value=[
+                ("doc1", "Sample text"),
+            ]
+        )
 
         embedding_generator.populate_table_embeddings(
             connection=mock_connection,
@@ -171,8 +192,9 @@ class TestGenerateDocumentEmbeddings:
         update_calls = [call for call in execute_calls if "UPDATE" in call]
 
         assert len(update_calls) > 0
-        assert any("TO_VECTOR" in call for call in update_calls), \
-            "UPDATE statements must use TO_VECTOR() per constitution"
+        assert any(
+            "TO_VECTOR" in call for call in update_calls
+        ), "UPDATE statements must use TO_VECTOR() per constitution"
 
     def test_handles_null_text_gracefully(self, embedding_generator, mock_connection):
         """✅ Handles NULL text values gracefully."""
@@ -182,10 +204,12 @@ class TestGenerateDocumentEmbeddings:
         mock_cursor.fetchone = Mock(return_value=(2,))
 
         # SELECT query with NULL text (all returned in first query since batch_size=32 > 2)
-        mock_cursor.fetchall = Mock(return_value=[
-            ("doc1", None),
-            ("doc2", "Valid text"),
-        ])
+        mock_cursor.fetchall = Mock(
+            return_value=[
+                ("doc1", None),
+                ("doc2", "Valid text"),
+            ]
+        )
 
         # Should not crash on NULL text
         count = embedding_generator.populate_table_embeddings(
@@ -208,7 +232,9 @@ class TestGenerateDocumentEmbeddings:
 class TestGenerateEntityEmbeddings:
     """Unit tests for generate_entity_embeddings()."""
 
-    def test_generates_embeddings_for_entities(self, embedding_generator, mock_connection):
+    def test_generates_embeddings_for_entities(
+        self, embedding_generator, mock_connection
+    ):
         """✅ Generates embeddings for RAG.Entities."""
         mock_cursor = mock_connection.cursor()
 
@@ -216,10 +242,12 @@ class TestGenerateEntityEmbeddings:
         mock_cursor.fetchone = Mock(return_value=(2,))
 
         # SELECT query (all in one batch)
-        mock_cursor.fetchall = Mock(return_value=[
-            ("entity1", "Entity description"),
-            ("entity2", "Another entity"),
-        ])
+        mock_cursor.fetchall = Mock(
+            return_value=[
+                ("entity1", "Entity description"),
+                ("entity2", "Another entity"),
+            ]
+        )
 
         count = embedding_generator.populate_table_embeddings(
             connection=mock_connection,
@@ -230,7 +258,9 @@ class TestGenerateEntityEmbeddings:
 
         assert count == 2
 
-    def test_generates_embeddings_for_kg_node_embeddings(self, embedding_generator, mock_connection):
+    def test_generates_embeddings_for_kg_node_embeddings(
+        self, embedding_generator, mock_connection
+    ):
         """✅ Generates embeddings for kg_NodeEmbeddings_optimized."""
         mock_cursor = mock_connection.cursor()
 
@@ -238,9 +268,11 @@ class TestGenerateEntityEmbeddings:
         mock_cursor.fetchone = Mock(return_value=(1,))
 
         # SELECT query
-        mock_cursor.fetchall = Mock(return_value=[
-            ("node1", "Node text"),
-        ])
+        mock_cursor.fetchall = Mock(
+            return_value=[
+                ("node1", "Node text"),
+            ]
+        )
 
         count = embedding_generator.populate_table_embeddings(
             connection=mock_connection,
@@ -276,7 +308,7 @@ class TestEmbeddingCaching:
     def test_retries_on_api_failure_with_exponential_backoff(self, embedding_generator):
         """✅ Retries with exponential backoff on API failure."""
         # Mock encode to fail twice then succeed
-        with patch.object(embedding_generator._model, 'encode') as mock_encode:
+        with patch.object(embedding_generator._model, "encode") as mock_encode:
             mock_encode.side_effect = [
                 Exception("API error"),
                 Exception("API error"),
@@ -298,7 +330,9 @@ class TestEmbeddingCaching:
 class TestBatchProcessing:
     """Unit tests for batch embedding generation."""
 
-    def test_processes_large_tables_in_batches(self, embedding_generator, mock_connection):
+    def test_processes_large_tables_in_batches(
+        self, embedding_generator, mock_connection
+    ):
         """✅ Processes large tables in batches to avoid memory issues."""
         # Setup mock to return many rows
         mock_cursor = mock_connection.cursor()
@@ -310,7 +344,7 @@ class TestBatchProcessing:
         # Loop will run: offset=0, 100, 200, ..., 900 (10 iterations)
         # Each SELECT uses LIMIT 100 OFFSET {offset}
         rows = [(f"doc{i}", f"Text {i}") for i in range(1000)]
-        batch_results = [rows[i:i+100] for i in range(0, 1000, 100)]
+        batch_results = [rows[i : i + 100] for i in range(0, 1000, 100)]
         mock_cursor.fetchall = Mock(side_effect=batch_results)
 
         count = embedding_generator.populate_table_embeddings(
@@ -332,7 +366,7 @@ class TestBatchProcessing:
 
         # SELECT query returns batches
         rows = [(f"doc{i}", f"Text {i}") for i in range(250)]
-        batch_results = [rows[i:i+100] for i in range(0, 250, 100)]
+        batch_results = [rows[i : i + 100] for i in range(0, 250, 100)]
         mock_cursor.fetchall = Mock(side_effect=batch_results)
 
         embedding_generator.populate_table_embeddings(
@@ -358,28 +392,38 @@ class TestEmbeddingGeneratorErrorHandling:
 
     def test_raises_clear_error_on_invalid_dimension(self):
         """✅ Raises clear error for invalid dimension."""
-        from tests.fixtures.embedding_generator import EmbeddingGenerator, DimensionMismatchError
+        from tests.fixtures.embedding_generator import (
+            EmbeddingGenerator,
+            DimensionMismatchError,
+        )
 
         mock_model = Mock()
         mock_model.encode = Mock(return_value=np.array([[0.1] * 384]))
 
-        with patch('sentence_transformers.SentenceTransformer', return_value=mock_model):
+        with patch(
+            "sentence_transformers.SentenceTransformer", return_value=mock_model
+        ):
             # Request dimension=0 but model returns 384
             with pytest.raises(DimensionMismatchError, match="dimension"):
                 EmbeddingGenerator(dimension=0)
 
     def test_raises_clear_error_on_invalid_model(self):
         """✅ Raises clear error for invalid model name."""
-        from tests.fixtures.embedding_generator import EmbeddingGenerator, ModelLoadError
+        from tests.fixtures.embedding_generator import (
+            EmbeddingGenerator,
+            ModelLoadError,
+        )
 
         # Patch at import site
-        with patch('sentence_transformers.SentenceTransformer') as mock_st:
+        with patch("sentence_transformers.SentenceTransformer") as mock_st:
             mock_st.side_effect = Exception("Model not found")
 
             with pytest.raises(ModelLoadError, match="Model not found"):
                 EmbeddingGenerator(model_name="invalid-model")
 
-    def test_skips_rows_with_database_errors(self, embedding_generator, mock_connection):
+    def test_skips_rows_with_database_errors(
+        self, embedding_generator, mock_connection
+    ):
         """✅ Skips rows that cause database errors and continues."""
         mock_cursor = mock_connection.cursor()
 
@@ -387,18 +431,22 @@ class TestEmbeddingGeneratorErrorHandling:
         mock_cursor.fetchone = Mock(return_value=(2,))
 
         # SELECT query
-        mock_cursor.fetchall = Mock(return_value=[
-            ("doc1", "Valid text"),
-            ("doc2", "Another valid text"),
-        ])
+        mock_cursor.fetchall = Mock(
+            return_value=[
+                ("doc1", "Valid text"),
+                ("doc2", "Another valid text"),
+            ]
+        )
 
         # Make UPDATE fail for first row only
-        mock_cursor.execute = Mock(side_effect=[
-            None,  # COUNT(*) query
-            None,  # SELECT query
-            Exception("Database error"),  # First UPDATE fails
-            None,  # Second UPDATE succeeds
-        ])
+        mock_cursor.execute = Mock(
+            side_effect=[
+                None,  # COUNT(*) query
+                None,  # SELECT query
+                Exception("Database error"),  # First UPDATE fails
+                None,  # Second UPDATE succeeds
+            ]
+        )
 
         # Should raise exception (current implementation doesn't skip errors)
         with pytest.raises(Exception, match="Failed to populate embeddings"):

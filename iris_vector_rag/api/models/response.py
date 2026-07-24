@@ -218,9 +218,7 @@ class QueryResponse(BaseModel):
                     }
                 ],
                 "sources": ["medical_textbook_ch5.pdf"],
-                "contexts": [
-                    "Diabetes mellitus is a group of metabolic diseases..."
-                ],
+                "contexts": ["Diabetes mellitus is a group of metabolic diseases..."],
                 "pipeline_name": "graphrag",
                 "execution_time_ms": 1456,
                 "retrieval_time_ms": 345,

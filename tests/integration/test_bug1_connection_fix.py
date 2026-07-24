@@ -36,7 +36,9 @@ class TestBug1ConnectionAPIFix:
         conn.close()
 
         assert result is not None, "Test query should return result"
-        print("✅ Bug 1 Fix: Connection established successfully using iris.createConnection()")
+        print(
+            "✅ Bug 1 Fix: Connection established successfully using iris.createConnection()"
+        )
 
     def test_no_attribute_error_on_connection(self):
         """T022: Verify no AttributeError about missing 'connect' method"""
@@ -67,7 +69,9 @@ class TestBug1ConnectionAPIFix:
             error_msg = str(exc_info.value)
             assert "Failed to connect" in error_msg
             assert "9999" in error_msg  # Port mentioned
-            print(f"✅ Bug 1 Fix: ConnectionError raised with clear message: {error_msg[:100]}...")
+            print(
+                f"✅ Bug 1 Fix: ConnectionError raised with clear message: {error_msg[:100]}..."
+            )
 
         finally:
             # Restore original port
@@ -89,7 +93,10 @@ class TestBug1ConnectionAPIFix:
 
             # Then: Error message contains expected elements
             error_msg = str(exc_info.value)
-            assert "Failed to connect" in error_msg or "connection failed" in error_msg.lower()
+            assert (
+                "Failed to connect" in error_msg
+                or "connection failed" in error_msg.lower()
+            )
             assert "9999" in error_msg  # Port mentioned
 
             # And: No mention of AttributeError or iris.connect()

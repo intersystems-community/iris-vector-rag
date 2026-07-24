@@ -24,45 +24,47 @@ class TestWorkingUnits(unittest.TestCase):
         """Test ConfigurationManager basic get functionality."""
         config_manager = ConfigurationManager.__new__(ConfigurationManager)
         test_config = {
-            'database': {'iris': {'host': 'localhost', 'port': 1972}},
-            'embedding_model': 'test-model'
+            "database": {"iris": {"host": "localhost", "port": 1972}},
+            "embedding_model": "test-model",
         }
         config_manager._config = test_config
 
         # Test simple key
-        self.assertEqual(config_manager.get('embedding_model'), 'test-model')
+        self.assertEqual(config_manager.get("embedding_model"), "test-model")
 
         # Test nested key with colons
-        self.assertEqual(config_manager.get('database:iris:host'), 'localhost')
-        self.assertEqual(config_manager.get('database:iris:port'), 1972)
+        self.assertEqual(config_manager.get("database:iris:host"), "localhost")
+        self.assertEqual(config_manager.get("database:iris:port"), 1972)
 
         # Test nonexistent key with default
-        self.assertEqual(config_manager.get('nonexistent', 'default'), 'default')
+        self.assertEqual(config_manager.get("nonexistent", "default"), "default")
 
         # Test nonexistent key without default
-        self.assertIsNone(config_manager.get('nonexistent'))
+        self.assertIsNone(config_manager.get("nonexistent"))
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('os.path.exists')
-    @patch('yaml.safe_load')
-    def test_config_manager_initialization(self, mock_yaml_load, mock_exists, mock_file):
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("os.path.exists")
+    @patch("yaml.safe_load")
+    def test_config_manager_initialization(
+        self, mock_yaml_load, mock_exists, mock_file
+    ):
         """Test ConfigurationManager initialization."""
-        test_config = {'database': {'iris': {'host': 'localhost'}}}
+        test_config = {"database": {"iris": {"host": "localhost"}}}
         mock_exists.return_value = True
         mock_yaml_load.return_value = test_config
 
-        config_manager = ConfigurationManager(config_path='/test/config.yaml')
+        config_manager = ConfigurationManager(config_path="/test/config.yaml")
 
         self.assertEqual(config_manager._config, test_config)
-        mock_exists.assert_called_once_with('/test/config.yaml')
-        mock_file.assert_called_once_with('/test/config.yaml', 'r')
+        mock_exists.assert_called_once_with("/test/config.yaml")
+        mock_file.assert_called_once_with("/test/config.yaml", "r")
 
     def test_config_manager_existing_methods(self):
         """Test ConfigurationManager existing methods."""
         config_manager = ConfigurationManager.__new__(ConfigurationManager)
         config_manager._config = {
-            'database': {'iris': {'host': 'localhost'}},
-            'embedding_model': 'test-model'
+            "database": {"iris": {"host": "localhost"}},
+            "embedding_model": "test-model",
         }
 
         # Test get_database_config method
@@ -74,5 +76,5 @@ class TestWorkingUnits(unittest.TestCase):
         self.assertIsInstance(embedding_config, (dict, str, type(None)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,11 +1,11 @@
 # iris_vector_rag package
-# This file makes the iris_vector_rag directory a Python package.
 
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 try:
     from dotenv import load_dotenv
+
     _env_file = Path(__file__).resolve().parent.parent / ".env"
     if _env_file.exists():
         load_dotenv(_env_file)
@@ -18,6 +18,7 @@ from iris_vector_rag.executor import SqlExecutor
 from .config.manager import ConfigurationManager
 from .core.base import RAGPipeline
 from .core.connection import ConnectionManager
+from .core.engine import IRISVectorEngine
 from .pipelines.basic import BasicRAGPipeline
 from .pipelines.crag import CRAGPipeline
 
@@ -28,9 +29,14 @@ from .validation.requirements import get_pipeline_requirements
 from .validation.validator import PreConditionValidator
 
 # Package version
-__version__ = "0.12.0"
-__author__ = "InterSystems IRIS RAG Templates Project"
-__description__ = "A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend."
+try:
+    from importlib.metadata import version as _meta_version, PackageNotFoundError
+
+    __version__ = _meta_version("iris-vector-rag")
+except PackageNotFoundError:
+    __version__ = "0.12.0"
+__author__ = "Thomas Dyar"
+__description__ = "RAG pipelines backed by InterSystems IRIS vector search."
 
 
 def create_pipeline(
@@ -39,6 +45,7 @@ def create_pipeline(
     llm_func: Optional[Callable[[str], str]] = None,
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
     external_connection=None,
+    engine: Optional["IRISVectorEngine"] = None,
     validate_requirements: bool = False,
     auto_setup: bool = False,
     **kwargs,
@@ -58,6 +65,7 @@ def create_pipeline(
         llm_func: Optional LLM function for answer generation.
         embedding_func: Optional embedding function for vector generation.
         external_connection: Optional existing database connection to use.
+        engine: Optional pre-built IRISVectorEngine instance. If provided, uses its managers.
         validate_requirements: Whether to validate pipeline requirements before creation.
         auto_setup: Whether to automatically set up missing requirements.
         **kwargs: Additional configuration parameters.
@@ -69,6 +77,41 @@ def create_pipeline(
         ValueError: If the pipeline_type is unknown.
         PipelineValidationError: If validation fails and auto_setup is False.
     """
+    # engine= shortcut: extract managers from pre-built engine
+    if engine is not None:
+        config_manager = engine.config_manager
+        connection_manager = engine.connection_manager
+        if validate_requirements:
+            factory = ValidatedPipelineFactory(connection_manager, config_manager)
+            if embedding_func:
+                kwargs["embedding_func"] = embedding_func
+            return factory.create_pipeline(
+                pipeline_type=pipeline_type,
+                llm_func=llm_func,
+                auto_setup=auto_setup,
+                validate_requirements=True,
+                **kwargs,
+            )
+        if embedding_func:
+            kwargs["embedding_func"] = embedding_func
+        effective_llm_func = llm_func
+        if effective_llm_func is None:
+            import os
+
+            default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
+            llm_provider = config_manager.get("llm.provider", default_provider)
+            llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
+            effective_llm_func = get_llm_func(
+                provider=llm_provider, model_name=llm_model_name, **kwargs
+            )
+        return _create_pipeline_legacy(
+            pipeline_type,
+            connection_manager,
+            config_manager,
+            effective_llm_func,
+            **kwargs,
+        )
+
     # Initialize configuration manager
     config_manager = ConfigurationManager(config_path)
 
@@ -105,6 +148,7 @@ def create_pipeline(
     effective_llm_func = llm_func
     if effective_llm_func is None:
         import os
+
         default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
         llm_provider = config_manager.get("llm.provider", default_provider)
         llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
@@ -168,6 +212,10 @@ def _create_pipeline_legacy(
         from .pipelines.multi_query_rrf import MultiQueryRRFPipeline
 
         return MultiQueryRRFPipeline(
+            connection_manager=connection_manager,
+            config_manager=config_manager,
+            llm_func=llm_func,
+            embedding_func=kwargs.get("embedding_func"),
             num_queries=kwargs.get("num_queries", 4),
             retrieved_k=kwargs.get("retrieved_k", 20),
             rrf_k=kwargs.get("rrf_k", 60),
@@ -292,6 +340,7 @@ __all__ = [
     "ConfigurationManager",
     "BasicRAGPipeline",
     "CRAGPipeline",
+    "IRISVectorEngine",
     "ValidatedPipelineFactory",
     "PreConditionValidator",
     "SetupOrchestrator",

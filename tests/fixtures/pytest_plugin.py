@@ -27,7 +27,6 @@ Reference: specs/047-create-a-unified/tasks.md (T078-T084)
 import pytest
 from pathlib import Path
 
-
 # ==============================================================================
 # PYTEST HOOKS
 # ==============================================================================
@@ -126,7 +125,9 @@ def dat_fixture_loader(request, backend_configuration):
         )
 
         if not result.success:
-            pytest.fail(f"Failed to load fixture '{fixture_name}': {result.error_message}")
+            pytest.fail(
+                f"Failed to load fixture '{fixture_name}': {result.error_message}"
+            )
 
         # Store result for test to access
         request.node.dat_fixture_result = result

@@ -22,25 +22,23 @@ logger = logging.getLogger(__name__)
 def _serialize_document(doc: Any) -> Dict[str, Any]:
     """Convert a Document object to a dictionary for JSON serialization."""
     import logging
+
     logger = logging.getLogger(__name__)
 
     logger.debug(f"Serializing document type: {type(doc)}, value: {repr(doc)[:200]}")
 
     if isinstance(doc, Document):
         # Extract core fields from LangChain Document
-        serialized = {
-            'content': doc.page_content,
-            **doc.metadata
-        }
+        serialized = {"content": doc.page_content, **doc.metadata}
         # Add Document.id if it exists (some Documents have this)
-        if hasattr(doc, 'id') and doc.id:
-            serialized['id'] = doc.id
+        if hasattr(doc, "id") and doc.id:
+            serialized["id"] = doc.id
         # Ensure we have either 'id' or 'doc_id' for compatibility
-        if 'id' not in serialized and 'doc_id' not in serialized:
+        if "id" not in serialized and "doc_id" not in serialized:
             # Use ticket_id or other ID fields if available
-            for id_field in ['ticket_id', 'document_id', 'source_id']:
+            for id_field in ["ticket_id", "document_id", "source_id"]:
                 if id_field in doc.metadata:
-                    serialized['doc_id'] = doc.metadata[id_field]
+                    serialized["doc_id"] = doc.metadata[id_field]
                     break
         logger.debug(f"Serialized Document to: {list(serialized.keys())}")
         return serialized
@@ -51,7 +49,7 @@ def _serialize_document(doc: Any) -> Dict[str, Any]:
     else:
         # Unknown type, try to convert
         logger.warning(f"Unknown document type {type(doc)}, converting to string")
-        return {'content': str(doc)}
+        return {"content": str(doc)}
 
 
 class TechniqueHandler:
@@ -81,28 +79,30 @@ class TechniqueHandler:
             self._query_count += 1
 
             # Serialize retrieved documents to dict format for MCP/JSON response
-            raw_documents = result.get('retrieved_documents', result.get('documents', []))
+            raw_documents = result.get(
+                "retrieved_documents", result.get("documents", [])
+            )
             serialized_documents = [_serialize_document(doc) for doc in raw_documents]
 
             # Standardize response format
             # Convert execution_time (seconds) to execution_time_ms (milliseconds)
-            execution_time = result.get('execution_time', 0)
+            execution_time = result.get("execution_time", 0)
             execution_time_ms = int(execution_time * 1000) if execution_time else 0
 
             return {
-                'answer': result.get('answer', ''),
-                'retrieved_documents': serialized_documents,
-                'sources': result.get('sources', []),
-                'metadata': {
-                    **result.get('metadata', {}),
-                    'pipeline_name': self.pipeline_name
+                "answer": result.get("answer", ""),
+                "retrieved_documents": serialized_documents,
+                "sources": result.get("sources", []),
+                "metadata": {
+                    **result.get("metadata", {}),
+                    "pipeline_name": self.pipeline_name,
                 },
-                'performance': {
-                    'execution_time_ms': execution_time_ms,
-                    'retrieval_time_ms': result.get('retrieval_time_ms', 0),
-                    'generation_time_ms': result.get('generation_time_ms', 0),
-                    'tokens_used': result.get('tokens_used', 0)
-                }
+                "performance": {
+                    "execution_time_ms": execution_time_ms,
+                    "retrieval_time_ms": result.get("retrieval_time_ms", 0),
+                    "generation_time_ms": result.get("generation_time_ms", 0),
+                    "tokens_used": result.get("tokens_used", 0),
+                },
             }
         except Exception:
             self._error_count += 1
@@ -115,20 +115,23 @@ class TechniqueHandler:
 
     async def health_check(self) -> Dict[str, Any]:
         """Check health of this technique."""
-        error_rate = (self._error_count / self._query_count
-                      if self._query_count > 0 else 0.0)
+        error_rate = (
+            self._error_count / self._query_count if self._query_count > 0 else 0.0
+        )
 
         if error_rate > 0.5:
-            status = 'degraded'
+            status = "degraded"
         elif self._pipeline_instance is None:
-            status = 'unavailable'
+            status = "unavailable"
         else:
-            status = 'healthy'
+            status = "healthy"
 
         return {
-            'status': status,
-            'last_success': self._last_success.isoformat() if self._last_success else None,
-            'error_rate': error_rate
+            "status": status,
+            "last_success": (
+                self._last_success.isoformat() if self._last_success else None
+            ),
+            "error_rate": error_rate,
         }
 
 
@@ -162,33 +165,42 @@ class TechniqueHandlerRegistry:
         from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
         # Register basic
-        self._handlers['basic'] = TechniqueHandler('basic', BasicRAGPipeline)
+        self._handlers["basic"] = TechniqueHandler("basic", BasicRAGPipeline)
 
         # Register basic_rerank
-        self._handlers['basic_rerank'] = TechniqueHandler('basic_rerank',
-                                                          BasicRAGRerankingPipeline)
+        self._handlers["basic_rerank"] = TechniqueHandler(
+            "basic_rerank", BasicRAGRerankingPipeline
+        )
 
         # Register crag
-        self._handlers['crag'] = TechniqueHandler('crag', CRAGPipeline)
+        self._handlers["crag"] = TechniqueHandler("crag", CRAGPipeline)
 
         # Register graphrag (HybridGraphRAG)
-        self._handlers['graphrag'] = TechniqueHandler('graphrag',
-                                                       HybridGraphRAGPipeline)
+        self._handlers["graphrag"] = TechniqueHandler(
+            "graphrag", HybridGraphRAGPipeline
+        )
 
         # Register pylate_colbert
         try:
-            from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
-            self._handlers['pylate_colbert'] = TechniqueHandler('pylate_colbert',
-                                                                 PyLateColBERTPipeline)
+            from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
+                PyLateColBERTPipeline,
+            )
+
+            self._handlers["pylate_colbert"] = TechniqueHandler(
+                "pylate_colbert", PyLateColBERTPipeline
+            )
         except ImportError:
             # PyLateColBERT may not be available
             pass
 
         # Register iris_global_graphrag
         try:
-            from iris_vector_rag.pipelines.iris_global_graphrag import IRISGlobalGraphRAGPipeline
-            self._handlers['iris_global_graphrag'] = TechniqueHandler(
-                'iris_global_graphrag', IRISGlobalGraphRAGPipeline
+            from iris_vector_rag.pipelines.iris_global_graphrag import (
+                IRISGlobalGraphRAGPipeline,
+            )
+
+            self._handlers["iris_global_graphrag"] = TechniqueHandler(
+                "iris_global_graphrag", IRISGlobalGraphRAGPipeline
             )
         except ImportError:
             # IRIS Global GraphRAG may not be available
@@ -198,7 +210,7 @@ class TechniqueHandlerRegistry:
         self,
         technique: str,
         handler: TechniqueHandler,
-        pipeline_class: Optional[Type[RAGPipeline]] = None
+        pipeline_class: Optional[Type[RAGPipeline]] = None,
     ):
         """
         Register a technique handler.
@@ -213,7 +225,10 @@ class TechniqueHandlerRegistry:
         """
         # Validate pipeline class if provided and validation is enabled
         if self._validate_on_register and pipeline_class is not None:
-            from iris_vector_rag.core.validators import PipelineValidator, ViolationSeverity
+            from iris_vector_rag.core.validators import (
+                PipelineValidator,
+                ViolationSeverity,
+            )
 
             validator = PipelineValidator(strict_mode=self._strict_mode)
             violations = validator.validate_pipeline_class(pipeline_class)
@@ -227,16 +242,24 @@ class TechniqueHandlerRegistry:
                 error_msg = f"Pipeline validation failed for '{technique}':\n"
                 error_msg += "\n".join(str(e) for e in errors)
                 logger.error(error_msg)
-                raise ValidationError(field='pipeline_class', value=technique, message=error_msg)
+                raise ValidationError(
+                    field="pipeline_class", value=technique, message=error_msg
+                )
 
             # In strict_mode, treat warnings as errors
             if self._strict_mode:
-                warnings = [v for v in violations if v.severity == ViolationSeverity.WARNING]
+                warnings = [
+                    v for v in violations if v.severity == ViolationSeverity.WARNING
+                ]
                 if warnings:
-                    error_msg = f"Pipeline validation failed (strict mode) for '{technique}':\n"
+                    error_msg = (
+                        f"Pipeline validation failed (strict mode) for '{technique}':\n"
+                    )
                     error_msg += "\n".join(str(w) for w in warnings)
                     logger.error(error_msg)
-                    raise ValidationError(field='pipeline_class', value=technique, message=error_msg)
+                    raise ValidationError(
+                        field="pipeline_class", value=technique, message=error_msg
+                    )
 
             # Log any informational messages
             infos = [v for v in violations if v.severity == ViolationSeverity.INFO]
@@ -259,7 +282,9 @@ class TechniqueHandlerRegistry:
         """Get all registered handlers."""
         return self._handlers.copy()
 
-    def get_validation_results(self, technique: Optional[str] = None) -> Dict[str, List]:
+    def get_validation_results(
+        self, technique: Optional[str] = None
+    ) -> Dict[str, List]:
         """
         Get validation results for registered techniques.
 

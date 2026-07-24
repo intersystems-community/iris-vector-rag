@@ -6,11 +6,9 @@ mock external APIs (LLM, embeddings).
 """
 
 import pytest
-import os
 import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, Any, Generator
+from typing import Dict, Any
 from unittest.mock import Mock
 
 
@@ -18,74 +16,89 @@ from unittest.mock import Mock
 def iris_connection_config():
     """IRIS database connection configuration for integration tests.
 
-    Uses port discovery to find available IRIS instance.
-    Priority: env var IRIS_PORT, then known project ports.
+    Uses port discovery to find available IRIS instance:
+    - 31972: Test database (docker-compose.test.yml)
+    - 1972: System/production database
+    - Other configured ports
     """
-    # Honour explicit env config first (e.g. IRIS_PORT=51972 from .env / CI)
-    env_port = os.environ.get("IRIS_PORT")
-    host = os.environ.get("IRIS_HOST", "localhost")
-    username = os.environ.get("IRIS_USERNAME", "_SYSTEM")
-    password = os.environ.get("IRIS_PASSWORD", "SYS")
-    namespace = os.environ.get("IRIS_NAMESPACE", "USER")
+    test_ports = [31972, 1972, 11972, 21972]
 
-    candidate_ports = []
-    if env_port:
-        candidate_ports.append(int(env_port))
-    # Known project ports (iris-vector-rag-iris=51972, others as fallback)
-    candidate_ports += [51972, 31972, 1972, 11972, 21972]
-
-    for port in candidate_ports:
+    for port in test_ports:
         try:
-            result = subprocess.run([
-                sys.executable, "-c",
-                f"""
-import iris
+            # Test connection
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    f"""
+import sqlalchemy_iris
+from sqlalchemy import create_engine, text
 try:
-    conn = iris.connect({host!r}, {port}, {namespace!r}, {username!r}, {password!r})
-    cursor = conn.cursor()
-    cursor.execute('SELECT 1')
-    cursor.fetchone()
-    cursor.close()
-    conn.close()
+    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
+    with engine.connect() as conn:
+        conn.execute(text('SELECT 1'))
     print('SUCCESS')
 except Exception:
     print('FAILED')
-"""
-            ], capture_output=True, text=True, timeout=5)
+""",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
 
             if "SUCCESS" in result.stdout:
                 return {
-                    "host": host,
+                    "host": "localhost",
                     "port": port,
-                    "username": username,
-                    "password": password,
-                    "namespace": namespace,
-                    "connection_string": f"iris://{username}:{password}@{host}:{port}/{namespace}",
+                    "username": "_SYSTEM",
+                    "password": "SYS",
+                    "namespace": "USER",
+                    "connection_string": f"iris://_SYSTEM:SYS@localhost:{port}/USER",
                 }
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             continue
 
+    # No IRIS instance found - skip integration tests
     pytest.skip("No IRIS database available for integration tests")
 
 
 @pytest.fixture(scope="session")
 def iris_engine(iris_connection_config):
-    """Native IRIS connection as a session-scoped 'engine' substitute."""
+    """Create SQLAlchemy engine for IRIS database."""
     try:
-        import iris as _iris
-        cfg = iris_connection_config
-        conn = _iris.connect(cfg["host"], cfg["port"], cfg["namespace"], cfg["username"], cfg["password"])
-        yield conn
-        conn.close()
+        from sqlalchemy import create_engine
+
+        engine = create_engine(iris_connection_config["connection_string"])
+
+        # Test connection
+        with engine.connect() as conn:
+            from sqlalchemy import text
+
+            conn.execute(text("SELECT 1"))
+
+        yield engine
+
+        # Cleanup
+        engine.dispose()
     except Exception as e:
-        pytest.skip(f"Could not create IRIS connection: {e}")
+        pytest.skip(f"Could not create IRIS engine: {e}")
 
 
 @pytest.fixture
 def iris_connection(iris_engine):
     """Provide IRIS database connection for integration tests."""
-    # iris_engine IS the connection (native iris, not SQLAlchemy)
-    yield iris_engine
+    conn = iris_engine.connect()
+
+    try:
+        yield conn
+    finally:
+        # Rollback any uncommitted changes
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        conn.close()
 
 
 @pytest.fixture
@@ -126,7 +139,7 @@ def iris_vector_store_config(iris_connection_config):
         "connection_string": iris_connection_config["connection_string"],
         "table_name": "integration_test_vectors",
         "vector_dimension": 384,
-        "distance_metric": "COSINE"
+        "distance_metric": "COSINE",
     }
 
 
@@ -140,22 +153,19 @@ def integration_test_config(iris_connection_config) -> Dict[str, Any]:
                 "port": iris_connection_config["port"],
                 "username": iris_connection_config["username"],
                 "password": iris_connection_config["password"],
-                "namespace": iris_connection_config["namespace"]
+                "namespace": iris_connection_config["namespace"],
             }
         },
         "llm": {
             "provider": "mock",  # Use mock for LLM in integration tests
-            "model": "test-model"
+            "model": "test-model",
         },
         "embeddings": {
             "provider": "mock",  # Use mock for embeddings in integration tests
             "model": "test-embedding-model",
-            "dimension": 384
+            "dimension": 384,
         },
-        "vector_store": {
-            "provider": "iris",
-            "table_name": "integration_test_vectors"
-        }
+        "vector_store": {"provider": "iris", "table_name": "integration_test_vectors"},
     }
 
 
@@ -173,7 +183,9 @@ def mock_llm_for_integration():
 def mock_embeddings_for_integration():
     """Mock embedding service for integration tests (avoid model downloads)."""
     mock_embeddings = Mock()
-    mock_embeddings.embed_documents = Mock(return_value=[[0.1] * 384 for _ in range(10)])
+    mock_embeddings.embed_documents = Mock(
+        return_value=[[0.1] * 384 for _ in range(10)]
+    )
     mock_embeddings.embed_query = Mock(return_value=[0.1] * 384)
     mock_embeddings.dimension = 384
     return mock_embeddings
@@ -186,18 +198,18 @@ def sample_documents_for_integration():
         {
             "id": "int_doc1",
             "content": "Integration test document about IRIS database capabilities.",
-            "metadata": {"source": "integration_test", "type": "database"}
+            "metadata": {"source": "integration_test", "type": "database"},
         },
         {
             "id": "int_doc2",
             "content": "RAG pipeline integration with vector search functionality.",
-            "metadata": {"source": "integration_test", "type": "pipeline"}
+            "metadata": {"source": "integration_test", "type": "pipeline"},
         },
         {
             "id": "int_doc3",
             "content": "Entity extraction and relationship mapping in knowledge graphs.",
-            "metadata": {"source": "integration_test", "type": "graph"}
-        }
+            "metadata": {"source": "integration_test", "type": "graph"},
+        },
     ]
 
 
@@ -219,23 +231,27 @@ def loaded_test_documents(iris_connection):
     documents = [
         Document(
             page_content="Diabetes is a chronic disease that affects how your body processes blood sugar. Common symptoms include increased thirst, frequent urination, extreme fatigue, and blurred vision.",
-            metadata={"source": "test_medical.pdf", "page": 1, "topic": "diabetes"}
+            metadata={"source": "test_medical.pdf", "page": 1, "topic": "diabetes"},
         ),
         Document(
             page_content="Type 2 diabetes symptoms often develop slowly over several years. Many people don't notice symptoms at first. Early signs include increased hunger, dry mouth, and slow-healing sores.",
-            metadata={"source": "test_medical.pdf", "page": 2, "topic": "diabetes"}
+            metadata={"source": "test_medical.pdf", "page": 2, "topic": "diabetes"},
         ),
         Document(
             page_content="IRIS database provides native vector search capabilities with HNSW indexing. This enables high-performance semantic search for RAG applications.",
-            metadata={"source": "test_technical.pdf", "page": 1, "topic": "database"}
+            metadata={"source": "test_technical.pdf", "page": 1, "topic": "database"},
         ),
         Document(
             page_content="RAG pipelines combine retrieval and generation. The retrieval step uses vector similarity search to find relevant documents.",
-            metadata={"source": "test_technical.pdf", "page": 2, "topic": "rag"}
+            metadata={"source": "test_technical.pdf", "page": 2, "topic": "rag"},
         ),
         Document(
             page_content="Knowledge graphs represent entities and relationships. Entity extraction identifies important concepts from text documents.",
-            metadata={"source": "test_graph.pdf", "page": 1, "topic": "knowledge_graph"}
+            metadata={
+                "source": "test_graph.pdf",
+                "page": 1,
+                "topic": "knowledge_graph",
+            },
         ),
     ]
 
@@ -251,15 +267,24 @@ def loaded_test_documents(iris_connection):
 
         # Check if migration is needed
         print("🔍 [FIXTURE] Checking if schema migration needed...", file=sys.stderr)
-        needs_migration = schema_mgr.needs_migration("SourceDocuments", pipeline_type="basic")
+        needs_migration = schema_mgr.needs_migration(
+            "SourceDocuments", pipeline_type="basic"
+        )
         print(f"   Migration needed: {needs_migration}", file=sys.stderr)
 
         if needs_migration:
-            print("🔄 [FIXTURE] Migrating table schema to VECTOR datatype...", file=sys.stderr)
-            schema_mgr.migrate_table("SourceDocuments", preserve_data=False, pipeline_type="basic")
+            print(
+                "🔄 [FIXTURE] Migrating table schema to VECTOR datatype...",
+                file=sys.stderr,
+            )
+            schema_mgr.migrate_table(
+                "SourceDocuments", preserve_data=False, pipeline_type="basic"
+            )
             print("✅ [FIXTURE] Schema migrated", file=sys.stderr)
         else:
-            print("🔧 [FIXTURE] Ensuring schema with VECTOR datatype...", file=sys.stderr)
+            print(
+                "🔧 [FIXTURE] Ensuring schema with VECTOR datatype...", file=sys.stderr
+            )
             schema_mgr.ensure_table_schema("SourceDocuments", pipeline_type="basic")
             print("✅ [FIXTURE] Schema ensured", file=sys.stderr)
 
@@ -293,22 +318,22 @@ def cleanup_test_data(iris_connection):
     """Cleanup test data after each integration test."""
     yield
 
+    # Cleanup test tables
+    from sqlalchemy import text
+
     test_tables = [
         "integration_test_vectors",
         "test_documents",
         "test_entities",
         "test_relationships",
     ]
-    try:
-        cursor = iris_connection.cursor()
-        for table in test_tables:
-            try:
-                cursor.execute(f"DROP TABLE IF EXISTS {table}")
-            except Exception:
-                pass
-        cursor.close()
-    except Exception:
-        pass
+
+    for table in test_tables:
+        try:
+            iris_connection.execute(text(f"DROP TABLE IF EXISTS {table}"))
+            iris_connection.commit()
+        except Exception:
+            pass  # Ignore cleanup errors
 
 
 @pytest.fixture
@@ -319,13 +344,15 @@ def iris_schema_manager(iris_connection):
 
     # Create schema manager with real connection
     mock_config = Mock()
-    mock_config.get = Mock(side_effect=lambda key, default=None: {
-        "database.iris.host": "localhost",
-        "database.iris.port": 31972,
-        "database.iris.username": "_SYSTEM",
-        "database.iris.password": "SYS",
-        "database.iris.namespace": "USER",
-    }.get(key, default))
+    mock_config.get = Mock(
+        side_effect=lambda key, default=None: {
+            "database.iris.host": "localhost",
+            "database.iris.port": 31972,
+            "database.iris.username": "_SYSTEM",
+            "database.iris.password": "SYS",
+            "database.iris.namespace": "USER",
+        }.get(key, default)
+    )
 
     try:
         manager = SchemaManager(config=mock_config)
@@ -338,34 +365,35 @@ def iris_schema_manager(iris_connection):
 @pytest.fixture(scope="session", autouse=True)
 def verify_iris_available():
     """Verify IRIS is available before running integration tests."""
-    env_port = os.environ.get("IRIS_PORT")
-    candidate_ports = []
-    if env_port:
-        candidate_ports.append(int(env_port))
-    candidate_ports += [51972, 31972, 1972, 11972, 21972]
+    test_ports = [31972, 1972, 11972]
 
-    for port in candidate_ports:
+    for port in test_ports:
         try:
-            result = subprocess.run([
-                sys.executable, "-c",
-                f"""
-import iris
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    f"""
+import sqlalchemy_iris
+from sqlalchemy import create_engine, text
 try:
-    conn = iris.connect('localhost', {port}, 'USER', '_SYSTEM', 'SYS')
-    cursor = conn.cursor()
-    cursor.execute('SELECT 1')
-    cursor.fetchone()
-    cursor.close()
-    conn.close()
+    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
+    with engine.connect() as conn:
+        conn.execute(text('SELECT 1'))
     print('AVAILABLE')
 except Exception:
     pass
-"""
-            ], capture_output=True, text=True, timeout=5)
+""",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
 
             if "AVAILABLE" in result.stdout:
                 return  # IRIS is available
-        except:
+        except Exception:
             continue
 
-    pytest.skip("No IRIS database available. Start with: docker start iris-vector-rag-iris")
+    # No IRIS available - warn but don't fail session
+    print("\nWARNING: No IRIS database available. Integration tests will be skipped.\n")

@@ -48,7 +48,11 @@ The config file is missing required fields."""
 
         # Should identify missing action (case-insensitive check)
         suggestions_lower = suggestions.lower()
-        assert "what to do" in suggestions_lower or "fix it" in suggestions_lower or "check" in suggestions_lower
+        assert (
+            "what to do" in suggestions_lower
+            or "fix it" in suggestions_lower
+            or "check" in suggestions_lower
+        )
 
     def test_ERR001_context_validation(self):
         """Verify error messages include relevant context."""
@@ -86,7 +90,7 @@ Verify credentials in test_data.json and ensure test API is running."""
         from tests.plugins.error_message_validator import pytest_exception_interact
 
         # Should not raise but should log validation warnings
-        with patch('tests.plugins.error_message_validator.logger') as mock_logger:
+        with patch("tests.plugins.error_message_validator.logger") as mock_logger:
             pytest_exception_interact(mock_node, mock_call, mock_report)
 
             # Should have logged a warning about poor error message
@@ -101,7 +105,7 @@ Verify credentials in test_data.json and ensure test API is running."""
         config = {
             "what_pattern": r"(?:failed|error|exception):",
             "why_pattern": r"(?:expected|got|because|due to)",
-            "action_pattern": r"(?:check|verify|ensure|try|fix)"
+            "action_pattern": r"(?:check|verify|ensure|try|fix)",
         }
 
         configure_validation(config)
@@ -112,5 +116,6 @@ Request took longer than 30s due to high latency.
 Try increasing timeout or check network connection."""
 
         from tests.plugins.error_message_validator import validate_error_message
+
         result = validate_error_message(custom_message)
         assert result.is_valid is True

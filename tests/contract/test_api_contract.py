@@ -22,12 +22,8 @@ def test_basic_rag_load_documents_signature():
 
     # Actual production signature uses documents_path + **kwargs
     assert "self" in params, "load_documents should be an instance method"
-    assert (
-        "documents_path" in params
-    ), "load_documents should accept documents_path"
-    assert (
-        "kwargs" in params
-    ), "load_documents should accept **kwargs for documents"
+    assert "documents_path" in params, "load_documents should accept documents_path"
+    assert "kwargs" in params, "load_documents should accept **kwargs for documents"
 
 
 def test_crag_pipeline_query_response_structure():
@@ -47,9 +43,7 @@ def test_graphrag_pipeline_entity_extraction_api():
 
         # GraphRAG uses entity extraction service, not direct methods
         # Verify pipeline has query method (actual production API)
-        assert hasattr(
-            GraphRAGPipeline, "query"
-        ), "GraphRAG should have query method"
+        assert hasattr(GraphRAGPipeline, "query"), "GraphRAG should have query method"
         assert hasattr(
             GraphRAGPipeline, "load_documents"
         ), "GraphRAG should have load_documents method"
@@ -97,9 +91,7 @@ def test_vector_store_metadata_filtering_api():
     sig = inspect.signature(IRISVectorStore.add_documents)
     params = list(sig.parameters.keys())
 
-    assert (
-        "documents" in params
-    ), "add_documents should accept documents parameter"
+    assert "documents" in params, "add_documents should accept documents parameter"
 
 
 def test_configuration_manager_api():
@@ -130,6 +122,4 @@ def test_pipeline_base_class_contract():
     expected_methods = ["load_documents", "query"]
 
     for method in expected_methods:
-        assert hasattr(
-            RAGPipeline, method
-        ), f"RAGPipeline must define {method}"
+        assert hasattr(RAGPipeline, method), f"RAGPipeline must define {method}"

@@ -126,13 +126,11 @@ class EntityStorageAdapter:
                 schema, table = "RAG", self.entities_table
 
             try:
-                cursor.execute(
-                    f"""
+                cursor.execute(f"""
                     SELECT COLUMN_NAME
                     FROM INFORMATION_SCHEMA.COLUMNS
                     WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
-                    """
-                )
+                    """)
                 columns = {row[0].lower() for row in cursor.fetchall()}
             except Exception as exc:
                 logger.warning(
@@ -464,9 +462,17 @@ class EntityStorageAdapter:
             relationship_type = str(relationship.relationship_type).strip()
 
             # Extract actual schema columns
-            weight = float(relationship.metadata.get("weight", 1.0)) if relationship.metadata else 1.0
+            weight = (
+                float(relationship.metadata.get("weight", 1.0))
+                if relationship.metadata
+                else 1.0
+            )
             confidence = float(relationship.confidence)
-            source_document = str(relationship.source_document_id) if relationship.source_document_id else None
+            source_document = (
+                str(relationship.source_document_id)
+                if relationship.source_document_id
+                else None
+            )
 
             # Check if relationship already exists (incremental upsert)
             if self.incremental:
@@ -580,8 +586,7 @@ class EntityStorageAdapter:
 
         # Use optimized batch processor with executemany()
         result = self.batch_processor.store_entities_batch(
-            entities,
-            validate_count=True
+            entities, validate_count=True
         )
 
         if not result.get("validation_passed", False):
@@ -610,8 +615,7 @@ class EntityStorageAdapter:
 
         # Use optimized batch processor with executemany() and FK validation
         result = self.batch_processor.store_relationships_batch(
-            relationships,
-            validate_foreign_keys=True
+            relationships, validate_foreign_keys=True
         )
 
         if not result.get("validation_passed", False):
@@ -798,7 +802,9 @@ class EntityStorageAdapter:
                 cursor.execute(sql, params)
                 rows = list(cursor.fetchall())
             except Exception as exc:
-                logger.warning(f"Search query failed, retrying after schema ensure: {exc}")
+                logger.warning(
+                    f"Search query failed, retrying after schema ensure: {exc}"
+                )
                 self._ensure_entity_columns()
                 try:
                     cursor.execute(sql, params)
@@ -815,7 +821,10 @@ class EntityStorageAdapter:
                     cached_id = str(cached.id)
                     if cached_id in existing_ids:
                         continue
-                    if entity_type_filter and str(cached.entity_type).upper() not in entity_type_filter:
+                    if (
+                        entity_type_filter
+                        and str(cached.entity_type).upper() not in entity_type_filter
+                    ):
                         continue
                     if float(cached.confidence) < min_confidence:
                         continue
@@ -825,7 +834,11 @@ class EntityStorageAdapter:
                             cached.text,
                             cached.entity_type,
                             cached.source_document_id,
-                            cached.metadata.get("description") if cached.metadata else None,
+                            (
+                                cached.metadata.get("description")
+                                if cached.metadata
+                                else None
+                            ),
                             cached.confidence,
                         )
                     )
@@ -833,11 +846,19 @@ class EntityStorageAdapter:
             # Convert rows to dictionaries (for hipporag2 compatibility)
             entities = []
             for row in rows:
-                entity_id, entity_name, entity_type, source_doc_id, description, confidence = row
+                (
+                    entity_id,
+                    entity_name,
+                    entity_type,
+                    source_doc_id,
+                    description,
+                    confidence,
+                ) = row
                 name = str(entity_name)
                 name_lower = name.lower()
                 distance = levenshtein_distance(lower_query, name_lower)
                 similarity = similarity_score_for(distance, lower_query, name_lower)
+
                 def tokenize(text: str) -> List[str]:
                     return re.findall(r"\w+", text.lower())
 
@@ -904,7 +925,9 @@ class EntityStorageAdapter:
             if max_results > 0:
                 entities = entities[:max_results]
 
-            logger.debug(f"Found {len(entities)} entities matching query: {normalized_query}")
+            logger.debug(
+                f"Found {len(entities)} entities matching query: {normalized_query}"
+            )
             return entities
 
         except Exception as e:

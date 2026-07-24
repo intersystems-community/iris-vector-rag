@@ -28,11 +28,14 @@ class TestCoverageWarningContract:
         mock_coverage.get_data.return_value = Mock(
             measured_files=lambda: ["module1.py", "module2.py"],
             lines=lambda f: list(range(1, 101)),  # 100 lines
-            executed_lines=lambda f: list(range(1, 51)) if f == "module1.py" else list(range(1, 71))  # 50% and 70%
+            executed_lines=lambda f: (
+                list(range(1, 51)) if f == "module1.py" else list(range(1, 71))
+            ),  # 50% and 70%
         )
 
         # This should fail until plugin implements warning collection
         from tests.plugins.coverage_warnings import collect_coverage_warnings
+
         warnings = collect_coverage_warnings(mock_coverage)
 
         # Should warn about module1.py (50% < 60%) but not module2.py (70% > 60%)
@@ -48,11 +51,12 @@ class TestCoverageWarningContract:
         mock_coverage.get_data.return_value = Mock(
             measured_files=lambda: ["iris_rag/pipelines/basic.py"],
             lines=lambda f: list(range(1, 101)),  # 100 lines
-            executed_lines=lambda f: list(range(1, 76))  # 75% coverage
+            executed_lines=lambda f: list(range(1, 76)),  # 75% coverage
         )
 
         # This should fail until plugin implements critical module detection
         from tests.plugins.coverage_warnings import collect_coverage_warnings
+
         warnings = collect_coverage_warnings(mock_coverage)
 
         # Should warn because 75% < 80% for critical module
@@ -69,11 +73,12 @@ class TestCoverageWarningContract:
             module_path="mymodule.py",
             current_coverage=45.5,
             threshold=60.0,
-            is_critical=False
+            is_critical=False,
         )
 
         # This should fail until plugin implements format_warning
         from tests.plugins.coverage_warnings import format_warning
+
         message = format_warning(mock_warning)
 
         # Should include all required information
@@ -91,7 +96,7 @@ class TestCoverageWarningContract:
         mock_terminal.config = mock_config
 
         # Mock coverage with low coverage module
-        with patch('coverage.Coverage') as mock_coverage_class:
+        with patch("coverage.Coverage") as mock_coverage_class:
             mock_cov = Mock()
             mock_coverage_class.return_value = mock_cov
             mock_data = Mock()
@@ -109,7 +114,9 @@ class TestCoverageWarningContract:
 
             # Verify warnings were written but exit status unchanged
             # Plugin uses write_line, section, etc - any of these being called means it worked
-            assert (mock_terminal.write_line.called or
-                    mock_terminal.section.called or
-                    mock_terminal.write.called), "No terminal write method was called"
+            assert (
+                mock_terminal.write_line.called
+                or mock_terminal.section.called
+                or mock_terminal.write.called
+            ), "No terminal write method was called"
             assert exitstatus == 0  # Still success

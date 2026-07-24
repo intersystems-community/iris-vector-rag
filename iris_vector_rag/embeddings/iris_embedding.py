@@ -30,16 +30,17 @@ logger = logging.getLogger(__name__)
 class EmbeddingResult:
     """
     Result of embedding generation with performance metrics.
-    
+
     Returned by embed_texts() to provide embeddings along with
     cache hit/miss information and timing data.
     """
+
     embeddings: List[List[float]]
     cache_hit: bool
     embedding_time_ms: float
     model_load_time_ms: float
     device_used: str
-    
+
     def __post_init__(self):
         """Validate embedding result."""
         if not self.embeddings:
@@ -69,10 +70,10 @@ def configure_embedding(
 ) -> EmbeddingConfig:
     """
     Create embedding configuration (simulates INSERT into %Embedding.Config).
-    
+
     In production, this would insert into IRIS %Embedding.Config table.
     For testing/development, stores in-memory.
-    
+
     Args:
         name: Unique configuration identifier
         model_name: HuggingFace model ID
@@ -83,10 +84,10 @@ def configure_embedding(
         entity_types: List of entity types to extract
         batch_size: Documents per batch
         device_preference: GPU preference (cuda, mps, cpu, auto)
-    
+
     Returns:
         EmbeddingConfig instance
-    
+
     Example:
         >>> config = configure_embedding(
         ...     name="medical_embeddings",
@@ -105,32 +106,32 @@ def configure_embedding(
         batch_size=batch_size,
         device_preference=device_preference,
     )
-    
+
     # Store configuration (in production, INSERT into %Embedding.Config)
     _CONFIG_STORE[name] = config
     logger.info(f"Created embedding configuration: {name}")
-    
+
     return config
 
 
 def get_config(config_name: str) -> EmbeddingConfig:
     """
     Read EMBEDDING configuration from IRIS %Embedding.Config table.
-    
+
     In production, this queries IRIS:
         SELECT Configuration FROM %Embedding.Config WHERE Name = :config_name
-    
+
     For testing/development, reads from in-memory store.
-    
+
     Args:
         config_name: Name of configuration to retrieve
-    
+
     Returns:
         EmbeddingConfig instance
-    
+
     Raises:
         ValueError: If configuration not found (CONFIG_NOT_FOUND)
-    
+
     Example:
         >>> config = get_config("medical_embeddings_v1")
         >>> print(config.model_name)
@@ -141,40 +142,40 @@ def get_config(config_name: str) -> EmbeddingConfig:
             f"CONFIG_NOT_FOUND: Embedding configuration '{config_name}' "
             f"not found in %Embedding.Config"
         )
-    
+
     return _CONFIG_STORE[config_name]
 
 
 def _detect_device(config: EmbeddingConfig) -> str:
     """
     Detect actual device to use based on device preference and availability.
-    
+
     Args:
         config: EmbeddingConfig with device_preference setting
-    
+
     Returns:
         Device string: "cuda:0", "mps", or "cpu"
     """
     try:
         import torch
-        
+
         if config.device_preference == "cuda":
             if torch.cuda.is_available():
                 return "cuda:0"
             else:
                 logger.warning("CUDA requested but not available, falling back to CPU")
                 return "cpu"
-        
+
         elif config.device_preference == "mps":
             if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
                 return "mps"
             else:
                 logger.warning("MPS requested but not available, falling back to CPU")
                 return "cpu"
-        
+
         elif config.device_preference == "cpu":
             return "cpu"
-        
+
         elif config.device_preference == "auto":
             # Auto-detect: CUDA > MPS > CPU
             if torch.cuda.is_available():
@@ -183,11 +184,13 @@ def _detect_device(config: EmbeddingConfig) -> str:
                 return "mps"
             else:
                 return "cpu"
-        
+
         else:
-            logger.warning(f"Unknown device preference: {config.device_preference}, using CPU")
+            logger.warning(
+                f"Unknown device preference: {config.device_preference}, using CPU"
+            )
             return "cpu"
-    
+
     except ImportError:
         logger.warning("PyTorch not available, defaulting to CPU")
         return "cpu"
@@ -230,14 +233,14 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
             "num_texts": len(texts),
             "operation": "embed_texts",
             "feature": "051_iris_embedding",
-        }
+        },
     )
 
     # Validate inputs
     if not texts:
         logger.error(
             "EMBEDDING_VALIDATION_ERROR: Empty texts list",
-            extra={"config_name": config_name, "error_type": "EMPTY_TEXT"}
+            extra={"config_name": config_name, "error_type": "EMPTY_TEXT"},
         )
         raise ValueError("EMPTY_TEXT: texts list must not be empty")
 
@@ -248,8 +251,8 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                 extra={
                     "config_name": config_name,
                     "text_index": i,
-                    "error_type": "EMPTY_TEXT"
-                }
+                    "error_type": "EMPTY_TEXT",
+                },
             )
             raise ValueError(f"EMPTY_TEXT: Text at index {i} is empty")
 
@@ -262,12 +265,12 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                 "config_name": config_name,
                 "model_name": config.model_name,
                 "device_preference": config.device_preference,
-            }
+            },
         )
     except ValueError as e:
         logger.error(
             "EMBEDDING_CONFIG_ERROR",
-            extra={"config_name": config_name, "error": str(e)}
+            extra={"config_name": config_name, "error": str(e)},
         )
         raise
 
@@ -279,20 +282,20 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
             "config_name": config_name,
             "device": device,
             "device_preference": config.device_preference,
-        }
+        },
     )
 
     # Track timing
     total_start = time.time()
     model_load_time_ms = 0.0
     cache_hit = False
-    
+
     # Build cache key
     cache_key = f"{config.model_name}:{device}"
-    
+
     # Check if model is cached
     from .manager import _SENTENCE_TRANSFORMER_CACHE
-    
+
     if cache_key in _SENTENCE_TRANSFORMER_CACHE:
         cache_hit = True
         _record_cache_hit(config_name)
@@ -300,7 +303,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
         # Model not cached - will load from disk
         cache_hit = False
         load_start = time.time()
-    
+
     # Get or load model (uses double-checked locking in manager)
     try:
         model = _get_cached_sentence_transformer(config.model_name, device)
@@ -317,7 +320,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                     "device": device,
                     "load_time_ms": model_load_time_ms,
                     "cache_hit": False,
-                }
+                },
             )
 
     except Exception as e:
@@ -345,7 +348,9 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                     texts_list = list(texts)
                 embeddings = []
                 for text in texts_list:
-                    seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (2**32)
+                    seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (
+                        2**32
+                    )
                     rng = random.Random(seed)
                     embeddings.append([rng.random() for _ in range(self.dim)])
                 return embeddings
@@ -360,8 +365,12 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
     try:
         # Time the embedding generation
         embed_start = time.time()
-        embeddings = model.encode(texts, convert_to_tensor=False, show_progress_bar=False)
-        embeddings_list = embeddings.tolist() if hasattr(embeddings, "tolist") else embeddings
+        embeddings = model.encode(
+            texts, convert_to_tensor=False, show_progress_bar=False
+        )
+        embeddings_list = (
+            embeddings.tolist() if hasattr(embeddings, "tolist") else embeddings
+        )
         embed_time_ms = (time.time() - embed_start) * 1000
 
         # Record embeddings generated and timing
@@ -375,7 +384,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                 "num_texts": len(texts),
                 "device": device,
                 "cache_hit": cache_hit,
-            }
+            },
         )
 
     except Exception as e:
@@ -389,7 +398,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                     "num_texts": len(texts),
                     "error": str(e),
                     "fallback": "cpu",
-                }
+                },
             )
 
             # Try CPU fallback
@@ -399,7 +408,9 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                 # Time CPU fallback embedding generation
                 embed_start = time.time()
                 embeddings = model_cpu.encode(texts, convert_to_tensor=False)
-                embeddings_list = embeddings.tolist() if hasattr(embeddings, "tolist") else embeddings
+                embeddings_list = (
+                    embeddings.tolist() if hasattr(embeddings, "tolist") else embeddings
+                )
                 embed_time_ms = (time.time() - embed_start) * 1000
                 device = "cpu"
 
@@ -415,7 +426,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                         "original_device": "gpu",
                         "fallback_device": "cpu",
                         "embedding_time_ms": embed_time_ms,
-                    }
+                    },
                 )
 
             except Exception as cpu_error:
@@ -426,7 +437,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                         "num_texts": len(texts),
                         "gpu_error": str(e),
                         "cpu_error": str(cpu_error),
-                    }
+                    },
                 )
                 raise ValueError(
                     f"EMBEDDING_FAILED: Failed on both GPU and CPU: {cpu_error}"
@@ -439,7 +450,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                     "device": device,
                     "num_texts": len(texts),
                     "error": str(e),
-                }
+                },
             )
             raise ValueError(f"EMBEDDING_FAILED: {e}") from e
 
@@ -459,7 +470,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
             "embedding_time_ms": embedding_time_ms,
             "model_load_time_ms": model_load_time_ms,
             "feature": "051_iris_embedding",
-        }
+        },
     )
 
     # Legacy log messages for backward compatibility
@@ -474,7 +485,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
             f"(model load: {model_load_time_ms:.1f}ms, "
             f"embedding: {embedding_time_ms:.1f}ms, device: {device})"
         )
-    
+
     return EmbeddingResult(
         embeddings=embeddings_list,
         cache_hit=cache_hit,
@@ -487,14 +498,14 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
 def embed_text(config_name: str, text: str) -> List[float]:
     """
     Generate embedding for single text (convenience method).
-    
+
     Args:
         config_name: Name of embedding configuration
         text: Text to embed
-    
+
     Returns:
         Embedding vector as list of floats
-    
+
     Example:
         >>> embedding = embed_text("medical_embeddings", "Patient has diabetes")
         >>> len(embedding)
@@ -508,12 +519,13 @@ def embed_text(config_name: str, text: str) -> List[float]:
 # IRIS Integration Points
 # ============================================================================
 
+
 def iris_embedding_callback(config_name: str, text: str) -> List[float]:
     """
     Callback function for IRIS %Embedding.SentenceTransformers.
-    
+
     This is the function IRIS calls when EMBEDDING columns auto-vectorize text.
-    
+
     IRIS Usage:
         CREATE TABLE documents (
             content VARCHAR(5000),
@@ -521,14 +533,14 @@ def iris_embedding_callback(config_name: str, text: str) -> List[float]:
                 REFERENCES %Embedding.Config('medical_embeddings')
                 USING content
         );
-    
+
     When rows are inserted, IRIS calls:
         iris_embedding_callback('medical_embeddings', row.content)
-    
+
     Args:
         config_name: Configuration name from EMBEDDING column definition
         text: Text content to vectorize
-    
+
     Returns:
         Embedding vector as list of floats
     """
@@ -536,18 +548,17 @@ def iris_embedding_callback(config_name: str, text: str) -> List[float]:
 
 
 def iris_batch_embedding_callback(
-    config_name: str,
-    texts: List[str]
+    config_name: str, texts: List[str]
 ) -> List[List[float]]:
     """
     Batch callback function for optimized bulk vectorization.
-    
+
     Used during bulk INSERT operations for better performance.
-    
+
     Args:
         config_name: Configuration name
         texts: List of texts to vectorize
-    
+
     Returns:
         List of embedding vectors
     """

@@ -15,11 +15,12 @@ from ..core.vector_store import VectorStore
 from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
-from ..exceptions import VectorStoreConfigurationError
-from ..core.exceptions import (
+from ..exceptions import (
+    EmbeddingError,
+    VectorStoreConfigurationError,
     VectorStoreConnectionError,
-    VectorStoreDataError,
     VectorStoreCLOBError,
+    VectorStoreDataError,
 )
 from .clob_handler import ensure_string_content
 
@@ -100,7 +101,8 @@ class IRISVectorStore(VectorStore):
             from .schema_manager import SchemaManager
 
             self.schema_manager = SchemaManager(
-                self.connection_manager, self.config_manager
+                self.connection_manager,
+                self.config_manager,
             )
         table_short_name = self.table_name.replace("RAG.", "")
         self.vector_dimension = self.schema_manager.get_vector_dimension(
@@ -113,14 +115,18 @@ class IRISVectorStore(VectorStore):
         # Initialize MetadataFilterManager for custom filter key management (Feature 051 - User Story 1)
         from .metadata_filter_manager import MetadataFilterManager
 
-        self.metadata_filter_manager = MetadataFilterManager(self.config_manager.to_dict())
+        self.metadata_filter_manager = MetadataFilterManager(
+            self.config_manager.to_dict()
+        )
 
         # Legacy support: Keep _allowed_filter_keys for backward compatibility
         # but it now uses MetadataFilterManager as source of truth
-        self._allowed_filter_keys = set(self.metadata_filter_manager.get_allowed_filter_keys())
+        self._allowed_filter_keys = set(
+            self.metadata_filter_manager.get_allowed_filter_keys()
+        )
 
         # IRIS EMBEDDING support (Feature 051)
-        self.embedding_config_name = kwargs.get('embedding_config')
+        self.embedding_config_name = kwargs.get("embedding_config")
         self.use_iris_embedding = self.embedding_config_name is not None
 
         if self.use_iris_embedding:
@@ -129,17 +135,8 @@ class IRISVectorStore(VectorStore):
                 f"(config: {self.embedding_config_name})"
             )
 
-        # Test connection on initialization (skip in test mode)
-        try:
-            # Only test connection if not in test mode or if explicitly requested
-            import os
-
-            if os.environ.get("PYTEST_CURRENT_TEST") is None:
-                self._get_connection()
-        except Exception as e:
-            raise VectorStoreConnectionError(
-                f"Failed to initialize IRIS connection: {e}"
-            )
+        # Feature 078: Pure Constructors - no DB connection on init
+        # Connection is now established lazily on first use
 
     def _get_connection(self):
         """Get or create database connection."""
@@ -152,7 +149,7 @@ class IRISVectorStore(VectorStore):
     def _get_vector_data_type(self) -> str:
         """
         Detect actual vector column data type from IRIS metadata.
-        
+
         Returns 'FLOAT' or 'DOUBLE'.
         """
         try:
@@ -161,24 +158,23 @@ class IRISVectorStore(VectorStore):
             # Use IRIS system dictionary to find the actual datatype parameter
             cursor.execute(
                 "SELECT Parameters FROM %Dictionary.CompiledProperty WHERE parent = ? AND Name = 'embedding'",
-                [self.table_name]
+                [self.table_name],
             )
             row = cursor.fetchone()
-            # Extract value before close — iris DataRow is invalidated by cursor.close()
-            params = str(row[0]) if row and row[0] else None
             cursor.close()
-            if params:
+            if row and row[0]:
+                params = str(row[0])
                 if "DATATYPE,DOUBLE" in params:
                     return "DOUBLE"
                 if "DATATYPE,FLOAT" in params:
                     return "FLOAT"
-
         except Exception as e:
-            logger.debug(f"Failed to detect vector data type for {self.table_name}: {e}")
-        
+            logger.debug(
+                f"Failed to detect vector data type for {self.table_name}: {e}"
+            )
+
         # Fallback to ENV or default
         return os.environ.get("IRIS_VECTOR_DATA_TYPE") or "FLOAT"
-
 
     # ========================================================================
     # IRIS EMBEDDING Support Methods (Feature 051)
@@ -215,7 +211,9 @@ class IRISVectorStore(VectorStore):
             row = cursor.fetchone()
 
             if not row:
-                logger.warning(f"EMBEDDING config '{config_name}' not found in %Embedding.Config")
+                logger.warning(
+                    f"EMBEDDING config '{config_name}' not found in %Embedding.Config"
+                )
                 return None
 
             # Parse configuration JSON
@@ -228,7 +226,9 @@ class IRISVectorStore(VectorStore):
                 "python_path": config_json.get("pythonPath", ""),
                 "batch_size": config_json.get("batchSize", 32),
                 "device_preference": config_json.get("devicePreference", "auto"),
-                "enable_entity_extraction": config_json.get("enableEntityExtraction", False),
+                "enable_entity_extraction": config_json.get(
+                    "enableEntityExtraction", False
+                ),
                 "entity_types": config_json.get("entityTypes", []),
                 "configuration_json": config_json,
             }
@@ -283,18 +283,22 @@ class IRISVectorStore(VectorStore):
 
             columns = []
             for row in rows:
-                columns.append({
-                    "column_name": row[0],
-                    "data_type": row[1],
-                    "is_nullable": row[2] == "YES",
-                })
+                columns.append(
+                    {
+                        "column_name": row[0],
+                        "data_type": row[1],
+                        "is_nullable": row[2] == "YES",
+                    }
+                )
 
             logger.debug(f"Found {len(columns)} EMBEDDING columns in {table_name}")
             return columns
 
         except Exception as e:
             # If INFORMATION_SCHEMA query fails, return empty list (table may not support EMBEDDING)
-            logger.debug(f"Could not query EMBEDDING column metadata for {table_name}: {e}")
+            logger.debug(
+                f"Could not query EMBEDDING column metadata for {table_name}: {e}"
+            )
             return []
         finally:
             cursor.close()
@@ -484,7 +488,9 @@ class IRISVectorStore(VectorStore):
         if not filter_dict:
             return
 
-        validation_result = self.metadata_filter_manager.validate_filter_keys(filter_dict)
+        validation_result = self.metadata_filter_manager.validate_filter_keys(
+            filter_dict
+        )
 
         if not validation_result.is_valid:
             logger.warning(
@@ -642,6 +648,7 @@ class IRISVectorStore(VectorStore):
             from ..embeddings.manager import EmbeddingManager
 
             embedding_manager = EmbeddingManager(self.config_manager)
+
             def embedding_func(text):
                 return embedding_manager.embed_text(text)
 
@@ -652,14 +659,12 @@ class IRISVectorStore(VectorStore):
 
             return embeddings
         except Exception as e:
-            logger.warning(f"Embedding generation failed: {e}")
-            # Return empty embeddings if generation fails
-            # Handle case where vector_dimension might be a Mock object
-            try:
-                dim = int(self.vector_dimension) if self.vector_dimension else 768
-            except (TypeError, ValueError):
-                dim = 768  # Default dimension
-            return [[0.0] * dim for _ in documents]
+            logger.error(f"Failed to generate embeddings: {e}")
+            raise EmbeddingError(
+                f"Failed to generate embeddings: {e}",
+                doc_count=len(documents),
+                error_type=type(e).__name__,
+            ) from e
 
     def _store_documents(
         self, documents: List[Document], embeddings: Optional[List[List[float]]] = None
@@ -731,7 +736,9 @@ class IRISVectorStore(VectorStore):
                 metadata_json = json.dumps(doc.metadata)
 
                 # Check if document exists - use actual id column
-                check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE {id_column} = ?"
+                check_sql = (
+                    f"SELECT COUNT(*) FROM {self.table_name} WHERE {id_column} = ?"
+                )
                 cursor.execute(check_sql, [doc.id])
                 exists = cursor.fetchone()[0] > 0
 
@@ -749,7 +756,9 @@ class IRISVectorStore(VectorStore):
                     if has_content_column and "content" not in additional_data:
                         additional_data["content"] = doc.page_content
                     if has_source_column:
-                        additional_data["source"] = doc.metadata.get("source", "unknown")
+                        additional_data["source"] = doc.metadata.get(
+                            "source", "unknown"
+                        )
                     if has_doc_id_column and id_column != "doc_id":
                         additional_data["doc_id"] = doc.id
 
@@ -1005,22 +1014,28 @@ class IRISVectorStore(VectorStore):
                 except Exception:
                     columns = set()
                 schema_config = {
-                    "id_column": "id"
-                    if "id" in columns
-                    else ("doc_id" if "doc_id" in columns else "doc_id"),
-                    "text_column": "content"
-                    if "content" in columns
-                    else (
-                        "text_content"
-                        if "text_content" in columns
-                        else "text_content"
+                    "id_column": (
+                        "id"
+                        if "id" in columns
+                        else ("doc_id" if "doc_id" in columns else "doc_id")
                     ),
-                    "metadata_column": "metadata"
-                    if "metadata" in columns
-                    else (
-                        "metadata_json"
-                        if "metadata_json" in columns
-                        else "metadata"
+                    "text_column": (
+                        "content"
+                        if "content" in columns
+                        else (
+                            "text_content"
+                            if "text_content" in columns
+                            else "text_content"
+                        )
+                    ),
+                    "metadata_column": (
+                        "metadata"
+                        if "metadata" in columns
+                        else (
+                            "metadata_json"
+                            if "metadata_json" in columns
+                            else "metadata"
+                        )
                     ),
                 }
 
@@ -1036,7 +1051,7 @@ class IRISVectorStore(VectorStore):
                     # This is best-effort filtering on serialized JSON
                     escaped_value = str(value).replace("'", "''")
                     filter_conditions.append(
-                        f"({metadata_column} LIKE '%\"{key}\":\"{escaped_value}\"%' OR {metadata_column} LIKE '%\"{key}\": \"{escaped_value}\"%')"
+                        f'({metadata_column} LIKE \'%"{key}":"{escaped_value}"%\' OR {metadata_column} LIKE \'%"{key}": "{escaped_value}"%\')'
                     )
 
                 if filter_conditions:
@@ -1048,7 +1063,7 @@ class IRISVectorStore(VectorStore):
                 )
             except Exception:
                 expected_dimension = len(query_embedding)
-            
+
             # Use data type from actual table metadata if available, fallback to ENV or FLOAT
             vector_data_type = self._get_vector_data_type()
 
@@ -1105,10 +1120,14 @@ class IRISVectorStore(VectorStore):
             )
 
             # DEBUG: Check if SQL contains DOUBLE or FLOAT
-            if 'DOUBLE' in sql:
-                logger.error(f"FOUND DOUBLE IN SQL! SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}")
-            elif 'FLOAT' in sql:
-                logger.info(f"SQL correctly uses FLOAT. SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}")
+            if "DOUBLE" in sql:
+                logger.error(
+                    f"FOUND DOUBLE IN SQL! SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}"
+                )
+            elif "FLOAT" in sql:
+                logger.info(
+                    f"SQL correctly uses FLOAT. SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}"
+                )
             else:
                 logger.warning("No FLOAT or DOUBLE found in SQL!")
 
@@ -1189,6 +1208,7 @@ class IRISVectorStore(VectorStore):
                     metadata_map = {}
 
             if apply_filter_in_python and filter:
+
                 def _matches(meta: Dict[str, Any]) -> bool:
                     return all(meta.get(k) == v for k, v in filter.items())
 
@@ -1369,7 +1389,9 @@ class IRISVectorStore(VectorStore):
                     document = self._ensure_string_content(document_data)
                     documents.append(document)
 
-                logger.debug(f"Fetched {len(documents)} documents by IDs using new schema")
+                logger.debug(
+                    f"Fetched {len(documents)} documents by IDs using new schema"
+                )
                 return documents
 
             except Exception as new_schema_error:
@@ -1395,7 +1417,9 @@ class IRISVectorStore(VectorStore):
                         document = self._ensure_string_content(document_data)
                         documents.append(document)
 
-                    logger.debug(f"Fetched {len(documents)} documents by IDs using simple schema")
+                    logger.debug(
+                        f"Fetched {len(documents)} documents by IDs using simple schema"
+                    )
                     return documents
                 else:
                     raise
@@ -1484,7 +1508,9 @@ class IRISVectorStore(VectorStore):
                         document = self._ensure_string_content(document_data)
                         documents.append(document)
 
-                    logger.debug(f"Retrieved {len(documents)} documents using simple schema")
+                    logger.debug(
+                        f"Retrieved {len(documents)} documents using simple schema"
+                    )
                     return documents
                 else:
                     raise
@@ -1529,17 +1555,25 @@ class IRISVectorStore(VectorStore):
         2. LangChain signature: similarity_search(query, k, filter)
         """
         # Check if first argument is a string OR if 'query' kwarg is a string (LangChain interface)
-        if (args and isinstance(args[0], str)) or (not args and 'query' in kwargs and isinstance(kwargs['query'], str)):
+        if (args and isinstance(args[0], str)) or (
+            not args and "query" in kwargs and isinstance(kwargs["query"], str)
+        ):
             # LangChain interface: similarity_search(query, k, filter)
-            query = args[0] if args else kwargs['query']
+            query = args[0] if args else kwargs["query"]
             k = args[1] if len(args) > 1 else kwargs.get("k", 4)
             # Support both 'filter' and 'metadata_filter' parameter names for backward compatibility
-            filter_param = args[2] if len(args) > 2 else kwargs.get("filter") or kwargs.get("metadata_filter")
+            filter_param = (
+                args[2]
+                if len(args) > 2
+                else kwargs.get("filter") or kwargs.get("metadata_filter")
+            )
 
             # Mock embedding generation for tests (when config_manager is mocked)
-            if hasattr(self.config_manager, '_spec'):
+            if hasattr(self.config_manager, "_spec"):
                 # This is a Mock object, return mock embedding
-                query_embedding = [0.0] * (self.vector_dimension if hasattr(self, 'vector_dimension') else 384)
+                query_embedding = [0.0] * (
+                    self.vector_dimension if hasattr(self, "vector_dimension") else 384
+                )
             else:
                 # Get embedding function for text query
                 embedding_func = kwargs.get("embedding_func")
@@ -1559,11 +1593,13 @@ class IRISVectorStore(VectorStore):
             documents_with_scores = []
             for doc, score in results:
                 # Create new document with score in metadata
-                enriched_metadata = {**doc.metadata, 'score': score, 'similarity': score}
+                enriched_metadata = {
+                    **doc.metadata,
+                    "score": score,
+                    "similarity": score,
+                }
                 enriched_doc = Document(
-                    id=doc.id,
-                    page_content=doc.page_content,
-                    metadata=enriched_metadata
+                    id=doc.id, page_content=doc.page_content, metadata=enriched_metadata
                 )
                 documents_with_scores.append(enriched_doc)
             return documents_with_scores
@@ -1578,40 +1614,9 @@ class IRISVectorStore(VectorStore):
                 query_embedding, top_k, filter_param
             )
 
-    def search_by_text(
-        self,
-        query: str,
-        top_k: int = 5,
-        metadata_filter: Optional[Dict[str, Any]] = None,
-    ) -> List[Document]:
-        """Return List[Document] for a text query (FR-014).
-
-        Embeds ``query`` and delegates to similarity_search_by_embedding.
-        Always returns plain Documents — scores are available via search_by_vector.
-        """
-        embedding = self._embed_query(query)
-        results = self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
-        return [doc for doc, _ in results]
-
-    def search_by_vector(
-        self,
-        embedding: List[float],
-        top_k: int = 5,
-        metadata_filter: Optional[Dict[str, Any]] = None,
+    def similarity_search_with_score(
+        self, query: str, k: int = 4, filter: Optional[Dict[str, Any]] = None
     ) -> List[Tuple[Document, float]]:
-        """Return List[Tuple[Document, float]] for a pre-computed embedding (FR-014).
-
-        Always returns (Document, score) tuples — use search_by_text for plain docs.
-        """
-        return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
-
-    def _embed_query(self, query: str) -> List[float]:
-        """Embed a text query using the configured EmbeddingManager."""
-        from ..embeddings.manager import EmbeddingManager
-        embedding_manager = EmbeddingManager(self.config_manager)
-        return embedding_manager.embed_text(query)
-
-    def similarity_search_with_score(self, query: str, k: int = 4, filter: Optional[Dict[str, Any]] = None) -> List[Tuple[Document, float]]:
         """
         Perform similarity search and return results with scores.
 

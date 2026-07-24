@@ -59,7 +59,9 @@ def cmd_list(args, manager: FixtureManager):
         return
 
     # Print table header
-    print(f"{'Name':<30} {'Version':<10} {'Type':<8} {'Tables':<15} {'Rows':<8} {'Embeddings'}")
+    print(
+        f"{'Name':<30} {'Version':<10} {'Type':<8} {'Tables':<15} {'Rows':<8} {'Embeddings'}"
+    )
     print("-" * 95)
 
     # Print each fixture
@@ -68,8 +70,10 @@ def cmd_list(args, manager: FixtureManager):
         tables_str = f"{len(fixture.tables)} tables"
         embeddings_str = "Required" if fixture.requires_embeddings else "-"
 
-        print(f"{fixture.name:<30} {fixture.version:<10} {fixture.source_type:<8} "
-              f"{tables_str:<15} {total_rows:<8} {embeddings_str}")
+        print(
+            f"{fixture.name:<30} {fixture.version:<10} {fixture.source_type:<8} "
+            f"{tables_str:<15} {total_rows:<8} {embeddings_str}"
+        )
 
     print(f"\nTotal: {len(fixtures)} fixture(s)")
 
@@ -265,7 +269,9 @@ def cmd_workflow(args, manager: FixtureManager):
         )
 
         print()
-        print_success(f"Fixture '{metadata.name}' v{metadata.version} created successfully!")
+        print_success(
+            f"Fixture '{metadata.name}' v{metadata.version} created successfully!"
+        )
         print(f"\nLocation: tests/fixtures/dat/{metadata.name}/")
         print(f"To use: make fixture-load FIXTURE={metadata.name}")
 
@@ -296,7 +302,9 @@ def cmd_create(args, manager: FixtureManager):
         )
 
         print()
-        print_success(f"Fixture '{metadata.name}' v{metadata.version} created successfully!")
+        print_success(
+            f"Fixture '{metadata.name}' v{metadata.version} created successfully!"
+        )
         print(f"\nLocation: tests/fixtures/dat/{metadata.name}/")
         print(f"To use: make fixture-load FIXTURE={metadata.name}")
 
@@ -361,23 +369,33 @@ Examples:
 
   # Quick snapshot
   python -m tests.fixtures.cli snapshot snapshot-20250114
-        """
+        """,
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # List command
     list_parser = subparsers.add_parser("list", help="List all available fixtures")
-    list_parser.add_argument("--source-type", choices=["dat", "json", "prog"], help="Filter by source type")
-    list_parser.add_argument("--requires-embeddings", action="store_true", help="Filter fixtures requiring embeddings")
+    list_parser.add_argument(
+        "--source-type", choices=["dat", "json", "prog"], help="Filter by source type"
+    )
+    list_parser.add_argument(
+        "--requires-embeddings",
+        action="store_true",
+        help="Filter fixtures requiring embeddings",
+    )
 
     # Info command
-    info_parser = subparsers.add_parser("info", help="Show detailed fixture information")
+    info_parser = subparsers.add_parser(
+        "info", help="Show detailed fixture information"
+    )
     info_parser.add_argument("fixture_name", help="Fixture name")
     info_parser.add_argument("--version", help="Specific version")
 
     # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Validate fixture integrity")
+    validate_parser = subparsers.add_parser(
+        "validate", help="Validate fixture integrity"
+    )
     validate_parser.add_argument("fixture_name", help="Fixture name")
     validate_parser.add_argument("--version", help="Specific version")
 
@@ -385,22 +403,38 @@ Examples:
     load_parser = subparsers.add_parser("load", help="Load fixture into database")
     load_parser.add_argument("fixture_name", help="Fixture name")
     load_parser.add_argument("--version", help="Specific version")
-    load_parser.add_argument("--no-validate-checksum", action="store_true", help="Skip checksum validation")
-    load_parser.add_argument("--cleanup-first", action="store_true", help="Clean database before loading")
-    load_parser.add_argument("--generate-embeddings", action="store_true", help="Generate embeddings after loading")
+    load_parser.add_argument(
+        "--no-validate-checksum", action="store_true", help="Skip checksum validation"
+    )
+    load_parser.add_argument(
+        "--cleanup-first", action="store_true", help="Clean database before loading"
+    )
+    load_parser.add_argument(
+        "--generate-embeddings",
+        action="store_true",
+        help="Generate embeddings after loading",
+    )
 
     # Workflow command
     subparsers.add_parser("workflow", help="Interactive fixture creation")
 
     # Create command
-    create_parser = subparsers.add_parser("create", help="Create fixture from current database")
+    create_parser = subparsers.add_parser(
+        "create", help="Create fixture from current database"
+    )
     create_parser.add_argument("fixture_name", help="Fixture name")
-    create_parser.add_argument("--tables", required=True, help="Comma-separated list of tables")
+    create_parser.add_argument(
+        "--tables", required=True, help="Comma-separated list of tables"
+    )
     create_parser.add_argument("--description", help="Fixture description")
     create_parser.add_argument("--version", help="Semantic version (default: 1.0.0)")
-    create_parser.add_argument("--generate-embeddings", action="store_true", help="Generate embeddings")
+    create_parser.add_argument(
+        "--generate-embeddings", action="store_true", help="Generate embeddings"
+    )
     create_parser.add_argument("--embedding-model", help="Embedding model name")
-    create_parser.add_argument("--embedding-dimension", type=int, default=384, help="Embedding dimension")
+    create_parser.add_argument(
+        "--embedding-dimension", type=int, default=384, help="Embedding dimension"
+    )
 
     # Snapshot command
     snapshot_parser = subparsers.add_parser("snapshot", help="Quick database snapshot")

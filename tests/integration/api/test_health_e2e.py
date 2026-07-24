@@ -118,13 +118,11 @@ class TestHealthEndpoint:
         components = data["components"]
 
         # Should include at least one pipeline
-        pipeline_components = [
-            name for name in components.keys()
-            if "pipeline" in name
-        ]
+        pipeline_components = [name for name in components.keys() if "pipeline" in name]
 
-        assert len(pipeline_components) > 0, \
-            "Health check should include pipeline statuses"
+        assert (
+            len(pipeline_components) > 0
+        ), "Health check should include pipeline statuses"
 
         # Each pipeline should have status
         for pipeline_name in pipeline_components:
@@ -203,8 +201,7 @@ class TestHealthEndpoint:
         assert response.status_code == 200
 
         # Health check should be fast (for monitoring)
-        assert elapsed < 1.0, \
-            f"Health check took {elapsed:.2f}s, should be < 1s"
+        assert elapsed < 1.0, f"Health check took {elapsed:.2f}s, should be < 1s"
 
     def test_health_endpoint_useful_for_kubernetes_probes(self, client):
         """

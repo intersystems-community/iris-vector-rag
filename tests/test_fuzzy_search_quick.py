@@ -42,8 +42,12 @@ def test_fuzzy_search():
     print(f"   Found {entity_count} entities in database\n")
 
     if entity_count == 0:
-        print("⚠️  No entities found in database. Load some entities first to test fuzzy matching.")
-        print("   Example: Run integration tests or HippoRAG pipeline to populate entities.\n")
+        print(
+            "⚠️  No entities found in database. Load some entities first to test fuzzy matching."
+        )
+        print(
+            "   Example: Run integration tests or HippoRAG pipeline to populate entities.\n"
+        )
         return
 
     # Test 2: Get sample entity for testing
@@ -71,9 +75,11 @@ def test_fuzzy_search():
     results = adapter.search_entities(test_name, fuzzy=True, max_results=5)
     print(f"   ✅ Found {len(results)} fuzzy matches")
     for r in results[:5]:
-        similarity = r.get('similarity_score', 1.0)
-        edit_dist = r.get('edit_distance', 0)
-        print(f"      - {r['entity_name']} (similarity={similarity:.2f}, edit_distance={edit_dist})")
+        similarity = r.get("similarity_score", 1.0)
+        edit_dist = r.get("edit_distance", 0)
+        print(
+            f"      - {r['entity_name']} (similarity={similarity:.2f}, edit_distance={edit_dist})"
+        )
     print()
 
     # Test 5: Case-insensitive search
@@ -93,7 +99,7 @@ def test_fuzzy_search():
         test_name[:5],  # Partial name
         fuzzy=True,
         entity_types=[test_type],
-        max_results=5
+        max_results=5,
     )
     print(f"   ✅ Found {len(results)} matches of type {test_type}")
     for r in results[:3]:
@@ -114,4 +120,5 @@ if __name__ == "__main__":
         print(f"❌ Error: {e}")
         print("\nMake sure IRIS database is running: docker-compose up -d")
         import traceback
+
         traceback.print_exc()

@@ -39,12 +39,14 @@ class TestIrisDevtoolsNamespaceFix:
 
         # Verify SYS.Namespace SQL query is NOT present (ignore comments)
         # Look for the actual SQL pattern: "FROM SYS.Namespace"
-        assert "FROM SYS.Namespace" not in source, \
-            "SYS.Namespace SQL query still present - fix not applied!"
+        assert (
+            "FROM SYS.Namespace" not in source
+        ), "SYS.Namespace SQL query still present - fix not applied!"
 
         # Verify SET NAMESPACE is used instead
-        assert "SET NAMESPACE" in source, \
-            "SET NAMESPACE not found - fix may be incorrect"
+        assert (
+            "SET NAMESPACE" in source
+        ), "SET NAMESPACE not found - fix may be incorrect"
 
     def test_fixture_creator_with_invalid_namespace_fails_gracefully(self):
         """✅ Invalid namespace fails with clear error message."""
@@ -59,7 +61,7 @@ class TestIrisDevtoolsNamespaceFix:
             port=21972,
             namespace="USER",
             username="_SYSTEM",
-            password="SYS"
+            password="SYS",
         )
         creator = FixtureCreator(connection_config=config)
 
@@ -70,8 +72,7 @@ class TestIrisDevtoolsNamespaceFix:
         try:
             with pytest.raises(FixtureCreateError) as exc_info:
                 creator.export_namespace_to_dat(
-                    namespace="NONEXISTENT_NAMESPACE_XYZ",
-                    dat_file_path=str(temp_dat)
+                    namespace="NONEXISTENT_NAMESPACE_XYZ", dat_file_path=str(temp_dat)
                 )
 
             # Verify error message is helpful
@@ -95,7 +96,7 @@ class TestIrisDevtoolsNamespaceFix:
             port=21972,
             namespace="USER",
             username="_SYSTEM",
-            password="SYS"
+            password="SYS",
         )
         creator = FixtureCreator(connection_config=config)
 

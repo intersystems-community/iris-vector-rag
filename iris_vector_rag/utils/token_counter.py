@@ -12,7 +12,6 @@ Implementation:
 
 import tiktoken
 
-
 # Supported models and their default encoding
 _MODEL_ENCODINGS = {
     "gpt-3.5-turbo": "cl100k_base",
@@ -66,8 +65,7 @@ def estimate_tokens(text: str, model: str = "gpt-3.5-turbo") -> int:
         # Model not recognized - raise descriptive error
         supported_models = ", ".join(_MODEL_ENCODINGS.keys())
         raise ValueError(
-            f"unsupported model: '{model}'. "
-            f"Supported models: {supported_models}"
+            f"unsupported model: '{model}'. " f"Supported models: {supported_models}"
         )
 
     # Encode and count tokens
@@ -75,9 +73,7 @@ def estimate_tokens(text: str, model: str = "gpt-3.5-turbo") -> int:
     return len(tokens)
 
 
-def estimate_tokens_bulk(
-    texts: list[str], model: str = "gpt-3.5-turbo"
-) -> list[int]:
+def estimate_tokens_bulk(texts: list[str], model: str = "gpt-3.5-turbo") -> list[int]:
     """
     Estimate token counts for multiple texts efficiently.
 
@@ -104,8 +100,7 @@ def estimate_tokens_bulk(
     except KeyError:
         supported_models = ", ".join(_MODEL_ENCODINGS.keys())
         raise ValueError(
-            f"unsupported model: '{model}'. "
-            f"Supported models: {supported_models}"
+            f"unsupported model: '{model}'. " f"Supported models: {supported_models}"
         )
 
     # Count tokens for each text

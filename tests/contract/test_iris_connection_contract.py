@@ -28,7 +28,7 @@ class TestGetIRISConnectionBasic:
 
     @pytest.mark.skipif(
         os.environ.get("SKIP_IRIS_CONTAINER", "0") == "1",
-        reason="IRIS container not configured for tests"
+        reason="IRIS container not configured for tests",
     )
     def test_get_iris_connection_with_explicit_params(self):
         """
@@ -65,7 +65,7 @@ class TestGetIRISConnectionBasic:
 
     @pytest.mark.skipif(
         os.environ.get("SKIP_IRIS_CONTAINER", "0") == "1",
-        reason="IRIS container not configured for tests"
+        reason="IRIS container not configured for tests",
     )
     def test_get_iris_connection_with_env_vars(self):
         """
@@ -92,7 +92,7 @@ class TestGetIRISConnectionBasic:
 
     @pytest.mark.skipif(
         os.environ.get("SKIP_IRIS_CONTAINER", "0") == "1",
-        reason="IRIS container not configured for tests"
+        reason="IRIS container not configured for tests",
     )
     def test_get_iris_connection_caching(self):
         """
@@ -123,7 +123,9 @@ class TestGetIRISConnectionBasic:
         )
 
         # Contract: Same connection object must be returned (singleton)
-        assert conn1 is conn2, "Cached connection must return same object (identity check)"
+        assert (
+            conn1 is conn2
+        ), "Cached connection must return same object (identity check)"
 
 
 class TestGetIRISConnectionValidation:
@@ -151,7 +153,9 @@ class TestGetIRISConnectionValidation:
                 password="SYS",
             )
         assert exc_info.value.parameter_name == "port"
-        assert "1-65535" in exc_info.value.valid_range or "1" in exc_info.value.valid_range
+        assert (
+            "1-65535" in exc_info.value.valid_range or "1" in exc_info.value.valid_range
+        )
 
         # Contract: Port > 65535 must raise ValidationError
         with pytest.raises(ValidationError) as exc_info:
@@ -250,7 +254,9 @@ class TestEditionDetection:
         if edition == "community":
             assert max_connections == 1, "Community edition must have 1 connection"
         elif edition == "enterprise":
-            assert max_connections == 999, "Enterprise edition must have 999 connections"
+            assert (
+                max_connections == 999
+            ), "Enterprise edition must have 999 connections"
 
         print(f"✅ Detected edition: {edition} ({max_connections} connections)")
 
@@ -282,7 +288,9 @@ class TestEditionDetection:
 
         # Contract: Cached call is significantly faster
         print(f"First call: {first_time*1000:.3f}ms, Cached: {cached_time*1000:.3f}ms")
-        assert cached_time < first_time or cached_time < 0.001, "Cached call should be faster"
+        assert (
+            cached_time < first_time or cached_time < 0.001
+        ), "Cached call should be faster"
 
     def test_iris_backend_mode_env_override(self):
         """
@@ -305,6 +313,7 @@ class TestEditionDetection:
             os.environ["IRIS_BACKEND_MODE"] = "community"
             # Clear cache to force re-detection
             import iris_vector_rag.common.iris_connection as conn_module
+
             conn_module._edition_cache = None
 
             edition, max_connections = detect_iris_edition()
@@ -330,6 +339,7 @@ class TestEditionDetection:
 
             # Clear cache
             import iris_vector_rag.common.iris_connection as conn_module
+
             conn_module._edition_cache = None
 
     def test_connection_limit_error_raised(self):
@@ -349,9 +359,9 @@ class TestEditionDetection:
             current_limit=1,
             suggested_actions=[
                 "Use connection queuing with IRISConnectionPool",
-                "Run tests serially with pytest -n 0"
+                "Run tests serially with pytest -n 0",
             ],
-            message="IRIS Community Edition connection limit (1) reached."
+            message="IRIS Community Edition connection limit (1) reached.",
         )
 
         # Contract: Error has required attributes
@@ -383,12 +393,12 @@ class TestConnectionPooling:
 
         # Test with explicit max_connections
         pool = IRISConnectionPool(max_connections=10)
-        assert hasattr(pool, 'max_connections')
+        assert hasattr(pool, "max_connections")
         assert pool.max_connections == 10
 
         # Test with edition-aware default
         pool_default = IRISConnectionPool()
-        assert hasattr(pool_default, 'max_connections')
+        assert hasattr(pool_default, "max_connections")
         assert pool_default.max_connections >= 1  # Community (1) or Enterprise (20)
 
         print("✅ IRISConnectionPool initialization validated")
@@ -408,12 +418,12 @@ class TestConnectionPooling:
         pool = IRISConnectionPool(max_connections=2)
 
         # Test acquire() method exists
-        assert hasattr(pool, 'acquire')
+        assert hasattr(pool, "acquire")
         assert callable(pool.acquire)
 
         # Test context manager protocol
-        assert hasattr(pool, '__enter__')
-        assert hasattr(pool, '__exit__')
+        assert hasattr(pool, "__enter__")
+        assert hasattr(pool, "__exit__")
 
         print("✅ IRISConnectionPool.acquire() contract validated")
 
@@ -431,7 +441,7 @@ class TestConnectionPooling:
         pool = IRISConnectionPool(max_connections=1)
 
         # Test release() method exists
-        assert hasattr(pool, 'release')
+        assert hasattr(pool, "release")
         assert callable(pool.release)
 
         print("✅ IRISConnectionPool.release() contract validated")
@@ -453,7 +463,7 @@ class TestConnectionPooling:
 
         # Test timeout behavior structure (implementation will be tested in integration)
         # For now, just verify timeout parameter is accepted
-        assert hasattr(pool, 'acquire')
+        assert hasattr(pool, "acquire")
 
         # Verify queue.Empty exception is available for timeout handling
         assert queue.Empty is not None
@@ -482,12 +492,18 @@ class TestConnectionPooling:
 
         # Validate edition-aware defaults
         if edition == "community":
-            assert pool.max_connections == 1, "Community pool should default to 1 connection"
+            assert (
+                pool.max_connections == 1
+            ), "Community pool should default to 1 connection"
         elif edition == "enterprise":
             # Enterprise defaults to reasonable pool size (20), not max limit (999)
-            assert pool.max_connections == 20, "Enterprise pool should default to 20 connections"
+            assert (
+                pool.max_connections == 20
+            ), "Enterprise pool should default to 20 connections"
 
-        print(f"✅ Edition-aware sizing validated: {edition} → {pool.max_connections} connections")
+        print(
+            f"✅ Edition-aware sizing validated: {edition} → {pool.max_connections} connections"
+        )
 
     @pytest.mark.requires_database
     @pytest.mark.skipif(
@@ -511,13 +527,14 @@ class TestConnectionPooling:
         except (ConnectionError, Exception) as e:
             pytest.skip(f"IRIS not reachable: {e}")
 
-        assert hasattr(conn_context, '__enter__')
-        assert hasattr(conn_context, '__exit__')
+        assert hasattr(conn_context, "__enter__")
+        assert hasattr(conn_context, "__exit__")
 
 
 # ---------------------------------------------------------------------------
 # T003 — get_iris_connector_for_embedded must NOT exist in utils
 # ---------------------------------------------------------------------------
+
 
 class TestRemovedDuplicateFunctions:
     """T003: verify that deprecated duplicate functions are gone from utils."""
@@ -526,14 +543,14 @@ class TestRemovedDuplicateFunctions:
         """get_iris_connector_for_embedded must not be exported from iris_vector_rag.common.utils."""
         import iris_vector_rag.common.utils as utils
 
-        assert not hasattr(utils, "get_iris_connector_for_embedded"), (
-            "get_iris_connector_for_embedded was removed — callers must use get_iris_connection()"
-        )
+        assert not hasattr(
+            utils, "get_iris_connector_for_embedded"
+        ), "get_iris_connector_for_embedded was removed — callers must use get_iris_connection()"
 
     def test_no_duplicate_iris_connector_globals_in_utils(self):
         """Module-level _iris_connector_embedded singleton must not exist in utils."""
         import iris_vector_rag.common.utils as utils
 
-        assert not hasattr(utils, "_iris_connector_embedded"), (
-            "_iris_connector_embedded singleton was removed from utils"
-        )
+        assert not hasattr(
+            utils, "_iris_connector_embedded"
+        ), "_iris_connector_embedded singleton was removed from utils"

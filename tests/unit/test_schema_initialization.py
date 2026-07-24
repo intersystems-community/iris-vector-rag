@@ -61,10 +61,13 @@ def test_initialization_records_timing():
     manager._ivg_table_exists = lambda table_name: True
 
     times = iter([100.0, 100.4])
-    with patch(
-        "iris_vector_rag.storage.schema_manager.assert_ivg_compatible",
-        return_value="2.0.0",
-    ), patch.object(time, "time", side_effect=lambda: next(times)):
+    with (
+        patch(
+            "iris_vector_rag.storage.schema_manager.assert_ivg_compatible",
+            return_value="2.0.0",
+        ),
+        patch.object(time, "time", side_effect=lambda: next(times)),
+    ):
         result = manager.ensure_iris_vector_graph_tables(pipeline_type="graphrag")
 
     assert 0 <= result.total_time_seconds <= 1.0

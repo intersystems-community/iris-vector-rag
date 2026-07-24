@@ -153,8 +153,7 @@ class FixtureManifest:
         return {
             "version": self.version,
             "fixtures": {
-                name: metadata.to_dict()
-                for name, metadata in self.fixtures.items()
+                name: metadata.to_dict() for name, metadata in self.fixtures.items()
             },
         }
 

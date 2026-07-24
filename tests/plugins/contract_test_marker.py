@@ -14,7 +14,7 @@ def pytest_configure(config):
     """Register contract test marker."""
     config.addinivalue_line(
         "markers",
-        "contract: Contract tests that define expected behavior (may fail if unimplemented)"
+        "contract: Contract tests that define expected behavior (may fail if unimplemented)",
     )
 
 
@@ -43,7 +43,7 @@ def pytest_runtest_makereport(item, call):
     if report.when != "call":
         return
 
-    if report.failed or (hasattr(report, 'outcome') and report.outcome == 'failed'):
+    if report.failed or (hasattr(report, "outcome") and report.outcome == "failed"):
         # Check if failure is due to unimplemented feature
         if call.excinfo:
             exc_type = call.excinfo.type
@@ -59,7 +59,9 @@ def pytest_runtest_makereport(item, call):
             if exc_type in expected_errors:
                 # Convert to xfail
                 report.outcome = "skipped"
-                report.wasxfail = f"Contract test - feature not implemented ({exc_value})"
+                report.wasxfail = (
+                    f"Contract test - feature not implemented ({exc_value})"
+                )
                 report.longrepr = None
 
 
@@ -79,7 +81,9 @@ def pytest_runtest_call(item):
         yield
     except (ModuleNotFoundError, ImportError, AttributeError) as e:
         # Mark as xfail for contract tests
-        pytest.xfail(f"Contract test - feature not implemented: {type(e).__name__}: {str(e)}")
+        pytest.xfail(
+            f"Contract test - feature not implemented: {type(e).__name__}: {str(e)}"
+        )
     except Exception:
         # Other exceptions should fail normally
         raise
@@ -100,6 +104,6 @@ def pytest_collection_modifyitems(config, items):
                     pytest.mark.xfail(
                         reason="Contract test may fail if feature unimplemented",
                         strict=False,
-                        raises=(ModuleNotFoundError, ImportError, AttributeError)
+                        raises=(ModuleNotFoundError, ImportError, AttributeError),
                     )
                 )

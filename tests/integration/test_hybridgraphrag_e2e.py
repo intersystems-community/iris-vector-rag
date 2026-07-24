@@ -48,23 +48,31 @@ class TestHybridGraphRAGE2E:
             result = graphrag_pipeline.query(query, method=method)
 
             # Verify query succeeded
-            assert result is not None, f"Query with method={method} should return result"
-            assert ('contexts' in result), f"Result should have contexts for method={method}"
-            assert ('metadata' in result), f"Result should have metadata for method={method}"
+            assert (
+                result is not None
+            ), f"Query with method={method} should return result"
+            assert (
+                "contexts" in result
+            ), f"Result should have contexts for method={method}"
+            assert (
+                "metadata" in result
+            ), f"Result should have metadata for method={method}"
 
             # Verify documents retrieved (or fallback occurred)
-            assert len(result['contexts']) >= 0, \
-                f"Query with method={method} should return contexts list"
+            assert (
+                len(result["contexts"]) >= 0
+            ), f"Query with method={method} should return contexts list"
 
             # Verify metadata contains retrieval method
-            assert 'retrieval_method' in result['metadata'], \
-                f"Metadata should contain retrieval_method for method={method}"
+            assert (
+                "retrieval_method" in result["metadata"]
+            ), f"Metadata should contain retrieval_method for method={method}"
 
             # Store result for analysis
             results[method] = {
-                'num_docs': len(result['contexts']),
-                'retrieval_method': result['metadata']['retrieval_method'],
-                'query': query
+                "num_docs": len(result["contexts"]),
+                "retrieval_method": result["metadata"]["retrieval_method"],
+                "query": query,
             }
 
         # Verify all methods were tested
@@ -72,9 +80,17 @@ class TestHybridGraphRAGE2E:
 
         # Verify each method either succeeded or fell back gracefully
         for method, result_data in results.items():
-            assert result_data['retrieval_method'] in [
-                method, 'hybrid_fusion', 'hybrid', 'rrf', 'text', 'vector',
-                'hnsw_vector', 'knowledge_graph', 'kg', 'vector_fallback'
+            assert result_data["retrieval_method"] in [
+                method,
+                "hybrid_fusion",
+                "hybrid",
+                "rrf",
+                "text",
+                "vector",
+                "hnsw_vector",
+                "knowledge_graph",
+                "kg",
+                "vector_fallback",
             ], f"Method {method} should use expected retrieval method or fallback"
 
     @pytest.mark.requires_database
@@ -117,24 +133,29 @@ class TestHybridGraphRAGE2E:
             execution_times.append(execution_time)
 
             # Verify query succeeded
-            assert result is not None, \
-                f"Query {len(results)+1}: {query[:50]}... should succeed"
+            assert (
+                result is not None
+            ), f"Query {len(results)+1}: {query[:50]}... should succeed"
 
-            assert len(result['contexts']) >= 0, \
-                f"Query {len(results)+1} should return contexts"
+            assert (
+                len(result["contexts"]) >= 0
+            ), f"Query {len(results)+1} should return contexts"
 
             # Store result
-            results.append({
-                'method': method,
-                'query': query[:50],
-                'num_docs': len(result['contexts']),
-                'retrieval_method': result['metadata']['retrieval_method'],
-                'execution_time': execution_time
-            })
+            results.append(
+                {
+                    "method": method,
+                    "query": query[:50],
+                    "num_docs": len(result["contexts"]),
+                    "retrieval_method": result["metadata"]["retrieval_method"],
+                    "execution_time": execution_time,
+                }
+            )
 
         # Verify all queries succeeded
-        assert len(results) == len(queries), \
-            f"All {len(queries)} queries should complete"
+        assert len(results) == len(
+            queries
+        ), f"All {len(queries)} queries should complete"
 
         # Verify no memory leaks or performance degradation
         # Later queries should not be significantly slower than earlier ones
@@ -142,15 +163,17 @@ class TestHybridGraphRAGE2E:
         avg_second_half = sum(execution_times[6:]) / 6
 
         # Allow up to 2x slowdown (gracious threshold)
-        assert avg_second_half < avg_first_half * 2.0, \
-            f"Performance should remain stable (first half: {avg_first_half:.2f}s, " \
+        assert avg_second_half < avg_first_half * 2.0, (
+            f"Performance should remain stable (first half: {avg_first_half:.2f}s, "
             f"second half: {avg_second_half:.2f}s)"
+        )
 
         # Verify pipeline state remains consistent
         # Execute one more query to verify functionality
         final_result = graphrag_pipeline.query("diabetes overview", method="hybrid")
-        assert len(final_result['contexts']) >= 0, \
-            "Pipeline should remain functional after 12+ queries"
+        assert (
+            len(final_result["contexts"]) >= 0
+        ), "Pipeline should remain functional after 12+ queries"
 
     @pytest.mark.requires_database
     @pytest.mark.integration
@@ -172,33 +195,53 @@ class TestHybridGraphRAGE2E:
             result = graphrag_pipeline.query(query, method=method)
 
             # Verify metadata completeness
-            assert 'retrieval_method' in result['metadata'], \
-                f"Metadata should contain retrieval_method for method={method}"
+            assert (
+                "retrieval_method" in result["metadata"]
+            ), f"Metadata should contain retrieval_method for method={method}"
 
             # Verify execution time (may be in different formats)
-            has_time = any(key in result['metadata'] for key in [
-                'execution_time', 'total_time', 'query_time', 'elapsed_time'
-            ])
-            assert has_time, \
-                f"Metadata should contain execution time for method={method}"
+            has_time = any(
+                key in result["metadata"]
+                for key in [
+                    "execution_time",
+                    "total_time",
+                    "query_time",
+                    "elapsed_time",
+                ]
+            )
+            assert (
+                has_time
+            ), f"Metadata should contain execution time for method={method}"
 
             # Verify document count (may be in metadata or derived from contexts)
-            has_count = ('num_retrieved' in result['metadata'] or
-                        'num_documents' in result['metadata'] or
-                        'document_count' in result['metadata'] or
-                        len(result['contexts']) >= 0)
-            assert has_count, \
-                f"Metadata should include document count for method={method}"
+            has_count = (
+                "num_retrieved" in result["metadata"]
+                or "num_documents" in result["metadata"]
+                or "document_count" in result["metadata"]
+                or len(result["contexts"]) >= 0
+            )
+            assert (
+                has_count
+            ), f"Metadata should include document count for method={method}"
 
             # Verify retrieval method value is valid
-            retrieval_method = result['metadata']['retrieval_method']
+            retrieval_method = result["metadata"]["retrieval_method"]
             valid_methods = [
-                'hybrid', 'hybrid_fusion', 'rrf', 'text', 'vector',
-                'hnsw_vector', 'knowledge_graph', 'kg', 'vector_fallback'
+                "hybrid",
+                "hybrid_fusion",
+                "rrf",
+                "text",
+                "vector",
+                "hnsw_vector",
+                "knowledge_graph",
+                "kg",
+                "vector_fallback",
             ]
-            assert retrieval_method in valid_methods, \
-                f"Retrieval method '{retrieval_method}' should be one of: {valid_methods}"
+            assert (
+                retrieval_method in valid_methods
+            ), f"Retrieval method '{retrieval_method}' should be one of: {valid_methods}"
 
             # Verify metadata format is consistent (dict)
-            assert isinstance(result['metadata'], dict), \
-                f"Metadata should be a dictionary for method={method}"
+            assert isinstance(
+                result["metadata"], dict
+            ), f"Metadata should be a dictionary for method={method}"

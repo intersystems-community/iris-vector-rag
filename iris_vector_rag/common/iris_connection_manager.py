@@ -28,18 +28,18 @@ class IRISConnectionManager:
     def get_connection(self, config: Optional[Dict[str, Any]] = None) -> Any:
         if self._connection is not None:
             return self._connection
-        
+
         if config:
             self._connection = get_iris_connection(
                 host=config.get("hostname") or config.get("host"),
                 port=config.get("port"),
                 namespace=config.get("namespace"),
                 username=config.get("username"),
-                password=config.get("password")
+                password=config.get("password"),
             )
         else:
             self._connection = get_iris_connection()
-            
+
         return self._connection
 
     def close(self):
@@ -63,8 +63,11 @@ def get_iris_dbapi_connection(config: Optional[Dict[str, Any]] = None) -> Any:
         port=config.get("port") if config else None,
         namespace=config.get("namespace") if config else None,
         username=config.get("username") if config else None,
-        password=config.get("password") if config else None
+        password=config.get("password") if config else None,
     )
 
-def get_iris_connection_old(config: Optional[Dict[str, Any]] = None, prefer_dbapi: bool = True) -> Any:
+
+def get_iris_connection_old(
+    config: Optional[Dict[str, Any]] = None, prefer_dbapi: bool = True
+) -> Any:
     return get_iris_connection()

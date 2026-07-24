@@ -230,7 +230,9 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
 
                 # Use cached model (eliminates 3-5 second load on repeated access)
                 self.emb_model = _get_cached_sentence_transformer(model_name, device)
-                logger.info(f"✅ Using cached embedding model: {model_name} on {device}")
+                logger.info(
+                    f"✅ Using cached embedding model: {model_name} on {device}"
+                )
 
         except Exception as e:
             raise IRISGlobalGraphRAGException(
@@ -312,13 +314,11 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
         combined = f"{title} {abstract}"
 
         # Insert into paper_content table
-        sql = text(
-            """
+        sql = text("""
             INSERT INTO paper_content
             (docid, title, abstract, url, published, authors, combined, paper_vector)
             VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR(?))
-        """
-        )
+        """)
 
         with self.iris_engine.connect() as conn:
             with conn.begin():

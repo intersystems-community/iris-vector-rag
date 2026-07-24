@@ -7,7 +7,11 @@ Implements T015 from Feature 028.
 
 import time
 
-from tests.utils.schema_models import get_expected_rag_schema, SchemaDefinition, ColumnType
+from tests.utils.schema_models import (
+    get_expected_rag_schema,
+    SchemaDefinition,
+    ColumnType,
+)
 
 
 class SchemaResetter:
@@ -67,7 +71,9 @@ class SchemaResetter:
         columns_sql = []
 
         for col in schema_def.columns:
-            col_def = f"{col.name} {self._map_column_type(col.column_type, col.max_length)}"
+            col_def = (
+                f"{col.name} {self._map_column_type(col.column_type, col.max_length)}"
+            )
 
             if not col.nullable:
                 col_def += " NOT NULL"
@@ -101,7 +107,9 @@ CREATE TABLE {schema_def.schema_name}.{schema_def.table_name} (
             IRIS SQL type string
         """
         type_mapping = {
-            ColumnType.VARCHAR: f"VARCHAR({max_length})" if max_length else "VARCHAR(255)",
+            ColumnType.VARCHAR: (
+                f"VARCHAR({max_length})" if max_length else "VARCHAR(255)"
+            ),
             ColumnType.INT: "INT",
             ColumnType.BIGINT: "BIGINT",
             ColumnType.DATETIME: "TIMESTAMP",

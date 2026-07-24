@@ -1,0 +1,62 @@
+name: PR Integration Tests
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+env:
+  PYTHON_DEFAULT_VERSION: "3.12"
+  IRIS_PORT: 1972
+
+jobs:
+  smoke-tests:
+    name: IRIS Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      iris:
+        image: intersystemsdc/iris-community:latest
+        env:
+          IRIS_USERNAME: SuperUser
+          IRIS_PASSWORD: SYS
+        options: >-
+          --health-cmd="iris status /usr/irissys"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=30
+        ports:
+          - 1972:1972
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_DEFAULT_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+
+      - name: Install package and test dependencies
+        run: |
+          pip install -e ".[dev,evaluation]" \
+            intersystems-irispython>=5.1.2 \
+            iris-vector-graph>=2.1.0
+
+      - name: Wait for IRIS to be healthy
+        run: |
+          timeout 60 bash -c 'until nc -z localhost 1972; do sleep 1; done'
+
+      - name: Run smoke tests
+        env:
+          IRIS_HOST: localhost
+          IRIS_PORT: 1972
+          IRIS_USERNAME: SuperUser
+          IRIS_PASSWORD: SYS
+          IRIS_NAMESPACE: USER
+        run: |
+          python -m pytest tests/contract/test_smoke.py \
+            -m smoke \
+            -v \
+            --tb=short \
+            -x

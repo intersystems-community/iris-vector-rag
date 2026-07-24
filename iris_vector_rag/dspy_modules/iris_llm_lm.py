@@ -4,6 +4,7 @@ IrisLLMDSPyAdapter — DSPy-compatible LM adapter wrapping iris_llm.ChatIris.
 Follows the same pattern as DirectOpenAILM in dspy_modules/entity_extraction_module.py.
 Requires iris_llm to be installed; raises ImportError on construction if absent.
 """
+
 from __future__ import annotations
 
 import logging
@@ -57,8 +58,11 @@ class IrisLLMDSPyAdapter:
 
         if messages:
             lc_messages = [
-                SystemMessage(content=m["content"]) if m.get("role") == "system"
-                else HumanMessage(content=m["content"])
+                (
+                    SystemMessage(content=m["content"])
+                    if m.get("role") == "system"
+                    else HumanMessage(content=m["content"])
+                )
                 for m in messages
             ]
         else:

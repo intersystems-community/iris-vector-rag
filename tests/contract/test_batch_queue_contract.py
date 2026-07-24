@@ -26,24 +26,27 @@ class TestBatchQueueContract:
         params = sig.parameters
 
         # Should accept optional token_budget parameter
-        assert 'token_budget' in params or len(params) == 1, \
-            "BatchQueue should accept optional token_budget parameter"
+        assert (
+            "token_budget" in params or len(params) == 1
+        ), "BatchQueue should accept optional token_budget parameter"
 
     def test_batch_queue_add_document_method_exists(self):
         """Validate add_document() method exists."""
         from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue()
-        assert hasattr(queue, 'add_document'), \
-            "BatchQueue must have add_document() method"
+        assert hasattr(
+            queue, "add_document"
+        ), "BatchQueue must have add_document() method"
 
     def test_batch_queue_get_next_batch_method_exists(self):
         """Validate get_next_batch() method exists."""
         from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue()
-        assert hasattr(queue, 'get_next_batch'), \
-            "BatchQueue must have get_next_batch() method"
+        assert hasattr(
+            queue, "get_next_batch"
+        ), "BatchQueue must have get_next_batch() method"
 
     def test_batch_queue_respects_token_budget(self):
         """Validate get_next_batch() respects token budget (FR-006)."""
@@ -64,8 +67,9 @@ class TestBatchQueueContract:
         batch = queue.get_next_batch(token_budget=8000)
 
         # Should return 2 documents (6000 tokens), not 3 (9000 tokens)
-        assert len(batch) == 2, \
-            f"Batch should contain 2 docs (6000 tokens < 8000 budget), got {len(batch)}"
+        assert (
+            len(batch) == 2
+        ), f"Batch should contain 2 docs (6000 tokens < 8000 budget), got {len(batch)}"
         assert batch[0].id == "1", "First document should be doc1"
         assert batch[1].id == "2", "Second document should be doc2"
 
@@ -78,8 +82,9 @@ class TestBatchQueueContract:
         batch = queue.get_next_batch()
 
         # Should return None or empty list for empty queue
-        assert batch is None or batch == [], \
-            "Empty queue must return None or empty list"
+        assert (
+            batch is None or batch == []
+        ), "Empty queue must return None or empty list"
 
     def test_batch_queue_add_document_signature(self):
         """Validate add_document() has correct signature."""
@@ -90,9 +95,11 @@ class TestBatchQueueContract:
         params = sig.parameters
 
         # Required parameters
-        assert 'self' in params, "add_document must be instance method"
-        assert 'document' in params, "add_document must accept 'document' parameter"
-        assert 'token_count' in params, "add_document must accept 'token_count' parameter"
+        assert "self" in params, "add_document must be instance method"
+        assert "document" in params, "add_document must accept 'document' parameter"
+        assert (
+            "token_count" in params
+        ), "add_document must accept 'token_count' parameter"
 
     def test_batch_queue_get_next_batch_signature(self):
         """Validate get_next_batch() has correct signature."""
@@ -103,7 +110,7 @@ class TestBatchQueueContract:
         params = sig.parameters
 
         # Should accept optional token_budget parameter
-        assert 'self' in params, "get_next_batch must be instance method"
+        assert "self" in params, "get_next_batch must be instance method"
         # token_budget can be optional with default
 
     def test_batch_queue_fifo_ordering(self):
@@ -113,10 +120,7 @@ class TestBatchQueueContract:
         queue = BatchQueue(token_budget=10000)
 
         # Add documents in specific order
-        docs = [
-            Document(id=f"doc{i}", page_content=f"Document {i}")
-            for i in range(5)
-        ]
+        docs = [Document(id=f"doc{i}", page_content=f"Document {i}") for i in range(5)]
 
         for doc in docs:
             queue.add_document(doc, token_count=500)
@@ -127,8 +131,9 @@ class TestBatchQueueContract:
         # Should maintain order
         assert len(batch) == 5, "All documents should fit in batch"
         for i, doc in enumerate(batch):
-            assert doc.id == f"doc{i}", \
-                f"Document order not maintained (expected doc{i}, got {doc.id})"
+            assert (
+                doc.id == f"doc{i}"
+            ), f"Document order not maintained (expected doc{i}, got {doc.id})"
 
     def test_batch_queue_handles_single_large_document(self):
         """Validate queue handles single document exceeding budget."""

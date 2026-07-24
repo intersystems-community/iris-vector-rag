@@ -82,21 +82,23 @@ class TestGraphRAGWithRealData:
             "error database connection",
             method="kg",
             top_k=5,
-            generate_answer=False  # Skip LLM
+            generate_answer=False,  # Skip LLM
         )
 
         # Should find documents via knowledge graph
         assert result is not None
-        assert 'contexts' in result
-        assert 'metadata' in result
-        assert result['metadata']['retrieval_method'] == 'knowledge_graph_traversal'
+        assert "contexts" in result
+        assert "metadata" in result
+        assert result["metadata"]["retrieval_method"] == "knowledge_graph_traversal"
 
         # Should have found at least some documents
         # (May be 0 if query doesn't match entities, but structure should be correct)
-        assert isinstance(result['contexts'], list)
-        assert len(result['contexts']) >= 0
+        assert isinstance(result["contexts"], list)
+        assert len(result["contexts"]) >= 0
 
-        print(f"\n✓ KG traversal completed: {len(result['contexts'])} documents retrieved")
+        print(
+            f"\n✓ KG traversal completed: {len(result['contexts'])} documents retrieved"
+        )
         print(f"  Database has {entity_count} entities, {rel_count} relationships")
 
     def test_vector_search_with_real_data(self, graphrag_with_real_data):
@@ -111,23 +113,23 @@ class TestGraphRAGWithRealData:
 
         # Query that might not have entities (fallback to vector)
         result = pipeline.query(
-            "xyzabc nonsense query unlikely to match",
-            top_k=3,
-            generate_answer=False
+            "xyzabc nonsense query unlikely to match", top_k=3, generate_answer=False
         )
 
         # Should complete without error (may use fallback)
         assert result is not None
-        assert 'contexts' in result
-        assert 'metadata' in result
+        assert "contexts" in result
+        assert "metadata" in result
 
         # Retrieval method should be either KG or vector_fallback
-        assert result['metadata']['retrieval_method'] in [
-            'knowledge_graph_traversal',
-            'vector_fallback'
+        assert result["metadata"]["retrieval_method"] in [
+            "knowledge_graph_traversal",
+            "vector_fallback",
         ]
 
-        print(f"\n✓ Query completed with method: {result['metadata']['retrieval_method']}")
+        print(
+            f"\n✓ Query completed with method: {result['metadata']['retrieval_method']}"
+        )
 
     def test_sequential_queries_stable(self, graphrag_with_real_data):
         """Test that multiple sequential queries work consistently."""
@@ -139,11 +141,7 @@ class TestGraphRAGWithRealData:
         if rel_count < 50:
             pytest.skip(f"Requires at least 50 relationships (found {rel_count})")
 
-        queries = [
-            "database error",
-            "connection timeout",
-            "performance issue"
-        ]
+        queries = ["database error", "connection timeout", "performance issue"]
 
         results = []
         for query in queries:
@@ -152,8 +150,8 @@ class TestGraphRAGWithRealData:
 
             # Each should complete successfully
             assert result is not None
-            assert 'contexts' in result
-            assert 'metadata' in result
+            assert "contexts" in result
+            assert "metadata" in result
 
         # All should have completed
         assert len(results) == len(queries)
@@ -173,18 +171,18 @@ class TestGraphRAGWithRealData:
         result = pipeline.query("test query", top_k=5, generate_answer=False)
 
         # Verify required metadata fields
-        assert 'metadata' in result
-        metadata = result['metadata']
+        assert "metadata" in result
+        metadata = result["metadata"]
 
-        assert 'retrieval_method' in metadata
-        assert 'num_retrieved' in metadata
-        assert 'processing_time' in metadata
-        assert 'pipeline_type' in metadata
+        assert "retrieval_method" in metadata
+        assert "num_retrieved" in metadata
+        assert "processing_time" in metadata
+        assert "pipeline_type" in metadata
 
         # Verify metadata values are sensible
-        assert metadata['pipeline_type'] == 'graphrag'
-        assert metadata['num_retrieved'] >= 0
-        assert metadata['processing_time'] > 0
+        assert metadata["pipeline_type"] == "graphrag"
+        assert metadata["num_retrieved"] >= 0
+        assert metadata["processing_time"] > 0
 
         print(f"\n✓ Metadata complete: {list(metadata.keys())}")
 
@@ -201,8 +199,8 @@ def test_graphrag_smoke_test():
 
     # Verify pipeline initialized
     assert pipeline is not None
-    assert hasattr(pipeline, 'query')
-    assert hasattr(pipeline, 'connection_manager')
+    assert hasattr(pipeline, "query")
+    assert hasattr(pipeline, "connection_manager")
 
     # Check entity count (may be 0, that's OK for smoke test)
     entity_count = get_entity_count()

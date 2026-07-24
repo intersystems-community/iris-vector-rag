@@ -7,6 +7,7 @@ where HippoRAG2 users saw zero logging output during 75+ minute runs.
 
 Related: https://github.com/tdyar/hipporag2-pipeline/BUG_REPORT_IRIS_VECTOR_RAG.md
 """
+
 import logging
 import pytest
 from unittest.mock import MagicMock, patch
@@ -94,9 +95,7 @@ def test_entity_extraction_service_logs_llm_config(config_with_openai, caplog):
     assert "Method:      llm_basic" in log_text
 
 
-def test_batch_extraction_logs_progress(
-    config_with_openai, sample_documents, caplog
-):
+def test_batch_extraction_logs_progress(config_with_openai, sample_documents, caplog):
     """
     Test that extract_batch_with_dspy logs batch processing progress.
 
@@ -114,14 +113,20 @@ def test_batch_extraction_logs_progress(
     service._batch_dspy_module = MagicMock()
 
     # Mock the batch DSPy module to avoid actual LLM calls
-    with patch.object(service, '_batch_dspy_module', service._batch_dspy_module) as mock_module:
+    with patch.object(
+        service, "_batch_dspy_module", service._batch_dspy_module
+    ) as mock_module:
         # Mock batch extraction results
         mock_module.forward.return_value = [
             {
                 "ticket_id": "doc1",
                 "entities": [
                     {"text": "TrakCare", "type": "PRODUCT", "confidence": 0.95},
-                    {"text": "appointment module", "type": "MODULE", "confidence": 0.90},
+                    {
+                        "text": "appointment module",
+                        "type": "MODULE",
+                        "confidence": 0.90,
+                    },
                     {"text": "User", "type": "USER", "confidence": 0.85},
                 ],
             },
@@ -177,7 +182,9 @@ def test_fallback_individual_extraction_logs_progress(
     ✅ Individual processing complete: 3 documents → 9 entities in 5.2s
     """
     # Disable batch processing
-    config_with_openai._config["entity_extraction"]["batch_processing"]["enabled"] = False
+    config_with_openai._config["entity_extraction"]["batch_processing"][
+        "enabled"
+    ] = False
 
     service = EntityExtractionService(
         config_manager=config_with_openai,
@@ -186,7 +193,7 @@ def test_fallback_individual_extraction_logs_progress(
     )
 
     # Mock process_document to avoid actual extraction
-    with patch.object(service, 'process_document') as mock_process:
+    with patch.object(service, "process_document") as mock_process:
         mock_process.return_value = {
             "stored": True,
             "entities": [
@@ -201,7 +208,10 @@ def test_fallback_individual_extraction_logs_progress(
 
     # Verify fallback logging
     log_text = caplog.text
-    assert "⚠️  Batch processing disabled - falling back to individual extraction" in log_text
+    assert (
+        "⚠️  Batch processing disabled - falling back to individual extraction"
+        in log_text
+    )
     assert "Processing 3 documents individually..." in log_text
     assert "✅ Individual processing complete:" in log_text
     assert "3 documents" in log_text
@@ -232,7 +242,9 @@ def test_no_silent_failures_llm_config_warning(caplog):
 
     # Should warn about missing LLM config
     log_text = caplog.text
-    assert "⚠️  No LLM configuration found" in log_text or "⚠️  No LLM config" in log_text
+    assert (
+        "⚠️  No LLM configuration found" in log_text or "⚠️  No LLM config" in log_text
+    )
 
 
 if __name__ == "__main__":

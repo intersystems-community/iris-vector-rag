@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ValidationResult:
     """Result of metadata filter key validation."""
+
     is_valid: bool
     rejected_keys: List[str]
     allowed_keys: List[str]
@@ -63,9 +64,27 @@ class MetadataFilterManager:
 
     # SQL keywords to reject (case-insensitive check)
     SQL_KEYWORDS = {
-        "SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "TABLE",
-        "FROM", "WHERE", "AND", "OR", "JOIN", "UNION", "ALTER",
-        "CREATE", "TRUNCATE", "EXEC", "EXECUTE", "--", ";", "/*", "*/"
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "DROP",
+        "TABLE",
+        "FROM",
+        "WHERE",
+        "AND",
+        "OR",
+        "JOIN",
+        "UNION",
+        "ALTER",
+        "CREATE",
+        "TRUNCATE",
+        "EXEC",
+        "EXECUTE",
+        "--",
+        ";",
+        "/*",
+        "*/",
     }
 
     def __init__(self, config: Dict[str, Any] = None):
@@ -91,9 +110,7 @@ class MetadataFilterManager:
 
         if config:
             custom_list = (
-                config.get("storage", {})
-                .get("iris", {})
-                .get("custom_filter_keys", [])
+                config.get("storage", {}).get("iris", {}).get("custom_filter_keys", [])
             )
 
             if custom_list:
@@ -169,7 +186,7 @@ class MetadataFilterManager:
             return ValidationResult(
                 is_valid=True,
                 rejected_keys=[],
-                allowed_keys=self.get_allowed_filter_keys()
+                allowed_keys=self.get_allowed_filter_keys(),
             )
 
         provided_keys = set(metadata_filter.keys())
@@ -184,11 +201,9 @@ class MetadataFilterManager:
                 is_valid=False,
                 rejected_keys=list(rejected_keys),
                 allowed_keys=self.get_allowed_filter_keys(),
-                error_message=error_msg
+                error_message=error_msg,
             )
 
         return ValidationResult(
-            is_valid=True,
-            rejected_keys=[],
-            allowed_keys=self.get_allowed_filter_keys()
+            is_valid=True, rejected_keys=[], allowed_keys=self.get_allowed_filter_keys()
         )

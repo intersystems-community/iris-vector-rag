@@ -25,7 +25,7 @@ class TestPyLateColBERTDimensionValidation:
         When: ColBERT encoding generated for sample text
         Then: Token embeddings have correct structure (list of token vectors)
         """
-        if not hasattr(pylate_colbert_pipeline, 'colbert_encoder'):
+        if not hasattr(pylate_colbert_pipeline, "colbert_encoder"):
             pytest.skip("Pipeline does not expose colbert_encoder")
 
         # Generate token embeddings for test text
@@ -35,13 +35,16 @@ class TestPyLateColBERTDimensionValidation:
             token_embeddings = pylate_colbert_pipeline.colbert_encoder.encode(test_text)
 
             import numpy as np
-            assert isinstance(token_embeddings, (list, tuple, np.ndarray)), \
-                "ColBERT encoding must return list/array of token embeddings"
+
+            assert isinstance(
+                token_embeddings, (list, tuple, np.ndarray)
+            ), "ColBERT encoding must return list/array of token embeddings"
 
             if len(token_embeddings) > 0:
                 first_token = token_embeddings[0]
-                assert hasattr(first_token, '__len__'), \
-                    "Each token must have embedding vector"
+                assert hasattr(
+                    first_token, "__len__"
+                ), "Each token must have embedding vector"
 
                 token_dim = len(first_token)
                 assert token_dim > 0, "Token embedding must have positive dimension"
@@ -56,18 +59,23 @@ class TestPyLateColBERTDimensionValidation:
         When: Dense embedding generated for fallback
         Then: Embedding has exactly 384 dimensions
         """
-        if not hasattr(pylate_colbert_pipeline, 'embedding_manager'):
+        if not hasattr(pylate_colbert_pipeline, "embedding_manager"):
             pytest.skip("Pipeline does not expose embedding_manager for fallback")
 
         # Generate dense embedding for fallback
         test_text = "Sample text for dense vector fallback"
-        embedding = pylate_colbert_pipeline.embedding_manager.generate_embedding(test_text)
+        embedding = pylate_colbert_pipeline.embedding_manager.generate_embedding(
+            test_text
+        )
 
         # Verify dimension (fallback uses all-MiniLM-L6-v2 = 384D)
-        assert len(embedding) == 384, \
-            f"Fallback dense vector must have 384 dimensions, got {len(embedding)}"
+        assert (
+            len(embedding) == 384
+        ), f"Fallback dense vector must have 384 dimensions, got {len(embedding)}"
 
-    def test_dimension_mismatch_raises_clear_error(self, pylate_colbert_pipeline, mocker):
+    def test_dimension_mismatch_raises_clear_error(
+        self, pylate_colbert_pipeline, mocker
+    ):
         """
         FR-022: Dimension mismatch MUST raise clear diagnostic error.
 
@@ -75,7 +83,7 @@ class TestPyLateColBERTDimensionValidation:
         When: Dimension validation occurs
         Then: Error message includes expected (384) and actual dimensions
         """
-        if not hasattr(pylate_colbert_pipeline, 'embedding_manager'):
+        if not hasattr(pylate_colbert_pipeline, "embedding_manager"):
             pytest.skip("Pipeline does not expose embedding_manager")
 
         # Mock fallback embedding to return wrong dimensions
@@ -83,17 +91,17 @@ class TestPyLateColBERTDimensionValidation:
 
         mocker.patch.object(
             pylate_colbert_pipeline.embedding_manager,
-            'generate_embedding',
-            return_value=corrupt_embedding
+            "generate_embedding",
+            return_value=corrupt_embedding,
         )
 
         try:
             # Trigger fallback path (mock ColBERT to fail)
-            if hasattr(pylate_colbert_pipeline, 'colbert_encoder'):
+            if hasattr(pylate_colbert_pipeline, "colbert_encoder"):
                 mocker.patch.object(
                     pylate_colbert_pipeline.colbert_encoder,
-                    'encode',
-                    side_effect=Exception("ColBERT failed, triggering fallback")
+                    "encode",
+                    side_effect=Exception("ColBERT failed, triggering fallback"),
                 )
 
             pylate_colbert_pipeline.query("test query")
@@ -103,13 +111,16 @@ class TestPyLateColBERTDimensionValidation:
             # Error message SHOULD include dimension info
             if "dimension" in error_msg:
                 # Dimension validation exists - verify message quality
-                assert "384" in error_msg or "expected" in error_msg, \
-                    "Error should mention expected dimension (384) for fallback"
+                assert (
+                    "384" in error_msg or "expected" in error_msg
+                ), "Error should mention expected dimension (384) for fallback"
             else:
                 # May skip if fallback not yet implemented
                 pytest.skip("Dimension validation not yet implemented")
 
-    def test_dimension_error_message_is_actionable(self, pylate_colbert_pipeline, mocker):
+    def test_dimension_error_message_is_actionable(
+        self, pylate_colbert_pipeline, mocker
+    ):
         """
         FR-022: Dimension mismatch error MUST suggest fix.
 
@@ -117,7 +128,7 @@ class TestPyLateColBERTDimensionValidation:
         When: Error is raised
         Then: Error message suggests reconfiguring embedding model
         """
-        if not hasattr(pylate_colbert_pipeline, 'embedding_manager'):
+        if not hasattr(pylate_colbert_pipeline, "embedding_manager"):
             pytest.skip("Pipeline does not expose embedding_manager")
 
         # Mock embedding to return wrong dimensions
@@ -125,17 +136,17 @@ class TestPyLateColBERTDimensionValidation:
 
         mocker.patch.object(
             pylate_colbert_pipeline.embedding_manager,
-            'generate_embedding',
-            return_value=corrupt_embedding
+            "generate_embedding",
+            return_value=corrupt_embedding,
         )
 
         try:
             # Trigger fallback path
-            if hasattr(pylate_colbert_pipeline, 'colbert_encoder'):
+            if hasattr(pylate_colbert_pipeline, "colbert_encoder"):
                 mocker.patch.object(
                     pylate_colbert_pipeline.colbert_encoder,
-                    'encode',
-                    side_effect=Exception("ColBERT failed")
+                    "encode",
+                    side_effect=Exception("ColBERT failed"),
                 )
 
             pylate_colbert_pipeline.query("test query")
@@ -144,15 +155,27 @@ class TestPyLateColBERTDimensionValidation:
 
             # If dimension validation exists, check for actionable guidance
             if "dimension" in error_msg:
-                actionable_keywords = ["reconfigure", "change", "model", "embedding", "384", "fallback"]
-                has_actionable = any(keyword in error_msg for keyword in actionable_keywords)
+                actionable_keywords = [
+                    "reconfigure",
+                    "change",
+                    "model",
+                    "embedding",
+                    "384",
+                    "fallback",
+                ]
+                has_actionable = any(
+                    keyword in error_msg for keyword in actionable_keywords
+                )
 
-                assert has_actionable, \
-                    f"Dimension error should include actionable guidance. Got: {e}"
+                assert (
+                    has_actionable
+                ), f"Dimension error should include actionable guidance. Got: {e}"
         else:
             pytest.skip("Dimension validation not yet implemented")
 
-    def test_correct_dimension_embeddings_succeed(self, pylate_colbert_pipeline, mocker):
+    def test_correct_dimension_embeddings_succeed(
+        self, pylate_colbert_pipeline, mocker
+    ):
         """
         FR-021: Correctly dimensioned fallback embeddings MUST succeed.
 
@@ -160,7 +183,7 @@ class TestPyLateColBERTDimensionValidation:
         When: Query executed
         Then: No dimension validation errors raised
         """
-        if not hasattr(pylate_colbert_pipeline, 'embedding_manager'):
+        if not hasattr(pylate_colbert_pipeline, "embedding_manager"):
             pytest.skip("Pipeline does not expose embedding_manager")
 
         # Mock embedding to return correct dimensions
@@ -168,8 +191,8 @@ class TestPyLateColBERTDimensionValidation:
 
         mocker.patch.object(
             pylate_colbert_pipeline.embedding_manager,
-            'generate_embedding',
-            return_value=correct_embedding
+            "generate_embedding",
+            return_value=correct_embedding,
         )
 
         # This should NOT raise dimension validation errors
@@ -180,8 +203,9 @@ class TestPyLateColBERTDimensionValidation:
             error_msg = str(e).lower()
 
             # Dimension validation should NOT trigger for correct 384D
-            assert "dimension" not in error_msg or "384" not in error_msg, \
-                f"Correct 384D embedding should not trigger dimension error: {e}"
+            assert (
+                "dimension" not in error_msg or "384" not in error_msg
+            ), f"Correct 384D embedding should not trigger dimension error: {e}"
 
     def test_token_count_validation(self, pylate_colbert_pipeline):
         """
@@ -191,7 +215,7 @@ class TestPyLateColBERTDimensionValidation:
         When: ColBERT encoding attempted
         Then: Warning or error if token count exceeds model limit
         """
-        if not hasattr(pylate_colbert_pipeline, 'colbert_encoder'):
+        if not hasattr(pylate_colbert_pipeline, "colbert_encoder"):
             pytest.skip("Pipeline does not expose colbert_encoder")
 
         # Generate text with many tokens (may exceed model limit)
@@ -202,8 +226,9 @@ class TestPyLateColBERTDimensionValidation:
 
             # If encoding succeeded, token count may be truncated or validated
             # This is acceptable behavior
-            assert isinstance(token_embeddings, (list, tuple)) or hasattr(token_embeddings, "shape"), \
-                "Token embeddings should be returned"
+            assert isinstance(token_embeddings, (list, tuple)) or hasattr(
+                token_embeddings, "shape"
+            ), "Token embeddings should be returned"
         except Exception as e:
             error_msg = str(e).lower()
 
@@ -220,10 +245,10 @@ class TestPyLateColBERTDimensionValidation:
         When: Both encoding types used
         Then: ColBERT has token-level dims, dense has 384D
         """
-        if not hasattr(pylate_colbert_pipeline, 'colbert_encoder'):
+        if not hasattr(pylate_colbert_pipeline, "colbert_encoder"):
             pytest.skip("Pipeline does not expose colbert_encoder")
 
-        if not hasattr(pylate_colbert_pipeline, 'embedding_manager'):
+        if not hasattr(pylate_colbert_pipeline, "embedding_manager"):
             pytest.skip("Pipeline does not expose embedding_manager")
 
         test_text = "Sample text"
@@ -232,13 +257,17 @@ class TestPyLateColBERTDimensionValidation:
         try:
             colbert_tokens = pylate_colbert_pipeline.colbert_encoder.encode(test_text)
             # Token-level structure (variable)
-            assert isinstance(colbert_tokens, (list, tuple)) or hasattr(colbert_tokens, "shape"), \
-                "ColBERT uses token-level embeddings"
+            assert isinstance(colbert_tokens, (list, tuple)) or hasattr(
+                colbert_tokens, "shape"
+            ), "ColBERT uses token-level embeddings"
         except AttributeError:
             pass
 
         # Generate dense encoding (fallback)
-        dense_embedding = pylate_colbert_pipeline.embedding_manager.generate_embedding(test_text)
+        dense_embedding = pylate_colbert_pipeline.embedding_manager.generate_embedding(
+            test_text
+        )
         # Dense vector is 384D
-        assert len(dense_embedding) == 384, \
-            f"Dense fallback must be 384D, got {len(dense_embedding)}"
+        assert (
+            len(dense_embedding) == 384
+        ), f"Dense fallback must be 384D, got {len(dense_embedding)}"

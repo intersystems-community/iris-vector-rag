@@ -12,13 +12,13 @@ from typing import Dict
 from dataclasses import dataclass
 from unittest.mock import patch
 
-
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ValidationResult:
     """Result of error message validation."""
+
     has_what: bool
     has_why: bool
     has_action: bool
@@ -34,7 +34,7 @@ class ValidationResult:
 DEFAULT_PATTERNS = {
     "what_pattern": r"(?:test.*failed|failed|error|exception|assertion)[\s:]+",
     "why_pattern": r"(?:expected|got|but|because|due to|caused by|reason)",
-    "action_pattern": r"(?:check|verify|ensure|try|fix|make sure|consider|should|must)"
+    "action_pattern": r"(?:check|verify|ensure|try|fix|make sure|consider|should|must)",
 }
 
 # Global configuration
@@ -61,10 +61,7 @@ def validate_error_message(message: str) -> ValidationResult:
     has_action = bool(re.search(_validation_config["action_pattern"], message_lower))
 
     return ValidationResult(
-        has_what=has_what,
-        has_why=has_why,
-        has_action=has_action,
-        message=message
+        has_what=has_what, has_why=has_why, has_action=has_action, message=message
     )
 
 
@@ -80,12 +77,16 @@ def get_improvement_suggestions(message: str) -> str:
         suggestions.append("Explain why it failed (e.g., 'Expected X but got Y')")
 
     if not result.has_action:
-        suggestions.append("Add what to do to fix it (e.g., 'Check that...' or 'Ensure...')")
+        suggestions.append(
+            "Add what to do to fix it (e.g., 'Check that...' or 'Ensure...')"
+        )
 
     if not suggestions:
         return "Error message structure looks good!"
 
-    return "Error message needs improvement:\n" + "\n".join(f"  - {s}" for s in suggestions)
+    return "Error message needs improvement:\n" + "\n".join(
+        f"  - {s}" for s in suggestions
+    )
 
 
 def has_sufficient_context(message: str) -> bool:
@@ -110,7 +111,9 @@ def has_sufficient_context(message: str) -> bool:
     return context_count >= 2
 
 
-def format_error_suggestion(node_name: str, original_error: str, suggestions: str) -> str:
+def format_error_suggestion(
+    node_name: str, original_error: str, suggestions: str
+) -> str:
     """Format error validation feedback."""
     max_length = 1000  # From clarification
 
@@ -132,7 +135,7 @@ Example of a good error message:
 
     # Truncate if too long
     if len(formatted) > max_length:
-        formatted = formatted[:max_length - 3] + "..."
+        formatted = formatted[: max_length - 3] + "..."
 
     return formatted
 
@@ -162,16 +165,15 @@ def pytest_exception_interact(node, call, report):
             suggestions = get_improvement_suggestions(error_message)
 
             # Log validation warning
-            warning_msg = format_error_suggestion(
-                node.name,
-                error_message,
-                suggestions
-            )
+            warning_msg = format_error_suggestion(node.name, error_message, suggestions)
 
             logger.warning(warning_msg)
 
             # Also print to terminal if verbose
-            if hasattr(node.config.option, "verbose") and node.config.option.verbose > 0:
+            if (
+                hasattr(node.config.option, "verbose")
+                and node.config.option.verbose > 0
+            ):
                 print(warning_msg)
 
     except Exception as e:
@@ -182,8 +184,7 @@ def pytest_exception_interact(node, call, report):
 def pytest_configure(config):
     """Register plugin with pytest."""
     config.addinivalue_line(
-        "markers",
-        "good_errors: mark test as having exemplary error messages"
+        "markers", "good_errors: mark test as having exemplary error messages"
     )
 
 
@@ -191,6 +192,6 @@ def pytest_runtest_protocol(item, nextitem):
     """Check if test is marked for good errors and skip validation."""
     if item.get_closest_marker("good_errors"):
         # Temporarily disable validation for this test
-        with patch.object(logger, 'warning'):
+        with patch.object(logger, "warning"):
             return None  # Continue with default protocol
     return None  # Continue with default protocol

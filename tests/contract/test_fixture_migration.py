@@ -19,7 +19,7 @@ class TestFixtureMigration:
         from tests.fixtures.manager import FixtureManager
 
         manager = FixtureManager()
-        assert hasattr(manager, 'migrate')
+        assert hasattr(manager, "migrate")
         assert callable(manager.migrate)
 
     def test_migrate_accepts_fixture_name_parameter(self):
@@ -30,7 +30,7 @@ class TestFixtureMigration:
         manager = FixtureManager()
         sig = inspect.signature(manager.migrate)
 
-        assert 'fixture_name' in sig.parameters
+        assert "fixture_name" in sig.parameters
 
     def test_migrate_accepts_target_version_parameter(self):
         """✅ migrate() accepts target_version parameter."""
@@ -40,7 +40,7 @@ class TestFixtureMigration:
         manager = FixtureManager()
         sig = inspect.signature(manager.migrate)
 
-        assert 'target_version' in sig.parameters
+        assert "target_version" in sig.parameters
 
     def test_migrate_returns_migration_result(self):
         """✅ migrate() returns MigrationResult with status and changes."""
@@ -104,7 +104,9 @@ class TestFixtureMigration:
         manager = FixtureManager()
 
         # Contract: should fail fast with clear error
-        with pytest.raises(FixtureNotFoundError, match="Fixture 'nonexistent' not found"):
+        with pytest.raises(
+            FixtureNotFoundError, match="Fixture 'nonexistent' not found"
+        ):
             manager.migrate("nonexistent", target_version="2.0.0")
 
     def test_migrate_supports_dry_run_mode(self):
@@ -116,7 +118,7 @@ class TestFixtureMigration:
         sig = inspect.signature(manager.migrate)
 
         # Contract: dry_run parameter shows what would change without applying
-        assert 'dry_run' in sig.parameters
+        assert "dry_run" in sig.parameters
 
 
 @pytest.mark.contract
@@ -143,12 +145,12 @@ class TestMigrationResult:
         )
 
         # Required fields for migration result
-        assert hasattr(result, 'success')
-        assert hasattr(result, 'old_version')
-        assert hasattr(result, 'new_version')
-        assert hasattr(result, 'changes_applied')
-        assert hasattr(result, 'migration_time')
-        assert hasattr(result, 'error_message')
+        assert hasattr(result, "success")
+        assert hasattr(result, "old_version")
+        assert hasattr(result, "new_version")
+        assert hasattr(result, "changes_applied")
+        assert hasattr(result, "migration_time")
+        assert hasattr(result, "error_message")
 
     def test_migration_result_can_be_serialized(self):
         """✅ MigrationResult can be serialized to JSON."""
@@ -163,10 +165,10 @@ class TestMigrationResult:
         )
 
         # Contract: should be serializable for logging/storage
-        assert hasattr(result, 'to_dict')
+        assert hasattr(result, "to_dict")
         serialized = result.to_dict()
         assert isinstance(serialized, dict)
-        assert 'success' in serialized
+        assert "success" in serialized
 
 
 @pytest.mark.contract
@@ -193,7 +195,7 @@ class TestSchemaVersioning:
             schema_version="1.0",
         )
 
-        assert hasattr(metadata, 'schema_version')
+        assert hasattr(metadata, "schema_version")
         assert metadata.schema_version == "1.0"
 
     def test_manifest_includes_migration_history(self):
@@ -214,7 +216,7 @@ class TestSchemaVersioning:
             migration_history=[],
         )
 
-        assert hasattr(metadata, 'migration_history')
+        assert hasattr(metadata, "migration_history")
         assert isinstance(metadata.migration_history, list)
 
     def test_migration_history_entry_format(self):

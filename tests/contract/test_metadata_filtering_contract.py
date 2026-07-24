@@ -37,12 +37,20 @@ class TestCustomFieldConfiguration:
 
         # Verify custom fields present
         assert "tenant_id" in allowed_keys, "Custom field 'tenant_id' should be allowed"
-        assert "security_level" in allowed_keys, "Custom field 'security_level' should be allowed"
-        assert "department" in allowed_keys, "Custom field 'department' should be allowed"
+        assert (
+            "security_level" in allowed_keys
+        ), "Custom field 'security_level' should be allowed"
+        assert (
+            "department" in allowed_keys
+        ), "Custom field 'department' should be allowed"
 
         # Verify default fields still present
-        assert "source" in allowed_keys, "Default field 'source' should still be allowed"
-        assert "doc_id" in allowed_keys, "Default field 'doc_id' should still be allowed"
+        assert (
+            "source" in allowed_keys
+        ), "Default field 'source' should still be allowed"
+        assert (
+            "doc_id" in allowed_keys
+        ), "Default field 'doc_id' should still be allowed"
 
     def test_metadata_filter_validation_success(self, iris_vector_store):
         """
@@ -62,14 +70,14 @@ class TestCustomFieldConfiguration:
         # No exception should be raised for valid filters
         try:
             iris_vector_store.similarity_search(
-                query="test query",
-                k=5,
-                metadata_filter=metadata_filter
+                query="test query", k=5, metadata_filter=metadata_filter
             )
             # If we reach here, validation succeeded
             assert True
         except VectorStoreConfigurationError:
-            pytest.fail("Valid metadata filter should not raise VectorStoreConfigurationError")
+            pytest.fail(
+                "Valid metadata filter should not raise VectorStoreConfigurationError"
+            )
 
     def test_metadata_filter_validation_failure(self, iris_vector_store, monkeypatch):
         """
@@ -83,7 +91,9 @@ class TestCustomFieldConfiguration:
         # Configure only tenant_id as custom field - need to rebuild the store
         from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
         from iris_vector_rag.config.manager import ConfigurationManager
-        from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
+        from iris_vector_rag.storage.metadata_filter_manager import (
+            MetadataFilterManager,
+        )
 
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "test_mode")
 
@@ -91,7 +101,9 @@ class TestCustomFieldConfiguration:
         config_dict = config.to_dict()
         config_dict["storage"] = config_dict.get("storage", {})
         config_dict["storage"]["iris"] = config_dict["storage"].get("iris", {})
-        config_dict["storage"]["iris"]["custom_filter_keys"] = ["tenant_id"]  # Only tenant_id
+        config_dict["storage"]["iris"]["custom_filter_keys"] = [
+            "tenant_id"
+        ]  # Only tenant_id
 
         mock_connection_manager = MagicMock()
         mock_connection_manager.get_connection.return_value = MagicMock()
@@ -102,11 +114,13 @@ class TestCustomFieldConfiguration:
         store = IRISVectorStore(
             connection_manager=mock_connection_manager,
             schema_manager=mock_schema_manager,
-            config_manager=ConfigurationManager()
+            config_manager=ConfigurationManager(),
         )
 
         store.metadata_filter_manager = MetadataFilterManager(config_dict)
-        store._allowed_filter_keys = set(store.metadata_filter_manager.get_allowed_filter_keys())
+        store._allowed_filter_keys = set(
+            store.metadata_filter_manager.get_allowed_filter_keys()
+        )
 
         # Don't mock similarity_search_by_embedding - validation happens there
         # Instead, mock _get_connection to prevent database access
@@ -118,13 +132,13 @@ class TestCustomFieldConfiguration:
         # This will fail initially - expecting VectorStoreConfigurationError
         with pytest.raises(VectorStoreConfigurationError) as exc_info:
             store.similarity_search(
-                query="test query",
-                k=5,
-                metadata_filter=metadata_filter
+                query="test query", k=5, metadata_filter=metadata_filter
             )
 
         error_msg = str(exc_info.value)
-        assert "department" in error_msg, "Error should mention rejected field 'department'"
+        assert (
+            "department" in error_msg
+        ), "Error should mention rejected field 'department'"
         assert "allowed" in error_msg.lower(), "Error should mention allowed fields"
 
     def test_duplicate_field_name_rejection(self, iris_vector_store):
@@ -144,7 +158,10 @@ class TestCustomFieldConfiguration:
         # This will fail initially - expecting validation error
         with pytest.raises(VectorStoreConfigurationError) as exc_info:
             # Configuration should be validated during initialization
-            from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
+            from iris_vector_rag.storage.metadata_filter_manager import (
+                MetadataFilterManager,
+            )
+
             MetadataFilterManager(custom_config)
 
         error_msg = str(exc_info.value)
@@ -167,14 +184,19 @@ class TestCustomFieldConfiguration:
 
         # This will fail initially - expecting validation error for SQL injection
         with pytest.raises(VectorStoreConfigurationError) as exc_info:
-            from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
+            from iris_vector_rag.storage.metadata_filter_manager import (
+                MetadataFilterManager,
+            )
+
             MetadataFilterManager(malicious_config)
 
         error_msg = str(exc_info.value)
         assert "DROP TABLE" in error_msg or "invalid" in error_msg.lower()
         assert "field name" in error_msg.lower()
 
-    def test_empty_custom_fields_backward_compatibility(self, iris_vector_store, monkeypatch):
+    def test_empty_custom_fields_backward_compatibility(
+        self, iris_vector_store, monkeypatch
+    ):
         """
         CONTRACT: T016 - Empty custom_filter_keys maintains backward compatibility.
 
@@ -186,7 +208,9 @@ class TestCustomFieldConfiguration:
         # Configuration with empty custom fields - need to rebuild the store
         from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
         from iris_vector_rag.config.manager import ConfigurationManager
-        from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
+        from iris_vector_rag.storage.metadata_filter_manager import (
+            MetadataFilterManager,
+        )
 
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "test_mode")
 
@@ -205,11 +229,13 @@ class TestCustomFieldConfiguration:
         store = IRISVectorStore(
             connection_manager=mock_connection_manager,
             schema_manager=mock_schema_manager,
-            config_manager=ConfigurationManager()
+            config_manager=ConfigurationManager(),
         )
 
         store.metadata_filter_manager = MetadataFilterManager(config_dict)
-        store._allowed_filter_keys = set(store.metadata_filter_manager.get_allowed_filter_keys())
+        store._allowed_filter_keys = set(
+            store.metadata_filter_manager.get_allowed_filter_keys()
+        )
 
         # This will fail initially
         allowed_keys = store.get_allowed_filter_keys()
@@ -231,7 +257,9 @@ class TestCustomFieldConfiguration:
         # Configure custom field with specific casing - need to rebuild the store
         from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
         from iris_vector_rag.config.manager import ConfigurationManager
-        from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
+        from iris_vector_rag.storage.metadata_filter_manager import (
+            MetadataFilterManager,
+        )
 
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "test_mode")
 
@@ -239,7 +267,9 @@ class TestCustomFieldConfiguration:
         config_dict = config.to_dict()
         config_dict["storage"] = config_dict.get("storage", {})
         config_dict["storage"]["iris"] = config_dict["storage"].get("iris", {})
-        config_dict["storage"]["iris"]["custom_filter_keys"] = ["Tenant_ID"]  # Specific casing
+        config_dict["storage"]["iris"]["custom_filter_keys"] = [
+            "Tenant_ID"
+        ]  # Specific casing
 
         mock_connection_manager = MagicMock()
         mock_connection_manager.get_connection.return_value = MagicMock()
@@ -250,11 +280,13 @@ class TestCustomFieldConfiguration:
         store = IRISVectorStore(
             connection_manager=mock_connection_manager,
             schema_manager=mock_schema_manager,
-            config_manager=ConfigurationManager()
+            config_manager=ConfigurationManager(),
         )
 
         store.metadata_filter_manager = MetadataFilterManager(config_dict)
-        store._allowed_filter_keys = set(store.metadata_filter_manager.get_allowed_filter_keys())
+        store._allowed_filter_keys = set(
+            store.metadata_filter_manager.get_allowed_filter_keys()
+        )
 
         # Don't mock similarity_search_by_embedding - validation happens there
         # Instead, mock _get_connection to prevent database access
@@ -265,11 +297,7 @@ class TestCustomFieldConfiguration:
 
         # This will fail initially
         with pytest.raises(VectorStoreConfigurationError) as exc_info:
-            store.similarity_search(
-                query="test",
-                k=5,
-                metadata_filter=metadata_filter
-            )
+            store.similarity_search(query="test", k=5, metadata_filter=metadata_filter)
 
         error_msg = str(exc_info.value)
         assert "tenant_id" in error_msg, "Error should mention attempted field name"
@@ -291,9 +319,7 @@ class TestCustomFieldConfiguration:
         # This should NOT raise exception - value should be safely parameterized
         try:
             iris_vector_store.similarity_search(
-                query="test",
-                k=5,
-                metadata_filter=malicious_filter
+                query="test", k=5, metadata_filter=malicious_filter
             )
             # If we reach here, SQL injection was prevented
             assert True
@@ -328,17 +354,17 @@ class TestMetadataFilterIntegration:
             Document(
                 id=f"{test_id_prefix}_doc1",
                 page_content="Document about ACME confidential information",
-                metadata={"tenant_id": "acme", "security_level": "confidential"}
+                metadata={"tenant_id": "acme", "security_level": "confidential"},
             ),
             Document(
                 id=f"{test_id_prefix}_doc2",
                 page_content="Document about ACME public information",
-                metadata={"tenant_id": "acme", "security_level": "public"}
+                metadata={"tenant_id": "acme", "security_level": "public"},
             ),
             Document(
                 id=f"{test_id_prefix}_doc3",
                 page_content="Document about Globex confidential information",
-                metadata={"tenant_id": "globex", "security_level": "confidential"}
+                metadata={"tenant_id": "globex", "security_level": "confidential"},
             ),
         ]
 
@@ -350,14 +376,14 @@ class TestMetadataFilterIntegration:
         metadata_filter = {"tenant_id": "acme", "security_level": "confidential"}
 
         results = real_iris_vector_store.similarity_search(
-            query="confidential information",
-            k=10,
-            metadata_filter=metadata_filter
+            query="confidential information", k=10, metadata_filter=metadata_filter
         )
 
         # Verify only matching documents returned
         matching_results = [r for r in results if r.id.startswith(test_id_prefix)]
-        assert len(matching_results) == 1, f"Should return exactly 1 matching document, got {len(matching_results)}"
+        assert (
+            len(matching_results) == 1
+        ), f"Should return exactly 1 matching document, got {len(matching_results)}"
         assert matching_results[0].metadata["tenant_id"] == "acme"
         assert matching_results[0].metadata["security_level"] == "confidential"
 
@@ -383,22 +409,22 @@ class TestMetadataFilterIntegration:
             Document(
                 id=f"{test_id_prefix}_acme1",
                 page_content="ACME financial report Q1 2024",
-                metadata={"tenant_id": "acme", "doc_type": "report"}
+                metadata={"tenant_id": "acme", "doc_type": "report"},
             ),
             Document(
                 id=f"{test_id_prefix}_acme2",
                 page_content="ACME employee handbook",
-                metadata={"tenant_id": "acme", "doc_type": "handbook"}
+                metadata={"tenant_id": "acme", "doc_type": "handbook"},
             ),
             Document(
                 id=f"{test_id_prefix}_globex1",
                 page_content="Globex product catalog",
-                metadata={"tenant_id": "globex", "doc_type": "catalog"}
+                metadata={"tenant_id": "globex", "doc_type": "catalog"},
             ),
             Document(
                 id=f"{test_id_prefix}_initech1",
                 page_content="Initech TPS report guidelines",
-                metadata={"tenant_id": "initech", "doc_type": "guidelines"}
+                metadata={"tenant_id": "initech", "doc_type": "guidelines"},
             ),
         ]
 
@@ -408,23 +434,24 @@ class TestMetadataFilterIntegration:
         # Test tenant isolation for each tenant
         for tenant_name in ["acme", "globex", "initech"]:
             results = real_iris_vector_store.similarity_search(
-                query="report",
-                k=10,
-                metadata_filter={"tenant_id": tenant_name}
+                query="report", k=10, metadata_filter={"tenant_id": tenant_name}
             )
 
             matching_results = [r for r in results if r.id.startswith(test_id_prefix)]
 
             # Verify all results belong to correct tenant
             for result in matching_results:
-                assert result.metadata["tenant_id"] == tenant_name, \
-                    f"Cross-tenant leak: Expected {tenant_name}, got {result.metadata['tenant_id']}"
+                assert (
+                    result.metadata["tenant_id"] == tenant_name
+                ), f"Cross-tenant leak: Expected {tenant_name}, got {result.metadata['tenant_id']}"
 
             # Verify expected counts
             if tenant_name == "acme":
                 assert len(matching_results) == 2, "ACME should have 2 documents"
             else:
-                assert len(matching_results) == 1, f"{tenant_name} should have 1 document"
+                assert (
+                    len(matching_results) == 1
+                ), f"{tenant_name} should have 1 document"
 
         # Cleanup
         real_iris_vector_store.delete_documents([d.id for d in docs])
@@ -449,8 +476,8 @@ class TestMetadataFilterIntegration:
                 metadata={
                     "tenant_id": "acme",
                     "department": "engineering",
-                    "security_level": "confidential"
-                }
+                    "security_level": "confidential",
+                },
             ),
             Document(
                 id=f"{test_id_prefix}_2",
@@ -458,8 +485,8 @@ class TestMetadataFilterIntegration:
                 metadata={
                     "tenant_id": "acme",
                     "department": "engineering",
-                    "security_level": "public"
-                }
+                    "security_level": "public",
+                },
             ),
             Document(
                 id=f"{test_id_prefix}_3",
@@ -467,8 +494,8 @@ class TestMetadataFilterIntegration:
                 metadata={
                     "tenant_id": "acme",
                     "department": "hr",
-                    "security_level": "confidential"
-                }
+                    "security_level": "confidential",
+                },
             ),
         ]
 
@@ -479,19 +506,19 @@ class TestMetadataFilterIntegration:
         metadata_filter = {
             "tenant_id": "acme",
             "department": "engineering",
-            "security_level": "confidential"
+            "security_level": "confidential",
         }
 
         results = real_iris_vector_store.similarity_search(
-            query="documentation",
-            k=10,
-            metadata_filter=metadata_filter
+            query="documentation", k=10, metadata_filter=metadata_filter
         )
 
         matching_results = [r for r in results if r.id.startswith(test_id_prefix)]
 
         # Should only return engineering + confidential document
-        assert len(matching_results) == 1, "Should return 1 document matching all filters"
+        assert (
+            len(matching_results) == 1
+        ), "Should return 1 document matching all filters"
         assert matching_results[0].id == f"{test_id_prefix}_1"
         assert matching_results[0].metadata["department"] == "engineering"
         assert matching_results[0].metadata["security_level"] == "confidential"
@@ -519,8 +546,8 @@ class TestMetadataFilterIntegration:
                 metadata={
                     "tenant_id": "acme",
                     "source": "hospital_A.pdf",
-                    "doc_type": "medical"
-                }
+                    "doc_type": "medical",
+                },
             ),
             Document(
                 id=f"{test_id_prefix}_2",
@@ -528,8 +555,8 @@ class TestMetadataFilterIntegration:
                 metadata={
                     "tenant_id": "acme",
                     "source": "clinic_B.pdf",
-                    "doc_type": "medical"
-                }
+                    "doc_type": "medical",
+                },
             ),
             Document(
                 id=f"{test_id_prefix}_3",
@@ -537,8 +564,8 @@ class TestMetadataFilterIntegration:
                 metadata={
                     "tenant_id": "globex",
                     "source": "hospital_A.pdf",
-                    "doc_type": "medical"
-                }
+                    "doc_type": "medical",
+                },
             ),
         ]
 
@@ -546,15 +573,10 @@ class TestMetadataFilterIntegration:
         assert len(added_ids) == 3
 
         # Test combining default field (source) with custom field (tenant_id)
-        metadata_filter = {
-            "tenant_id": "acme",
-            "source": "hospital_A.pdf"
-        }
+        metadata_filter = {"tenant_id": "acme", "source": "hospital_A.pdf"}
 
         results = real_iris_vector_store.similarity_search(
-            query="patient",
-            k=10,
-            metadata_filter=metadata_filter
+            query="patient", k=10, metadata_filter=metadata_filter
         )
 
         matching_results = [r for r in results if r.id.startswith(test_id_prefix)]
@@ -580,7 +602,9 @@ class TestMetadataFilterManagerUnit:
         THEN returns {default_keys, custom_keys, all_keys}
         AND validate_filter_keys() correctly identifies valid/invalid keys
         """
-        from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
+        from iris_vector_rag.storage.metadata_filter_manager import (
+            MetadataFilterManager,
+        )
 
         # Configure custom fields
         config = {
@@ -605,11 +629,14 @@ class TestMetadataFilterManagerUnit:
         # Test validate_filter_keys() - invalid case
         invalid_keys = {"unknown_field": "value"}
         validation_result = manager.validate_filter_keys(invalid_keys)
-        assert validation_result.is_valid is False, "Invalid keys should fail validation"
+        assert (
+            validation_result.is_valid is False
+        ), "Invalid keys should fail validation"
         assert "unknown_field" in validation_result.rejected_keys
 
 
 # Fixtures
+
 
 @pytest.fixture
 def iris_vector_store(monkeypatch):
@@ -627,7 +654,11 @@ def iris_vector_store(monkeypatch):
     config_dict = config.to_dict()
     config_dict["storage"] = config_dict.get("storage", {})
     config_dict["storage"]["iris"] = config_dict["storage"].get("iris", {})
-    config_dict["storage"]["iris"]["custom_filter_keys"] = ["tenant_id", "security_level", "department"]
+    config_dict["storage"]["iris"]["custom_filter_keys"] = [
+        "tenant_id",
+        "security_level",
+        "department",
+    ]
 
     # Mock connection manager and schema manager to avoid database connection
     mock_connection_manager = MagicMock()
@@ -640,13 +671,16 @@ def iris_vector_store(monkeypatch):
     store = IRISVectorStore(
         connection_manager=mock_connection_manager,
         schema_manager=mock_schema_manager,
-        config_manager=ConfigurationManager()
+        config_manager=ConfigurationManager(),
     )
 
     # Manually initialize MetadataFilterManager with custom config
     from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
+
     store.metadata_filter_manager = MetadataFilterManager(config_dict)
-    store._allowed_filter_keys = set(store.metadata_filter_manager.get_allowed_filter_keys())
+    store._allowed_filter_keys = set(
+        store.metadata_filter_manager.get_allowed_filter_keys()
+    )
 
     # Mock similarity_search_by_embedding to avoid database queries
     def mock_similarity_search(query_embedding, top_k, filter=None):
@@ -684,7 +718,11 @@ def real_iris_vector_store(connection_pool, monkeypatch):
     config_dict = config.to_dict()
     config_dict["storage"] = config_dict.get("storage", {})
     config_dict["storage"]["iris"] = config_dict["storage"].get("iris", {})
-    config_dict["storage"]["iris"]["custom_filter_keys"] = ["tenant_id", "security_level", "department"]
+    config_dict["storage"]["iris"]["custom_filter_keys"] = [
+        "tenant_id",
+        "security_level",
+        "department",
+    ]
 
     # Use real ConnectionManager - it will use connection_pool internally via conftest.py configuration
     # The connection_pool fixture handles backend mode configuration automatically
@@ -693,13 +731,14 @@ def real_iris_vector_store(connection_pool, monkeypatch):
     connection_manager = ConnectionManager()
 
     store = IRISVectorStore(
-        connection_manager=connection_manager,
-        config_manager=config
+        connection_manager=connection_manager, config_manager=config
     )
 
     # Update MetadataFilterManager with custom config
     store.metadata_filter_manager = MetadataFilterManager(config_dict)
-    store._allowed_filter_keys = set(store.metadata_filter_manager.get_allowed_filter_keys())
+    store._allowed_filter_keys = set(
+        store.metadata_filter_manager.get_allowed_filter_keys()
+    )
 
     yield store
 

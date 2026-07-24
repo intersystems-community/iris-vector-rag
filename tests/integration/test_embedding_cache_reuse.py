@@ -50,7 +50,9 @@ class TestActualModelCaching:
         time2 = time.time() - start2
 
         # Verify same embeddings (same model instance)
-        assert emb1 == emb2, "Embeddings should be identical when using same model instance"
+        assert (
+            emb1 == emb2
+        ), "Embeddings should be identical when using same model instance"
 
         # Verify second initialization is at least 10x faster
         print(f"\nFirst initialization: {time1:.3f}s")
@@ -99,9 +101,7 @@ class TestActualModelCaching:
 
         # All times should be consistently fast (< 50ms)
         for i, t in enumerate(times, start=1):
-            assert t < 0.05, (
-                f"Manager {i} took {t:.3f}s, expected <0.05s with caching"
-            )
+            assert t < 0.05, f"Manager {i} took {t:.3f}s, expected <0.05s with caching"
 
     def test_cache_persistence_across_embeddings(self):
         """
@@ -130,9 +130,9 @@ class TestActualModelCaching:
         # All 10 embeddings + manager init should be fast (<100ms total)
         # This will FAIL before caching because manager init alone takes 400ms
         print(f"\nTotal time for manager2 + 10 embeddings: {total_time:.3f}s")
-        assert total_time < 0.1, (
-            f"Expected <0.1s for cached manager + 10 embeddings, got {total_time:.3f}s"
-        )
+        assert (
+            total_time < 0.1
+        ), f"Expected <0.1s for cached manager + 10 embeddings, got {total_time:.3f}s"
 
 
 class TestCacheBehaviorIntegration:

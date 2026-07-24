@@ -14,7 +14,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -25,7 +24,9 @@ def _read(rel_path: str) -> str:
 def test_uses_import_iris_pattern():
     """iris_connection.py must use 'import iris' (official intersystems-irispython pattern)."""
     content = _read("iris_vector_rag/common/iris_connection.py")
-    assert "import iris" in content, "Must use 'import iris' from intersystems-irispython"
+    assert (
+        "import iris" in content
+    ), "Must use 'import iris' from intersystems-irispython"
 
 
 def test_no_import_iris_dbapi_directly():
@@ -40,6 +41,7 @@ def test_no_import_iris_dbapi_directly():
 # ---------------------------------------------------------------------------
 # T001 — embedded-mode branch: when IRISINSTALLDIR set, use iris.dbapi.connect(path=...)
 # ---------------------------------------------------------------------------
+
 
 class TestEmbeddedModeSupport:
     """T001: get_iris_connection() uses embedded path when IRISINSTALLDIR is set."""
@@ -63,15 +65,18 @@ class TestEmbeddedModeSupport:
         with patch.dict(sys.modules, {"iris": mock_iris}):
             with patch.object(conn_module, "_connection_cache", {}):
                 result = conn_module.get_iris_connection(
-                    host="localhost", port=1972, namespace="USER",
-                    username="_SYSTEM", password="SYS",
+                    host="localhost",
+                    port=1972,
+                    namespace="USER",
+                    username="_SYSTEM",
+                    password="SYS",
                 )
 
         mock_iris.dbapi.connect.assert_called_once()
         call_kwargs = mock_iris.dbapi.connect.call_args
-        assert call_kwargs.kwargs.get("namespace") == "USER" or \
-               (call_kwargs.args and "USER" in str(call_kwargs.args)), \
-               "embedded-kernel must call iris.dbapi.connect with namespace"
+        assert call_kwargs.kwargs.get("namespace") == "USER" or (
+            call_kwargs.args and "USER" in str(call_kwargs.args)
+        ), "embedded-kernel must call iris.dbapi.connect with namespace"
         assert result is mock_conn
 
     def test_irisinstalldir_triggers_embedded_local(self, tmp_path, monkeypatch):
@@ -91,8 +96,8 @@ class TestEmbeddedModeSupport:
 
         mock_iris = MagicMock()
         mock_iris.runtime.get.side_effect = [
-            mock_runtime_ctx_unavailable,   # first check
-            mock_runtime_ctx_embedded,       # after configure()
+            mock_runtime_ctx_unavailable,  # first check
+            mock_runtime_ctx_embedded,  # after configure()
         ]
         mock_iris.runtime.configure.return_value = mock_runtime_ctx_embedded
         mock_iris.dbapi.connect.return_value = mock_conn
@@ -102,8 +107,11 @@ class TestEmbeddedModeSupport:
         with patch.dict(sys.modules, {"iris": mock_iris}):
             with patch.object(conn_module, "_connection_cache", {}):
                 result = conn_module.get_iris_connection(
-                    host="localhost", port=1972, namespace="USER",
-                    username="_SYSTEM", password="SYS",
+                    host="localhost",
+                    port=1972,
+                    namespace="USER",
+                    username="_SYSTEM",
+                    password="SYS",
                 )
 
         mock_iris.runtime.configure.assert_called_once_with(
@@ -116,6 +124,7 @@ class TestEmbeddedModeSupport:
 # ---------------------------------------------------------------------------
 # T002 — connection_pool.py: importing the module must not raise even without iris
 # ---------------------------------------------------------------------------
+
 
 class TestConnectionPoolLazyImport:
     """T002: connection_pool module import must not fail when iris is unavailable."""
@@ -141,6 +150,7 @@ class TestConnectionPoolLazyImport:
 # ---------------------------------------------------------------------------
 # T004 — colbert _ensure_native_conn must route through get_iris_connection
 # ---------------------------------------------------------------------------
+
 
 class TestColbertEnsureNativeConn:
     """T004: colbert _ensure_native_conn() must call get_iris_connection(), not intersystems_iris."""
@@ -184,16 +194,19 @@ class TestColbertEnsureNativeConn:
 # T005 — hybrid_graphrag connection path must call get_iris_connection
 # ---------------------------------------------------------------------------
 
+
 class TestHybridGraphRAGConnection:
     """T005: hybrid_graphrag must use get_iris_connection(), not inline hasattr fan-out."""
 
     def test_no_hasattr_iris_fanout_in_hybrid_graphrag(self):
         """hybrid_graphrag.py must not contain the 3-way hasattr fan-out."""
         content = _read("iris_vector_rag/pipelines/hybrid_graphrag.py")
-        assert 'hasattr(_iris_mod, "createConnection")' not in content, \
-            "hybrid_graphrag must not contain inline hasattr createConnection fan-out"
-        assert 'hasattr(_iris_mod, "dbapi")' not in content, \
-            "hybrid_graphrag must not contain inline hasattr dbapi fan-out"
+        assert (
+            'hasattr(_iris_mod, "createConnection")' not in content
+        ), "hybrid_graphrag must not contain inline hasattr createConnection fan-out"
+        assert (
+            'hasattr(_iris_mod, "dbapi")' not in content
+        ), "hybrid_graphrag must not contain inline hasattr dbapi fan-out"
 
     def test_no_intersystems_iris_createconnection_in_colbert(self):
         """colbert files must not call intersystems_iris.createConnection directly."""
@@ -202,5 +215,6 @@ class TestHybridGraphRAGConnection:
             "iris_vector_rag/pipelines/colbert_iris/vecindex_phase2.py",
         ]:
             content = _read(rel)
-            assert "intersystems_iris.createConnection" not in content, \
-                f"{rel} must not call intersystems_iris.createConnection directly"
+            assert (
+                "intersystems_iris.createConnection" not in content
+            ), f"{rel} must not call intersystems_iris.createConnection directly"

@@ -123,7 +123,9 @@ class TestCoreFrameworkDocumentLifecycle:
         # Step 3: Test document retrieval by ID
         logger.info("Step 3: Testing document retrieval by ID")
 
-        retrieved_documents = fresh_iris_vector_store.fetch_documents_by_ids(document_ids)
+        retrieved_documents = fresh_iris_vector_store.fetch_documents_by_ids(
+            document_ids
+        )
 
         assert len(retrieved_documents) == len(
             document_ids
@@ -512,7 +514,9 @@ class TestCoreFrameworkErrorHandling:
         result_ids = fresh_iris_vector_store.add_documents([invalid_doc])
 
         # Should return the document ID even for empty content (graceful handling)
-        assert len(result_ids) >= 0, "Vector store should handle empty documents gracefully"
+        assert (
+            len(result_ids) >= 0
+        ), "Vector store should handle empty documents gracefully"
 
         # Test None content document - Document model should handle this
         # If page_content is None, it's converted to empty string by pydantic
@@ -520,7 +524,9 @@ class TestCoreFrameworkErrorHandling:
             id="test_invalid_none", page_content=None or "", metadata={}
         )
         result_ids2 = fresh_iris_vector_store.add_documents([invalid_doc2])
-        assert len(result_ids2) >= 0, "Vector store should handle None content gracefully"
+        assert (
+            len(result_ids2) >= 0
+        ), "Vector store should handle None content gracefully"
 
         logger.info("=== INVALID DOCUMENT HANDLING E2E TEST COMPLETED ===")
 

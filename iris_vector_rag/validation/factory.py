@@ -6,7 +6,7 @@ before creating pipeline instances.
 """
 
 import logging
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
 
 from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
@@ -159,7 +159,10 @@ class ValidatedPipelineFactory:
         elif pipeline_type == "graphrag":
             return HybridGraphRAGPipeline(**pipeline_kwargs)
         elif pipeline_type == "pylate_colbert":
-            from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+            from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
+                PyLateColBERTPipeline,
+            )
+
             return PyLateColBERTPipeline(**pipeline_kwargs)
         else:
             available_types = [
@@ -362,10 +365,11 @@ class ValidatedPipelineFactory:
 # Convenience function for backward compatibility
 def create_validated_pipeline(
     pipeline_type: str,
-    connection_manager: ConnectionManager,
-    config_manager: ConfigurationManager,
+    connection_manager: Optional[ConnectionManager] = None,
+    config_manager: Optional[ConfigurationManager] = None,
     llm_func: Optional[Callable[[str], str]] = None,
     auto_setup: bool = False,
+    engine: Optional[Any] = None,
     **kwargs,
 ) -> RAGPipeline:
     """
@@ -373,15 +377,31 @@ def create_validated_pipeline(
 
     Args:
         pipeline_type: Type of pipeline to create
-        connection_manager: Database connection manager
-        config_manager: Configuration manager
+        connection_manager: Database connection manager. If engine is provided, this is ignored.
+        config_manager: Configuration manager. If engine is provided, this is ignored.
         llm_func: Optional LLM function
         auto_setup: Whether to automatically set up missing requirements
+        engine: Optional IRISVectorEngine instance. If provided, connection_manager and
+            config_manager are extracted from it.
         **kwargs: Additional pipeline arguments
 
     Returns:
         Validated pipeline instance
+
+    Raises:
+        ValueError: If neither engine nor (connection_manager and config_manager) are provided.
     """
+    # Extract managers from engine if provided
+    if engine is not None:
+        connection_manager = engine.connection_manager
+        config_manager = engine.config_manager
+
+    # Validate that we have both managers
+    if connection_manager is None or config_manager is None:
+        raise ValueError(
+            "Either engine must be provided, or both connection_manager and config_manager must be provided"
+        )
+
     factory = ValidatedPipelineFactory(connection_manager, config_manager)
     return factory.create_pipeline(
         pipeline_type=pipeline_type, llm_func=llm_func, auto_setup=auto_setup, **kwargs

@@ -32,8 +32,9 @@ class TestTokenCounter:
 
         # Token counts may differ slightly between models
         # but should be in same ballpark
-        assert abs(gpt35_tokens - gpt4_tokens) < 5, \
-            "Token counts should be similar across models"
+        assert (
+            abs(gpt35_tokens - gpt4_tokens) < 5
+        ), "Token counts should be similar across models"
 
     def test_edge_case_none_input(self):
         """Validate None input raises ValueError."""
@@ -77,8 +78,9 @@ class TestTokenCounter:
         tokens = estimate_tokens(long_text)
 
         # Should be in reasonable range
-        assert 9000 <= tokens <= 11000, \
-            f"Long text estimation (expected ~10K, got {tokens})"
+        assert (
+            9000 <= tokens <= 11000
+        ), f"Long text estimation (expected ~10K, got {tokens})"
 
     def test_token_count_consistency(self):
         """Validate same text always returns same token count."""
@@ -88,8 +90,7 @@ class TestTokenCounter:
         count2 = estimate_tokens(text)
         count3 = estimate_tokens(text)
 
-        assert count1 == count2 == count3, \
-            "Token count should be deterministic"
+        assert count1 == count2 == count3, "Token count should be deterministic"
 
     def test_known_token_counts(self):
         """Validate against known token counts for specific texts."""
@@ -102,8 +103,9 @@ class TestTokenCounter:
         for text, expected in test_cases:
             actual = estimate_tokens(text)
             # Allow ±1 token tolerance
-            assert abs(actual - expected) <= 1, \
-                f"Token count for '{text}' (expected ~{expected}, got {actual})"
+            assert (
+                abs(actual - expected) <= 1
+            ), f"Token count for '{text}' (expected ~{expected}, got {actual})"
 
     def test_default_model_parameter(self):
         """Validate default model is gpt-3.5-turbo."""
@@ -115,8 +117,9 @@ class TestTokenCounter:
         # Call with explicit gpt-3.5-turbo
         explicit_tokens = estimate_tokens(text, model="gpt-3.5-turbo")
 
-        assert default_tokens == explicit_tokens, \
-            "Default model should be gpt-3.5-turbo"
+        assert (
+            default_tokens == explicit_tokens
+        ), "Default model should be gpt-3.5-turbo"
 
     def test_unsupported_model_raises_error(self):
         """Validate unsupported model raises ValueError."""
@@ -135,8 +138,9 @@ class TestTokenCounter:
         elapsed = time.time() - start
 
         # Should be very fast (< 100ms for 100 iterations)
-        assert elapsed < 0.1, \
-            f"Token estimation should be fast (got {elapsed*1000:.1f}ms for 100 iterations)"
+        assert (
+            elapsed < 0.1
+        ), f"Token estimation should be fast (got {elapsed*1000:.1f}ms for 100 iterations)"
 
     def test_text_with_numbers(self):
         """Validate text with numbers is counted correctly."""

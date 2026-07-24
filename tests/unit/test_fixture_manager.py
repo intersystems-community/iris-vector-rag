@@ -28,6 +28,7 @@ def temp_fixtures_dir():
 def fixture_manager(temp_fixtures_dir):
     """Create FixtureManager instance with temporary directory."""
     from tests.fixtures.manager import FixtureManager
+
     return FixtureManager(fixtures_root=temp_fixtures_dir)
 
 
@@ -63,7 +64,9 @@ class TestFixtureManagerInit:
         """FixtureManager accepts custom backend mode."""
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager(fixtures_root=temp_fixtures_dir, backend_mode="enterprise")
+        manager = FixtureManager(
+            fixtures_root=temp_fixtures_dir, backend_mode="enterprise"
+        )
 
         assert manager.backend_mode == "enterprise"
 
@@ -129,6 +132,7 @@ class TestScanFixtures:
         fixture_dir.mkdir(parents=True, exist_ok=True)
 
         from tests.fixtures.models import FixtureMetadata
+
         metadata = FixtureMetadata(
             name="new-fixture",
             version="1.0.0",
@@ -225,7 +229,9 @@ class TestGetFixture:
 class TestListFixtures:
     """Unit tests for list_fixtures method."""
 
-    def test_returns_all_fixtures_without_filter(self, fixture_manager, temp_fixtures_dir):
+    def test_returns_all_fixtures_without_filter(
+        self, fixture_manager, temp_fixtures_dir
+    ):
         """list_fixtures returns all fixtures when no filter provided."""
         from tests.fixtures.models import FixtureMetadata
 
@@ -326,7 +332,9 @@ class TestComputeChecksum:
 
         assert checksum1 == checksum2
 
-    def test_different_content_produces_different_checksum(self, fixture_manager, temp_fixtures_dir):
+    def test_different_content_produces_different_checksum(
+        self, fixture_manager, temp_fixtures_dir
+    ):
         """_compute_checksum produces different checksums for different content."""
         # Create two test files with different content
         file1 = temp_fixtures_dir / "test1.txt"

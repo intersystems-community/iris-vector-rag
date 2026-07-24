@@ -57,7 +57,7 @@ def format_vector_search_sql(
     id_column: str = "doc_id",
     content_column: Optional[str] = "text_content",
     additional_where: Optional[str] = None,
-    vector_data_type: str = "FLOAT"
+    vector_data_type: str = "FLOAT",
 ) -> str:
     """Constructs a SQL query for vector search (deprecated - use build_safe_vector_dot_sql)."""
     if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$", table_name):
@@ -125,7 +125,7 @@ def format_vector_search_sql_with_params(
     id_column: str = "doc_id",
     content_column: str = "text_content",
     additional_where: Optional[str] = None,
-    vector_data_type: str = "FLOAT"
+    vector_data_type: str = "FLOAT",
 ) -> str:
     """Constructs a SQL query for vector search with parameters (deprecated)."""
     if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$", table_name):
@@ -205,7 +205,7 @@ def build_safe_vector_dot_sql(
     extra_columns: Optional[List[str]] = None,
     top_k: int = 5,
     additional_where: Optional[str] = None,
-    vector_data_type: str = "FLOAT"
+    vector_data_type: str = "FLOAT",
 ) -> str:
     """
     Build safe vector search SQL with embedded vector string.
@@ -234,8 +234,10 @@ def build_safe_vector_dot_sql(
     select_parts = [f"SELECT TOP {top_k} {id_column}"]
     if extra_columns:
         select_parts.extend([f", {col}" for col in extra_columns])
-    
-    select_parts.append(f", VECTOR_DOT_PRODUCT({vector_column}, TO_VECTOR('{vector_string}', {vector_data_type}, {vector_dimension})) AS score")
+
+    select_parts.append(
+        f", VECTOR_DOT_PRODUCT({vector_column}, TO_VECTOR('{vector_string}', {vector_data_type}, {vector_dimension})) AS score"
+    )
 
     from_clause = f" FROM {table}"
 
@@ -249,9 +251,7 @@ def build_safe_vector_dot_sql(
     return sql
 
 
-def execute_safe_vector_search(
-    cursor, sql: str
-) -> List[Tuple]:
+def execute_safe_vector_search(cursor, sql: str) -> List[Tuple]:
     """Execute safe vector search with embedded vector string."""
     cursor.execute(sql)
     return cursor.fetchall()

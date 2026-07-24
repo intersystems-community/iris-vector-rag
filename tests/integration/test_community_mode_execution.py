@@ -20,7 +20,10 @@ from iris_vector_rag.testing.backend_manager import (
     BackendMode,
     load_configuration,
 )
-from iris_vector_rag.testing.connection_pool import ConnectionPool, ConnectionPoolTimeout
+from iris_vector_rag.testing.connection_pool import (
+    ConnectionPool,
+    ConnectionPoolTimeout,
+)
 
 
 @pytest.mark.integration
@@ -64,7 +67,9 @@ class TestCommunityModeExecution:
 
         # At least 95% should succeed
         success_rate = success_count / 10
-        assert success_rate >= 0.95, f"Only {success_count}/10 succeeded. Errors: {errors}"
+        assert (
+            success_rate >= 0.95
+        ), f"Only {success_count}/10 succeeded. Errors: {errors}"
 
     def test_community_mode_blocks_parallel_execution(self, community_pool):
         """
@@ -100,7 +105,9 @@ class TestCommunityModeExecution:
         # Exactly 1 should succeed at a time, others should timeout
         # With proper timing, we expect ~2-3 successes and 2-3 timeouts
         assert acquired_count >= 1, "At least 1 connection should succeed"
-        assert timeout_count >= 1, "At least 1 connection should timeout (limit enforced)"
+        assert (
+            timeout_count >= 1
+        ), "At least 1 connection should timeout (limit enforced)"
         assert len(errors) == 0, f"Unexpected errors: {errors}"
 
     def test_community_mode_connection_reuse(self, community_pool):
@@ -170,4 +177,6 @@ class TestCommunityModeStressTest:
 
         # Expect near 100% success
         success_rate = success_count / 100
-        assert success_rate >= 0.95, f"Only {success_count}/100 succeeded. Errors: {errors[:5]}"
+        assert (
+            success_rate >= 0.95
+        ), f"Only {success_count}/100 succeeded. Errors: {errors[:5]}"

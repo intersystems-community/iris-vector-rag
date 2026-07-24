@@ -25,29 +25,25 @@ class TestMCPRESTConsistency:
         # MCP query
         bridge = MCPBridge()
         mcp_result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes mellitus?',
-            params={'top_k': 5}
+            technique="basic", query="What is diabetes mellitus?", params={"top_k": 5}
         )
 
         # REST API query (direct pipeline call)
         pipeline = BasicRAGPipeline()
-        rest_result = pipeline.query(
-            query='What is diabetes mellitus?',
-            top_k=5
-        )
+        rest_result = pipeline.query(query="What is diabetes mellitus?", top_k=5)
 
         # Verify both succeeded
-        assert mcp_result['success'] is True
-        mcp_response = mcp_result['result']
+        assert mcp_result["success"] is True
+        mcp_response = mcp_result["result"]
 
         # Compare responses (excluding timestamps and request IDs)
-        assert 'answer' in mcp_response
-        assert 'answer' in rest_result
+        assert "answer" in mcp_response
+        assert "answer" in rest_result
 
         # Document counts should match
-        assert len(mcp_response['retrieved_documents']) == \
-               len(rest_result.get('retrieved_documents', rest_result.get('documents', [])))
+        assert len(mcp_response["retrieved_documents"]) == len(
+            rest_result.get("retrieved_documents", rest_result.get("documents", []))
+        )
 
         # Response structure should be identical
         set(mcp_response.keys())
@@ -65,24 +61,21 @@ class TestMCPRESTConsistency:
         # MCP query
         bridge = MCPBridge()
         mcp_result = await bridge.invoke_technique(
-            technique='crag',
-            query='What are diabetes symptoms?',
-            params={'top_k': 3, 'confidence_threshold': 0.8}
+            technique="crag",
+            query="What are diabetes symptoms?",
+            params={"top_k": 3, "confidence_threshold": 0.8},
         )
 
         # REST API query
         pipeline = CRAGPipeline()
-        rest_result = pipeline.query(
-            query='What are diabetes symptoms?',
-            top_k=3
-        )
+        rest_result = pipeline.query(query="What are diabetes symptoms?", top_k=3)
 
         # Verify both succeeded
-        assert mcp_result['success'] is True
+        assert mcp_result["success"] is True
 
         # Both should have answer
-        assert 'answer' in mcp_result['result']
-        assert 'answer' in rest_result
+        assert "answer" in mcp_result["result"]
+        assert "answer" in rest_result
 
     @pytest.mark.asyncio
     async def test_performance_metrics_consistency(self):
@@ -91,21 +84,23 @@ class TestMCPRESTConsistency:
 
         bridge = MCPBridge()
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'top_k': 3}
+            technique="basic", query="What is diabetes?", params={"top_k": 3}
         )
 
-        assert result['success'] is True
-        response = result['result']
+        assert result["success"] is True
+        response = result["result"]
 
         # Verify performance metrics exist
-        assert 'performance' in response
-        metrics = response['performance']
+        assert "performance" in response
+        metrics = response["performance"]
 
         # Standard performance fields
-        expected_fields = ['execution_time_ms', 'retrieval_time_ms',
-                          'generation_time_ms', 'tokens_used']
+        expected_fields = [
+            "execution_time_ms",
+            "retrieval_time_ms",
+            "generation_time_ms",
+            "tokens_used",
+        ]
         for field in expected_fields:
             assert field in metrics, f"Missing performance field: {field}"
 
@@ -118,12 +113,10 @@ class TestMCPRESTConsistency:
 
         # Execute query
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'top_k': 3}
+            technique="basic", query="What is diabetes?", params={"top_k": 3}
         )
 
-        assert result['success'] is True
+        assert result["success"] is True
 
         # This test validates implementation reuses PipelineManager.get_instance()
         # (actual validation done in contract tests)
@@ -135,16 +128,14 @@ class TestMCPRESTConsistency:
 
         bridge = MCPBridge()
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={}
+            technique="basic", query="What is diabetes?", params={}
         )
 
-        assert result['success'] is True
-        metadata = result['result']['metadata']
+        assert result["success"] is True
+        metadata = result["result"]["metadata"]
 
         # Metadata should include pipeline name
-        assert 'pipeline_name' in metadata or 'technique' in metadata
+        assert "pipeline_name" in metadata or "technique" in metadata
 
     @pytest.mark.asyncio
     async def test_error_format_consistency(self):
@@ -155,12 +146,10 @@ class TestMCPRESTConsistency:
 
         # Trigger error with invalid parameter
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='test',
-            params={'top_k': 1000}  # exceeds max
+            technique="basic", query="test", params={"top_k": 1000}  # exceeds max
         )
 
-        assert result['success'] is False
-        assert 'error' in result
-        assert isinstance(result['error'], str)
-        assert len(result['error']) > 0
+        assert result["success"] is False
+        assert "error" in result
+        assert isinstance(result["error"], str)
+        assert len(result["error"]) > 0

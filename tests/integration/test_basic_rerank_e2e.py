@@ -27,7 +27,7 @@ class TestBasicRerankRAGIntegration:
         """
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         documents = docs_data["documents"]
@@ -35,8 +35,7 @@ class TestBasicRerankRAGIntegration:
         # Execute load_documents
         load_result = basic_rerank_pipeline.load_documents(documents)
 
-        assert load_result["documents_loaded"] > 0, \
-            "Should successfully load documents"
+        assert load_result["documents_loaded"] > 0, "Should successfully load documents"
 
         # Execute query
         query = "What are the symptoms of diabetes?"
@@ -57,7 +56,7 @@ class TestBasicRerankRAGIntegration:
         Then: Documents embedded and stored
         """
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         documents = docs_data["documents"]
@@ -78,7 +77,7 @@ class TestBasicRerankRAGIntegration:
         Then: Response includes quality metrics
         """
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         basic_rerank_pipeline.load_documents(docs_data["documents"])
@@ -100,7 +99,7 @@ class TestBasicRerankRAGIntegration:
         Then: Reranking metadata MAY be present
         """
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         basic_rerank_pipeline.load_documents(docs_data["documents"])
@@ -128,8 +127,9 @@ class TestBasicRerankRAGIntegration:
                 scores = [ctx.get("score", 0) for ctx in contexts if "score" in ctx]
                 if scores:
                     # Verify descending order (reranked)
-                    assert scores == sorted(scores, reverse=True), \
-                        "Contexts should be ordered by descending rerank score"
+                    assert scores == sorted(
+                        scores, reverse=True
+                    ), "Contexts should be ordered by descending rerank score"
 
     def test_multiple_queries_maintain_consistency(self, basic_rerank_pipeline):
         """
@@ -140,7 +140,7 @@ class TestBasicRerankRAGIntegration:
         Then: All queries succeed with consistent structure
         """
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         basic_rerank_pipeline.load_documents(docs_data["documents"])
@@ -148,7 +148,7 @@ class TestBasicRerankRAGIntegration:
         queries = [
             "What are diabetes symptoms?",
             "How is diabetes diagnosed?",
-            "What are diabetes risk factors?"
+            "What are diabetes risk factors?",
         ]
 
         for query in queries:

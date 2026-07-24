@@ -89,8 +89,7 @@ class CoverageTracker:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS coverage_reports (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 module_name TEXT NOT NULL,
@@ -101,13 +100,14 @@ class CoverageTracker:
                 is_critical INTEGER NOT NULL,
                 missing_lines TEXT
             )
-        """
-        )
+        """)
 
         conn.commit()
         conn.close()
 
-    def parse_coverage_file(self, coverage_file: Path = Path(".coverage")) -> CoverageSummary:
+    def parse_coverage_file(
+        self, coverage_file: Path = Path(".coverage")
+    ) -> CoverageSummary:
         """Parse .coverage file and create CoverageReport entities.
 
         Args:
@@ -171,7 +171,9 @@ class CoverageTracker:
             total_statements = sum(r.total_lines for r in module_reports)
             total_covered = sum(r.covered_lines for r in module_reports)
             summary.overall_percentage = (
-                (total_covered / total_statements * 100) if total_statements > 0 else 0.0
+                (total_covered / total_statements * 100)
+                if total_statements > 0
+                else 0.0
             )
             summary.total_modules = len(module_reports)
 

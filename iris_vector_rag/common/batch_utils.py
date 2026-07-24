@@ -21,7 +21,6 @@ from iris_vector_rag.core.models import (
     ProcessingMetrics,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -63,7 +62,9 @@ class BatchQueue:
 
         self._queue.append((document, token_count))
 
-    def get_next_batch(self, token_budget: Optional[int] = None) -> Optional[List[Document]]:
+    def get_next_batch(
+        self, token_budget: Optional[int] = None
+    ) -> Optional[List[Document]]:
         """
         Get next batch of documents within token budget.
 
@@ -209,9 +210,11 @@ def extract_batch_with_retry(
                     processing_time=result1.processing_time + result2.processing_time,
                     success_status=result1.success_status and result2.success_status,
                     retry_count=retry_count + result1.retry_count + result2.retry_count,
-                    error_message=None
-                    if (result1.success_status and result2.success_status)
-                    else f"Sub-batch errors: {result1.error_message}; {result2.error_message}",
+                    error_message=(
+                        None
+                        if (result1.success_status and result2.success_status)
+                        else f"Sub-batch errors: {result1.error_message}; {result2.error_message}"
+                    ),
                 )
 
                 return merged_result

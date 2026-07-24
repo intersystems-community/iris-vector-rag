@@ -12,6 +12,7 @@ import pytest
 try:
     from iris_vector_rag.embeddings.entity_extractor import extract_entities_batch
     from iris_vector_rag.config.embedding_config import EmbeddingConfig
+
     IMPLEMENTATION_EXISTS = True
 except ImportError:
     IMPLEMENTATION_EXISTS = False
@@ -19,7 +20,7 @@ except ImportError:
 
 pytestmark = pytest.mark.skipif(
     not IMPLEMENTATION_EXISTS,
-    reason="Implementation not yet available (TDD - tests first)"
+    reason="Implementation not yet available (TDD - tests first)",
 )
 
 
@@ -31,7 +32,7 @@ class TestEntityExtractionBatch:
         texts = [
             "Patient presents with type 2 diabetes and elevated blood glucose.",
             "Insulin therapy recommended for glucose control.",
-            "Metformin prescribed for diabetes management."
+            "Metformin prescribed for diabetes management.",
         ]
         config = EmbeddingConfig(
             name="test_medical",
@@ -41,7 +42,7 @@ class TestEntityExtractionBatch:
             embedding_class="%Embedding.SentenceTransformers",
             enable_entity_extraction=True,
             entity_types=["Disease", "Symptom", "Medication"],
-            batch_size=32
+            batch_size=32,
         )
 
         result = extract_entities_batch(texts, config)
@@ -61,13 +62,16 @@ class TestEntityExtractionBatch:
             python_path="/usr/bin/python3",
             embedding_class="%Embedding.SentenceTransformers",
             enable_entity_extraction=False,
-            batch_size=32
+            batch_size=32,
         )
 
         with pytest.raises(ValueError) as exc_info:
             extract_entities_batch(texts, config)
 
-        assert "ENTITY_EXTRACTION_DISABLED" in str(exc_info.value) or "disabled" in str(exc_info.value).lower()
+        assert (
+            "ENTITY_EXTRACTION_DISABLED" in str(exc_info.value)
+            or "disabled" in str(exc_info.value).lower()
+        )
 
 
 # TDD Status Check

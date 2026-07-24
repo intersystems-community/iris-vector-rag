@@ -17,8 +17,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from iris_vector_rag.api.models.auth import ApiKey, Permission
-from iris_vector_rag.api.models.errors import ErrorResponse, ErrorType, ErrorInfo, ErrorDetails
-
+from iris_vector_rag.api.models.errors import (
+    ErrorResponse,
+    ErrorType,
+    ErrorInfo,
+    ErrorDetails,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,13 +60,13 @@ class ApiKeyAuth:
         """
         try:
             # Decode base64
-            decoded = base64.b64decode(credentials).decode('utf-8')
+            decoded = base64.b64decode(credentials).decode("utf-8")
 
             # Split on first colon
-            if ':' not in decoded:
+            if ":" not in decoded:
                 raise ValueError("Missing colon separator")
 
-            key_id, key_secret = decoded.split(':', 1)
+            key_id, key_secret = decoded.split(":", 1)
 
             # Validate UUID format
             try:
@@ -82,9 +86,9 @@ class ApiKeyAuth:
                         reason="Malformed API key credentials",
                         details=ErrorDetails(
                             message="API key must be base64-encoded 'id:secret' format"
-                        )
+                        ),
                     )
-                ).model_dump()
+                ).model_dump(),
             )
 
     def verify_api_key(self, key_id: str, key_secret: str) -> ApiKey:
@@ -127,10 +131,10 @@ class ApiKeyAuth:
                             reason="Invalid API key",
                             details=ErrorDetails(
                                 message="API key not found or has been revoked",
-                                key_id=key_id
-                            )
+                                key_id=key_id,
+                            ),
                         )
-                    ).model_dump()
+                    ).model_dump(),
                 )
 
             # Parse row into ApiKey object
@@ -138,7 +142,7 @@ class ApiKeyAuth:
                 key_id=UUID(row[0]),
                 key_secret_hash=row[1],
                 name=row[2],
-                permissions=[Permission(p) for p in row[3].split(',')],
+                permissions=[Permission(p) for p in row[3].split(",")],
                 rate_limit_tier=row[4],
                 requests_per_minute=row[5],
                 requests_per_hour=row[6],
@@ -146,7 +150,7 @@ class ApiKeyAuth:
                 expires_at=row[8],
                 is_active=row[9],
                 owner_email=row[10],
-                description=row[11]
+                description=row[11],
             )
 
             # Check if key is active (FR-011)
@@ -160,10 +164,10 @@ class ApiKeyAuth:
                             reason="API key is inactive",
                             details=ErrorDetails(
                                 message="This API key has been deactivated",
-                                key_id=key_id
-                            )
+                                key_id=key_id,
+                            ),
                         )
-                    ).model_dump()
+                    ).model_dump(),
                 )
 
             # Check if key is expired (FR-011)
@@ -178,15 +182,16 @@ class ApiKeyAuth:
                             details=ErrorDetails(
                                 message="This API key expired and must be renewed",
                                 key_id=key_id,
-                                expired_at=api_key.expires_at.isoformat()
-                            )
+                                expired_at=api_key.expires_at.isoformat(),
+                            ),
                         )
-                    ).model_dump()
+                    ).model_dump(),
                 )
 
             # Verify secret with bcrypt (FR-010)
-            if not bcrypt.checkpw(key_secret.encode('utf-8'),
-                                 api_key.key_secret_hash.encode('utf-8')):
+            if not bcrypt.checkpw(
+                key_secret.encode("utf-8"), api_key.key_secret_hash.encode("utf-8")
+            ):
                 logger.warning(f"Invalid secret for API key: {key_id}")
                 raise HTTPException(
                     status_code=401,
@@ -195,11 +200,10 @@ class ApiKeyAuth:
                             type=ErrorType.INVALID_API_KEY,
                             reason="Invalid API key credentials",
                             details=ErrorDetails(
-                                message="API key secret does not match",
-                                key_id=key_id
-                            )
+                                message="API key secret does not match", key_id=key_id
+                            ),
                         )
-                    ).model_dump()
+                    ).model_dump(),
                 )
 
             logger.info(f"API key authenticated: {key_id} ({api_key.name})")
@@ -229,16 +233,14 @@ class ApiKeyAuth:
                         details=ErrorDetails(
                             required_permissions=[required_permission.value],
                             current_permissions=[p.value for p in api_key.permissions],
-                            message=f"This operation requires '{required_permission.value}' permission"
-                        )
+                            message=f"This operation requires '{required_permission.value}' permission",
+                        ),
                     )
-                ).model_dump()
+                ).model_dump(),
             )
 
     async def __call__(
-        self,
-        request: Request,
-        required_permission: Optional[Permission] = None
+        self, request: Request, required_permission: Optional[Permission] = None
     ) -> ApiKey:
         """
         Authenticate request and check permissions.
@@ -265,13 +267,13 @@ class ApiKeyAuth:
                         reason="Missing Authorization header",
                         details=ErrorDetails(
                             message="API requests must include 'Authorization: ApiKey <base64(id:secret)>' header"
-                        )
+                        ),
                     )
-                ).model_dump()
+                ).model_dump(),
             )
 
         # Check format: "ApiKey <credentials>"
-        parts = auth_header.split(' ', 1)
+        parts = auth_header.split(" ", 1)
         if len(parts) != 2 or parts[0] != "ApiKey":
             raise HTTPException(
                 status_code=401,
@@ -281,9 +283,9 @@ class ApiKeyAuth:
                         reason="Invalid Authorization header format",
                         details=ErrorDetails(
                             message="Authorization header must be 'ApiKey <base64(id:secret)>'"
-                        )
+                        ),
                     )
-                ).model_dump()
+                ).model_dump(),
             )
 
         # Parse and verify credentials
@@ -326,7 +328,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             "/docs/",
             "/redoc",
             "/redoc/",
-            "/openapi.json"
+            "/openapi.json",
         }
 
     async def dispatch(self, request: Request, call_next) -> Response:

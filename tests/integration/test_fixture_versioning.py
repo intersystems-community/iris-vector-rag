@@ -10,7 +10,6 @@ Reference: specs/047-create-a-unified/tasks.md (T032)
 import pytest
 from tests.fixtures.manager import FixtureManager
 
-
 # ==============================================================================
 # FIXTURES
 # ==============================================================================
@@ -43,13 +42,15 @@ class TestVersionResolution:
         # Get without version - should return latest
         latest = fixture_manager.get_fixture(fixture_name)
 
-        assert latest is not None, \
-            f"get_fixture('{fixture_name}') should return metadata"
+        assert (
+            latest is not None
+        ), f"get_fixture('{fixture_name}') should return metadata"
 
         # Version should be in semantic version format (MAJOR.MINOR.PATCH)
         assert latest.version is not None
-        assert "." in latest.version, \
-            f"Version should use semantic versioning: {latest.version}"
+        assert (
+            "." in latest.version
+        ), f"Version should use semantic versioning: {latest.version}"
 
     def test_get_fixture_returns_specific_version_when_requested(self, fixture_manager):
         """get_fixture() with version parameter returns that specific version."""
@@ -82,8 +83,9 @@ class TestVersionResolution:
         # Request non-existent version
         result = fixture_manager.get_fixture(fixture_name, version="99.99.99")
 
-        assert result is None, \
-            "get_fixture() should return None for non-existent version"
+        assert (
+            result is None
+        ), "get_fixture() should return None for non-existent version"
 
 
 class TestSemanticVersioning:
@@ -102,13 +104,15 @@ class TestSemanticVersioning:
 
             # Should have format X.Y.Z
             parts = version.split(".")
-            assert len(parts) == 3, \
-                f"Version {version} should have format MAJOR.MINOR.PATCH"
+            assert (
+                len(parts) == 3
+            ), f"Version {version} should have format MAJOR.MINOR.PATCH"
 
             # Each part should be numeric
             for part in parts:
-                assert part.isdigit(), \
-                    f"Version component '{part}' in {version} should be numeric"
+                assert (
+                    part.isdigit()
+                ), f"Version component '{part}' in {version} should be numeric"
 
     def test_version_comparison_follows_semver(self, fixture_manager):
         """Version comparison follows semantic versioning rules."""
@@ -144,7 +148,9 @@ class TestVersionCompatibility:
         # Should succeed or skip gracefully (for contract tests without DB)
         assert result.success or result.error_message is not None
 
-    def test_load_fixture_with_nonexistent_version_fails_gracefully(self, fixture_manager):
+    def test_load_fixture_with_nonexistent_version_fails_gracefully(
+        self, fixture_manager
+    ):
         """load_fixture() with non-existent version fails with clear error."""
         fixtures = fixture_manager.list_fixtures()
 
@@ -163,8 +169,10 @@ class TestVersionCompatibility:
         # Should fail with clear error message
         assert not result.success
         assert result.error_message is not None
-        assert "not found" in result.error_message.lower() or \
-               "version" in result.error_message.lower()
+        assert (
+            "not found" in result.error_message.lower()
+            or "version" in result.error_message.lower()
+        )
 
 
 class TestVersionMetadata:
@@ -180,12 +188,15 @@ class TestVersionMetadata:
 
         for fixture in fixtures:
             # Required version metadata
-            assert fixture.version is not None, \
-                f"Fixture {fixture.name} missing version"
-            assert fixture.created_at is not None, \
-                f"Fixture {fixture.name} missing created_at"
-            assert fixture.created_by is not None, \
-                f"Fixture {fixture.name} missing created_by"
+            assert (
+                fixture.version is not None
+            ), f"Fixture {fixture.name} missing version"
+            assert (
+                fixture.created_at is not None
+            ), f"Fixture {fixture.name} missing created_at"
+            assert (
+                fixture.created_by is not None
+            ), f"Fixture {fixture.name} missing created_by"
 
     def test_fixture_metadata_version_immutable(self, fixture_manager):
         """Fixture version doesn't change across scans."""
@@ -201,8 +212,7 @@ class TestVersionMetadata:
         fixtures2 = {f.name: f.version for f in fixture_manager.list_fixtures()}
 
         # Versions should be identical
-        assert fixtures1 == fixtures2, \
-            "Fixture versions should be stable across scans"
+        assert fixtures1 == fixtures2, "Fixture versions should be stable across scans"
 
 
 class TestVersionIsolation:
@@ -221,8 +231,9 @@ class TestVersionIsolation:
 
         # All fixtures should have unique checksums
         checksums = [f.checksum for f in fixtures]
-        assert len(checksums) == len(set(checksums)), \
-            "Each fixture should have unique checksum"
+        assert len(checksums) == len(
+            set(checksums)
+        ), "Each fixture should have unique checksum"
 
     def test_load_specific_version_loads_that_version_only(self, fixture_manager):
         """Loading specific version loads that version, not latest."""
@@ -243,8 +254,9 @@ class TestVersionIsolation:
 
         # Should load the requested version
         if result.success:
-            assert result.fixture_version == version, \
-                f"Should load version {version}, got {result.fixture_version}"
+            assert (
+                result.fixture_version == version
+            ), f"Should load version {version}, got {result.fixture_version}"
 
 
 class TestVersionUpgradePath:
@@ -279,8 +291,9 @@ class TestVersionUpgradePath:
 
         # Both should succeed
         if result1.success:
-            assert result2.success, \
-                "Version replacement should succeed with cleanup_first=True"
+            assert (
+                result2.success
+            ), "Version replacement should succeed with cleanup_first=True"
 
     def test_fixture_metadata_tracks_version_history(self, fixture_manager):
         """Fixture metadata can track version history (future enhancement)."""
@@ -314,10 +327,10 @@ class TestVersionErrorHandling:
         # Try various malformed versions
         malformed_versions = [
             "not-a-version",
-            "1.0",          # Missing PATCH
-            "1.0.0.0",      # Too many components
-            "",             # Empty
-            "v1.0.0",       # Prefix not expected
+            "1.0",  # Missing PATCH
+            "1.0.0.0",  # Too many components
+            "",  # Empty
+            "v1.0.0",  # Prefix not expected
         ]
 
         for bad_version in malformed_versions:

@@ -25,7 +25,6 @@ from iris_vector_rag.testing.exceptions import EditionMismatchError
 from iris_vector_rag.testing.validators import IRISEdition
 from iris_vector_rag.testing.exceptions import IrisDevtoolsMissingError
 
-
 # Default configuration file path
 DEFAULT_CONFIG_PATH = Path(".specify/config/backend_modes.yaml")
 # Default iris-devtools path (optional)
@@ -203,8 +202,6 @@ def log_session_start(config: BackendConfiguration) -> None:
         >>> log_session_start(config)
         # Logs: "Backend mode: community (source: environment)"
     """
-    logger.info(
-        f"Backend mode: {config.mode.value} (source: {config.source.value})"
-    )
+    logger.info(f"Backend mode: {config.mode.value} (source: {config.source.value})")
     logger.info(f"Max connections: {config.max_connections}")
     logger.info(f"Execution strategy: {config.execution_strategy.value}")

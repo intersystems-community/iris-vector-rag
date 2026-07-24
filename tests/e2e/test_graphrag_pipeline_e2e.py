@@ -13,7 +13,10 @@ import pytest
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
-from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline, KnowledgeGraphNotPopulatedException
+from iris_vector_rag.pipelines.graphrag import (
+    GraphRAGPipeline,
+    KnowledgeGraphNotPopulatedException,
+)
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from iris_vector_rag.common.utils import get_llm_func
 
@@ -151,7 +154,9 @@ class TestGraphRAGPipelineTableSetup:
 class TestGraphRAGPipelineDocumentLoading:
     """Test document loading with entity extraction."""
 
-    def test_load_documents_extracts_entities(self, graphrag_pipeline, entity_rich_documents):
+    def test_load_documents_extracts_entities(
+        self, graphrag_pipeline, entity_rich_documents
+    ):
         """Test that loading documents extracts entities."""
         graphrag_pipeline.load_documents("", documents=entity_rich_documents)
 
@@ -160,13 +165,17 @@ class TestGraphRAGPipelineDocumentLoading:
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT COUNT(*) FROM RAG.Entities WHERE source_doc_id LIKE 'graphrag_ent%'")
+            cursor.execute(
+                "SELECT COUNT(*) FROM RAG.Entities WHERE source_doc_id LIKE 'graphrag_ent%'"
+            )
             count = cursor.fetchone()[0]
             assert count > 0
         finally:
             cursor.close()
 
-    def test_load_documents_extracts_relationships(self, graphrag_pipeline, relationship_documents):
+    def test_load_documents_extracts_relationships(
+        self, graphrag_pipeline, relationship_documents
+    ):
         """Test that loading documents extracts relationships."""
         graphrag_pipeline.load_documents("", documents=relationship_documents)
 
@@ -195,7 +204,9 @@ class TestGraphRAGPipelineDocumentLoading:
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT COUNT(*) FROM RAG.Entities WHERE source_doc_id = 'graphrag_single1'")
+            cursor.execute(
+                "SELECT COUNT(*) FROM RAG.Entities WHERE source_doc_id = 'graphrag_single1'"
+            )
             count = cursor.fetchone()[0]
             # Should have extracted some entities
             assert count >= 0
@@ -222,7 +233,9 @@ class TestGraphRAGPipelineEntityExtraction:
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT entity_name FROM RAG.Entities WHERE source_doc_id = 'graphrag_extract1'")
+            cursor.execute(
+                "SELECT entity_name FROM RAG.Entities WHERE source_doc_id = 'graphrag_extract1'"
+            )
             entities = cursor.fetchall()
             # Should have extracted some entities
             assert len(entities) >= 0
@@ -244,14 +257,18 @@ class TestGraphRAGPipelineEntityExtraction:
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT entity_type FROM RAG.Entities WHERE source_doc_id = 'graphrag_types1'")
+            cursor.execute(
+                "SELECT entity_type FROM RAG.Entities WHERE source_doc_id = 'graphrag_types1'"
+            )
             types = cursor.fetchall()
             # May have entity types
             assert len(types) >= 0
         finally:
             cursor.close()
 
-    def test_multiple_documents_entity_extraction(self, graphrag_pipeline, entity_rich_documents):
+    def test_multiple_documents_entity_extraction(
+        self, graphrag_pipeline, entity_rich_documents
+    ):
         """Test entity extraction from multiple documents."""
         graphrag_pipeline.load_documents("", documents=entity_rich_documents)
 
@@ -259,7 +276,9 @@ class TestGraphRAGPipelineEntityExtraction:
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT DISTINCT source_doc_id FROM RAG.Entities WHERE source_doc_id LIKE 'graphrag_ent%'")
+            cursor.execute(
+                "SELECT DISTINCT source_doc_id FROM RAG.Entities WHERE source_doc_id LIKE 'graphrag_ent%'"
+            )
             docs = cursor.fetchall()
             # Should have entities from multiple documents
             assert len(docs) >= 0
@@ -307,7 +326,9 @@ class TestGraphRAGPipelineRelationshipStorage:
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT COUNT(*) FROM RAG.EntityRelationships WHERE source_entity_id IS NOT NULL")
+            cursor.execute(
+                "SELECT COUNT(*) FROM RAG.EntityRelationships WHERE source_entity_id IS NOT NULL"
+            )
             count = cursor.fetchone()[0]
             assert count >= 0
         finally:
@@ -324,7 +345,9 @@ class TestGraphRAGPipelineQuerying:
 
     def test_simple_graph_query(self, graphrag_pipeline):
         """Test a simple query using knowledge graph."""
-        result = graphrag_pipeline.query("Python programming", top_k=3, generate_answer=False)
+        result = graphrag_pipeline.query(
+            "Python programming", top_k=3, generate_answer=False
+        )
 
         assert result is not None
         assert "contexts" in result
@@ -333,7 +356,9 @@ class TestGraphRAGPipelineQuerying:
 
     def test_query_with_entity_matching(self, graphrag_pipeline):
         """Test query that matches known entities."""
-        result = graphrag_pipeline.query("What is Python?", top_k=2, generate_answer=False)
+        result = graphrag_pipeline.query(
+            "What is Python?", top_k=2, generate_answer=False
+        )
 
         assert len(result["contexts"]) > 0
         metadata = result["metadata"]
@@ -341,7 +366,9 @@ class TestGraphRAGPipelineQuerying:
 
     def test_query_with_answer_generation(self, graphrag_pipeline):
         """Test query with LLM answer generation."""
-        result = graphrag_pipeline.query("What is TensorFlow?", top_k=2, generate_answer=True)
+        result = graphrag_pipeline.query(
+            "What is TensorFlow?", top_k=2, generate_answer=True
+        )
 
         assert "answer" in result
         assert len(result["answer"]) > 0
@@ -364,7 +391,9 @@ class TestGraphRAGPipelineGraphTraversal:
 
     def test_multi_hop_traversal(self, graphrag_pipeline):
         """Test multi-hop graph traversal."""
-        result = graphrag_pipeline.query("physicist discoveries", top_k=3, generate_answer=False)
+        result = graphrag_pipeline.query(
+            "physicist discoveries", top_k=3, generate_answer=False
+        )
 
         # Should traverse multiple hops in the graph
         assert result is not None
@@ -413,7 +442,9 @@ class TestGraphRAGPipelineValidation:
             # Expected if graph is truly empty
             pass
 
-    def test_validation_with_populated_graph(self, graphrag_pipeline, entity_rich_documents):
+    def test_validation_with_populated_graph(
+        self, graphrag_pipeline, entity_rich_documents
+    ):
         """Test validation when graph is populated."""
         graphrag_pipeline.load_documents("", documents=entity_rich_documents)
 
@@ -438,7 +469,9 @@ class TestGraphRAGPipelineSeedEntityFinding:
 
     def test_seed_entities_relevance(self, graphrag_pipeline):
         """Test that seed entities are relevant to query."""
-        seed_entities = graphrag_pipeline._find_seed_entities("TensorFlow machine learning")
+        seed_entities = graphrag_pipeline._find_seed_entities(
+            "TensorFlow machine learning"
+        )
 
         # Seed entities should be related to the query
         assert isinstance(seed_entities, list)
@@ -471,7 +504,9 @@ class TestGraphRAGPipelineDocumentRetrieval:
 
     def test_document_retrieval_metadata(self, graphrag_pipeline):
         """Test metadata in retrieved documents."""
-        result = graphrag_pipeline.query("web framework", top_k=2, generate_answer=False)
+        result = graphrag_pipeline.query(
+            "web framework", top_k=2, generate_answer=False
+        )
 
         # Check metadata
         assert "metadata" in result
@@ -492,7 +527,9 @@ class TestGraphRAGPipelineFallback:
         ]
         graphrag_pipeline.load_documents("", documents=docs)
 
-        result = graphrag_pipeline.query("generic content", top_k=2, generate_answer=False)
+        result = graphrag_pipeline.query(
+            "generic content", top_k=2, generate_answer=False
+        )
 
         # Should fallback to vector search and return results
         assert result is not None
@@ -555,7 +592,9 @@ class TestGraphRAGPipelineIntegration:
         ]
         graphrag_pipeline.load_documents("", documents=docs)
 
-        result = graphrag_pipeline.query("Who founded Google?", top_k=2, generate_answer=True)
+        result = graphrag_pipeline.query(
+            "Who founded Google?", top_k=2, generate_answer=True
+        )
 
         assert "answer" in result
         assert "contexts" in result
@@ -573,10 +612,14 @@ class TestGraphRAGPipelineIntegration:
 
         graphrag_pipeline.load_documents("", documents=docs)
 
-        result = graphrag_pipeline.query("Entity property", top_k=5, generate_answer=False)
+        result = graphrag_pipeline.query(
+            "Entity property", top_k=5, generate_answer=False
+        )
         assert len(result["contexts"]) > 0
 
-    def test_sequential_queries_on_graph(self, graphrag_pipeline, entity_rich_documents):
+    def test_sequential_queries_on_graph(
+        self, graphrag_pipeline, entity_rich_documents
+    ):
         """Test sequential queries on the same knowledge graph."""
         graphrag_pipeline.load_documents("", documents=entity_rich_documents)
 
@@ -614,7 +657,9 @@ class TestGraphRAGPipelinePerformance:
         ]
         graphrag_pipeline.load_documents("", documents=docs)
 
-        result = graphrag_pipeline.query("performance test", top_k=5, generate_answer=False)
+        result = graphrag_pipeline.query(
+            "performance test", top_k=5, generate_answer=False
+        )
 
         # Should complete quickly
         assert result["execution_time"] < 30

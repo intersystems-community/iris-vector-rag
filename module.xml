@@ -3,7 +3,7 @@
 <Document name="iris-vector-rag.ZPM">
 <Module>
   <Name>iris-vector-rag</Name>
-  <Version>0.11.4</Version>
+  <Version>0.12.0</Version>
   <Packaging>module</Packaging>
   <Description>
     Production-ready RAG (Retrieval-Augmented Generation) pipelines backed by

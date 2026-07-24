@@ -11,7 +11,6 @@ import pytest
 from tests.fixtures.manager import FixtureManager, FixtureError
 from tests.fixtures.models import FixtureMetadata
 
-
 # ==============================================================================
 # FIXTURES
 # ==============================================================================
@@ -52,7 +51,9 @@ def sample_fixture_metadata():
 class TestChecksumValidation:
     """Contract tests for checksum validation logic."""
 
-    def test_checksum_validation_accepts_valid_checksum(self, fixture_manager, tmp_path):
+    def test_checksum_validation_accepts_valid_checksum(
+        self, fixture_manager, tmp_path
+    ):
         """Checksum validation passes for matching checksum."""
         # Create a test file with known content (use expected filename)
         test_file = tmp_path / "data.dat"
@@ -80,7 +81,9 @@ class TestChecksumValidation:
         except Exception as e:
             pytest.fail(f"Valid checksum validation failed: {e}")
 
-    def test_checksum_validation_rejects_mismatched_checksum(self, fixture_manager, tmp_path):
+    def test_checksum_validation_rejects_mismatched_checksum(
+        self, fixture_manager, tmp_path
+    ):
         """Checksum validation fails for mismatched checksum."""
         # Create a test file with known content (use expected filename)
         test_file = tmp_path / "data.dat"
@@ -108,7 +111,9 @@ class TestChecksumValidation:
 
         assert "checksum" in str(exc_info.value).lower()
 
-    def test_checksum_validation_handles_missing_dat_file(self, fixture_manager, tmp_path):
+    def test_checksum_validation_handles_missing_dat_file(
+        self, fixture_manager, tmp_path
+    ):
         """Checksum validation fails gracefully when .DAT file is missing."""
         metadata = FixtureMetadata(
             name="test",
@@ -132,12 +137,16 @@ class TestChecksumValidation:
 
         error_msg = str(exc_info.value).lower()
         # Check that error message indicates file not found
-        assert ".dat" in error_msg and ("not found" in error_msg or "found" in error_msg)
+        assert ".dat" in error_msg and (
+            "not found" in error_msg or "found" in error_msg
+        )
 
     def test_checksum_format_validation(self, fixture_manager):
         """Checksum must be in format 'sha256:hash'."""
         # Valid checksums should have 'sha256:' prefix
-        valid_checksum = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        valid_checksum = (
+            "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
         assert valid_checksum.startswith("sha256:")
 
         # Invalid checksums should be rejected
@@ -186,7 +195,9 @@ class TestChecksumComputation:
         checksum = fixture_manager._compute_checksum(test_file)
 
         # SHA256 of empty file
-        expected = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        expected = (
+            "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
         assert checksum == expected
 
     def test_compute_checksum_for_file_with_content(self, fixture_manager, tmp_path):
@@ -197,7 +208,9 @@ class TestChecksumComputation:
         checksum = fixture_manager._compute_checksum(test_file)
 
         # SHA256 of "test content"
-        expected = "sha256:6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72"
+        expected = (
+            "sha256:6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72"
+        )
         assert checksum == expected
 
     def test_compute_checksum_handles_large_files(self, fixture_manager, tmp_path):
@@ -237,15 +250,18 @@ class TestChecksumValidationWorkflow:
 
         # Check load_fixture signature includes validate_checksum parameter
         import inspect
+
         sig = inspect.signature(fixture_manager.load_fixture)
         params = sig.parameters
 
-        assert "validate_checksum" in params, \
-            "load_fixture() must have validate_checksum parameter"
+        assert (
+            "validate_checksum" in params
+        ), "load_fixture() must have validate_checksum parameter"
 
     def test_load_fixture_allows_skipping_validation(self, fixture_manager):
         """load_fixture() can skip checksum validation if requested."""
         import inspect
+
         sig = inspect.signature(fixture_manager.load_fixture)
         params = sig.parameters
 
@@ -254,10 +270,13 @@ class TestChecksumValidationWorkflow:
         param = params["validate_checksum"]
 
         # Should have a default value
-        assert param.default is not inspect.Parameter.empty, \
-            "validate_checksum should have a default value"
+        assert (
+            param.default is not inspect.Parameter.empty
+        ), "validate_checksum should have a default value"
 
-    def test_checksum_validation_error_message_is_helpful(self, fixture_manager, tmp_path):
+    def test_checksum_validation_error_message_is_helpful(
+        self, fixture_manager, tmp_path
+    ):
         """Checksum validation errors include helpful messages."""
         test_file = tmp_path / "data.dat"
         test_file.write_bytes(b"corrupted content")
@@ -289,9 +308,11 @@ class TestChecksumValidationWorkflow:
             # 2. Expected vs actual checksums
             # 3. Fixture name
 
-            assert "checksum" in error_msg.lower() or "mismatch" in error_msg.lower(), \
-                "Error message should mention checksum/mismatch"
+            assert (
+                "checksum" in error_msg.lower() or "mismatch" in error_msg.lower()
+            ), "Error message should mention checksum/mismatch"
 
             # Should help identify the fixture
-            assert "corrupted-fixture" in error_msg or "fixture" in error_msg.lower(), \
-                "Error message should identify the fixture"
+            assert (
+                "corrupted-fixture" in error_msg or "fixture" in error_msg.lower()
+            ), "Error message should identify the fixture"

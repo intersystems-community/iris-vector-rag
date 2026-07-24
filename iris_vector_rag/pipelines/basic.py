@@ -1,4 +1,3 @@
-import time
 """
 Basic RAG Pipeline implementation.
 
@@ -7,6 +6,8 @@ pipeline using vector similarity search and LLM generation.
 """
 
 import logging
+import time
+import os
 from typing import Any, Callable, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager
@@ -14,7 +15,7 @@ from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
-from ..exceptions import VectorStoreConfigurationError
+from ..exceptions import IngestionError, RetrievalError, GenerationError
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +29,6 @@ class BasicRAGPipeline(RAGPipeline):
     2. Vector similarity search for retrieval
     3. Context augmentation and LLM generation
     """
-
-    # FR-010/T031: all four modes accepted; text/hybrid/rrf raise prereq error if
-    # iris-vector-graph BM25 is unavailable (handled by RetrievalEngine.retrieve).
-    supported_retrieval_modes = ["vector", "text", "hybrid", "rrf"]
 
     def __init__(
         self,
@@ -91,7 +88,9 @@ class BasicRAGPipeline(RAGPipeline):
                 f"(config: {self.embedding_config})"
             )
 
-    def load_documents(self, documents=None, documents_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    def load_documents(
+        self, documents=None, documents_path: Optional[str] = None, **kwargs
+    ) -> Dict[str, Any]:
         """
         Load and process documents into the pipeline's knowledge base.
 
@@ -108,6 +107,9 @@ class BasicRAGPipeline(RAGPipeline):
                 - embeddings_generated: Number of embeddings generated
                 - documents_failed: Number of documents that failed to load
         """
+        # Feature 078: Pure Constructors - lazy initialization on first use
+        self._ensure_initialized()
+
         start_time = time.time()
 
         # Validation: require either documents or documents_path
@@ -121,7 +123,11 @@ class BasicRAGPipeline(RAGPipeline):
             )
 
         # Validation: empty documents list
-        if documents is not None and isinstance(documents, list) and len(documents) == 0:
+        if (
+            documents is not None
+            and isinstance(documents, list)
+            and len(documents) == 0
+        ):
             raise ValueError(
                 "Error: Empty documents list\n"
                 "Context: BasicRAG document loading\n"
@@ -144,34 +150,67 @@ class BasicRAGPipeline(RAGPipeline):
         embeddings_generated = 0
         documents_failed = 0
 
-        # For contract tests without database, gracefully handle vector store operations
+        # Validate embedding dimensions early (contract requirement FR-023)
+        if (
+            generate_embeddings
+            and hasattr(self, "embedding_manager")
+            and self.embedding_manager
+        ):
+            sample_doc = documents[0]
+            if isinstance(sample_doc, Document):
+                sample_text = sample_doc.page_content
+            elif isinstance(sample_doc, dict):
+                sample_text = (
+                    sample_doc.get("page_content")
+                    or sample_doc.get("text")
+                    or sample_doc.get("content")
+                )
+            else:
+                sample_text = str(sample_doc)
+
+            if sample_text:
+                embedding = self.embedding_manager.generate_embedding(sample_text)
+                self._validate_embedding_dimension(embedding)
+
+        # Add documents to vector store with embeddings
         try:
             if generate_embeddings:
                 # Use vector store's automatic chunking and embedding generation
-                if hasattr(self, 'vector_store') and self.vector_store:
+                if hasattr(self, "vector_store") and self.vector_store:
                     self.vector_store.add_documents(
                         documents,
                         auto_chunk=True,
                         chunking_strategy=kwargs.get("chunking_strategy", "fixed_size"),
                     )
+                    documents_loaded = len(documents)
+                    embeddings_generated = len(documents)
                 else:
-                    logger.warning("No vector store available - documents not persisted")
-                documents_loaded = len(documents)
-                embeddings_generated = len(documents)  # One embedding per document
+                    raise IngestionError(
+                        "Vector store not available for document ingestion",
+                        documents_loaded=0,
+                        documents_failed=len(documents),
+                    )
             else:
                 # Store documents without embeddings using vector store
-                if hasattr(self, 'vector_store') and self.vector_store:
+                if hasattr(self, "vector_store") and self.vector_store:
                     self._store_documents(documents)
+                    documents_loaded = len(documents)
+                    embeddings_generated = 0
                 else:
-                    logger.warning("No vector store available - documents not persisted")
-                documents_loaded = len(documents)
-                embeddings_generated = 0
+                    raise IngestionError(
+                        "Vector store not available for document ingestion",
+                        documents_loaded=0,
+                        documents_failed=len(documents),
+                    )
+        except IngestionError:
+            raise
         except Exception as e:
-            logger.warning(f"Vector store operation failed (expected for contract tests without DB): {e}")
-            # Still count as loaded for contract testing purposes (validates API contract)
-            documents_loaded = len(documents)
-            embeddings_generated = len(documents) if generate_embeddings else 0
-            documents_failed = 0
+            raise IngestionError(
+                f"Failed to add documents to vector store: {str(e)}",
+                documents_loaded=0,
+                documents_failed=len(documents),
+                original_error=e,
+            ) from e
 
         processing_time = time.time() - start_time
         logger.info(
@@ -402,7 +441,7 @@ class BasicRAGPipeline(RAGPipeline):
                 "pipeline_type": "basic",
             }
 
-    def query(self, query: str = None, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute RAG query - THE single method for all RAG operations.
 
@@ -410,10 +449,9 @@ class BasicRAGPipeline(RAGPipeline):
         Replaces the old query()/execute()/run() method confusion.
 
         Args:
-            query: The query text (canonical param; ``query_text`` accepted as alias).
+            query_text: The query text
             top_k: Number of documents to retrieve (must be between 1 and 100)
             **kwargs: Additional arguments including:
-                - query_text: Alias for ``query`` (deprecated; use ``query``).
                 - include_sources: Whether to include source information (default: True)
                 - custom_prompt: Custom prompt template
                 - metadata_filter: Optional metadata filters
@@ -429,157 +467,107 @@ class BasicRAGPipeline(RAGPipeline):
                 "contexts": List[str],
                 "sources": List[Dict],
                 "metadata": Dict,
-                "execution_time": float
+                "execution_time": float,
+                "error": Optional error dict
             }
         """
+        # Feature 078: Pure Constructors - lazy initialization on first use
+        self._ensure_initialized()
+
         start_time = time.time()
 
-        # FR-005: normalize query / query_text alias via the composable mixin
-        from iris_vector_rag.core.query_options import normalize_query_params
-
-        query_text_kwarg = kwargs.pop("query_text", None)
-        try:
-            opts = normalize_query_params(
-                query=query,
-                query_text=query_text_kwarg,
-                top_k=top_k,
-                **{
-                    k: kwargs[k]
-                    for k in (
-                        "generate_answer",
-                        "include_sources",
-                        "metadata_filter",
-                        "similarity_threshold",
-                        "custom_prompt",
-                        "rerank",
-                        "retrieval",
-                        "weights",
-                    )
-                    if k in kwargs
-                },
+        # Validation: query parameter is required and cannot be empty
+        if not query_text or query_text.strip() == "":
+            raise ValueError(
+                "Error: Query parameter is required and cannot be empty\n"
+                "Context: BasicRAG pipeline query operation\n"
+                "Expected: Non-empty query string\n"
+                "Actual: Empty or whitespace-only string\n"
+                "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
             )
-        except ValueError as exc:
-            # Re-raise with pipeline-contextual messaging to preserve existing error format
-            msg = str(exc)
-            if "query" in msg.lower():
-                raise ValueError(
-                    "Error: Query parameter is required and cannot be empty\n"
-                    "Context: BasicRAG pipeline query operation\n"
-                    "Expected: Non-empty query string\n"
-                    "Actual: Empty or whitespace-only string\n"
-                    "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
-                ) from exc
-            if "top_k" in msg.lower():
-                raise ValueError(
-                    f"Error: top_k parameter out of valid range\n"
-                    f"Context: BasicRAG pipeline query operation\n"
-                    f"Expected: Integer between 1 and 100 (inclusive)\n"
-                    f"Actual: {top_k}\n"
-                    f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
-                ) from exc
-            raise
 
-        # Unpack normalized values
-        query = opts.query
-        top_k = opts.top_k
+        # Validation: top_k must be in valid range
+        if top_k < 1 or top_k > 100:
+            raise ValueError(
+                f"Error: top_k parameter out of valid range\n"
+                f"Context: BasicRAG pipeline query operation\n"
+                f"Expected: Integer between 1 and 100 (inclusive)\n"
+                f"Actual: {top_k}\n"
+                f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
+            )
 
         # Get parameters
-        include_sources = opts.include_sources
-        custom_prompt = opts.custom_prompt
-        generate_answer = opts.generate_answer
-        metadata_filter = opts.metadata_filter
-        similarity_threshold = opts.similarity_threshold
+        include_sources = kwargs.get("include_sources", True)
+        custom_prompt = kwargs.get("custom_prompt")
+        generate_answer = kwargs.get("generate_answer", True)
+        kwargs.get("metadata_filter")
+        kwargs.get("similarity_threshold", 0.0)
         retrieval_method = kwargs.get("method", "vector")
 
-        logger.debug(
-            "BasicRAG retrieval: top_k=%s retrieval_mode=%s weights=%s rerank=%s "
-            "metadata_filter=%s similarity_threshold=%s",
-            top_k,
-            opts.retrieval or "vector",
-            opts.weights,
-            opts.rerank,
-            metadata_filter,
-            similarity_threshold,
-        )
+        # Validate query embedding dimensions (contract requirement FR-022)
+        if hasattr(self, "embedding_manager") and self.embedding_manager:
+            query_embedding = self.embedding_manager.generate_embedding(query_text)
+            self._validate_embedding_dimension(query_embedding)
+
+        # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
+        if generate_answer and not os.environ.get("OPENAI_API_KEY"):
+            logger.error(
+                "Missing OPENAI_API_KEY for BasicRAG query. "
+                "Pipeline=basic_rag, operation=query, state=missing_api_key."
+            )
+            raise ValueError(
+                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
+                "or configure your API key before running BasicRAG queries."
+            )
+
+        if not self.vector_store:
+            logger.error(
+                "BasicRAG pipeline error: vector_store missing during query operation. "
+                "Pipeline=basic_rag, operation=query, state=vector_store=None."
+            )
+            raise RuntimeError(
+                "BasicRAG pipeline error: vector_store missing during query operation. "
+                "Pipeline=basic, operation=query, state=vector_store=None. "
+                "Fix: initialize the pipeline with a vector store or check configuration."
+            )
 
         # Step 1: Retrieve relevant documents
+        retrieval_error = None
         try:
-            # FR-010: dispatch via RetrievalEngine when retrieval mode is explicitly set
-            if opts.retrieval and opts.retrieval != "vector" and hasattr(self, "vector_store") and self.vector_store:
-                from iris_vector_rag.retrieval.engine import RetrievalEngine
-
-                engine = RetrievalEngine(
-                    vector_store=self.vector_store,
-                    connection=getattr(self.connection_manager, "connection", None) if self.connection_manager else None,
+            # Use vector store for retrieval
+            if hasattr(self, "vector_store") and self.vector_store:
+                retrieved_documents = self.vector_store.similarity_search(
+                    query_text, k=top_k
                 )
-                retrieved_documents = engine.retrieve(opts)
-            elif hasattr(self, "vector_store") and self.vector_store:
-                # FR-016: native EMBEDDING path when configured and no explicit embedding_func
-                explicit_embed_func = kwargs.get("embedding_func")
-                if (
-                    not explicit_embed_func
-                    and getattr(self, "use_iris_embedding", False)
-                    and getattr(self.vector_store, "use_iris_embedding", False)
-                ):
-                    raw = self.vector_store.search_with_embedding(
-                        query, top_k=top_k, filter=metadata_filter
-                    )
-                    retrieved_documents = [doc for doc, _ in raw]
-                else:
-                    retrieved_documents = self.vector_store.search_by_text(
-                        query, top_k=top_k, metadata_filter=metadata_filter
-                    )
             else:
                 logger.warning("No vector store available")
                 retrieved_documents = []
-        except VectorStoreConfigurationError:
-            # FR-003: surface invalid/unsupported filter keys (and non-scalar values)
-            # with a clear error instead of silently returning unfiltered/empty results.
-            raise
         except Exception as e:
-            from iris_vector_rag.retrieval.modes import RetrievalPrerequisiteError
-            if isinstance(e, (RetrievalPrerequisiteError,)):
-                raise
-            logger.warning(f"Document retrieval failed: {e}")
+            logger.error(f"Document retrieval failed: {e}")
             retrieved_documents = []
-
-        # FR-002: apply similarity threshold post-retrieval. Scores are attached to
-        # each Document's metadata by the vector store ("score"/"similarity").
-        if similarity_threshold and similarity_threshold > 0.0:
-            before = len(retrieved_documents)
-            retrieved_documents = [
-                doc
-                for doc in retrieved_documents
-                if float(
-                    doc.metadata.get("score", doc.metadata.get("similarity", 0.0))
-                )
-                >= similarity_threshold
-            ]
-            logger.debug(
-                "Applied similarity_threshold=%s: %s -> %s documents",
-                similarity_threshold,
-                before,
-                len(retrieved_documents),
-            )
-
-        # Step 1b: Apply query-time reranking (FR-007 / US3)
-        rerank_degraded = False
-        if opts.rerank:
-            from iris_vector_rag.core.composable_query import ComposableQueryMixin
-
-            retrieved_documents, rerank_degraded = ComposableQueryMixin._maybe_rerank(
-                self, retrieved_documents, opts
-            )
+            retrieval_error = {
+                "type": "RetrievalError",
+                "message": str(e),
+                "error_class": type(e).__name__,
+            }
 
         # Step 2: Generate answer using LLM (if enabled and LLM available)
-        if generate_answer and self.llm_func and retrieved_documents:
+        generation_error = None
+        if retrieval_error:
+            answer = None
+        elif generate_answer and self.llm_func and retrieved_documents:
             try:
                 answer = self._generate_answer(
-                    query, retrieved_documents, custom_prompt
+                    query_text, retrieved_documents, custom_prompt
                 )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
-                answer = "Error generating answer"
+                answer = None
+                generation_error = {
+                    "type": "GenerationError",
+                    "message": str(e),
+                    "error_class": type(e).__name__,
+                }
         elif not generate_answer:
             answer = None
         elif not retrieved_documents:
@@ -596,40 +584,38 @@ class BasicRAGPipeline(RAGPipeline):
         # Step 3: Prepare complete response
         contexts_list = [doc.page_content for doc in retrieved_documents]
         response = {
-            "query": query,
+            "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
             "contexts": contexts_list,  # String contexts for RAGAS
+            "sources": sources,  # Top-level sources as per spec
             "execution_time": execution_time,  # Required for RAGAS debug harness
+            "error": retrieval_error or generation_error,
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
                 "processing_time": execution_time,
                 "pipeline_type": "basic_rag",
                 "generated_answer": generate_answer and answer is not None,
-                "retrieval_method": retrieval_method,
-                "context_count": len(contexts_list),
-                "sources": sources,
-                **( {"rerank_degraded": True} if rerank_degraded else {} ),
+                "retrieval_method": retrieval_method,  # FR-003: Include retrieval method
+                "context_count": len(contexts_list),  # FR-003: Include context count
             },
         }
 
-        # Always include sources key (FR-006: consistent response shape)
-        response["sources"] = sources
-
-        rerank_strategy = (
-            opts.rerank if isinstance(opts.rerank, str) else ("cross-encoder" if opts.rerank else None)
-        )
         logger.info(
-            "RAG query completed: elapsed=%.2fs docs=%d retrieval_mode=%s weights=%s "
-            "rerank_strategy=%s rerank_degraded=%s",
-            execution_time,
-            len(retrieved_documents),
-            opts.retrieval or "vector",
-            opts.weights,
-            rerank_strategy,
-            rerank_degraded,
+            f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved"
         )
         return response
+
+    def _validate_embedding_dimension(self, embedding: List[float]) -> None:
+        """Validate embedding dimension matches expected model output."""
+        expected_dim = self.embedding_manager.get_embedding_dimension()
+        actual_dim = len(embedding)
+        if actual_dim != expected_dim:
+            raise ValueError(
+                "Embedding dimension mismatch: expected "
+                f"{expected_dim}, got {actual_dim}. "
+                "Fix: reconfigure embedding model to produce the expected dimension."
+            )
 
     def retrieve(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
         """
@@ -693,13 +679,8 @@ class BasicRAGPipeline(RAGPipeline):
         else:
             prompt = self._create_default_prompt(query, context)
 
-        # Generate answer using LLM
-        try:
-            answer = self.llm_func(prompt)
-            return answer
-        except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
-            return f"Error generating answer: {e}"
+        # Generate answer using LLM — let exceptions propagate to caller
+        return self.llm_func(prompt)
 
     def _create_default_prompt(self, query: str, context: str) -> str:
         """

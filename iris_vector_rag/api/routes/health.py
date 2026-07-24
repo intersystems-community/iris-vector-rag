@@ -11,17 +11,18 @@ from datetime import datetime
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from iris_vector_rag.api.models.health import HealthCheckResponse, HealthStatus, ComponentStatus
+from iris_vector_rag.api.models.health import (
+    HealthCheckResponse,
+    HealthStatus,
+    ComponentStatus,
+)
 from iris_vector_rag.api.services.pipeline_manager import PipelineManager
-
 
 logger = logging.getLogger(__name__)
 
 
 def create_health_router(
-    pipeline_manager: PipelineManager,
-    connection_pool,
-    redis_client=None
+    pipeline_manager: PipelineManager, connection_pool, redis_client=None
 ) -> APIRouter:
     """
     Create health check API router.
@@ -41,7 +42,7 @@ def create_health_router(
         response_model=HealthCheckResponse,
         responses={
             200: {"description": "System is healthy"},
-            503: {"description": "System is degraded or unavailable"}
+            503: {"description": "System is degraded or unavailable"},
         },
         summary="Health check endpoint",
         description="""
@@ -75,7 +76,7 @@ def create_health_router(
           initialDelaySeconds: 10
           periodSeconds: 5
         ```
-        """
+        """,
     )
     async def health_check() -> HealthCheckResponse:
         """
@@ -108,9 +109,7 @@ def create_health_router(
                 last_checked_at=datetime.utcnow(),
                 response_time_ms=iris_response_time,
                 version=None,  # TODO: Get IRIS version
-                metrics={
-                    "response_time_ms": iris_response_time
-                }
+                metrics={"response_time_ms": iris_response_time},
             )
 
         except Exception as e:
@@ -120,7 +119,7 @@ def create_health_router(
                 component_name="iris_database",
                 status=ComponentStatus.UNAVAILABLE,
                 last_checked_at=datetime.utcnow(),
-                error_message=str(e)
+                error_message=str(e),
             )
 
         # Check Redis cache (FR-033)
@@ -138,9 +137,7 @@ def create_health_router(
                     status=ComponentStatus.HEALTHY,
                     last_checked_at=datetime.utcnow(),
                     response_time_ms=redis_response_time,
-                    metrics={
-                        "response_time_ms": redis_response_time
-                    }
+                    metrics={"response_time_ms": redis_response_time},
                 )
 
             except Exception as e:
@@ -150,7 +147,7 @@ def create_health_router(
                     component_name="redis_cache",
                     status=ComponentStatus.DEGRADED,
                     last_checked_at=datetime.utcnow(),
-                    error_message=str(e)
+                    error_message=str(e),
                 )
 
         # Check all pipelines (FR-034)
@@ -163,18 +160,20 @@ def create_health_router(
         overall_status = ComponentStatus.HEALTHY
 
         unavailable_count = sum(
-            1 for comp in components.values()
+            1
+            for comp in components.values()
             if comp.status == ComponentStatus.UNAVAILABLE
         )
 
         degraded_count = sum(
-            1 for comp in components.values()
-            if comp.status == ComponentStatus.DEGRADED
+            1 for comp in components.values() if comp.status == ComponentStatus.DEGRADED
         )
 
         # If IRIS database is down, system is unavailable
-        if components.get("iris_database") and \
-           components["iris_database"].status == ComponentStatus.UNAVAILABLE:
+        if (
+            components.get("iris_database")
+            and components["iris_database"].status == ComponentStatus.UNAVAILABLE
+        ):
             overall_status = ComponentStatus.UNAVAILABLE
 
         # If any critical component is unavailable, system is unavailable
@@ -189,15 +188,12 @@ def create_health_router(
             status=overall_status,
             timestamp=timestamp,
             components=components,
-            overall_health=overall_status
+            overall_health=overall_status,
         )
 
         # Return 503 if system is unavailable (for load balancer health checks)
         if overall_status == ComponentStatus.UNAVAILABLE:
-            return JSONResponse(
-                status_code=503,
-                content=response.model_dump()
-            )
+            return JSONResponse(status_code=503, content=response.model_dump())
 
         return response
 

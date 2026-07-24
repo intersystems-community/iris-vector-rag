@@ -98,13 +98,11 @@ class ColBERTSchema:
         except Exception:
             pass
         try:
-            cur.execute(
-                f"""
+            cur.execute(f"""
                 CREATE INDEX idx_tok_vec_hnsw
                 ON TABLE RAG.DocumentTokenEmbeddings (tok_vec)
                 AS HNSW(Distance='DotProduct', M={m}, efConstruction={ef_construction})
-                """
-            )
+                """)
             self._conn.commit()
             logger.info(f"HNSW index created (M={m}, efConstruction={ef_construction})")
         except Exception as e:

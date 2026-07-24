@@ -30,6 +30,7 @@ try:
         get_cache_stats,
         clear_cache,
     )
+
     IMPLEMENTATION_EXISTS = True
 except ImportError:
     IMPLEMENTATION_EXISTS = False
@@ -37,7 +38,7 @@ except ImportError:
 
 pytestmark = pytest.mark.skipif(
     not IMPLEMENTATION_EXISTS,
-    reason="Implementation not yet available (TDD - tests first)"
+    reason="Implementation not yet available (TDD - tests first)",
 )
 
 
@@ -58,7 +59,7 @@ class TestReadEmbeddingConfig:
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             hf_cache_path="/var/lib/huggingface",
             python_path="/usr/bin/python3",
-            description="Test configuration"
+            description="Test configuration",
         )
 
         # Execute
@@ -82,7 +83,10 @@ class TestReadEmbeddingConfig:
         with pytest.raises(ValueError) as exc_info:
             get_config("nonexistent_config_12345")
 
-        assert "CONFIG_NOT_FOUND" in str(exc_info.value) or "not found" in str(exc_info.value).lower()
+        assert (
+            "CONFIG_NOT_FOUND" in str(exc_info.value)
+            or "not found" in str(exc_info.value).lower()
+        )
 
 
 class TestValidateEmbeddingConfig:
@@ -104,7 +108,7 @@ class TestValidateEmbeddingConfig:
             python_path=sys.executable,
             embedding_class="%Embedding.SentenceTransformers",
             batch_size=32,
-            device_preference="auto"
+            device_preference="auto",
         )
 
         result = validate_embedding_config(config)
@@ -129,14 +133,17 @@ class TestValidateEmbeddingConfig:
             python_path=sys.executable,
             embedding_class="%Embedding.SentenceTransformers",
             batch_size=32,
-            device_preference="auto"
+            device_preference="auto",
         )
 
         result = validate_embedding_config(config)
 
         assert isinstance(result, ValidationResult)
         assert result.valid is False
-        assert any("MODEL_NOT_FOUND" in error or "not found" in error.lower() for error in result.errors)
+        assert any(
+            "MODEL_NOT_FOUND" in error or "not found" in error.lower()
+            for error in result.errors
+        )
 
 
 class TestGenerateEmbeddings:
@@ -150,7 +157,7 @@ class TestGenerateEmbeddings:
             name=self.config_name,
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             hf_cache_path="/var/lib/huggingface",
-            python_path="/usr/bin/python3"
+            python_path="/usr/bin/python3",
         )
         yield
         # Cleanup: clear cache after test
@@ -185,7 +192,9 @@ class TestGenerateEmbeddings:
         # Verify cache hit
         assert len(result2.embeddings) == 2
         assert result2.cache_hit is True
-        assert result2.embedding_time_ms < 50, f"Expected <50ms, got {result2.embedding_time_ms}ms"
+        assert (
+            result2.embedding_time_ms < 50
+        ), f"Expected <50ms, got {result2.embedding_time_ms}ms"
         assert result2.model_load_time_ms == 0
         assert result2.device_used in ["cuda:0", "mps", "cpu"]
 
@@ -210,7 +219,9 @@ class TestGenerateEmbeddings:
         assert len(result.embeddings) == 1
         assert len(result.embeddings[0]) > 0  # Vector has dimensions
         assert result.cache_hit is False
-        assert result.model_load_time_ms < 5000, f"Model load took {result.model_load_time_ms}ms (target: <5000ms)"
+        assert (
+            result.model_load_time_ms < 5000
+        ), f"Model load took {result.model_load_time_ms}ms (target: <5000ms)"
         assert result.device_used in ["cuda:0", "mps", "cpu"]
 
     def test_embed_texts_empty_text(self):
@@ -223,7 +234,10 @@ class TestGenerateEmbeddings:
         with pytest.raises(ValueError) as exc_info:
             embed_texts(self.config_name, [""])
 
-        assert "EMPTY_TEXT" in str(exc_info.value) or "empty" in str(exc_info.value).lower()
+        assert (
+            "EMPTY_TEXT" in str(exc_info.value)
+            or "empty" in str(exc_info.value).lower()
+        )
 
     def test_cache_hit_rate_target(self):
         """
@@ -243,9 +257,9 @@ class TestGenerateEmbeddings:
         stats = get_cache_stats(self.config_name)
 
         # Verify total embeddings generated (should be 1000 texts)
-        assert stats.total_embeddings >= 1000, (
-            f"Expected >=1000 embeddings, got {stats.total_embeddings}"
-        )
+        assert (
+            stats.total_embeddings >= 1000
+        ), f"Expected >=1000 embeddings, got {stats.total_embeddings}"
 
         # Verify cache hit rate (10 calls: 1 miss + 9 hits = 90%)
         # To get 95%+ hit rate, need more calls (20 calls = 1 miss + 19 hits = 95%)
@@ -273,7 +287,7 @@ class TestGenerateEmbeddings:
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             hf_cache_path="/var/lib/huggingface",
             python_path="/usr/bin/python3",
-            device_preference="cpu"  # Force CPU
+            device_preference="cpu",  # Force CPU
         )
 
         texts = ["Test CPU fallback works"]
@@ -297,7 +311,7 @@ class TestCacheManagement:
             name=config_name,
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             hf_cache_path="/var/lib/huggingface",
-            python_path="/usr/bin/python3"
+            python_path="/usr/bin/python3",
         )
 
         # Generate some embeddings
@@ -323,7 +337,7 @@ class TestCacheManagement:
             name=config_name,
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             hf_cache_path="/var/lib/huggingface",
-            python_path="/usr/bin/python3"
+            python_path="/usr/bin/python3",
         )
 
         # Load model into cache
@@ -355,7 +369,7 @@ class TestPerformanceBenchmarks:
             name=config_name,
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             hf_cache_path="/var/lib/huggingface",
-            python_path="/usr/bin/python3"
+            python_path="/usr/bin/python3",
         )
 
         # Generate 1,746 texts (exact count from DP-442038)
@@ -367,12 +381,14 @@ class TestPerformanceBenchmarks:
         # Benchmark: measure time for all 1,746 texts
         start_time = time.time()
         for i in range(0, len(texts), 100):  # Batch processing
-            batch = texts[i:i+100]
+            batch = texts[i : i + 100]
             embed_texts(config_name, batch)
         elapsed_time = time.time() - start_time
 
         # Verify performance target
-        assert elapsed_time < 30, f"Vectorization took {elapsed_time:.1f}s (target: <30s)"
+        assert (
+            elapsed_time < 30
+        ), f"Vectorization took {elapsed_time:.1f}s (target: <30s)"
 
         # Cleanup
         clear_cache(config_name)

@@ -53,9 +53,13 @@ class IRISPasswordResetHandler:
             "User must change password",
         ]
 
-        return any(indicator in error_message for indicator in password_change_indicators)
+        return any(
+            indicator in error_message for indicator in password_change_indicators
+        )
 
-    def reset_iris_password(self, username: str = None, new_password: str = None) -> Tuple[bool, str]:
+    def reset_iris_password(
+        self, username: str = None, new_password: str = None
+    ) -> Tuple[bool, str]:
         """
         Reset IRIS password using Docker exec.
 
@@ -71,18 +75,39 @@ class IRISPasswordResetHandler:
 
         try:
             # Check if container is running
-            check_cmd = ["docker", "ps", "--filter", f"name={self.container_name}", "--format", "{{.Names}}"]
-            result = subprocess.run(check_cmd, capture_output=True, text=True, timeout=5)
+            check_cmd = [
+                "docker",
+                "ps",
+                "--filter",
+                f"name={self.container_name}",
+                "--format",
+                "{{.Names}}",
+            ]
+            result = subprocess.run(
+                check_cmd, capture_output=True, text=True, timeout=5
+            )
 
             if self.container_name not in result.stdout:
-                return False, f"Container {self.container_name} not running. Start with: docker-compose up -d"
+                return (
+                    False,
+                    f"Container {self.container_name} not running. Start with: docker-compose up -d",
+                )
 
             # Reset password using iris session
             # This uses the IRIS ObjectScript command to change password
             reset_cmd = [
-                "docker", "exec", "-i", self.container_name,
-                "iris", "session", "IRIS", "-U", "%SYS",
-                "##class(Security.Users).ChangePassword('{}','{}')".format(username, new_password)
+                "docker",
+                "exec",
+                "-i",
+                self.container_name,
+                "iris",
+                "session",
+                "IRIS",
+                "-U",
+                "%SYS",
+                "##class(Security.Users).ChangePassword('{}','{}')".format(
+                    username, new_password
+                ),
             ]
 
             logger.info(f"Resetting IRIS password for user {username}...")
@@ -92,7 +117,7 @@ class IRISPasswordResetHandler:
                 capture_output=True,
                 text=True,
                 timeout=30,
-                input=new_password + "\n"  # Provide current password if needed
+                input=new_password + "\n",  # Provide current password if needed
             )
 
             if result.returncode == 0:
@@ -107,25 +132,40 @@ class IRISPasswordResetHandler:
             else:
                 # Try alternative method using docker exec with SQL
                 alt_cmd = [
-                    "docker", "exec", "-i", self.container_name,
-                    "sh", "-c",
-                    f"echo \"ALTER USER {username} IDENTIFY BY '{new_password}'\" | iris sql IRIS -U %SYS"
+                    "docker",
+                    "exec",
+                    "-i",
+                    self.container_name,
+                    "sh",
+                    "-c",
+                    f"echo \"ALTER USER {username} IDENTIFY BY '{new_password}'\" | iris sql IRIS -U %SYS",
                 ]
 
-                result = subprocess.run(alt_cmd, capture_output=True, text=True, timeout=30)
+                result = subprocess.run(
+                    alt_cmd, capture_output=True, text=True, timeout=30
+                )
 
-                if "error" not in result.stdout.lower() and "error" not in result.stderr.lower():
+                if (
+                    "error" not in result.stdout.lower()
+                    and "error" not in result.stderr.lower()
+                ):
                     os.environ["IRIS_USERNAME"] = username
                     os.environ["IRIS_PASSWORD"] = new_password
                     time.sleep(2)
-                    return True, f"Password reset successful (via SQL) for user {username}"
+                    return (
+                        True,
+                        f"Password reset successful (via SQL) for user {username}",
+                    )
                 else:
                     return False, f"Password reset failed: {result.stderr}"
 
         except subprocess.TimeoutExpired:
             return False, "Password reset timed out after 30 seconds"
         except FileNotFoundError:
-            return False, "Docker command not found. Ensure Docker is installed and in PATH"
+            return (
+                False,
+                "Docker command not found. Ensure Docker is installed and in PATH",
+            )
         except Exception as e:
             return False, f"Password reset failed: {str(e)}"
 
@@ -144,7 +184,10 @@ class IRISPasswordResetHandler:
         # Note: This requires the Management Portal to be accessible
 
         # This is a simplified approach - actual implementation would need proper auth
-        return False, "Management Portal API password reset not implemented. Use Docker exec method."
+        return (
+            False,
+            "Management Portal API password reset not implemented. Use Docker exec method.",
+        )
 
     def auto_remediate_password_issue(self, error: Exception) -> bool:
         """
@@ -161,7 +204,9 @@ class IRISPasswordResetHandler:
         if not self.detect_password_change_required(error_msg):
             return False
 
-        logger.warning("⚠️  IRIS password change required. Attempting automatic remediation...")
+        logger.warning(
+            "⚠️  IRIS password change required. Attempting automatic remediation..."
+        )
 
         success, message = self.reset_iris_password()
 
@@ -174,7 +219,9 @@ class IRISPasswordResetHandler:
             logger.error("Manual intervention required:")
             logger.error(f"  1. docker exec -it {self.container_name} bash")
             logger.error("  2. iris session IRIS -U %SYS")
-            logger.error(f"  3. Do ##class(Security.Users).ChangePassword('{self.default_user}','{self.default_password}')")
+            logger.error(
+                f"  3. Do ##class(Security.Users).ChangePassword('{self.default_user}','{self.default_password}')"
+            )
             return False
 
 

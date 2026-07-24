@@ -27,6 +27,7 @@ class TestDatabaseState:
         relationship_ids: List of relationship IDs created by test
         metadata: Additional test metadata
     """
+
     test_run_id: str
     test_class: str
     test_method: Optional[str] = None
@@ -38,7 +39,9 @@ class TestDatabaseState:
     metadata: dict = field(default_factory=dict)
 
     @classmethod
-    def create_for_test(cls, test_class: str, test_method: Optional[str] = None) -> 'TestDatabaseState':
+    def create_for_test(
+        cls, test_class: str, test_method: Optional[str] = None
+    ) -> "TestDatabaseState":
         """
         Create a new test database state.
 
@@ -52,7 +55,7 @@ class TestDatabaseState:
         return cls(
             test_run_id=str(uuid.uuid4()),
             test_class=test_class,
-            test_method=test_method
+            test_method=test_method,
         )
 
     def add_document(self, document_id: str) -> None:
@@ -121,10 +124,10 @@ class TestStateRegistry:
     Maintains a registry of all active test database states for cleanup tracking.
     """
 
-    _instance: Optional['TestStateRegistry'] = None
+    _instance: Optional["TestStateRegistry"] = None
     _states: dict = {}
 
-    def __new__(cls) -> 'TestStateRegistry':
+    def __new__(cls) -> "TestStateRegistry":
         """Singleton pattern for global registry."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)

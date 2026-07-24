@@ -10,7 +10,6 @@ Reference: specs/047-create-a-unified/tasks.md (T031)
 import pytest
 from tests.fixtures.manager import FixtureManager
 
-
 # ==============================================================================
 # FIXTURES
 # ==============================================================================
@@ -60,10 +59,12 @@ class TestFixtureIsolation:
         assert result2.success, f"Second load failed: {result2.error_message}"
 
         # Results should be identical
-        assert result2.rows_loaded == first_rows, \
-            f"Row counts differ: {result2.rows_loaded} != {first_rows}"
-        assert set(result2.tables_loaded) == first_tables, \
-            f"Table lists differ: {result2.tables_loaded} != {list(first_tables)}"
+        assert (
+            result2.rows_loaded == first_rows
+        ), f"Row counts differ: {result2.rows_loaded} != {first_rows}"
+        assert (
+            set(result2.tables_loaded) == first_tables
+        ), f"Table lists differ: {result2.tables_loaded} != {list(first_tables)}"
 
     def test_cleanup_first_ensures_isolation(self, fixture_manager):
         """cleanup_first=True ensures isolated state between loads."""
@@ -89,8 +90,9 @@ class TestFixtureIsolation:
         )
 
         assert result2.success
-        assert result2.rows_loaded == expected_rows, \
-            "Cleanup should restore identical state"
+        assert (
+            result2.rows_loaded == expected_rows
+        ), "Cleanup should restore identical state"
 
     def test_fixture_state_independent_of_prior_database_state(self, fixture_manager):
         """Fixture loading produces same state regardless of prior database content."""
@@ -116,8 +118,9 @@ class TestFixtureIsolation:
         )
 
         assert result2.success
-        assert result2.rows_loaded == baseline_rows, \
-            "Fixture should produce identical state regardless of prior state"
+        assert (
+            result2.rows_loaded == baseline_rows
+        ), "Fixture should produce identical state regardless of prior state"
 
         # Third load: Skip cleanup (should add duplicate data)
         result3 = fixture_manager.load_fixture(
@@ -145,8 +148,9 @@ class TestFixtureIsolation:
         )
 
         assert result.success
-        assert result.checksum_valid, \
-            "Checksum validation should pass for valid fixture"
+        assert (
+            result.checksum_valid
+        ), "Checksum validation should pass for valid fixture"
 
     def test_multiple_fixtures_isolated_from_each_other(self, fixture_manager):
         """Different fixtures provide independent, isolated states."""
@@ -177,8 +181,9 @@ class TestFixtureIsolation:
             cleanup_first=True,
         )
         assert result3.success
-        assert result3.rows_loaded == result1.rows_loaded, \
-            "Fixture should restore its original state"
+        assert (
+            result3.rows_loaded == result1.rows_loaded
+        ), "Fixture should restore its original state"
 
 
 class TestFixtureReproducibility:
@@ -195,8 +200,9 @@ class TestFixtureReproducibility:
         fixtures2 = {f.name: f for f in manifest2.list_fixtures()}
 
         # Should find same fixtures
-        assert set(fixtures1.keys()) == set(fixtures2.keys()), \
-            "Fixture list should be stable across scans"
+        assert set(fixtures1.keys()) == set(
+            fixtures2.keys()
+        ), "Fixture list should be stable across scans"
 
         # Metadata should be identical
         for name in fixtures1.keys():

@@ -50,40 +50,40 @@ Custom Metadata Filtering (Feature 051 - User Story 1):
 # These 17 standard fields can always be used in metadata_filter parameter
 # Custom fields can be added via storage.iris.custom_filter_keys in config
 DEFAULT_FILTER_KEYS = [
-    "doc_id",               # Unique document identifier (matches IRIS schema)
-    "source",               # Source file or URL
-    "title",                # Document title
-    "author",               # Document author(s)
-    "created_at",           # Creation timestamp
-    "updated_at",           # Last update timestamp
-    "content_type",         # MIME type (e.g., text/plain, application/pdf)
-    "file_type",            # File extension (e.g., txt, pdf, md)
-    "page_number",          # Page number for multi-page documents
-    "section",              # Section or chapter identifier
-    "chunk_id",             # Unique chunk identifier
-    "chunk_index",          # Sequential chunk index within document
-    "language",             # Document language (e.g., en, es, fr)
-    "collection_id",        # Collection identifier for document grouping
-    "metadata_hash",        # Hash of metadata for change detection
-    "parent_doc_id",        # Parent document ID for hierarchical documents (matches IRIS schema)
-    "version",              # Document version number
+    "doc_id",  # Unique document identifier (matches IRIS schema)
+    "source",  # Source file or URL
+    "title",  # Document title
+    "author",  # Document author(s)
+    "created_at",  # Creation timestamp
+    "updated_at",  # Last update timestamp
+    "content_type",  # MIME type (e.g., text/plain, application/pdf)
+    "file_type",  # File extension (e.g., txt, pdf, md)
+    "page_number",  # Page number for multi-page documents
+    "section",  # Section or chapter identifier
+    "chunk_id",  # Unique chunk identifier
+    "chunk_index",  # Sequential chunk index within document
+    "language",  # Document language (e.g., en, es, fr)
+    "collection_id",  # Collection identifier for document grouping
+    "metadata_hash",  # Hash of metadata for change detection
+    "parent_doc_id",  # Parent document ID for hierarchical documents (matches IRIS schema)
+    "version",  # Document version number
 ]
 
 # SQL injection prevention patterns
 # These patterns are used to validate custom filter keys
 INVALID_FIELD_NAME_PATTERNS = [
-    r"[;'\"]",              # SQL injection characters
-    r"--",                  # SQL comment
-    r"/\*",                 # SQL block comment start
-    r"\*/",                 # SQL block comment end
-    r"\bDROP\b",            # DROP statement
-    r"\bDELETE\b",          # DELETE statement
-    r"\bUPDATE\b",          # UPDATE statement
-    r"\bINSERT\b",          # INSERT statement
-    r"\bEXEC\b",            # EXEC statement
-    r"\bEXECUTE\b",         # EXECUTE statement
-    r"\bSELECT\b",          # SELECT statement
-    r"\bUNION\b",           # UNION statement
+    r"[;'\"]",  # SQL injection characters
+    r"--",  # SQL comment
+    r"/\*",  # SQL block comment start
+    r"\*/",  # SQL block comment end
+    r"\bDROP\b",  # DROP statement
+    r"\bDELETE\b",  # DELETE statement
+    r"\bUPDATE\b",  # UPDATE statement
+    r"\bINSERT\b",  # INSERT statement
+    r"\bEXEC\b",  # EXEC statement
+    r"\bEXECUTE\b",  # EXECUTE statement
+    r"\bSELECT\b",  # SELECT statement
+    r"\bUNION\b",  # UNION statement
 ]
 
 # Valid field name pattern

@@ -24,8 +24,9 @@ def test_import_iris_dbapi_connector():
     from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
     # Verify function is callable
-    assert callable(get_iris_dbapi_connection), \
-        "get_iris_dbapi_connection should be a callable function"
+    assert callable(
+        get_iris_dbapi_connection
+    ), "get_iris_dbapi_connection should be a callable function"
 
 
 def test_import_iris_connection_manager():
@@ -38,8 +39,9 @@ def test_import_iris_connection_manager():
     from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
     # Verify function is callable
-    assert callable(get_iris_connection), \
-        "get_iris_connection should be a callable function"
+    assert callable(
+        get_iris_connection
+    ), "get_iris_connection should be a callable function"
 
 
 def test_connection_manager_imports():
@@ -55,12 +57,12 @@ def test_connection_manager_imports():
     from iris_vector_rag.core.connection import ConnectionManager
 
     # Should not raise ImportError
-    assert ConnectionManager is not None, \
-        "ConnectionManager should import successfully"
+    assert ConnectionManager is not None, "ConnectionManager should import successfully"
 
     # Verify it's the correct class
-    assert hasattr(ConnectionManager, 'get_connection'), \
-        "ConnectionManager should have get_connection method"
+    assert hasattr(
+        ConnectionManager, "get_connection"
+    ), "ConnectionManager should have get_connection method"
 
 
 def test_common_module_location():
@@ -74,12 +76,15 @@ def test_common_module_location():
 
     # Verify common is a module
     import types
-    assert isinstance(common, types.ModuleType), \
-        "iris_vector_rag.common should be a Python module"
+
+    assert isinstance(
+        common, types.ModuleType
+    ), "iris_vector_rag.common should be a Python module"
 
     # Verify it's in the correct location
-    assert 'iris_vector_rag' in common.__name__, \
-        f"common module should be under iris_vector_rag namespace, got: {common.__name__}"
+    assert (
+        "iris_vector_rag" in common.__name__
+    ), f"common module should be under iris_vector_rag namespace, got: {common.__name__}"
 
 
 def test_old_top_level_common_removed():
@@ -95,9 +100,11 @@ def test_old_top_level_common_removed():
     # Try to import common module
     try:
         import common
+
         # If it exists, verify it's NOT from iris-vector-rag
-        assert not common.__file__.startswith('iris_vector_rag'), \
-            "Top-level common should not be provided by iris-vector-rag package"
+        assert not common.__file__.startswith(
+            "iris_vector_rag"
+        ), "Top-level common should not be provided by iris-vector-rag package"
     except ModuleNotFoundError:
         # This is expected - no top-level common module provided
         pass
@@ -114,8 +121,14 @@ def test_connection_manager_can_create_connection_mock():
     from iris_vector_rag.core.connection import ConnectionManager
 
     # Mock the IRIS connection functions
-    with patch('iris_vector_rag.common.iris_dbapi_connector.get_iris_dbapi_connection') as mock_dbapi, \
-         patch('iris_vector_rag.common.iris_connection_manager.get_iris_connection') as mock_iris:
+    with (
+        patch(
+            "iris_vector_rag.common.iris_dbapi_connector.get_iris_dbapi_connection"
+        ) as mock_dbapi,
+        patch(
+            "iris_vector_rag.common.iris_connection_manager.get_iris_connection"
+        ) as mock_iris,
+    ):
 
         # Setup mocks
         mock_dbapi.return_value = MagicMock()
@@ -123,12 +136,12 @@ def test_connection_manager_can_create_connection_mock():
 
         # Create ConnectionManager instance
         config = {
-            'connection': {
-                'host': 'localhost',
-                'port': 1972,
-                'namespace': 'USER',
-                'username': 'test',
-                'password': 'test'
+            "connection": {
+                "host": "localhost",
+                "port": 1972,
+                "namespace": "USER",
+                "username": "test",
+                "password": "test",
             }
         }
 
@@ -141,6 +154,6 @@ def test_connection_manager_can_create_connection_mock():
 pytestmark = pytest.mark.contract
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run tests with verbose output
-    pytest.main([__file__, '-v', '--tb=short'])
+    pytest.main([__file__, "-v", "--tb=short"])

@@ -4,7 +4,6 @@ Feature: 025-fixes-for-testing
 Contract: test_isolation_contract.md
 """
 
-
 import pytest
 
 
@@ -24,9 +23,7 @@ def test_fixture_scopes_configured():
     assert (
         '@pytest.fixture(scope="session")' in content
     ), "Should have session-scoped fixtures"
-    assert (
-        "e2e_config_manager" in content
-    ), "Should have e2e_config_manager fixture"
+    assert "e2e_config_manager" in content, "Should have e2e_config_manager fixture"
 
     # Module-scoped for pipeline dependencies
     assert (
@@ -40,9 +37,7 @@ def test_fixture_scopes_configured():
     assert (
         '@pytest.fixture(scope="function")' in content
     ), "Should have function-scoped fixtures"
-    assert (
-        "e2e_database_cleanup" in content
-    ), "Should have e2e_database_cleanup fixture"
+    assert "e2e_database_cleanup" in content, "Should have e2e_database_cleanup fixture"
 
 
 @pytest.mark.requires_database

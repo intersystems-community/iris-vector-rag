@@ -1,4 +1,4 @@
-#+#+#+#+# ruff: noqa: F821
+# +#+#+#+# ruff: noqa: F821
 """
 Comprehensive unit tests for core framework models and utilities.
 

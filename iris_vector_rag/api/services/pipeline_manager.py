@@ -14,10 +14,9 @@ from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.api.models.pipeline import (
     PipelineInstance,
     PipelineStatus,
-    PipelineListResponse
+    PipelineListResponse,
 )
 from iris_vector_rag.api.models.health import HealthStatus, ComponentStatus
-
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class PipelineManager:
         Loads pipelines from config and performs health checks.
         Implements FR-006: Pipeline discovery
         """
-        enabled_pipelines = self.config.get('pipelines', {}).get('enabled', [])
+        enabled_pipelines = self.config.get("pipelines", {}).get("enabled", [])
 
         logger.info(f"Initializing {len(enabled_pipelines)} pipelines...")
 
@@ -62,7 +61,7 @@ class PipelineManager:
                 pipeline = create_pipeline(
                     pipeline_type=pipeline_type,
                     validate_requirements=True,
-                    auto_setup=False  # Don't auto-fix in production
+                    auto_setup=False,  # Don't auto-fix in production
                 )
 
                 # Store pipeline
@@ -80,7 +79,7 @@ class PipelineManager:
                     last_health_check=datetime.utcnow(),
                     total_queries=0,
                     avg_latency_ms=0.0,
-                    error_rate=0.0
+                    error_rate=0.0,
                 )
 
                 logger.info(f"Initialized pipeline: {pipeline_type}")
@@ -101,7 +100,7 @@ class PipelineManager:
                     total_queries=0,
                     avg_latency_ms=0.0,
                     error_rate=0.0,
-                    error_message=str(e)
+                    error_message=str(e),
                 )
 
     def _get_pipeline_capabilities(self, pipeline_type: str) -> List[str]:
@@ -123,9 +122,9 @@ class PipelineManager:
                 "text_search",
                 "knowledge_graph",
                 "hybrid_retrieval",
-                "rrf_fusion"
+                "rrf_fusion",
             ],
-            "pylate_colbert": ["late_interaction", "token_level_similarity"]
+            "pylate_colbert": ["late_interaction", "token_level_similarity"],
         }
 
         return capabilities_map.get(pipeline_type, [])
@@ -145,7 +144,7 @@ class PipelineManager:
             "basic_rerank": "Vector search with cross-encoder reranking for improved relevance",
             "crag": "Corrective RAG with self-evaluation and adaptive retrieval",
             "graphrag": "Hybrid search combining vector, text, and knowledge graph retrieval with RRF fusion",
-            "pylate_colbert": "Late interaction retrieval using ColBERT token-level similarity"
+            "pylate_colbert": "Late interaction retrieval using ColBERT token-level similarity",
         }
 
         return descriptions.get(pipeline_type, "RAG pipeline")
@@ -162,8 +161,7 @@ class PipelineManager:
         pipelines_list = list(self.pipeline_metadata.values())
 
         return PipelineListResponse(
-            pipelines=pipelines_list,
-            total_count=len(pipelines_list)
+            pipelines=pipelines_list, total_count=len(pipelines_list)
         )
 
     def get_pipeline_info(self, pipeline_name: str) -> Optional[PipelineInstance]:
@@ -213,7 +211,7 @@ class PipelineManager:
                 component_name=pipeline_name,
                 status=ComponentStatus.UNAVAILABLE,
                 last_checked_at=start_time,
-                error_message="Pipeline not found"
+                error_message="Pipeline not found",
             )
 
         # Check if pipeline is loaded
@@ -224,13 +222,13 @@ class PipelineManager:
                 component_name=pipeline_name,
                 status=ComponentStatus.UNAVAILABLE,
                 last_checked_at=start_time,
-                error_message=metadata.error_message or "Pipeline not initialized"
+                error_message=metadata.error_message or "Pipeline not initialized",
             )
 
         # Perform basic health check (try to access pipeline config)
         try:
             # Simple validation - check if pipeline is callable
-            if not hasattr(pipeline, 'query'):
+            if not hasattr(pipeline, "query"):
                 raise ValueError("Pipeline missing query method")
 
             # Calculate response time
@@ -250,8 +248,8 @@ class PipelineManager:
                 metrics={
                     "total_queries": metadata.total_queries,
                     "avg_latency_ms": metadata.avg_latency_ms,
-                    "error_rate": metadata.error_rate
-                }
+                    "error_rate": metadata.error_rate,
+                },
             )
 
         except Exception as e:
@@ -265,14 +263,11 @@ class PipelineManager:
                 component_name=pipeline_name,
                 status=ComponentStatus.DEGRADED,
                 last_checked_at=datetime.utcnow(),
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def update_pipeline_metrics(
-        self,
-        pipeline_name: str,
-        execution_time_ms: int,
-        success: bool
+        self, pipeline_name: str, execution_time_ms: int, success: bool
     ):
         """
         Update pipeline performance metrics.
@@ -296,8 +291,7 @@ class PipelineManager:
         else:
             alpha = 0.1  # Smoothing factor
             metadata.avg_latency_ms = (
-                alpha * execution_time_ms +
-                (1 - alpha) * metadata.avg_latency_ms
+                alpha * execution_time_ms + (1 - alpha) * metadata.avg_latency_ms
             )
 
         # Update error rate

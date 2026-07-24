@@ -11,8 +11,12 @@ from fastapi import APIRouter, HTTPException, Path
 
 from iris_vector_rag.api.models.pipeline import PipelineInstance, PipelineListResponse
 from iris_vector_rag.api.services.pipeline_manager import PipelineManager
-from iris_vector_rag.api.models.errors import ErrorResponse, ErrorType, ErrorInfo, ErrorDetails
-
+from iris_vector_rag.api.models.errors import (
+    ErrorResponse,
+    ErrorType,
+    ErrorInfo,
+    ErrorDetails,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +47,7 @@ def create_pipeline_router(pipeline_manager: PipelineManager) -> APIRouter:
         - Capabilities for each pipeline
 
         **No authentication required** - public discovery endpoint.
-        """
+        """,
     )
     async def list_pipelines() -> PipelineListResponse:
         """
@@ -60,7 +64,7 @@ def create_pipeline_router(pipeline_manager: PipelineManager) -> APIRouter:
         response_model=PipelineInstance,
         responses={
             200: {"description": "Pipeline details"},
-            404: {"description": "Pipeline not found"}
+            404: {"description": "Pipeline not found"},
         },
         summary="Get pipeline details",
         description="""
@@ -74,7 +78,7 @@ def create_pipeline_router(pipeline_manager: PipelineManager) -> APIRouter:
         - Version information
 
         **No authentication required** - public discovery endpoint.
-        """
+        """,
     )
     async def get_pipeline_info(
         pipeline_name: str = Path(..., description="Pipeline name")
@@ -104,9 +108,9 @@ def create_pipeline_router(pipeline_manager: PipelineManager) -> APIRouter:
                         reason=f"Pipeline not found: {pipeline_name}",
                         details=ErrorDetails(
                             message=f"Pipeline '{pipeline_name}' does not exist or is not configured"
-                        )
+                        ),
                     )
-                ).model_dump()
+                ).model_dump(),
             )
 
         return pipeline_info

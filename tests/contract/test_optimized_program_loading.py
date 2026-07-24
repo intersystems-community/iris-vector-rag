@@ -19,20 +19,20 @@ class TestOptimizedProgramParameter:
         sig = inspect.signature(OntologyAwareEntityExtractor.__init__)
         params = list(sig.parameters.keys())
 
-        assert 'optimized_program_path' in params, (
-            "optimized_program_path parameter missing from __init__ signature"
-        )
+        assert (
+            "optimized_program_path" in params
+        ), "optimized_program_path parameter missing from __init__ signature"
 
     def test_parameter_is_optional_with_none_default(self):
         """Verify that optimized_program_path has Optional[str] = None default."""
         import inspect
 
         sig = inspect.signature(OntologyAwareEntityExtractor.__init__)
-        param = sig.parameters['optimized_program_path']
+        param = sig.parameters["optimized_program_path"]
 
-        assert param.default is None, (
-            "optimized_program_path should have None as default value"
-        )
+        assert (
+            param.default is None
+        ), "optimized_program_path should have None as default value"
 
     def test_parameter_type_annotation_is_optional_str(self):
         """Verify that optimized_program_path is annotated as Optional[str]."""
@@ -40,7 +40,7 @@ class TestOptimizedProgramParameter:
         from typing import get_args, get_origin
 
         sig = inspect.signature(OntologyAwareEntityExtractor.__init__)
-        param = sig.parameters['optimized_program_path']
+        param = sig.parameters["optimized_program_path"]
         annotation = param.annotation
 
         # Check if annotation is Optional (Union with None)
@@ -57,9 +57,9 @@ class TestOptimizedProgramParameter:
         docstring = OntologyAwareEntityExtractor.__init__.__doc__
 
         assert docstring is not None, "__init__ should have a docstring"
-        assert "optimized_program_path" in docstring.lower(), (
-            "Docstring should mention optimized_program_path parameter"
-        )
+        assert (
+            "optimized_program_path" in docstring.lower()
+        ), "Docstring should mention optimized_program_path parameter"
 
 
 class TestBackwardCompatibility:
@@ -73,16 +73,18 @@ class TestBackwardCompatibility:
         params = list(sig.parameters.keys())
 
         expected_params = [
-            'self',
-            'config_manager',
-            'connection_manager',
-            'embedding_manager',
-            'ontology_sources',
-            'optimized_program_path'
+            "self",
+            "config_manager",
+            "connection_manager",
+            "embedding_manager",
+            "ontology_sources",
+            "optimized_program_path",
         ]
 
         for param in expected_params:
-            assert param in params, f"Expected parameter '{param}' missing from signature"
+            assert (
+                param in params
+            ), f"Expected parameter '{param}' missing from signature"
 
     def test_parameter_order_maintains_backward_compatibility(self):
         """Verify new parameter is added at the end (after existing parameters)."""
@@ -92,16 +94,24 @@ class TestBackwardCompatibility:
         params = list(sig.parameters.keys())
 
         # New parameter should be after all existing parameters
-        optimized_index = params.index('optimized_program_path')
-        config_index = params.index('config_manager')
-        connection_index = params.index('connection_manager')
-        embedding_index = params.index('embedding_manager')
-        ontology_index = params.index('ontology_sources')
+        optimized_index = params.index("optimized_program_path")
+        config_index = params.index("config_manager")
+        connection_index = params.index("connection_manager")
+        embedding_index = params.index("embedding_manager")
+        ontology_index = params.index("ontology_sources")
 
-        assert optimized_index > config_index, "New parameter should be after config_manager"
-        assert optimized_index > connection_index, "New parameter should be after connection_manager"
-        assert optimized_index > embedding_index, "New parameter should be after embedding_manager"
-        assert optimized_index > ontology_index, "New parameter should be after ontology_sources"
+        assert (
+            optimized_index > config_index
+        ), "New parameter should be after config_manager"
+        assert (
+            optimized_index > connection_index
+        ), "New parameter should be after connection_manager"
+        assert (
+            optimized_index > embedding_index
+        ), "New parameter should be after embedding_manager"
+        assert (
+            optimized_index > ontology_index
+        ), "New parameter should be after ontology_sources"
 
 
 class TestImplementationDetails:
@@ -113,15 +123,16 @@ class TestImplementationDetails:
 
         # Get the source of the entire entity_extraction module
         import iris_vector_rag.services.entity_extraction as ee_module
+
         module_source = inspect.getsource(ee_module)
 
         # Verify the loading logic is present in the module
-        assert "optimized_program_path" in module_source, (
-            "Module should reference optimized_program_path"
-        )
-        assert "self._batch_dspy_module.load(" in module_source, (
-            "Module should call .load() on batch DSPy module"
-        )
+        assert (
+            "optimized_program_path" in module_source
+        ), "Module should reference optimized_program_path"
+        assert (
+            "self._batch_dspy_module.load(" in module_source
+        ), "Module should call .load() on batch DSPy module"
 
     def test_instance_variable_stored(self):
         """Verify that optimized_program_path is stored as instance variable."""
@@ -129,6 +140,6 @@ class TestImplementationDetails:
 
         source = inspect.getsource(OntologyAwareEntityExtractor.__init__)
 
-        assert "self.optimized_program_path" in source, (
-            "__init__ should store optimized_program_path as instance variable"
-        )
+        assert (
+            "self.optimized_program_path" in source
+        ), "__init__ should store optimized_program_path as instance variable"

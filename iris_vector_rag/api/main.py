@@ -20,35 +20,33 @@ from iris_vector_rag.common.connection_pool import IRISConnectionPool
 from iris_vector_rag.api.middleware import (
     AuthenticationMiddleware,
     RateLimitMiddleware,
-    RequestLoggingMiddleware
+    RequestLoggingMiddleware,
 )
-from iris_vector_rag.api.services import (
-    PipelineManager,
-    AuthService,
-    DocumentService
-)
+from iris_vector_rag.api.services import PipelineManager, AuthService, DocumentService
 from iris_vector_rag.api.routes import (
     create_query_router,
     create_pipeline_router,
     create_document_router,
-    create_health_router
+    create_health_router,
 )
 from iris_vector_rag.api.websocket import (
     ConnectionManager,
     QueryStreamingHandler,
     DocumentUploadProgressHandler,
-    create_websocket_router
+    create_websocket_router,
 )
-from iris_vector_rag.api.models.errors import ErrorResponse, ErrorType, ErrorInfo, ErrorDetails
-
+from iris_vector_rag.api.models.errors import (
+    ErrorResponse,
+    ErrorType,
+    ErrorInfo,
+    ErrorDetails,
+)
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 
 logger = logging.getLogger(__name__)
@@ -88,7 +86,7 @@ def load_config(config_path: str = "config/api_config.yaml") -> dict:
         Configuration dictionary
     """
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             config = yaml.safe_load(f)
 
         logger.info(f"Loaded configuration from {config_path}")
@@ -111,18 +109,13 @@ def get_default_config() -> dict:
         Default configuration dictionary
     """
     return {
-        "server": {
-            "host": "0.0.0.0",
-            "port": 8000,
-            "workers": 4,
-            "reload": False
-        },
+        "server": {"host": "0.0.0.0", "port": 8000, "workers": 4, "reload": False},
         "cors": {
             "enabled": True,
             "allowed_origins": ["http://localhost:3000", "http://localhost:8501"],
             "allow_credentials": True,
             "allow_methods": ["*"],
-            "allow_headers": ["*"]
+            "allow_headers": ["*"],
         },
         "database": {
             "host": "localhost",
@@ -132,28 +125,19 @@ def get_default_config() -> dict:
             "password": "demo",
             "pool_size": 20,
             "max_overflow": 10,
-            "pool_recycle": 3600
+            "pool_recycle": 3600,
         },
-        "redis": {
-            "enabled": False,
-            "host": "localhost",
-            "port": 6379,
-            "db": 0
-        },
+        "redis": {"enabled": False, "host": "localhost", "port": 6379, "db": 0},
         "pipelines": {
             "enabled": ["basic", "basic_rerank", "crag", "graphrag", "pylate_colbert"]
         },
-        "auth": {
-            "bcrypt_rounds": 12
-        },
-        "rate_limiting": {
-            "max_concurrent_per_key": 10
-        },
+        "auth": {"bcrypt_rounds": 12},
+        "rate_limiting": {"max_concurrent_per_key": 10},
         "websocket": {
             "max_connections_per_key": 10,
             "heartbeat_interval": 30,
-            "idle_timeout": 300
-        }
+            "idle_timeout": 300,
+        },
     }
 
 
@@ -188,7 +172,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             password=db_config.get("password", "demo"),
             pool_size=db_config.get("pool_size", 20),
             max_overflow=db_config.get("max_overflow", 10),
-            pool_recycle=db_config.get("pool_recycle", 3600)
+            pool_recycle=db_config.get("pool_recycle", 3600),
         )
 
         logger.info("IRIS connection pool initialized")
@@ -201,7 +185,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 host=redis_config.get("host", "localhost"),
                 port=redis_config.get("port", 6379),
                 db=redis_config.get("db", 0),
-                decode_responses=True
+                decode_responses=True,
             )
 
             # Test connection
@@ -215,11 +199,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app_state.pipeline_manager = PipelineManager(app_state.config)
         app_state.auth_service = AuthService(
             app_state.connection_pool,
-            bcrypt_rounds=app_state.config.get("auth", {}).get("bcrypt_rounds", 12)
+            bcrypt_rounds=app_state.config.get("auth", {}).get("bcrypt_rounds", 12),
         )
         app_state.document_service = DocumentService(
-            app_state.connection_pool,
-            app_state.pipeline_manager
+            app_state.connection_pool, app_state.pipeline_manager
         )
 
         logger.info("Services initialized")
@@ -235,17 +218,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             auth_service=auth_middleware,
             max_connections_per_key=ws_config.get("max_connections_per_key", 10),
             heartbeat_interval=ws_config.get("heartbeat_interval", 30),
-            idle_timeout=ws_config.get("idle_timeout", 300)
+            idle_timeout=ws_config.get("idle_timeout", 300),
         )
 
         app_state.query_handler = QueryStreamingHandler(
-            app_state.connection_manager,
-            app_state.pipeline_manager
+            app_state.connection_manager, app_state.pipeline_manager
         )
 
         app_state.upload_handler = DocumentUploadProgressHandler(
-            app_state.connection_manager,
-            app_state.document_service
+            app_state.connection_manager, app_state.document_service
         )
 
         logger.info("WebSocket handlers initialized")
@@ -317,7 +298,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         docs_url="/docs",
         redoc_url="/redoc",
-        openapi_url="/openapi.json"
+        openapi_url="/openapi.json",
     )
 
     # Add CORS middleware
@@ -329,14 +310,13 @@ def create_app() -> FastAPI:
             allow_origins=cors_config.get("allowed_origins", ["*"]),
             allow_credentials=cors_config.get("allow_credentials", True),
             allow_methods=cors_config.get("allow_methods", ["*"]),
-            allow_headers=cors_config.get("allow_headers", ["*"])
+            allow_headers=cors_config.get("allow_headers", ["*"]),
         )
 
     # Add custom middleware (order matters!)
     # 1. Request logging (outermost - logs all requests)
     app.add_middleware(
-        RequestLoggingMiddleware,
-        connection_pool=app_state.connection_pool
+        RequestLoggingMiddleware, connection_pool=app_state.connection_pool
     )
 
     # 2. Rate limiting (after logging)
@@ -346,13 +326,12 @@ def create_app() -> FastAPI:
             redis_client=app_state.redis_client,
             max_concurrent_per_key=app_state.config.get("rate_limiting", {}).get(
                 "max_concurrent_per_key", 10
-            )
+            ),
         )
 
     # 3. Authentication (innermost - runs last)
     app.add_middleware(
-        AuthenticationMiddleware,
-        connection_pool=app_state.connection_pool
+        AuthenticationMiddleware, connection_pool=app_state.connection_pool
     )
 
     # Add exception handlers
@@ -369,9 +348,9 @@ def create_app() -> FastAPI:
                     reason="An unexpected error occurred",
                     details=ErrorDetails(
                         message="Please try again or contact support."
-                    )
+                    ),
                 )
-            ).model_dump()
+            ).model_dump(),
         )
 
     # Register routers
@@ -380,10 +359,7 @@ def create_app() -> FastAPI:
     auth_middleware = ApiKeyAuth(app_state.connection_pool)
 
     # Query routes
-    query_router = create_query_router(
-        app_state.pipeline_manager,
-        auth_middleware
-    )
+    query_router = create_query_router(app_state.pipeline_manager, auth_middleware)
     app.include_router(query_router)
 
     # Pipeline routes
@@ -392,24 +368,19 @@ def create_app() -> FastAPI:
 
     # Document routes
     document_router = create_document_router(
-        app_state.document_service,
-        auth_middleware
+        app_state.document_service, auth_middleware
     )
     app.include_router(document_router)
 
     # Health routes
     health_router = create_health_router(
-        app_state.pipeline_manager,
-        app_state.connection_pool,
-        app_state.redis_client
+        app_state.pipeline_manager, app_state.connection_pool, app_state.redis_client
     )
     app.include_router(health_router)
 
     # WebSocket routes
     websocket_router = create_websocket_router(
-        app_state.connection_manager,
-        app_state.query_handler,
-        app_state.upload_handler
+        app_state.connection_manager, app_state.query_handler, app_state.upload_handler
     )
     app.include_router(websocket_router)
 
@@ -432,5 +403,5 @@ if __name__ == "__main__":
         port=server_config.get("port", 8000),
         workers=server_config.get("workers", 4),
         reload=server_config.get("reload", False),
-        log_level="info"
+        log_level="info",
     )

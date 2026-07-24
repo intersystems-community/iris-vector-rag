@@ -35,6 +35,7 @@ def client():
 def auth_header():
     """Authorization header with valid API key."""
     import base64
+
     credentials = base64.b64encode(b"test-id:test-secret").decode()
     return {"Authorization": f"ApiKey {credentials}"}
 
@@ -57,10 +58,7 @@ class TestValidationErrorHandling:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={
-                "query": "What is diabetes?",
-                "top_k": -5  # Invalid: must be 1-100
-            }
+            json={"query": "What is diabetes?", "top_k": -5},  # Invalid: must be 1-100
         )
 
         assert response.status_code == 422
@@ -92,9 +90,7 @@ class TestValidationErrorHandling:
         long_query = "a" * 10001
 
         response = client.post(
-            "/api/v1/basic/_search",
-            headers=auth_header,
-            json={"query": long_query}
+            "/api/v1/basic/_search", headers=auth_header, json={"query": long_query}
         )
 
         assert response.status_code == 422
@@ -111,9 +107,7 @@ class TestValidationErrorHandling:
         Validates: Query minLength=1
         """
         response = client.post(
-            "/api/v1/basic/_search",
-            headers=auth_header,
-            json={"query": ""}
+            "/api/v1/basic/_search", headers=auth_header, json={"query": ""}
         )
 
         assert response.status_code == 422
@@ -129,7 +123,7 @@ class TestValidationErrorHandling:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={"top_k": 5}  # Missing 'query'
+            json={"top_k": 5},  # Missing 'query'
         )
 
         assert response.status_code == 422
@@ -148,7 +142,7 @@ class TestValidationErrorHandling:
         response = client.post(
             "/api/v1/basic/_search",
             data="not valid json{{{",  # Malformed JSON
-            headers={**auth_header, "Content-Type": "application/json"}
+            headers={**auth_header, "Content-Type": "application/json"},
         )
 
         assert response.status_code == 400
@@ -169,10 +163,7 @@ class TestValidationErrorHandling:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={
-                "query": "test",
-                "top_k": 150  # Exceeds max of 100
-            }
+            json={"query": "test", "top_k": 150},  # Exceeds max of 100
         )
 
         assert response.status_code == 422
@@ -196,10 +187,7 @@ class TestValidationErrorHandling:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={
-                "query": "",  # Too short
-                "top_k": -1   # Invalid
-            }
+            json={"query": "", "top_k": -1},  # Too short  # Invalid
         )
 
         assert response.status_code == 422
@@ -216,10 +204,7 @@ class TestValidationErrorHandling:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={
-                "query": "test",
-                "filters": "not an object"  # Should be object
-            }
+            json={"query": "test", "filters": "not an object"},  # Should be object
         )
 
         assert response.status_code == 422
@@ -235,10 +220,7 @@ class TestValidationErrorHandling:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={
-                "query": "test",
-                "unknown_field": "value"
-            }
+            json={"query": "test", "unknown_field": "value"},
         )
 
         # Should either succeed (ignore) or return 422

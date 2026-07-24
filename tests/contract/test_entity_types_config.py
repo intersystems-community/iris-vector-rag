@@ -12,7 +12,10 @@ Simplified approach: Test the signature and basic logic without full service ini
 import pytest
 import inspect
 
-from iris_vector_rag.services.entity_extraction import EntityExtractionService, DEFAULT_ENTITY_TYPES
+from iris_vector_rag.services.entity_extraction import (
+    EntityExtractionService,
+    DEFAULT_ENTITY_TYPES,
+)
 from langchain_core.documents import Document
 
 
@@ -29,8 +32,10 @@ def test_extract_batch_accepts_entity_types():
     sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
     params = list(sig.parameters.keys())
 
-    assert 'entity_types' in params, "entity_types parameter not in signature"
-    assert sig.parameters['entity_types'].default is None, "entity_types should default to None"
+    assert "entity_types" in params, "entity_types parameter not in signature"
+    assert (
+        sig.parameters["entity_types"].default is None
+    ), "entity_types should default to None"
 
 
 def test_default_entity_types_constant_exists():
@@ -92,12 +97,12 @@ def test_signature_backward_compatible():
     sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
 
     # Check that entity_types has a default value (making it optional)
-    entity_types_param = sig.parameters.get('entity_types')
+    entity_types_param = sig.parameters.get("entity_types")
     assert entity_types_param is not None
-    assert entity_types_param.default is not inspect.Parameter.empty, \
-        "entity_types must have a default value for backward compatibility"
-    assert entity_types_param.default is None, \
-        "entity_types should default to None"
+    assert (
+        entity_types_param.default is not inspect.Parameter.empty
+    ), "entity_types must have a default value for backward compatibility"
+    assert entity_types_param.default is None, "entity_types should default to None"
 
 
 def test_docstring_documents_new_parameter():
@@ -110,10 +115,12 @@ def test_docstring_documents_new_parameter():
     docstring = method.__doc__
 
     assert docstring is not None
-    assert 'entity_types' in docstring.lower(), \
-        "Docstring must mention entity_types parameter"
-    assert 'raises' in docstring.lower() or 'valueerror' in docstring.lower(), \
-        "Docstring must document ValueError for empty list"
+    assert (
+        "entity_types" in docstring.lower()
+    ), "Docstring must mention entity_types parameter"
+    assert (
+        "raises" in docstring.lower() or "valueerror" in docstring.lower()
+    ), "Docstring must document ValueError for empty list"
 
 
 def test_default_types_are_domain_neutral():
@@ -128,13 +135,15 @@ def test_default_types_are_domain_neutral():
     healthcare_types = {"USER", "MODULE", "VERSION", "ERROR"}
 
     # Check that none of the old healthcare types are in defaults
-    assert not healthcare_types.intersection(set(DEFAULT_ENTITY_TYPES)), \
-        f"DEFAULT_ENTITY_TYPES should not contain healthcare types: {healthcare_types}"
+    assert not healthcare_types.intersection(
+        set(DEFAULT_ENTITY_TYPES)
+    ), f"DEFAULT_ENTITY_TYPES should not contain healthcare types: {healthcare_types}"
 
     # Should contain domain-neutral types
     expected_neutral = {"PERSON", "ORGANIZATION", "LOCATION"}
-    assert expected_neutral.issubset(set(DEFAULT_ENTITY_TYPES)), \
-        f"DEFAULT_ENTITY_TYPES should contain neutral types: {expected_neutral}"
+    assert expected_neutral.issubset(
+        set(DEFAULT_ENTITY_TYPES)
+    ), f"DEFAULT_ENTITY_TYPES should contain neutral types: {expected_neutral}"
 
 
 def test_parameter_typing():
@@ -144,12 +153,14 @@ def test_parameter_typing():
     THEN entity_types must be typed as Optional[List[str]]
     """
     sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
-    entity_types_param = sig.parameters.get('entity_types')
+    entity_types_param = sig.parameters.get("entity_types")
 
     assert entity_types_param is not None
     # Check annotation includes Optional and List
     annotation_str = str(entity_types_param.annotation)
-    assert 'Optional' in annotation_str or 'None' in annotation_str, \
-        "entity_types should be Optional"
-    assert 'List' in annotation_str or 'list' in annotation_str, \
-        "entity_types should be List"
+    assert (
+        "Optional" in annotation_str or "None" in annotation_str
+    ), "entity_types should be Optional"
+    assert (
+        "List" in annotation_str or "list" in annotation_str
+    ), "entity_types should be List"

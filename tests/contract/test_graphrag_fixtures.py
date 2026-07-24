@@ -2,6 +2,7 @@
 Contract tests for GraphRAG test fixture management.
 These tests should fail initially and pass once implementation is complete.
 """
+
 import pytest
 
 
@@ -24,16 +25,16 @@ class TestFixtureContracts:
                     {"entity_id": "e3", "name": "Metformin", "type": "Medication"},
                     {"entity_id": "e4", "name": "Type 2 diabetes", "type": "Disease"},
                     {"entity_id": "e5", "name": "blood glucose", "type": "Test"},
-                    {"entity_id": "e6", "name": "HbA1c", "type": "Test"}
+                    {"entity_id": "e6", "name": "HbA1c", "type": "Test"},
                 ],
                 "expected_relationships": [
                     {"source": "e1", "target": "e2", "type": "treated_with"},
-                    {"source": "e4", "target": "e3", "type": "treated_with"}
+                    {"source": "e4", "target": "e3", "type": "treated_with"},
                 ],
                 "category": "medical",
-                "complexity": "medium"
+                "complexity": "medium",
             },
-            "tags": ["medical", "diabetes", "entity-rich"]
+            "tags": ["medical", "diabetes", "entity-rich"],
         }
 
         result = fixture_service.create_fixture(fixture_data)
@@ -60,8 +61,10 @@ class TestFixtureContracts:
             "fixture_type": "document",
             "data": {
                 "doc_id": "test-doc-1",
-                "expected_entities": [{"entity_id": "e1", "name": "Test", "type": "Thing"}]
-            }
+                "expected_entities": [
+                    {"entity_id": "e1", "name": "Test", "type": "Thing"}
+                ],
+            },
         }
         fixture_service.create_fixture(fixture_data)
 
@@ -83,8 +86,8 @@ class TestRunContracts:
             "environment": {
                 "python_version": "3.11",
                 "iris_version": "2025.1",
-                "pytest_version": "7.4.0"
-            }
+                "pytest_version": "7.4.0",
+            },
         }
 
         result = test_run_service.start_run(run_data)
@@ -101,7 +104,7 @@ class TestRunContracts:
             "passed_tests": 48,
             "failed_tests": 2,
             "skipped_tests": 0,
-            "coverage_percentage": 92.5
+            "coverage_percentage": 92.5,
         }
 
         result = test_run_service.update_run(run_id, update_data)
@@ -116,7 +119,7 @@ class TestRunContracts:
             "test_type": "unit",
             "status": "passed",
             "duration_ms": 1250,
-            "fixtures_used": ["medical-doc-1"]
+            "fixtures_used": ["medical-doc-1"],
         }
 
         result = test_run_service.add_result("test-run-123", result_data)
@@ -134,9 +137,9 @@ class TestRunContracts:
             "stack_trace": "Traceback...",
             "debug_info": {
                 "document_content": "sample content",
-                "extraction_output": []
+                "extraction_output": [],
             },
-            "fixtures_used": ["medical-doc-1"]
+            "fixtures_used": ["medical-doc-1"],
         }
 
         result = test_run_service.add_result("test-run-123", result_data)
@@ -153,9 +156,11 @@ class TestValidationContracts:
             "doc_id": "test-1",
             "title": "Test Document",
             "content": "Short content",  # Too short
-            "expected_entities": [{"entity_id": "e1", "name": "Test", "type": "Thing"}],  # Too few
+            "expected_entities": [
+                {"entity_id": "e1", "name": "Test", "type": "Thing"}
+            ],  # Too few
             "category": "test",
-            "complexity": "simple"
+            "complexity": "simple",
         }
 
         errors = validator_service.validate_document(document)
@@ -168,9 +173,17 @@ class TestValidationContracts:
         document = {
             "content": "This document talks about Python programming.",
             "expected_entities": [
-                {"entity_id": "e1", "name": "Java", "type": "Technology"},  # Not in content
-                {"entity_id": "e2", "name": "Python", "type": "Technology"}  # In content
-            ]
+                {
+                    "entity_id": "e1",
+                    "name": "Java",
+                    "type": "Technology",
+                },  # Not in content
+                {
+                    "entity_id": "e2",
+                    "name": "Python",
+                    "type": "Technology",
+                },  # In content
+            ],
         }
 
         errors = validator_service.validate_entities_in_content(document)
@@ -183,7 +196,7 @@ class TestValidationContracts:
             "total_tests": 100,
             "passed_tests": 95,
             "failed_tests": 3,
-            "skipped_tests": 1  # Sum is 99, not 100
+            "skipped_tests": 1,  # Sum is 99, not 100
         }
 
         errors = validator_service.validate_test_run(test_run)
@@ -196,10 +209,7 @@ class TestGraphRAGStorageContracts:
 
     @pytest.mark.requires_real_database
     def test_entity_insertion_respects_fk_constraints(
-        self,
-        iris_connection,
-        graphrag_sample_fixture,
-        database_with_clean_schema
+        self, iris_connection, graphrag_sample_fixture, database_with_clean_schema
     ):
         """
         Contract: Entities must insert successfully with valid FK references.
@@ -219,10 +229,13 @@ class TestGraphRAGStorageContracts:
 
         # Insert source documents first
         for doc in fixture.source_documents:
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO RAG.SourceDocuments (doc_id, title, content, metadata)
                 VALUES (?, ?, ?, ?)
-            """, [doc.doc_id, doc.title, doc.content, json.dumps(doc.metadata)])
+            """,
+                [doc.doc_id, doc.title, doc.content, json.dumps(doc.metadata)],
+            )
         iris_connection.commit()
 
         # Verify documents inserted and get their doc_ids
@@ -233,17 +246,20 @@ class TestGraphRAGStorageContracts:
         # This should succeed because FK constraint references doc_id column
         for entity in fixture.entities:
             try:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO RAG.Entities
                     (entity_id, entity_name, entity_type, source_doc_id, description)
                     VALUES (?, ?, ?, ?, ?)
-                """, [
-                    entity.entity_id,
-                    entity.name,
-                    entity.entity_type,
-                    entity.source_document_id,  # Must be doc_id, not id
-                    entity.description
-                ])
+                """,
+                    [
+                        entity.entity_id,
+                        entity.name,
+                        entity.entity_type,
+                        entity.source_document_id,  # Must be doc_id, not id
+                        entity.description,
+                    ],
+                )
             except Exception as e:
                 pytest.fail(
                     f"Entity insertion failed with FK constraint violation.\n"
@@ -259,8 +275,9 @@ class TestGraphRAGStorageContracts:
         # Verify entities inserted correctly
         cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
         count = cursor.fetchone()[0]
-        assert count == len(fixture.entities), \
-            f"Expected {len(fixture.entities)} entities, but found {count}"
+        assert count == len(
+            fixture.entities
+        ), f"Expected {len(fixture.entities)} entities, but found {count}"
 
         # Verify FK references are valid doc_ids
         cursor.execute("""
@@ -269,12 +286,12 @@ class TestGraphRAGStorageContracts:
             JOIN RAG.SourceDocuments sd ON e.source_doc_id = sd.doc_id
         """)
         joined_entities = cursor.fetchall()
-        assert len(joined_entities) == len(fixture.entities), \
-            "FK join failed - some entities reference invalid doc_ids"
+        assert len(joined_entities) == len(
+            fixture.entities
+        ), "FK join failed - some entities reference invalid doc_ids"
 
     def test_entity_source_document_references_are_doc_ids(
-        self,
-        graphrag_sample_fixture
+        self, graphrag_sample_fixture
     ):
         """
         Contract: Entity fixtures must reference source documents by doc_id.
@@ -288,9 +305,10 @@ class TestGraphRAGStorageContracts:
 
         # Verify all entity source_document_ids are in the valid set
         for entity in fixture.entities:
-            assert entity.source_document_id in valid_doc_ids, \
-                f"Entity '{entity.name}' references invalid doc_id: {entity.source_document_id}\n" \
+            assert entity.source_document_id in valid_doc_ids, (
+                f"Entity '{entity.name}' references invalid doc_id: {entity.source_document_id}\n"
                 f"Valid doc_ids: {valid_doc_ids}"
+            )
 
 
 class TestPerformanceContracts:
@@ -301,7 +319,7 @@ class TestPerformanceContracts:
         test_run = {
             "start_time": "2024-10-10T10:00:00Z",
             "end_time": "2024-10-10T10:25:00Z",  # 25 minutes
-            "test_suite": "all"
+            "test_suite": "all",
         }
 
         result = performance_monitor.validate_duration(test_run)
@@ -312,14 +330,16 @@ class TestPerformanceContracts:
         """Test that parallel execution reduces total time."""
         sequential_run = {
             "parallel_execution": False,
-            "duration_seconds": 1800  # 30 minutes
+            "duration_seconds": 1800,  # 30 minutes
         }
 
         parallel_run = {
             "parallel_execution": True,
-            "duration_seconds": 900  # 15 minutes
+            "duration_seconds": 900,  # 15 minutes
         }
 
-        improvement = performance_monitor.calculate_improvement(sequential_run, parallel_run)
+        improvement = performance_monitor.calculate_improvement(
+            sequential_run, parallel_run
+        )
         assert improvement["speedup_factor"] >= 1.5
         assert improvement["time_saved_seconds"] > 0

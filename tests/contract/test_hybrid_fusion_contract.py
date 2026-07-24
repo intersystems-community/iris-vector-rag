@@ -40,22 +40,30 @@ class TestHybridFusionContract:
         assert isinstance(result, dict), "Result should be a dictionary"
 
         # Verify documents retrieved (may be via fallback if iris_vector_graph unavailable)
-        assert 'contexts' in result, "Result should contain contexts"
-        assert len(result['contexts']) > 0, \
-            f"Hybrid fusion (or fallback) should retrieve documents, got {len(result['contexts'])}"
+        assert "contexts" in result, "Result should contain contexts"
+        assert (
+            len(result["contexts"]) > 0
+        ), f"Hybrid fusion (or fallback) should retrieve documents, got {len(result['contexts'])}"
 
         # Verify metadata contains retrieval_method
-        assert 'metadata' in result, "Result should contain metadata"
-        assert 'retrieval_method' in result['metadata'], \
-            "Metadata should contain retrieval_method key"
+        assert "metadata" in result, "Result should contain metadata"
+        assert (
+            "retrieval_method" in result["metadata"]
+        ), "Metadata should contain retrieval_method key"
 
         # Retrieval method should be either hybrid_fusion or vector_fallback
-        method = result['metadata']['retrieval_method']
-        assert method in ['hybrid_fusion', 'vector_fallback', 'hybrid', 'knowledge_graph'], \
-            f"Expected hybrid_fusion or fallback method, got {method}"
+        method = result["metadata"]["retrieval_method"]
+        assert method in [
+            "hybrid_fusion",
+            "vector_fallback",
+            "hybrid",
+            "knowledge_graph",
+        ], f"Expected hybrid_fusion or fallback method, got {method}"
 
     @pytest.mark.requires_database
-    def test_hybrid_fusion_fallback_on_zero_results(self, graphrag_pipeline, mocker, caplog):
+    def test_hybrid_fusion_fallback_on_zero_results(
+        self, graphrag_pipeline, mocker, caplog
+    ):
         """
         FR-002: Hybrid fusion MUST fall back to vector search when returning 0 results.
 
@@ -69,39 +77,44 @@ class TestHybridFusionContract:
         query = "What are the symptoms of diabetes?"
 
         # Mock retrieval_methods.retrieve_via_hybrid_fusion to return 0 results
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_hybrid_fusion',
-                return_value=([], 'hybrid_fusion')
+                "retrieve_via_hybrid_fusion",
+                return_value=([], "hybrid_fusion"),
             )
         else:
             # If retrieval_methods not available, mock _retrieve_via_hybrid_fusion directly
             mocker.patch.object(
                 graphrag_pipeline,
-                '_retrieve_via_hybrid_fusion',
-                return_value=([], 'hybrid_fusion')
+                "_retrieve_via_hybrid_fusion",
+                return_value=([], "hybrid_fusion"),
             )
 
         # Execute query
         result = graphrag_pipeline.query(query, method="hybrid")
 
         # Verify fallback occurred
-        assert len(result['contexts']) > 0, \
-            "Fallback to vector search should retrieve documents"
+        assert (
+            len(result["contexts"]) > 0
+        ), "Fallback to vector search should retrieve documents"
 
         # Verify metadata indicates fallback
-        assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
+        assert (
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
         # Verify warning log
         log_output = caplog.text
-        assert any("fallback" in msg.lower() or "0 results" in msg.lower()
-                   for msg in log_output.split('\n')), \
-            "Should log warning about fallback"
+        assert any(
+            "fallback" in msg.lower() or "0 results" in msg.lower()
+            for msg in log_output.split("\n")
+        ), "Should log warning about fallback"
 
     @pytest.mark.requires_database
-    def test_hybrid_fusion_fallback_on_exception(self, graphrag_pipeline, mocker, caplog):
+    def test_hybrid_fusion_fallback_on_exception(
+        self, graphrag_pipeline, mocker, caplog
+    ):
         """
         FR-003: Hybrid fusion MUST fall back when iris_vector_graph raises exception.
 
@@ -115,32 +128,35 @@ class TestHybridFusionContract:
         query = "What are the symptoms of diabetes?"
 
         # Mock retrieval_methods to raise exception
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_hybrid_fusion',
-                side_effect=Exception("iris_vector_graph connection failed")
+                "retrieve_via_hybrid_fusion",
+                side_effect=Exception("iris_vector_graph connection failed"),
             )
         else:
             mocker.patch.object(
                 graphrag_pipeline,
-                '_retrieve_via_hybrid_fusion',
-                side_effect=Exception("iris_vector_graph connection failed")
+                "_retrieve_via_hybrid_fusion",
+                side_effect=Exception("iris_vector_graph connection failed"),
             )
 
         # Execute query - should not raise exception
         result = graphrag_pipeline.query(query, method="hybrid")
 
         # Verify fallback succeeded
-        assert len(result['contexts']) > 0, \
-            "Fallback to vector search should retrieve documents after exception"
+        assert (
+            len(result["contexts"]) > 0
+        ), "Fallback to vector search should retrieve documents after exception"
 
         # Verify metadata indicates fallback
-        assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            f"Expected vector_fallback after exception, got {result['metadata']['retrieval_method']}"
+        assert (
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback after exception, got {result['metadata']['retrieval_method']}"
 
         # Verify error was logged
         log_output = caplog.text
-        assert any("error" in msg.lower() or "fail" in msg.lower()
-                   for msg in log_output.split('\n')), \
-            "Should log error message about exception"
+        assert any(
+            "error" in msg.lower() or "fail" in msg.lower()
+            for msg in log_output.split("\n")
+        ), "Should log error message about exception"

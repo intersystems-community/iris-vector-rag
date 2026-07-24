@@ -10,7 +10,11 @@ import unittest
 from unittest.mock import patch
 
 from iris_vector_rag.core.base import RAGPipeline, VectorStore
-from iris_vector_rag.core.exceptions import ConfigurationError, RAGError, ValidationError
+from iris_vector_rag.core.exceptions import (
+    ConfigurationError,
+    RAGError,
+    ValidationError,
+)
 
 # Import and test what actually exists
 from iris_vector_rag.core.models import (

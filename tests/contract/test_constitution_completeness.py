@@ -11,7 +11,6 @@ import pytest
 from pathlib import Path
 import re
 
-
 # ==============================================================================
 # FIXTURES
 # ==============================================================================
@@ -44,22 +43,26 @@ class TestConstitutionStructure:
 
     def test_constitution_file_exists(self, constitution_path):
         """Constitution file exists at .specify/memory/constitution.md."""
-        assert constitution_path.exists(), \
-            f"Constitution file not found at {constitution_path}"
+        assert (
+            constitution_path.exists()
+        ), f"Constitution file not found at {constitution_path}"
 
     def test_constitution_not_template(self, constitution_content):
         """Constitution is not the default template."""
         # Template contains placeholder text like [PROJECT_NAME]
-        assert "[PROJECT_NAME]" not in constitution_content, \
-            "Constitution still contains template placeholders"
-        assert "[PRINCIPLE_1_NAME]" not in constitution_content, \
-            "Constitution still contains principle placeholders"
+        assert (
+            "[PROJECT_NAME]" not in constitution_content
+        ), "Constitution still contains template placeholders"
+        assert (
+            "[PRINCIPLE_1_NAME]" not in constitution_content
+        ), "Constitution still contains principle placeholders"
 
     def test_has_project_name(self, constitution_content):
         """Constitution has project name in header."""
         # Should have "# IRIS RAG Templates Constitution" or similar
-        assert re.search(r"#\s+\w+.*Constitution", constitution_content), \
-            "Constitution missing project name header"
+        assert re.search(
+            r"#\s+\w+.*Constitution", constitution_content
+        ), "Constitution missing project name header"
 
 
 # ==============================================================================
@@ -80,18 +83,21 @@ class TestIRISTestingPrinciples:
 
         content_lower = constitution_content.lower()
 
-        assert "vector" in content_lower, \
-            "Constitution missing VECTOR type discussion"
-        assert "to_vector" in content_lower or "to_vector()" in content_lower, \
-            "Constitution missing TO_VECTOR() function requirement"
+        assert "vector" in content_lower, "Constitution missing VECTOR type discussion"
+        assert (
+            "to_vector" in content_lower or "to_vector()" in content_lower
+        ), "Constitution missing TO_VECTOR() function requirement"
 
         # Should explain the limitation
-        assert any(phrase in content_lower for phrase in [
-            "client limitation",
-            "cannot insert",
-            "cannot be inserted",
-            "must use to_vector"
-        ]), "Constitution missing VECTOR client limitation explanation"
+        assert any(
+            phrase in content_lower
+            for phrase in [
+                "client limitation",
+                "cannot insert",
+                "cannot be inserted",
+                "must use to_vector",
+            ]
+        ), "Constitution missing VECTOR client limitation explanation"
 
     def test_has_dat_fixture_first_principle(self, constitution_content):
         """Constitution documents .DAT fixture-first approach."""
@@ -102,14 +108,18 @@ class TestIRISTestingPrinciples:
 
         content_lower = constitution_content.lower()
 
-        assert ".dat" in content_lower or "dat fixture" in content_lower, \
-            "Constitution missing .DAT fixture discussion"
-        assert any(phrase in content_lower for phrase in [
-            "iris-devtools",
-            "100x faster",
-            "200x faster",
-            "faster than json"
-        ]), "Constitution missing .DAT performance benefits"
+        assert (
+            ".dat" in content_lower or "dat fixture" in content_lower
+        ), "Constitution missing .DAT fixture discussion"
+        assert any(
+            phrase in content_lower
+            for phrase in [
+                "iris-devtools",
+                "100x faster",
+                "200x faster",
+                "faster than json",
+            ]
+        ), "Constitution missing .DAT performance benefits"
 
     def test_has_test_isolation_principle(self, constitution_content):
         """Constitution documents test isolation by database state."""
@@ -120,17 +130,15 @@ class TestIRISTestingPrinciples:
 
         content_lower = constitution_content.lower()
 
-        assert any(phrase in content_lower for phrase in [
-            "test isolation",
-            "isolated",
-            "isolation"
-        ]), "Constitution missing test isolation discussion"
+        assert any(
+            phrase in content_lower
+            for phrase in ["test isolation", "isolated", "isolation"]
+        ), "Constitution missing test isolation discussion"
 
-        assert any(phrase in content_lower for phrase in [
-            "checksum",
-            "reproducible",
-            "reproducibility"
-        ]), "Constitution missing checksum/reproducibility discussion"
+        assert any(
+            phrase in content_lower
+            for phrase in ["checksum", "reproducible", "reproducibility"]
+        ), "Constitution missing checksum/reproducibility discussion"
 
     def test_has_embedding_standards_principle(self, constitution_content):
         """Constitution documents embedding generation standards."""
@@ -141,10 +149,10 @@ class TestIRISTestingPrinciples:
 
         content_lower = constitution_content.lower()
 
-        assert "embedding" in content_lower, \
-            "Constitution missing embedding discussion"
-        assert "384" in constitution_content or "dimension" in content_lower, \
-            "Constitution missing embedding dimension standard"
+        assert "embedding" in content_lower, "Constitution missing embedding discussion"
+        assert (
+            "384" in constitution_content or "dimension" in content_lower
+        ), "Constitution missing embedding dimension standard"
 
     def test_has_backend_mode_awareness_principle(self, constitution_content):
         """Constitution documents backend mode awareness."""
@@ -155,12 +163,15 @@ class TestIRISTestingPrinciples:
 
         content_lower = constitution_content.lower()
 
-        assert any(phrase in content_lower for phrase in [
-            "backend mode",
-            "community edition",
-            "enterprise edition",
-            "connection pool"
-        ]), "Constitution missing backend mode discussion"
+        assert any(
+            phrase in content_lower
+            for phrase in [
+                "backend mode",
+                "community edition",
+                "enterprise edition",
+                "connection pool",
+            ]
+        ), "Constitution missing backend mode discussion"
 
 
 # ==============================================================================
@@ -177,27 +188,35 @@ class TestPrincipleCompleteness:
         content_lower = constitution_content.lower()
 
         principles = {
-            "VECTOR/VARCHAR": any(phrase in content_lower for phrase in [
-                "to_vector", "vector column", "client limitation"
-            ]),
-            ".DAT Fixture-First": any(phrase in content_lower for phrase in [
-                ".dat", "dat fixture", "iris-devtools"
-            ]),
-            "Test Isolation": any(phrase in content_lower for phrase in [
-                "isolation", "isolated", "checksum"
-            ]),
-            "Embedding Standards": any(phrase in content_lower for phrase in [
-                "embedding", "384", "dimension"
-            ]),
-            "Backend Mode": any(phrase in content_lower for phrase in [
-                "backend mode", "community", "enterprise", "connection pool"
-            ]),
+            "VECTOR/VARCHAR": any(
+                phrase in content_lower
+                for phrase in ["to_vector", "vector column", "client limitation"]
+            ),
+            ".DAT Fixture-First": any(
+                phrase in content_lower
+                for phrase in [".dat", "dat fixture", "iris-devtools"]
+            ),
+            "Test Isolation": any(
+                phrase in content_lower
+                for phrase in ["isolation", "isolated", "checksum"]
+            ),
+            "Embedding Standards": any(
+                phrase in content_lower for phrase in ["embedding", "384", "dimension"]
+            ),
+            "Backend Mode": any(
+                phrase in content_lower
+                for phrase in [
+                    "backend mode",
+                    "community",
+                    "enterprise",
+                    "connection pool",
+                ]
+            ),
         }
 
         missing = [name for name, present in principles.items() if not present]
 
-        assert not missing, \
-            f"Constitution missing principles: {', '.join(missing)}"
+        assert not missing, f"Constitution missing principles: {', '.join(missing)}"
 
     def test_has_examples_or_code_blocks(self, constitution_content):
         """Constitution includes examples or code blocks."""
@@ -207,29 +226,35 @@ class TestPrincipleCompleteness:
         has_code_blocks = "```" in constitution_content
 
         # Check for examples section
-        has_examples = any(word in constitution_content.lower() for word in [
-            "example", "examples", "usage", "how to"
-        ])
+        has_examples = any(
+            word in constitution_content.lower()
+            for word in ["example", "examples", "usage", "how to"]
+        )
 
-        assert has_code_blocks or has_examples, \
-            "Constitution missing practical examples or code blocks"
+        assert (
+            has_code_blocks or has_examples
+        ), "Constitution missing practical examples or code blocks"
 
     def test_has_decision_trees_or_guidelines(self, constitution_content):
         """Constitution includes decision trees or when-to-use guidelines."""
         content_lower = constitution_content.lower()
 
         # Check for decision-making guidance
-        has_guidance = any(phrase in content_lower for phrase in [
-            "when to",
-            "use when",
-            "decision",
-            "choose",
-            "prefer",
-            "should use"
-        ])
+        has_guidance = any(
+            phrase in content_lower
+            for phrase in [
+                "when to",
+                "use when",
+                "decision",
+                "choose",
+                "prefer",
+                "should use",
+            ]
+        )
 
-        assert has_guidance, \
-            "Constitution missing decision trees or when-to-use guidelines"
+        assert (
+            has_guidance
+        ), "Constitution missing decision trees or when-to-use guidelines"
 
 
 # ==============================================================================
@@ -244,24 +269,25 @@ class TestConstitutionReferences:
     def test_references_feature_035(self, constitution_content):
         """Constitution references Feature 035 (backend mode)."""
         # Should reference Feature 035 or backend configuration
-        assert any(ref in constitution_content for ref in [
-            "Feature 035",
-            "035",
-            "backend_configuration",
-            "backend mode"
-        ]), "Constitution missing reference to Feature 035"
+        assert any(
+            ref in constitution_content
+            for ref in ["Feature 035", "035", "backend_configuration", "backend mode"]
+        ), "Constitution missing reference to Feature 035"
 
     def test_references_fixture_readme(self, constitution_content):
         """Constitution references tests/fixtures/README.md or fixture documentation."""
         content_lower = constitution_content.lower()
 
         # Should reference fixture documentation
-        assert any(ref in content_lower for ref in [
-            "tests/fixtures",
-            "fixture readme",
-            "fixture documentation",
-            "fixturemanager"
-        ]), "Constitution missing reference to fixture documentation"
+        assert any(
+            ref in content_lower
+            for ref in [
+                "tests/fixtures",
+                "fixture readme",
+                "fixture documentation",
+                "fixturemanager",
+            ]
+        ), "Constitution missing reference to fixture documentation"
 
 
 # ==============================================================================
@@ -276,26 +302,41 @@ class TestConstitutionFormatting:
     def test_uses_markdown_headers(self, constitution_content):
         """Constitution uses proper markdown headers."""
         # Should have multiple levels of headers
-        assert re.search(r"^#+\s+.+", constitution_content, re.MULTILINE), \
-            "Constitution missing markdown headers"
+        assert re.search(
+            r"^#+\s+.+", constitution_content, re.MULTILINE
+        ), "Constitution missing markdown headers"
 
     def test_has_numbered_or_named_principles(self, constitution_content):
         """Principles are numbered or named (I, II, III or Principle 1, 2, 3)."""
         # Check for numbered principles
-        has_numbering = any(pattern in constitution_content for pattern in [
-            "## I.", "## II.", "## III.", "## IV.", "## V.",
-            "### I.", "### II.", "### III.", "### IV.", "### V.",
-            "Principle 1", "Principle 2", "Principle 3", "Principle 4", "Principle 5",
-        ])
+        has_numbering = any(
+            pattern in constitution_content
+            for pattern in [
+                "## I.",
+                "## II.",
+                "## III.",
+                "## IV.",
+                "## V.",
+                "### I.",
+                "### II.",
+                "### III.",
+                "### IV.",
+                "### V.",
+                "Principle 1",
+                "Principle 2",
+                "Principle 3",
+                "Principle 4",
+                "Principle 5",
+            ]
+        )
 
-        assert has_numbering, \
-            "Constitution principles not numbered or clearly named"
+        assert has_numbering, "Constitution principles not numbered or clearly named"
 
     def test_has_version_and_dates(self, constitution_content):
         """Constitution has version and ratification date."""
         content_lower = constitution_content.lower()
 
-        assert "version" in content_lower, \
-            "Constitution missing version information"
-        assert any(word in content_lower for word in ["ratified", "date", "amended"]), \
-            "Constitution missing date information"
+        assert "version" in content_lower, "Constitution missing version information"
+        assert any(
+            word in content_lower for word in ["ratified", "date", "amended"]
+        ), "Constitution missing date information"

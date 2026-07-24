@@ -32,14 +32,13 @@ class TestBatchPerformance:
         """Generate 1,000 test documents for performance testing."""
         documents = []
         for i in range(1000):
-            content = f"Support ticket {i}: TrakCare system error in module PatientManagement. " \
-                     f"User admin reported issue with database connection. " \
-                     f"Error code ERR{i:04d} in version 2024.1.{i % 10}. " \
-                     f"The system failed to process patient records correctly."
-            documents.append(Document(
-                id=f"perf-ticket-{i}",
-                page_content=content
-            ))
+            content = (
+                f"Support ticket {i}: TrakCare system error in module PatientManagement. "
+                f"User admin reported issue with database connection. "
+                f"Error code ERR{i:04d} in version 2024.1.{i % 10}. "
+                f"The system failed to process patient records correctly."
+            )
+            documents.append(Document(id=f"perf-ticket-{i}", page_content=content))
         return documents
 
     @pytest.fixture
@@ -47,12 +46,11 @@ class TestBatchPerformance:
         """Generate 10,000 test documents for large-scale performance testing."""
         documents = []
         for i in range(10000):
-            content = f"Ticket {i}: Error in TrakCare module. " \
-                     f"Code: ERR{i:05d}. Version: 2024.{i % 12 + 1}.{i % 30 + 1}."
-            documents.append(Document(
-                id=f"large-ticket-{i}",
-                page_content=content
-            ))
+            content = (
+                f"Ticket {i}: Error in TrakCare module. "
+                f"Code: ERR{i:05d}. Version: 2024.{i % 12 + 1}.{i % 30 + 1}."
+            )
+            documents.append(Document(id=f"large-ticket-{i}", page_content=content))
         return documents
 
     def test_1k_documents_speedup_target_3x(self, service, documents_1k):
@@ -80,12 +78,15 @@ class TestBatchPerformance:
         # Validate 3x speedup (allow 20% tolerance: 2.4x - 3.6x)
         print("\nResults:")
         print(f"  Batch processing time: {elapsed:.1f}s ({elapsed/60:.1f} min)")
-        print(f"  Expected single-doc time: {expected_single_doc_time:.1f}s ({expected_single_doc_time/3600:.1f} hours)")
+        print(
+            f"  Expected single-doc time: {expected_single_doc_time:.1f}s ({expected_single_doc_time/3600:.1f} hours)"
+        )
         print(f"  Actual speedup: {actual_speedup:.2f}x")
         print("  Target speedup: 3.0x (tolerance: 2.4x - 3.6x)")
 
-        assert actual_speedup >= 2.4, \
-            f"Speedup must be at least 2.4x (target 3.0x), got {actual_speedup:.2f}x"
+        assert (
+            actual_speedup >= 2.4
+        ), f"Speedup must be at least 2.4x (target 3.0x), got {actual_speedup:.2f}x"
         print(f"  ✓ Speedup requirement met: {actual_speedup:.2f}x >= 2.4x")
 
         # Validate batch succeeded
@@ -115,13 +116,18 @@ class TestBatchPerformance:
 
         print("\nResults:")
         print(f"  Batch processing time: {elapsed:.1f}s ({elapsed/60:.1f} min)")
-        print(f"  Expected single-doc time: {expected_single_doc_time:.1f}s ({expected_single_doc_time/3600:.1f} hours)")
+        print(
+            f"  Expected single-doc time: {expected_single_doc_time:.1f}s ({expected_single_doc_time/3600:.1f} hours)"
+        )
         print(f"  Actual speedup: {actual_speedup:.2f}x")
         print("  Target speedup: 3.0x (tolerance: 2.4x - 3.6x)")
 
-        assert actual_speedup >= 2.4, \
-            f"Speedup must be at least 2.4x at 10K scale, got {actual_speedup:.2f}x"
-        print(f"  ✓ Speedup requirement met at 10K scale: {actual_speedup:.2f}x >= 2.4x")
+        assert (
+            actual_speedup >= 2.4
+        ), f"Speedup must be at least 2.4x at 10K scale, got {actual_speedup:.2f}x"
+        print(
+            f"  ✓ Speedup requirement met at 10K scale: {actual_speedup:.2f}x >= 2.4x"
+        )
 
         assert result.success_status, "Large-scale batch must succeed"
         print("  ✓ Large-scale batch processing succeeded")
@@ -151,8 +157,9 @@ class TestBatchPerformance:
         print("  Target: 4.86 entities/doc (tolerance: >= 4.0)")
 
         # Validate quality maintained (allow some tolerance: >= 4.0)
-        assert avg_entities_per_doc >= 4.0, \
-            f"Quality must be maintained (target 4.86 entities/doc), got {avg_entities_per_doc:.2f}"
+        assert (
+            avg_entities_per_doc >= 4.0
+        ), f"Quality must be maintained (target 4.86 entities/doc), got {avg_entities_per_doc:.2f}"
         print(f"  ✓ Quality requirement met: {avg_entities_per_doc:.2f} >= 4.0")
 
         # Additional quality checks
@@ -161,13 +168,16 @@ class TestBatchPerformance:
         zero_entity_pct = (zero_entity_docs / len(documents_1k)) * 100
 
         print("\nAdditional Quality Metrics:")
-        print(f"  Documents with zero entities: {zero_entity_docs} ({zero_entity_pct:.1f}%)")
+        print(
+            f"  Documents with zero entities: {zero_entity_docs} ({zero_entity_pct:.1f}%)"
+        )
         print(f"  Max entities in single doc: {max(entity_counts.values())}")
         print(f"  Min entities in single doc: {min(entity_counts.values())}")
 
         # Zero-entity documents should be low (< 10%)
-        assert zero_entity_pct < 10.0, \
-            f"Too many zero-entity documents ({zero_entity_pct:.1f}%), expected < 10%"
+        assert (
+            zero_entity_pct < 10.0
+        ), f"Too many zero-entity documents ({zero_entity_pct:.1f}%), expected < 10%"
         print(f"  ✓ Low zero-entity rate: {zero_entity_pct:.1f}% < 10%")
 
     def test_mixed_document_types_in_same_batch(self, service):
@@ -185,20 +195,38 @@ class TestBatchPerformance:
         # Create mixed document types
         mixed_docs = [
             # Support tickets
-            Document(id="ticket1", page_content="Support ticket: TrakCare error ERR001 in module PatientManagement."),
-            Document(id="ticket2", page_content="Ticket #2: Database connection failed with timeout."),
-
+            Document(
+                id="ticket1",
+                page_content="Support ticket: TrakCare error ERR001 in module PatientManagement.",
+            ),
+            Document(
+                id="ticket2",
+                page_content="Ticket #2: Database connection failed with timeout.",
+            ),
             # Emails
-            Document(id="email1", page_content="From: user@example.com. Subject: Issue with TrakCare login. Body: Cannot access system."),
-            Document(id="email2", page_content="Email: System upgrade notification for version 2024.1.5."),
-
+            Document(
+                id="email1",
+                page_content="From: user@example.com. Subject: Issue with TrakCare login. Body: Cannot access system.",
+            ),
+            Document(
+                id="email2",
+                page_content="Email: System upgrade notification for version 2024.1.5.",
+            ),
             # Documentation
-            Document(id="doc1", page_content="Documentation: TrakCare module PatientManagement handles patient records."),
-            Document(id="doc2", page_content="User guide: How to troubleshoot database errors in TrakCare."),
-
+            Document(
+                id="doc1",
+                page_content="Documentation: TrakCare module PatientManagement handles patient records.",
+            ),
+            Document(
+                id="doc2",
+                page_content="User guide: How to troubleshoot database errors in TrakCare.",
+            ),
             # Short notes
             Document(id="note1", page_content="Quick note: ERR404 resolved."),
-            Document(id="note2", page_content="Meeting notes: Discussed TrakCare upgrade schedule."),
+            Document(
+                id="note2",
+                page_content="Meeting notes: Discussed TrakCare upgrade schedule.",
+            ),
         ]
 
         # Process mixed batch
@@ -210,8 +238,9 @@ class TestBatchPerformance:
         print(f"  Documents processed: {len(result.per_document_entities)}")
 
         # Validate all documents processed
-        assert len(result.per_document_entities) == len(mixed_docs), \
-            "All document types must be processed"
+        assert len(result.per_document_entities) == len(
+            mixed_docs
+        ), "All document types must be processed"
         print("  ✓ All document types processed successfully")
 
         # Validate success
@@ -220,8 +249,9 @@ class TestBatchPerformance:
 
         # Validate entities extracted from each type
         for doc in mixed_docs:
-            assert doc.id in result.per_document_entities, \
-                f"Document {doc.id} must have entity results"
+            assert (
+                doc.id in result.per_document_entities
+            ), f"Document {doc.id} must have entity results"
 
         print("  ✓ All documents have entity extraction results")
 
@@ -245,8 +275,9 @@ class TestBatchPerformance:
         print("  Target: >= 20 docs/min (3x improvement over 8.33 baseline)")
 
         # Validate throughput improvement
-        assert docs_per_minute >= 20.0, \
-            f"Throughput must be >= 20 docs/min, got {docs_per_minute:.1f}"
+        assert (
+            docs_per_minute >= 20.0
+        ), f"Throughput must be >= 20 docs/min, got {docs_per_minute:.1f}"
         print(f"  ✓ Throughput requirement met: {docs_per_minute:.1f} >= 20")
 
     def test_processing_statistics_accuracy(self, service, documents_1k):
@@ -265,17 +296,19 @@ class TestBatchPerformance:
         print(f"  Total batches processed: {metrics.total_batches_processed}")
         print(f"  Total documents processed: {metrics.total_documents_processed}")
         print(f"  Average batch time: {metrics.average_batch_processing_time:.2f}s")
-        print(f"  Entity extraction rate: {metrics.entity_extraction_rate_per_batch:.2f}")
+        print(
+            f"  Entity extraction rate: {metrics.entity_extraction_rate_per_batch:.2f}"
+        )
         print(f"  Zero-entity documents: {metrics.zero_entity_documents_count}")
         print(f"  Failed batches: {metrics.failed_batches_count}")
         print(f"  Total retry attempts: {metrics.retry_attempts_total}")
 
         # Validate statistics are reasonable
         assert metrics.total_batches_processed > 0, "Should have processed batches"
-        assert metrics.total_documents_processed >= len(documents_1k), \
-            "Should track document count"
-        assert metrics.average_batch_processing_time > 0, \
-            "Should track processing time"
+        assert metrics.total_documents_processed >= len(
+            documents_1k
+        ), "Should track document count"
+        assert metrics.average_batch_processing_time > 0, "Should track processing time"
 
         print("  ✓ All statistics tracked correctly")
 
@@ -287,13 +320,19 @@ class TestBatchPerformance:
 
         # Create test documents
         test_docs = [
-            Document(id=f"equiv-{i}", page_content=f"TrakCare error ERR{i:03d} in module PatientManagement. User admin reported issue.")
+            Document(
+                id=f"equiv-{i}",
+                page_content=f"TrakCare error ERR{i:03d} in module PatientManagement. User admin reported issue.",
+            )
             for i in range(10)
         ]
 
         # Process via batch
         batch_result = service.extract_batch(test_docs)
-        batch_entities = {doc_id: entities for doc_id, entities in batch_result.per_document_entities.items()}
+        batch_entities = {
+            doc_id: entities
+            for doc_id, entities in batch_result.per_document_entities.items()
+        }
 
         # Process individually (if supported)
         # For now, validate batch extraction produces consistent results
@@ -309,8 +348,9 @@ class TestBatchPerformance:
         print(f"  Variance: {variance:.2f}")
 
         # Variance should be low for similar documents
-        assert variance < 10.0, \
-            f"Extraction should be consistent across similar docs (variance {variance:.2f})"
+        assert (
+            variance < 10.0
+        ), f"Extraction should be consistent across similar docs (variance {variance:.2f})"
         print("  ✓ Consistent extraction across documents")
 
     def test_memory_usage_bounded(self, service, documents_1k):
@@ -333,6 +373,7 @@ class TestBatchPerformance:
         print(f"  Increase: {memory_increase:.1f} MB")
 
         # Memory increase should be reasonable (< 500 MB for 1K docs)
-        assert memory_increase < 500, \
-            f"Memory usage should be bounded (increase {memory_increase:.1f} MB)"
+        assert (
+            memory_increase < 500
+        ), f"Memory usage should be bounded (increase {memory_increase:.1f} MB)"
         print(f"  ✓ Memory usage bounded: {memory_increase:.1f} MB < 500 MB")

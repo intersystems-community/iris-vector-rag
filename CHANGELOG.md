@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.12.0] — 2026-07-24
+## v0.12.0
 
-### Added
+### Composable query-time retrieval (065)
 
 - Composable query-time options on all pipelines via unified `query()` signature:
   - `retrieval=` — `"vector"` (default) | `"text"` | `"hybrid"` | `"rrf"` — switch retrieval mode per query without changing pipeline type
@@ -14,22 +14,23 @@
   - `include_sources=` — control source metadata in response
 - `IRISVectorStore.search_by_text(query, top_k)` → `List[Document]` — explicit text-search entry point
 - `IRISVectorStore.search_by_vector(embedding, top_k)` → `List[Tuple[Document, float]]` — explicit vector entry point; legacy `similarity_search` unchanged
-- `iris_vector_rag.retrieval.rerank.resolve_reranker(spec, model_name=)` — public reranker resolver; process-level cache ensures cross-encoder model loads once per `(strategy, model_name)` tuple per process; thread-safe
+- `iris_vector_rag.retrieval.rerank.resolve_reranker(spec, model_name=)` — process-level cache; cross-encoder model loads once per `(strategy, model_name)` tuple per process; thread-safe
 - `iris_vector_rag.retrieval.engine.RetrievalEngine` — routes `vector`/`text`/`hybrid`/`rrf` modes; emits `vector_score`/`text_score`/`fusion_score` into `Document.metadata`
-- `iris_vector_rag.retrieval.modes.RetrievalMode` — prerequisite checks with `RetrievalPrerequisiteError` (named, non-silent) when a mode requires iris-vector-graph
+- `iris_vector_rag.retrieval.modes.RetrievalMode` — prerequisite checks with `RetrievalPrerequisiteError` when a mode requires iris-vector-graph
 - Structured log fields on all pipeline completion logs: `retrieval_mode=`, `weights=`, `rerank_strategy=`, `rerank_degraded=`
+- Fixed `metadata_filter` and `similarity_threshold` silently discarded in `BasicRAGPipeline.query()`
+- Fixed `RetrievalPrerequisiteError` swallowed by generic `except Exception`
+- Fixed `tests/unit/conftest.py` leaking mock `sentence_transformers` into `sys.modules` across test processes
 
-### Fixed
+### IRISVectorEngine unified engine object (080)
 
-- `metadata_filter` and `similarity_threshold` were silently discarded in `BasicRAGPipeline.query()` — now forwarded to the vector store and enforced
-- `RetrievalPrerequisiteError` was swallowed by generic `except Exception` — now re-raised with full context
-- `tests/unit/conftest.py` injected `sentence_transformers` into `sys.modules` without restoring it — now uses `monkeypatch.setitem` so benchmarks run clean after unit tests in the same process
-
-### Changed
-
-- `query_text=` retained as an alias for `query=` (backward-compatible)
-- `basic_rerank` pipeline is now equivalent to `basic` + `rerank=True`; both patterns are supported
-- All six registered pipelines (`basic`, `basic_rerank`, `crag`, `graphrag`, `pylate_colbert`, `multi_query_rrf`) accept the full unified `query()` signature
+- Add `IRISVectorEngine` — unified engine object that collapses `(connection_manager, config_manager)` pair into one entry point. `IRISVectorEngine.from_config()` constructs from env/YAML in one call; accepts raw DBAPI connection or `ConnectionManager` as first arg.
+- Export `IRISVectorEngine` from top-level `iris_vector_rag`.
+- Add `engine=` kwarg to `create_pipeline()` and `create_validated_pipeline()`.
+- `RAGPipeline.__init__` accepts `IRISVectorEngine` as first positional arg.
+- Fully lazy — no DB connection until `.connection` or `.vector_store` accessed.
+- 313 unit tests pass; 8 new E2E tests for engine in `tests/e2e/test_engine_e2e.py`.
+- Rewrite AGENTS.md from 4-line stub to full 370-line agent reference.
 
 ## v0.11.4
 

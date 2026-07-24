@@ -19,11 +19,10 @@ from iris_vector_rag.api.models.websocket import (
     WebSocketEvent,
     WebSocketAuthMessage,
     EventType,
-    SubscriptionType
+    SubscriptionType,
 )
 from iris_vector_rag.api.models.auth import ApiKey
 from iris_vector_rag.api.middleware.auth import ApiKeyAuth
-
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class ConnectionManager:
         auth_service: ApiKeyAuth,
         max_connections_per_key: int = 10,
         heartbeat_interval: int = 30,
-        idle_timeout: int = 300
+        idle_timeout: int = 300,
     ):
         """
         Initialize connection manager.
@@ -64,9 +63,7 @@ class ConnectionManager:
         self.connections_by_api_key: Dict[UUID, Set[UUID]] = {}
 
     async def connect(
-        self,
-        websocket: WebSocket,
-        auth_message: WebSocketAuthMessage
+        self, websocket: WebSocket, auth_message: WebSocketAuthMessage
     ) -> WebSocketSession:
         """
         Establish WebSocket connection with authentication.
@@ -116,7 +113,7 @@ class ConnectionManager:
             subscription_type=auth_message.subscription_type,
             is_active=True,
             message_count=0,
-            reconnection_token=f"reconnect_{uuid4()}"
+            reconnection_token=f"reconnect_{uuid4()}",
         )
 
         # Store connection
@@ -171,11 +168,7 @@ class ConnectionManager:
         )
 
     async def send_event(
-        self,
-        session_id: UUID,
-        event_type: EventType,
-        data: dict,
-        request_id: UUID
+        self, session_id: UUID, event_type: EventType, data: dict, request_id: UUID
     ):
         """
         Send event to WebSocket client.
@@ -199,7 +192,7 @@ class ConnectionManager:
             event=event_type,
             data=data,
             timestamp=datetime.utcnow(),
-            request_id=request_id
+            request_id=request_id,
         )
 
         try:
@@ -220,7 +213,7 @@ class ConnectionManager:
         data: dict,
         request_id: UUID,
         api_key_id: Optional[UUID] = None,
-        subscription_filter: Optional[SubscriptionType] = None
+        subscription_filter: Optional[SubscriptionType] = None,
     ):
         """
         Broadcast event to multiple sessions.
@@ -241,8 +234,10 @@ class ConnectionManager:
 
             # Filter by subscription type if specified
             if subscription_filter:
-                if session.subscription_type != subscription_filter and \
-                   session.subscription_type != SubscriptionType.ALL:
+                if (
+                    session.subscription_type != subscription_filter
+                    and session.subscription_type != SubscriptionType.ALL
+                ):
                     continue
 
             target_sessions.append(session_id)
@@ -284,7 +279,7 @@ class ConnectionManager:
                     session_id=session_id,
                     event_type=EventType.PING,
                     data={"timestamp": datetime.utcnow().isoformat()},
-                    request_id=uuid4()
+                    request_id=uuid4(),
                 )
 
             except Exception as e:

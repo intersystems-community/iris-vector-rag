@@ -20,17 +20,29 @@ class RAGPipeline(abc.ABC):
     def __init__(
         self,
         connection_manager,
-        config_manager,
+        config_manager=None,
         vector_store: Optional[VectorStore] = None,
     ):
         """
         Initialize the RAG pipeline with connection and configuration managers.
 
+        Supports two calling conventions:
+        1. Legacy: RAGPipeline(connection_manager, config_manager, vector_store=None)
+        2. Engine overload: RAGPipeline(engine, vector_store=None) where engine is IRISVectorEngine
+
         Args:
-            connection_manager: Database connection manager
-            config_manager: Configuration manager
+            connection_manager: Database connection manager OR IRISVectorEngine instance
+            config_manager: Configuration manager (ignored if connection_manager is IRISVectorEngine)
             vector_store: Optional VectorStore instance. If None, IRISVectorStore will be instantiated.
         """
+        # engine= overload: accept IRISVectorEngine as first positional arg
+        if connection_manager.__class__.__name__ == "IRISVectorEngine":
+            engine = connection_manager
+            config_manager = engine.config_manager
+            if vector_store is None:
+                vector_store = engine.vector_store
+            connection_manager = engine.connection_manager
+
         self.connection_manager = connection_manager
         self.config_manager = config_manager
 
@@ -42,6 +54,19 @@ class RAGPipeline(abc.ABC):
         else:
             self.vector_store = vector_store
 
+        self._lazy_init_done = False
+
+    def initialize(self) -> None:
+        """Explicitly initialize pipeline schema. Idempotent; called lazily on first use."""
+        if hasattr(self.vector_store, "schema_manager"):
+            self.vector_store.schema_manager.ensure_schema_metadata_table()
+
+    def _ensure_initialized(self) -> None:
+        """Lazy init: call initialize() once on first use."""
+        if not self._lazy_init_done:
+            self.initialize()
+            self._lazy_init_done = True
+
     def _validate_dimensions(self, embedding: List[float], expected_dims: int) -> None:
         actual_dims = len(embedding)
         if actual_dims != expected_dims:
@@ -52,7 +77,7 @@ class RAGPipeline(abc.ABC):
             )
 
     @abc.abstractmethod
-    def load_documents(self, documents_path: str, **kwargs) -> None:
+    def load_documents(self, documents_path: str, **kwargs) -> Dict[str, Any]:
         """
         Loads and processes documents into the RAG pipeline&#x27;s knowledge base.
 
@@ -62,6 +87,12 @@ class RAGPipeline(abc.ABC):
         Args:
             documents_path: Path to the documents or directory of documents.
             **kwargs: Additional keyword arguments for document loading.
+
+        Returns:
+            Dict with ingestion status containing keys:
+                - documents_loaded: int (number of documents successfully loaded)
+                - documents_failed: int (number of documents that failed to load)
+                - embeddings_generated: int (number of embeddings generated)
         """
 
     @abc.abstractmethod

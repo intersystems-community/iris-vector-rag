@@ -43,39 +43,44 @@ class TestBatchRetryLogic:
         Then: System retries entire batch 3 times with exponential backoff (2s, 4s, 8s)
         """
         # Mock LLM failure for first 2 attempts, success on 3rd
-        attempt_count = {'count': 0}
+        attempt_count = {"count": 0}
 
         def mock_extract_with_failure(*args, **kwargs):
-            attempt_count['count'] += 1
-            if attempt_count['count'] < 3:
+            attempt_count["count"] += 1
+            if attempt_count["count"] < 3:
                 raise Exception("Simulated LLM timeout")
             # Third attempt succeeds
             from iris_vector_rag.core.models import BatchExtractionResult
+
             return BatchExtractionResult(
                 batch_id="test-batch",
                 per_document_entities={doc.id: [] for doc in test_documents},
                 per_document_relationships={},
                 processing_time=1.0,
                 success_status=True,
-                retry_count=attempt_count['count'] - 1,
-                error_message=""
+                retry_count=attempt_count["count"] - 1,
+                error_message="",
             )
 
         # Patch the internal batch extraction method
-        with patch.object(service, '_extract_batch_impl', side_effect=mock_extract_with_failure):
+        with patch.object(
+            service, "_extract_batch_impl", side_effect=mock_extract_with_failure
+        ):
             start_time = time.time()
             result = service.extract_batch(test_documents)
             elapsed = time.time() - start_time
 
             # Validate retry succeeded after 2 failures
             assert result.success_status, "Batch should succeed after retries"
-            assert result.retry_count == 2, \
-                f"Should have 2 retries before success, got {result.retry_count}"
+            assert (
+                result.retry_count == 2
+            ), f"Should have 2 retries before success, got {result.retry_count}"
 
             # Validate exponential backoff delays (2s + 4s = 6s minimum)
             # Allow some tolerance for processing time
-            assert elapsed >= 6.0, \
-                f"Should have exponential backoff delays (2s+4s=6s min), got {elapsed:.1f}s"
+            assert (
+                elapsed >= 6.0
+            ), f"Should have exponential backoff delays (2s+4s=6s min), got {elapsed:.1f}s"
 
             print("\nExponential Backoff Validation:")
             print(f"  Retry attempts: {result.retry_count}")
@@ -91,16 +96,17 @@ class TestBatchRetryLogic:
         Then: System splits batch into individual documents for separate retry
         """
         # Mock LLM failure for all batch attempts
-        batch_attempt_count = {'count': 0}
-        individual_calls = {'count': 0}
+        batch_attempt_count = {"count": 0}
+        individual_calls = {"count": 0}
 
         def mock_extract_always_fail_batch(*args, **kwargs):
-            batch_attempt_count['count'] += 1
+            batch_attempt_count["count"] += 1
             if len(args) > 0 and len(args[0]) > 1:  # Batch of multiple docs
                 raise Exception("Simulated batch LLM failure")
             else:  # Individual document
-                individual_calls['count'] += 1
+                individual_calls["count"] += 1
                 from iris_vector_rag.core.models import BatchExtractionResult
+
                 doc = args[0][0]
                 return BatchExtractionResult(
                     batch_id=f"individual-{doc.id}",
@@ -109,19 +115,23 @@ class TestBatchRetryLogic:
                     processing_time=0.5,
                     success_status=True,
                     retry_count=0,
-                    error_message=""
+                    error_message="",
                 )
 
-        with patch.object(service, '_extract_batch_impl', side_effect=mock_extract_always_fail_batch):
+        with patch.object(
+            service, "_extract_batch_impl", side_effect=mock_extract_always_fail_batch
+        ):
             service.extract_batch(test_documents)
 
             # Validate batch was split after 3 failed attempts
-            assert batch_attempt_count['count'] >= 3, \
-                "Should attempt batch processing 3 times before splitting"
+            assert (
+                batch_attempt_count["count"] >= 3
+            ), "Should attempt batch processing 3 times before splitting"
 
             # Validate individual processing occurred
-            assert individual_calls['count'] == len(test_documents), \
-                f"Should process {len(test_documents)} documents individually after split"
+            assert individual_calls["count"] == len(
+                test_documents
+            ), f"Should process {len(test_documents)} documents individually after split"
 
             print("\nBatch Splitting Validation:")
             print(f"  Batch attempts: {batch_attempt_count['count']}")
@@ -147,7 +157,7 @@ class TestBatchRetryLogic:
         try:
             extract_batch_with_retry(
                 documents=[Document(id="test", page_content="test")],
-                extract_fn=track_attempt_time
+                extract_fn=track_attempt_time,
             )
         except Exception:
             pass  # Expected to fail after all retries
@@ -158,10 +168,12 @@ class TestBatchRetryLogic:
             delay2 = attempt_times[2] - attempt_times[1]
 
             # Allow 0.5s tolerance
-            assert 1.5 <= delay1 <= 2.5, \
-                f"First retry delay should be ~2s, got {delay1:.1f}s"
-            assert 3.5 <= delay2 <= 4.5, \
-                f"Second retry delay should be ~4s, got {delay2:.1f}s"
+            assert (
+                1.5 <= delay1 <= 2.5
+            ), f"First retry delay should be ~2s, got {delay1:.1f}s"
+            assert (
+                3.5 <= delay2 <= 4.5
+            ), f"Second retry delay should be ~4s, got {delay2:.1f}s"
 
             print("\nRetry Delay Validation:")
             print(f"  First delay: {delay1:.1f}s (target: 2s)")
@@ -169,14 +181,15 @@ class TestBatchRetryLogic:
 
     def test_successful_retry_after_first_failure(self, service, test_documents):
         """Validate immediate success after single failure."""
-        attempt_count = {'count': 0}
+        attempt_count = {"count": 0}
 
         def mock_extract_fail_once(*args, **kwargs):
-            attempt_count['count'] += 1
-            if attempt_count['count'] == 1:
+            attempt_count["count"] += 1
+            if attempt_count["count"] == 1:
                 raise Exception("First attempt fails")
             # Second attempt succeeds
             from iris_vector_rag.core.models import BatchExtractionResult
+
             return BatchExtractionResult(
                 batch_id="test-batch",
                 per_document_entities={doc.id: [] for doc in test_documents},
@@ -184,18 +197,21 @@ class TestBatchRetryLogic:
                 processing_time=1.0,
                 success_status=True,
                 retry_count=1,
-                error_message=""
+                error_message="",
             )
 
-        with patch.object(service, '_extract_batch_impl', side_effect=mock_extract_fail_once):
+        with patch.object(
+            service, "_extract_batch_impl", side_effect=mock_extract_fail_once
+        ):
             start_time = time.time()
             result = service.extract_batch(test_documents)
             elapsed = time.time() - start_time
 
             assert result.success_status, "Should succeed after first retry"
             assert result.retry_count == 1, "Should have 1 retry"
-            assert elapsed >= 2.0, \
-                f"Should have 2s delay for first retry, got {elapsed:.1f}s"
+            assert (
+                elapsed >= 2.0
+            ), f"Should have 2s delay for first retry, got {elapsed:.1f}s"
 
             print("\nSingle Retry Validation:")
             print(f"  Retry count: {result.retry_count}")
@@ -219,10 +235,10 @@ class TestBatchRetryLogic:
         metrics = service.get_batch_metrics()
 
         # Validate retry tracking
-        assert hasattr(metrics, 'retry_attempts_total'), \
-            "Metrics must track total retry attempts"
-        assert metrics.retry_attempts_total >= 0, \
-            "Retry attempts must be non-negative"
+        assert hasattr(
+            metrics, "retry_attempts_total"
+        ), "Metrics must track total retry attempts"
+        assert metrics.retry_attempts_total >= 0, "Retry attempts must be non-negative"
 
         print("\nRetry Metrics:")
         print(f"  Total retry attempts: {metrics.retry_attempts_total}")

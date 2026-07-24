@@ -37,6 +37,7 @@ def test_graph_ai_integration_optional():
     """GraphRAG components import without requiring graph-ai package."""
     from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
     from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+
     assert GraphRAGPipeline is not None
     assert HybridGraphRAGPipeline is not None
 
@@ -76,9 +77,7 @@ def test_graphrag_test_errors_are_skips():
     # Check that GraphRAG tests use proper skip logic
     from pathlib import Path
 
-    graphrag_test_files = list(
-        Path("tests/e2e").glob("*graphrag*_e2e.py")
-    )
+    graphrag_test_files = list(Path("tests/e2e").glob("*graphrag*_e2e.py"))
 
     if not graphrag_test_files:
         pytest.skip("No GraphRAG E2E test files found")
@@ -96,6 +95,7 @@ def test_graphrag_test_errors_are_skips():
 
         if not has_skip_logic:
             import warnings
+
             warnings.warn(
                 f"{test_file.name} should handle missing GraphRAG dependencies"
             )

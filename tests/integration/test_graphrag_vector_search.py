@@ -45,16 +45,19 @@ class TestGraphRAGVectorSearchIntegration:
         result = graphrag_pipeline.query(query)
 
         # Should retrieve documents
-        assert len(result.contexts) > 0, \
-            f"GraphRAG vector search returned 0 results for query: {query}"
+        assert (
+            len(result.contexts) > 0
+        ), f"GraphRAG vector search returned 0 results for query: {query}"
 
         # Should have answer generated
-        assert len(result.answer) > 0, \
-            "GraphRAG should generate answer from retrieved contexts"
+        assert (
+            len(result.answer) > 0
+        ), "GraphRAG should generate answer from retrieved contexts"
 
         # Answer should not be default "No relevant documents"
-        assert "No relevant documents" not in result.answer, \
-            "GraphRAG answer indicates no retrieval occurred"
+        assert (
+            "No relevant documents" not in result.answer
+        ), "GraphRAG answer indicates no retrieval occurred"
 
     def test_graphrag_top_k_configuration(self, config_manager):
         """
@@ -69,16 +72,18 @@ class TestGraphRAGVectorSearchIntegration:
         query = "What are the symptoms of diabetes?"
         result_default = pipeline_default.query(query)
 
-        assert len(result_default.contexts) <= 10, \
-            f"Default top_k=10 violated: {len(result_default.contexts)} documents returned"
+        assert (
+            len(result_default.contexts) <= 10
+        ), f"Default top_k=10 violated: {len(result_default.contexts)} documents returned"
 
         # Test custom K=5
         config_manager.update_config({"retrieval": {"top_k": 5}})
         pipeline_custom = create_pipeline("graphrag", config_manager=config_manager)
         result_custom = pipeline_custom.query(query)
 
-        assert len(result_custom.contexts) <= 5, \
-            f"Custom top_k=5 violated: {len(result_custom.contexts)} documents returned"
+        assert (
+            len(result_custom.contexts) <= 5
+        ), f"Custom top_k=5 violated: {len(result_custom.contexts)} documents returned"
 
     def test_graphrag_dimension_validation(self, graphrag_pipeline, embedding_manager):
         """
@@ -94,15 +99,17 @@ class TestGraphRAGVectorSearchIntegration:
         query_embedding = embedding_manager.generate_embedding(query)
 
         # Validate dimensions
-        assert len(query_embedding) == 384, \
-            f"Query embedding dimension mismatch: {len(query_embedding)} != 384"
+        assert (
+            len(query_embedding) == 384
+        ), f"Query embedding dimension mismatch: {len(query_embedding)} != 384"
 
         # Query should execute successfully
         result = graphrag_pipeline.query(query)
 
         # If retrieval works, dimension validation passed
-        assert isinstance(result.contexts, list), \
-            "GraphRAG query should succeed with matching dimensions"
+        assert isinstance(
+            result.contexts, list
+        ), "GraphRAG query should succeed with matching dimensions"
 
     def test_graphrag_diagnostic_logging(self, graphrag_pipeline, caplog):
         """
@@ -113,6 +120,7 @@ class TestGraphRAGVectorSearchIntegration:
         Then: Diagnostic logs are emitted
         """
         import logging
+
         caplog.set_level(logging.DEBUG)
 
         query = "What are the symptoms of diabetes?"
@@ -123,14 +131,14 @@ class TestGraphRAGVectorSearchIntegration:
         " ".join(log_messages)
 
         # Should have some diagnostic logging
-        assert len(log_messages) > 0, \
-            "No log messages emitted during GraphRAG query"
+        assert len(log_messages) > 0, "No log messages emitted during GraphRAG query"
 
         # If 0 results, should have diagnostic info
         if len(result.contexts) == 0:
-            assert any("0 results" in msg or "no documents" in msg.lower()
-                      for msg in log_messages), \
-                "Missing diagnostic log when 0 results returned"
+            assert any(
+                "0 results" in msg or "no documents" in msg.lower()
+                for msg in log_messages
+            ), "Missing diagnostic log when 0 results returned"
 
     def test_graphrag_embedding_consistency(self, graphrag_pipeline, embedding_manager):
         """
@@ -150,8 +158,9 @@ class TestGraphRAGVectorSearchIntegration:
         result = graphrag_pipeline.query(query)
 
         # If retrieval works, embeddings are consistent
-        assert len(result.contexts) >= 0, \
-            "GraphRAG should execute without dimension mismatch errors"
+        assert (
+            len(result.contexts) >= 0
+        ), "GraphRAG should execute without dimension mismatch errors"
 
     def test_graphrag_multiple_queries_consistency(self, graphrag_pipeline):
         """
@@ -171,12 +180,14 @@ class TestGraphRAGVectorSearchIntegration:
             result = graphrag_pipeline.query(query)
 
             # Each query should retrieve documents
-            assert len(result.contexts) > 0, \
-                f"GraphRAG failed to retrieve documents for query: {query}"
+            assert (
+                len(result.contexts) > 0
+            ), f"GraphRAG failed to retrieve documents for query: {query}"
 
             # Each query should generate answer
-            assert len(result.answer) > 0, \
-                f"GraphRAG failed to generate answer for query: {query}"
+            assert (
+                len(result.answer) > 0
+            ), f"GraphRAG failed to generate answer for query: {query}"
 
     def test_graphrag_relevance_scoring(self, graphrag_pipeline):
         """
@@ -193,13 +204,17 @@ class TestGraphRAGVectorSearchIntegration:
             pytest.skip("Need at least 2 documents to test sorting")
 
         # Extract similarity scores
-        scores = [doc.similarity_score for doc in result.contexts
-                 if hasattr(doc, 'similarity_score')]
+        scores = [
+            doc.similarity_score
+            for doc in result.contexts
+            if hasattr(doc, "similarity_score")
+        ]
 
         if not scores:
             pytest.skip("Documents missing similarity_score attribute")
 
         # Verify descending order
         for i in range(len(scores) - 1):
-            assert scores[i] >= scores[i+1], \
-                f"Documents not sorted by score DESC: {scores[i]} < {scores[i+1]}"
+            assert (
+                scores[i] >= scores[i + 1]
+            ), f"Documents not sorted by score DESC: {scores[i]} < {scores[i+1]}"

@@ -12,6 +12,7 @@ from enum import Enum
 
 class ColumnType(str, Enum):
     """Database column types supported by IRIS."""
+
     VARCHAR = "VARCHAR"
     INT = "INT"
     BIGINT = "BIGINT"
@@ -23,6 +24,7 @@ class ColumnType(str, Enum):
 
 class MismatchType(str, Enum):
     """Types of schema mismatches that can be detected."""
+
     MISSING_TABLE = "missing_table"
     MISSING_COLUMN = "missing_column"
     TYPE_MISMATCH = "type_mismatch"
@@ -42,6 +44,7 @@ class ColumnDefinition:
         max_length: Maximum length for VARCHAR columns
         default_value: Default value if any
     """
+
     name: str
     column_type: ColumnType
     nullable: bool = True
@@ -68,6 +71,7 @@ class SchemaDefinition:
         columns: List of column definitions
         primary_key: Name of primary key column
     """
+
     table_name: str
     schema_name: str
     columns: List[ColumnDefinition]
@@ -106,6 +110,7 @@ class SchemaMismatch:
         actual_value: What was found
         severity: Severity level (error, warning)
     """
+
     table_name: str
     mismatch_type: MismatchType
     column_name: Optional[str] = None
@@ -141,6 +146,7 @@ class SchemaValidationResult:
         validation_time_ms: Time taken for validation
         message: Summary message
     """
+
     is_valid: bool
     mismatches: List[SchemaMismatch] = field(default_factory=list)
     validated_tables: List[str] = field(default_factory=list)
@@ -189,54 +195,93 @@ def get_expected_rag_schema() -> List[SchemaDefinition]:
             table_name="SourceDocuments",
             schema_name="RAG",
             columns=[
-                ColumnDefinition("id", ColumnType.VARCHAR, nullable=False, max_length=255),
-                ColumnDefinition("source", ColumnType.VARCHAR, nullable=False, max_length=500),
+                ColumnDefinition(
+                    "id", ColumnType.VARCHAR, nullable=False, max_length=255
+                ),
+                ColumnDefinition(
+                    "source", ColumnType.VARCHAR, nullable=False, max_length=500
+                ),
                 ColumnDefinition("content", ColumnType.CLOB, nullable=False),
                 ColumnDefinition("metadata", ColumnType.JSON, nullable=True),
                 ColumnDefinition("created_at", ColumnType.DATETIME, nullable=True),
-                ColumnDefinition("test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255),
+                ColumnDefinition(
+                    "test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255
+                ),
             ],
-            primary_key="id"
+            primary_key="id",
         ),
         SchemaDefinition(
             table_name="DocumentChunks",
             schema_name="RAG",
             columns=[
-                ColumnDefinition("id", ColumnType.VARCHAR, nullable=False, max_length=255),
-                ColumnDefinition("document_id", ColumnType.VARCHAR, nullable=False, max_length=255),
+                ColumnDefinition(
+                    "id", ColumnType.VARCHAR, nullable=False, max_length=255
+                ),
+                ColumnDefinition(
+                    "document_id", ColumnType.VARCHAR, nullable=False, max_length=255
+                ),
                 ColumnDefinition("chunk_text", ColumnType.CLOB, nullable=False),
                 ColumnDefinition("chunk_index", ColumnType.INT, nullable=False),
                 ColumnDefinition("embedding", ColumnType.VECTOR, nullable=True),
                 ColumnDefinition("created_at", ColumnType.DATETIME, nullable=True),
-                ColumnDefinition("test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255),
+                ColumnDefinition(
+                    "test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255
+                ),
             ],
-            primary_key="id"
+            primary_key="id",
         ),
         SchemaDefinition(
             table_name="Entities",
             schema_name="RAG",
             columns=[
-                ColumnDefinition("id", ColumnType.VARCHAR, nullable=False, max_length=255),
-                ColumnDefinition("entity_name", ColumnType.VARCHAR, nullable=False, max_length=500),
-                ColumnDefinition("entity_type", ColumnType.VARCHAR, nullable=False, max_length=100),
+                ColumnDefinition(
+                    "id", ColumnType.VARCHAR, nullable=False, max_length=255
+                ),
+                ColumnDefinition(
+                    "entity_name", ColumnType.VARCHAR, nullable=False, max_length=500
+                ),
+                ColumnDefinition(
+                    "entity_type", ColumnType.VARCHAR, nullable=False, max_length=100
+                ),
                 ColumnDefinition("properties", ColumnType.JSON, nullable=True),
                 ColumnDefinition("created_at", ColumnType.DATETIME, nullable=True),
-                ColumnDefinition("test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255),
+                ColumnDefinition(
+                    "test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255
+                ),
             ],
-            primary_key="id"
+            primary_key="id",
         ),
         SchemaDefinition(
             table_name="Relationships",
             schema_name="RAG",
             columns=[
-                ColumnDefinition("id", ColumnType.VARCHAR, nullable=False, max_length=255),
-                ColumnDefinition("source_entity_id", ColumnType.VARCHAR, nullable=False, max_length=255),
-                ColumnDefinition("target_entity_id", ColumnType.VARCHAR, nullable=False, max_length=255),
-                ColumnDefinition("relationship_type", ColumnType.VARCHAR, nullable=False, max_length=100),
+                ColumnDefinition(
+                    "id", ColumnType.VARCHAR, nullable=False, max_length=255
+                ),
+                ColumnDefinition(
+                    "source_entity_id",
+                    ColumnType.VARCHAR,
+                    nullable=False,
+                    max_length=255,
+                ),
+                ColumnDefinition(
+                    "target_entity_id",
+                    ColumnType.VARCHAR,
+                    nullable=False,
+                    max_length=255,
+                ),
+                ColumnDefinition(
+                    "relationship_type",
+                    ColumnType.VARCHAR,
+                    nullable=False,
+                    max_length=100,
+                ),
                 ColumnDefinition("properties", ColumnType.JSON, nullable=True),
                 ColumnDefinition("created_at", ColumnType.DATETIME, nullable=True),
-                ColumnDefinition("test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255),
+                ColumnDefinition(
+                    "test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255
+                ),
             ],
-            primary_key="id"
+            primary_key="id",
         ),
     ]

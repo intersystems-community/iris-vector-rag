@@ -172,7 +172,9 @@ class TestVectorStoreChunking:
 
     def test_chunking_with_overlap(self, vector_store):
         """Test chunking with overlap between chunks."""
-        long_content = "Section one content. Section two content. Section three content." * 10
+        long_content = (
+            "Section one content. Section two content. Section three content." * 10
+        )
         doc = Document(id="vs_chunk3", page_content=long_content)
 
         vector_store.add_documents([doc], auto_chunk=True)
@@ -243,7 +245,9 @@ class TestVectorStoreMetadataFiltering:
         """Load documents before each test."""
         vector_store.add_documents(sample_documents)
 
-    @pytest.mark.xfail(reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling")
+    @pytest.mark.xfail(
+        reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling"
+    )
     def test_filter_by_category(self, vector_store):
         """Test filtering by category metadata."""
         # Similarity search with category filter
@@ -256,7 +260,9 @@ class TestVectorStoreMetadataFiltering:
         # Should return only ML category documents
         assert len(results) >= 0
 
-    @pytest.mark.xfail(reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling")
+    @pytest.mark.xfail(
+        reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling"
+    )
     def test_filter_by_year(self, vector_store):
         """Test filtering by year metadata."""
         results = vector_store.similarity_search(
@@ -267,7 +273,9 @@ class TestVectorStoreMetadataFiltering:
 
         assert len(results) >= 0
 
-    @pytest.mark.xfail(reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling")
+    @pytest.mark.xfail(
+        reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling"
+    )
     def test_filter_by_multiple_criteria(self, vector_store):
         """Test filtering by multiple metadata criteria."""
         results = vector_store.similarity_search(
@@ -278,7 +286,9 @@ class TestVectorStoreMetadataFiltering:
 
         assert len(results) >= 0
 
-    @pytest.mark.xfail(reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling")
+    @pytest.mark.xfail(
+        reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling"
+    )
     def test_filter_with_no_matches(self, vector_store):
         """Test filter that matches no documents."""
         results = vector_store.similarity_search(
@@ -644,7 +654,9 @@ class TestVectorStoreIntegration:
         results2 = vector_store.similarity_search("updated new", k=2)
         assert len(results2) > 0
 
-    @pytest.mark.xfail(reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling")
+    @pytest.mark.xfail(
+        reason="IRIS does not support JSON_EXTRACT/JSON_VALUE - needs IRIS-specific JSON handling"
+    )
     def test_mixed_operations(self, vector_store):
         """Test mixed add, search, and filter operations."""
         # Add initial documents

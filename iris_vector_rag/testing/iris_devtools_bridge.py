@@ -59,6 +59,7 @@ class IrisDevToolsBridge:
 
         try:
             from iris_devtools.containers import IRISContainer
+
             self._iris_container_class = IRISContainer
         except ImportError as e:
             raise IrisDevtoolsMissingError(

@@ -6,6 +6,7 @@ auto-imported by ``import iris_vector_rag``.
 
 Raises ``ImportError`` with install instructions if iris_llm is not installed.
 """
+
 from __future__ import annotations
 
 try:

@@ -28,7 +28,7 @@ class TestGraphPackageDetection:
         AND does not raise any exceptions
         """
         # Mock iris-vector-graph as installed
-        with patch('importlib.util.find_spec') as mock_find_spec:
+        with patch("importlib.util.find_spec") as mock_find_spec:
             mock_spec = MagicMock()
             mock_find_spec.return_value = mock_spec
 
@@ -49,7 +49,7 @@ class TestGraphPackageDetection:
         AND does not raise any exceptions
         """
         # Mock iris-vector-graph as not installed
-        with patch('importlib.util.find_spec') as mock_find_spec:
+        with patch("importlib.util.find_spec") as mock_find_spec:
             mock_find_spec.return_value = None
 
             # This will fail initially with AttributeError
@@ -67,7 +67,7 @@ class TestGraphPackageDetection:
         THEN returns same result without side effects
         AND does not modify any instance state
         """
-        with patch('importlib.util.find_spec') as mock_find_spec:
+        with patch("importlib.util.find_spec") as mock_find_spec:
             mock_spec = MagicMock()
             mock_find_spec.return_value = mock_spec
 
@@ -87,7 +87,7 @@ class TestGraphPackageDetection:
         THEN returns False without raising
         AND logs appropriate error message
         """
-        with patch('importlib.util.find_spec') as mock_find_spec:
+        with patch("importlib.util.find_spec") as mock_find_spec:
             mock_find_spec.side_effect = ImportError("Simulated import error")
 
             # This will fail initially with AttributeError
@@ -106,7 +106,7 @@ class TestGraphPackageDetection:
         AND does NOT execute 'import iris_vector_graph'
         AND avoids package initialization side effects
         """
-        with patch('importlib.util.find_spec') as mock_find_spec:
+        with patch("importlib.util.find_spec") as mock_find_spec:
             mock_spec = MagicMock()
             mock_find_spec.return_value = mock_spec
 
@@ -137,8 +137,9 @@ class TestPackageDetectionIntegration:
         # Verify against direct check
         expected = importlib.util.find_spec("iris_vector_graph") is not None
 
-        assert result == expected, \
-            f"Detection result ({result}) should match direct check ({expected})"
+        assert (
+            result == expected
+        ), f"Detection result ({result}) should match direct check ({expected})"
         assert isinstance(result, bool), "Result must be boolean type"
 
 

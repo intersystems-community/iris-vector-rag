@@ -62,7 +62,7 @@ except ImportError:
 def iris_infrastructure():
     """
     Ensure IRIS infrastructure is available for E2E tests.
-    
+
     If IRIS_HOST is not set, attempts to use iris-devtester to start
     a named project-specific container.
     """
@@ -86,9 +86,7 @@ def iris_infrastructure():
 
     with RuntimeIRISContainer.community(
         name=PROJECT_CONTAINER_NAME
-    ).with_preconfigured_password(
-        "SYS"
-    ) as iris:
+    ).with_preconfigured_password("SYS") as iris:
         # Trigger iris-devtester auto-remediation for password change required
         try:
             iris.get_connection()
@@ -608,7 +606,9 @@ def pytest_runtest_setup(item):
     if "e2e" in item.keywords:
         # Verify IRIS connection is available or can be provisioned
         if not os.environ.get("IRIS_HOST") and not has_devtester:
-            pytest.skip("E2E tests require IRIS_HOST environment variable or iris-devtester")
+            pytest.skip(
+                "E2E tests require IRIS_HOST environment variable or iris-devtester"
+            )
 
         # Log that we're running a true E2E test
         logger.info(f"Running TRUE E2E test: {item.name}")
