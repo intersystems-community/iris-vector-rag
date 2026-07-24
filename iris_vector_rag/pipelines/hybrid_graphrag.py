@@ -174,10 +174,13 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         Returns:
             Dictionary with query results and metadata
         """
-        # Support both 'query' (standard) and 'query_text' (backward compatibility)
-        if query is None and query_text is None:
-            raise ValueError("Either 'query' or 'query_text' parameter is required")
-        query_text = query if query is not None else query_text
+        # FR-005: normalize query / query_text alias with deprecation warning
+        from iris_vector_rag.core.query_options import normalize_query_params
+
+        opts = normalize_query_params(query=query, query_text=query_text, top_k=top_k or 10)
+        query_text = opts.query
+        if top_k is None:
+            top_k = opts.top_k
 
         start_time = time.time()
         start_perf = time.perf_counter()
@@ -249,8 +252,8 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             },
         }
 
-        if include_sources:
-            response["sources"] = self._extract_sources(retrieved_documents)
+        # FR-006: always include sources key; populate when include_sources=True
+        response["sources"] = self._extract_sources(retrieved_documents) if include_sources else []
 
         logger.info(
             f"Hybrid GraphRAG query completed in {execution_time:.2f}s ({execution_time_ms:.1f}ms) - "

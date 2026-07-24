@@ -261,7 +261,7 @@ Return only the alternative queries, one per line, without numbering.
 
     def query(
         self,
-        query: str,
+        query: str = None,
         top_k: int = 20,
         generate_answer: bool = True,
         **kwargs
@@ -287,6 +287,14 @@ Return only the alternative queries, one per line, without numbering.
                     - raw_result_count: Total documents before fusion
                     - execution_time: Total execution time
         """
+        # FR-005: normalize query / query_text alias
+        from iris_vector_rag.core.query_options import normalize_query_params
+
+        query_text_kwarg = kwargs.pop("query_text", None)
+        opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k)
+        query = opts.query
+        top_k = opts.top_k
+
         start_time = time.time()
 
         logger.info(f"Multi-query RRF pipeline query: '{query}'")

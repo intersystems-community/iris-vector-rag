@@ -398,7 +398,7 @@ class BasicRAGPipeline(RAGPipeline):
                 "pipeline_type": "basic",
             }
 
-    def query(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query: str = None, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute RAG query - THE single method for all RAG operations.
 
@@ -406,9 +406,10 @@ class BasicRAGPipeline(RAGPipeline):
         Replaces the old query()/execute()/run() method confusion.
 
         Args:
-            query: The query text
+            query: The query text (canonical param; ``query_text`` accepted as alias).
             top_k: Number of documents to retrieve (must be between 1 and 100)
             **kwargs: Additional arguments including:
+                - query_text: Alias for ``query`` (deprecated; use ``query``).
                 - include_sources: Whether to include source information (default: True)
                 - custom_prompt: Custom prompt template
                 - metadata_filter: Optional metadata filters
@@ -429,32 +430,58 @@ class BasicRAGPipeline(RAGPipeline):
         """
         start_time = time.time()
 
-        # Validation: query parameter is required and cannot be empty
-        if not query or query.strip() == "":
-            raise ValueError(
-                "Error: Query parameter is required and cannot be empty\n"
-                "Context: BasicRAG pipeline query operation\n"
-                "Expected: Non-empty query string\n"
-                "Actual: Empty or whitespace-only string\n"
-                "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
-            )
+        # FR-005: normalize query / query_text alias via the composable mixin
+        from iris_vector_rag.core.query_options import normalize_query_params
 
-        # Validation: top_k must be in valid range
-        if top_k < 1 or top_k > 100:
-            raise ValueError(
-                f"Error: top_k parameter out of valid range\n"
-                f"Context: BasicRAG pipeline query operation\n"
-                f"Expected: Integer between 1 and 100 (inclusive)\n"
-                f"Actual: {top_k}\n"
-                f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
+        query_text_kwarg = kwargs.pop("query_text", None)
+        try:
+            opts = normalize_query_params(
+                query=query,
+                query_text=query_text_kwarg,
+                top_k=top_k,
+                **{
+                    k: kwargs[k]
+                    for k in (
+                        "generate_answer",
+                        "include_sources",
+                        "metadata_filter",
+                        "similarity_threshold",
+                        "custom_prompt",
+                    )
+                    if k in kwargs
+                },
             )
+        except ValueError as exc:
+            # Re-raise with pipeline-contextual messaging to preserve existing error format
+            msg = str(exc)
+            if "query" in msg.lower():
+                raise ValueError(
+                    "Error: Query parameter is required and cannot be empty\n"
+                    "Context: BasicRAG pipeline query operation\n"
+                    "Expected: Non-empty query string\n"
+                    "Actual: Empty or whitespace-only string\n"
+                    "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
+                ) from exc
+            if "top_k" in msg.lower():
+                raise ValueError(
+                    f"Error: top_k parameter out of valid range\n"
+                    f"Context: BasicRAG pipeline query operation\n"
+                    f"Expected: Integer between 1 and 100 (inclusive)\n"
+                    f"Actual: {top_k}\n"
+                    f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
+                ) from exc
+            raise
+
+        # Unpack normalized values
+        query = opts.query
+        top_k = opts.top_k
 
         # Get parameters
-        include_sources = kwargs.get("include_sources", True)
-        custom_prompt = kwargs.get("custom_prompt")
-        generate_answer = kwargs.get("generate_answer", True)
-        metadata_filter = kwargs.get("metadata_filter")
-        similarity_threshold = kwargs.get("similarity_threshold", 0.0)
+        include_sources = opts.include_sources
+        custom_prompt = opts.custom_prompt
+        generate_answer = opts.generate_answer
+        metadata_filter = opts.metadata_filter
+        similarity_threshold = opts.similarity_threshold
         retrieval_method = kwargs.get("method", "vector")
 
         logger.debug(
@@ -542,9 +569,8 @@ class BasicRAGPipeline(RAGPipeline):
             },
         }
 
-        # Add sources to top level if requested
-        if include_sources:
-            response["sources"] = sources
+        # Always include sources key (FR-006: consistent response shape)
+        response["sources"] = sources
 
         logger.info(
             f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved"

@@ -253,20 +253,28 @@ class CRAGPipeline(RAGPipeline):
         }
 
     def query(
-        self, query: str, top_k: int = 5, generate_answer: bool = True, **kwargs
+        self, query: str = None, top_k: int = 5, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Execute the CRAG pipeline implementation.
 
         Args:
-            query: The input query string
+            query: The input query string (canonical; ``query_text`` accepted as alias).
             top_k: Number of top relevant documents to retrieve (must be between 1 and 100)
             generate_answer: Whether to generate an answer
-            **kwargs: Additional keyword arguments
+            **kwargs: Additional keyword arguments including ``query_text`` alias.
 
         Returns:
             Standardized response with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
+        # FR-005: normalize query / query_text alias
+        from iris_vector_rag.core.query_options import normalize_query_params
+
+        query_text_kwarg = kwargs.pop("query_text", None)
+        opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k)
+        query = opts.query
+        top_k = opts.top_k
+
         # Validation: query parameter is required and cannot be empty
         if not query or query.strip() == "":
             raise ValueError(
@@ -334,6 +342,7 @@ class CRAGPipeline(RAGPipeline):
                 "answer": answer,
                 "retrieved_documents": corrected_docs,
                 "contexts": contexts_list,
+                "sources": sources,  # FR-006: top-level sources key
                 "execution_time": execution_time,
                 "metadata": {
                     "num_retrieved": len(corrected_docs),
@@ -361,6 +370,7 @@ class CRAGPipeline(RAGPipeline):
                 "answer": answer,
                 "retrieved_documents": [],
                 "contexts": [],
+                "sources": [],  # FR-006: always present
                 "execution_time": 0.0,
                 "metadata": {
                     "num_retrieved": 0,
