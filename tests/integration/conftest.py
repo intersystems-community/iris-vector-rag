@@ -110,18 +110,14 @@ def iris_test_table(iris_connection):
 
     # Create test table
     try:
-        iris_connection.execute(
-            text(
-                f"""
+        iris_connection.execute(text(f"""
             CREATE TABLE IF NOT EXISTS {table_name} (
                 id VARCHAR(255) PRIMARY KEY,
                 content CLOB,
                 metadata VARCHAR(2000),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-            )
-        )
+        """))
         iris_connection.commit()
     except Exception as e:
         print(f"Warning: Could not create test table: {e}")

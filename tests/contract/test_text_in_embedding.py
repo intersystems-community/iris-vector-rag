@@ -12,7 +12,6 @@ import pytest
 
 from iris_vector_rag.core.models import Document
 
-
 STUB_DOC = Document(id="1", page_content="hello", metadata={})
 
 

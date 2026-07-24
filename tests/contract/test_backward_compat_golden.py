@@ -12,7 +12,6 @@ Pipelines covered (matching iris_vector_rag/__init__.py factory map):
 from unittest.mock import MagicMock, patch
 import pytest
 
-
 REQUIRED_KEYS = {"answer", "retrieved_documents", "contexts", "sources", "metadata"}
 
 

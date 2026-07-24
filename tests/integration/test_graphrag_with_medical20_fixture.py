@@ -59,14 +59,10 @@ class TestMedical20FixtureIntegrity:
     def test_no_orphaned_entities(self, iris_connection, medical_20_fixture_validation):
         """Verify all entities have valid FK references to source documents."""
         # All entities should join successfully to source documents
-        result = iris_connection.execute(
-            text(
-                """
+        result = iris_connection.execute(text("""
             SELECT COUNT(*) FROM RAG.Entities e
             JOIN RAG.SourceDocuments sd ON e.source_doc_id = sd.doc_id
-        """
-            )
-        )
+        """))
         joined_count = result.scalar()
 
         assert joined_count == 21, (
@@ -79,34 +75,26 @@ class TestMedical20FixtureIntegrity:
     ):
         """Verify all relationships reference valid entities."""
         # Check source entities exist
-        result = iris_connection.execute(
-            text(
-                """
+        result = iris_connection.execute(text("""
             SELECT COUNT(*) FROM RAG.EntityRelationships r
             WHERE NOT EXISTS (
                 SELECT 1 FROM RAG.Entities e
                 WHERE e.entity_id = r.source_entity_id
             )
-        """
-            )
-        )
+        """))
         orphaned_sources = result.scalar()
         assert (
             orphaned_sources == 0
         ), f"Found {orphaned_sources} relationships with invalid source_entity_id"
 
         # Check target entities exist
-        result = iris_connection.execute(
-            text(
-                """
+        result = iris_connection.execute(text("""
             SELECT COUNT(*) FROM RAG.EntityRelationships r
             WHERE NOT EXISTS (
                 SELECT 1 FROM RAG.Entities e
                 WHERE e.entity_id = r.target_entity_id
             )
-        """
-            )
-        )
+        """))
         orphaned_targets = result.scalar()
         assert (
             orphaned_targets == 0
@@ -116,16 +104,12 @@ class TestMedical20FixtureIntegrity:
         self, iris_connection, medical_20_fixture_validation
     ):
         """Verify expected entity type distribution."""
-        result = iris_connection.execute(
-            text(
-                """
+        result = iris_connection.execute(text("""
             SELECT entity_type, COUNT(*) as cnt
             FROM RAG.Entities
             GROUP BY entity_type
             ORDER BY cnt DESC
-        """
-            )
-        )
+        """))
 
         types = {row[0]: row[1] for row in result.fetchall()}
 
@@ -139,16 +123,12 @@ class TestMedical20FixtureIntegrity:
         self, iris_connection, medical_20_fixture_validation
     ):
         """Verify expected relationship type distribution."""
-        result = iris_connection.execute(
-            text(
-                """
+        result = iris_connection.execute(text("""
             SELECT relationship_type, COUNT(*) as cnt
             FROM RAG.EntityRelationships
             GROUP BY relationship_type
             ORDER BY cnt DESC
-        """
-            )
-        )
+        """))
 
         types = {row[0]: row[1] for row in result.fetchall()}
 
@@ -242,17 +222,13 @@ class TestGraphRAGWithMedical20Fixture:
         Find all entities connected to "Diabetes mellitus" within 2 hops.
         """
         # 1-hop neighbors
-        result = iris_connection.execute(
-            text(
-                """
+        result = iris_connection.execute(text("""
             SELECT DISTINCT e2.entity_name, e2.entity_type, r.relationship_type
             FROM RAG.Entities e1
             JOIN RAG.EntityRelationships r ON e1.entity_id = r.source_entity_id
             JOIN RAG.Entities e2 ON r.target_entity_id = e2.entity_id
             WHERE e1.entity_name LIKE '%Diabetes%'
-        """
-            )
-        )
+        """))
 
         neighbors = result.fetchall()
 
@@ -302,18 +278,14 @@ class TestFixtureAsGroundTruth:
     ):
         """Verify specific known relationships exist in fixture."""
         # Diabetes treated_with Metformin
-        result = iris_connection.execute(
-            text(
-                """
+        result = iris_connection.execute(text("""
             SELECT COUNT(*) FROM RAG.EntityRelationships r
             JOIN RAG.Entities source ON r.source_entity_id = source.entity_id
             JOIN RAG.Entities target ON r.target_entity_id = target.entity_id
             WHERE source.entity_name LIKE '%Type 2 diabetes%'
             AND target.entity_name = 'Metformin'
             AND r.relationship_type = 'treated_with'
-        """
-            )
-        )
+        """))
 
         count = result.scalar()
         assert (
@@ -348,13 +320,9 @@ class TestFixtureAsGroundTruth:
         ), f"Expected at least 3 relationship types, found {rel_type_count}"
 
         # Should have multi-document coverage (entities from different docs)
-        result = iris_connection.execute(
-            text(
-                """
+        result = iris_connection.execute(text("""
             SELECT COUNT(DISTINCT source_doc_id) FROM RAG.Entities
-        """
-            )
-        )
+        """))
         doc_coverage = result.scalar()
         assert (
             doc_coverage == 3

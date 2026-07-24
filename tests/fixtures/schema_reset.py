@@ -153,13 +153,11 @@ CREATE TABLE {schema_def.schema_name}.{schema_def.table_name} (
         conn = get_iris_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_SCHEMA = 'RAG'
-        """
-        )
+        """)
 
         existing_tables = {row[0] for row in cursor.fetchall()}
         expected_tables = {s.table_name for s in self.expected_schemas}
@@ -178,12 +176,10 @@ CREATE TABLE {schema_def.schema_name}.{schema_def.table_name} (
         conn = get_iris_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT COUNT(*)
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_SCHEMA = 'RAG'
-        """
-        )
+        """)
 
         return cursor.fetchone()[0]

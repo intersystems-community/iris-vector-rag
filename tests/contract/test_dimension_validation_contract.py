@@ -146,13 +146,11 @@ class TestDimensionValidationContract:
         conn = ConnectionManager(graphrag_pipeline.config).get_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT embedding FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
             LIMIT 1
-        """
-        )
+        """)
         result = cursor.fetchone()
 
         if result is None:

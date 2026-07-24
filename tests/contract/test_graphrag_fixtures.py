@@ -280,13 +280,11 @@ class TestGraphRAGStorageContracts:
         ), f"Expected {len(fixture.entities)} entities, but found {count}"
 
         # Verify FK references are valid doc_ids
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT e.entity_name, e.source_doc_id, sd.doc_id
             FROM RAG.Entities e
             JOIN RAG.SourceDocuments sd ON e.source_doc_id = sd.doc_id
-        """
-        )
+        """)
         joined_entities = cursor.fetchall()
         assert len(joined_entities) == len(
             fixture.entities

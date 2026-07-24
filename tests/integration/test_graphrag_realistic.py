@@ -87,16 +87,14 @@ class TestGraphRAGRealistic:
         # Execute using DB-API cursor
         cursor = raw_conn.cursor()
         try:
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT TOP 1 e.entity_name
                 FROM RAG.Entities e
                 JOIN RAG.EntityRelationships r ON e.entity_id = r.source_entity_id
                 WHERE LENGTH(e.entity_name) > 5
                 GROUP BY e.entity_name
                 ORDER BY COUNT(r.relationship_id) DESC
-            """
-            )
+            """)
             row = cursor.fetchone()
             if not row:
                 pytest.skip("No entities with relationships found in database")

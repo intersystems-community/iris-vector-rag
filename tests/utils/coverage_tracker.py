@@ -89,8 +89,7 @@ class CoverageTracker:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS coverage_reports (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 module_name TEXT NOT NULL,
@@ -101,8 +100,7 @@ class CoverageTracker:
                 is_critical INTEGER NOT NULL,
                 missing_lines TEXT
             )
-        """
-        )
+        """)
 
         conn.commit()
         conn.close()
