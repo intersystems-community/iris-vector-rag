@@ -6,14 +6,15 @@
 
 ## Overview
 
-The Model Context Protocol (MCP) allows iris-vector-rag pipelines to be used directly within Claude Desktop and other MCP-compatible applications. This enables conversational RAG workflows where Claude can query your document collections during conversations.
+The Model Context Protocol (MCP) allows iris-vector-rag pipelines to be used directly within Claude Desktop and other MCP-compatible applications, enabling conversational RAG workflows where Claude can query your document collections during conversations.
 
 **Key Benefits**:
-- 🔌 **Zero-code integration** - No API endpoints to maintain
-- 💬 **Conversational RAG** - Claude queries your docs during chats
-- 🚀 **All pipelines supported** - basic, basic_rerank, crag, graphrag, multi_query_rrf, pylate_colbert
-- 🔒 **Local execution** - Documents stay on your machine
-- ⚡ **Fast** - Direct Python execution, no HTTP overhead
+
+- **Zero-code integration** - No API endpoints to maintain
+- **Conversational RAG** - Claude queries your docs during chats
+- **All pipelines supported** - basic, basic_rerank, crag, graphrag, multi_query_rrf, pylate_colbert
+- **Local execution** - Documents stay on your machine
+- **Fast** - Direct Python execution, no HTTP overhead
 
 ## Quick Start
 
@@ -68,6 +69,7 @@ Claude: Based on your medical documentation, diabetes treatment typically involv
 The MCP server exposes the following tools:
 
 ### rag_basic
+
 **Purpose**: Standard vector similarity search
 **Best For**: General Q&A, getting started
 
@@ -93,6 +95,7 @@ The MCP server exposes the following tools:
 ```
 
 ### rag_basic_rerank
+
 **Purpose**: Vector search with cross-encoder reranking
 **Best For**: Higher accuracy requirements
 
@@ -103,9 +106,12 @@ The MCP server exposes the following tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "query": {"type": "string"},
-      "top_k": {"type": "number"},
-      "candidate_k": {"type": "number", "description": "Candidates before reranking (default: 50)"}
+      "query": { "type": "string" },
+      "top_k": { "type": "number" },
+      "candidate_k": {
+        "type": "number",
+        "description": "Candidates before reranking (default: 50)"
+      }
     },
     "required": ["query"]
   }
@@ -113,6 +119,7 @@ The MCP server exposes the following tools:
 ```
 
 ### rag_crag
+
 **Purpose**: Self-correcting RAG with web search fallback
 **Best For**: Current events, fact-checking
 
@@ -123,8 +130,8 @@ The MCP server exposes the following tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "query": {"type": "string"},
-      "top_k": {"type": "number"}
+      "query": { "type": "string" },
+      "top_k": { "type": "number" }
     },
     "required": ["query"]
   }
@@ -132,6 +139,7 @@ The MCP server exposes the following tools:
 ```
 
 ### rag_graphrag
+
 **Purpose**: Hybrid search with knowledge graphs
 **Best For**: Entity relationships, complex queries
 
@@ -142,8 +150,8 @@ The MCP server exposes the following tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "query": {"type": "string"},
-      "top_k": {"type": "number"}
+      "query": { "type": "string" },
+      "top_k": { "type": "number" }
     },
     "required": ["query"]
   }
@@ -151,6 +159,7 @@ The MCP server exposes the following tools:
 ```
 
 ### rag_multi_query_rrf
+
 **Purpose**: Multiple query variations with fusion
 **Best For**: Ambiguous queries, exploratory search
 
@@ -161,9 +170,12 @@ The MCP server exposes the following tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "query": {"type": "string"},
-      "top_k": {"type": "number"},
-      "num_variations": {"type": "number", "description": "Query variations to generate (default: 3)"}
+      "query": { "type": "string" },
+      "top_k": { "type": "number" },
+      "num_variations": {
+        "type": "number",
+        "description": "Query variations to generate (default: 3)"
+      }
     },
     "required": ["query"]
   }
@@ -171,6 +183,7 @@ The MCP server exposes the following tools:
 ```
 
 ### rag_pylate_colbert
+
 **Purpose**: Token-level late interaction retrieval
 **Best For**: Long documents, fine-grained matching
 
@@ -181,8 +194,8 @@ The MCP server exposes the following tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "query": {"type": "string"},
-      "top_k": {"type": "number"}
+      "query": { "type": "string" },
+      "top_k": { "type": "number" }
     },
     "required": ["query"]
   }
@@ -190,6 +203,7 @@ The MCP server exposes the following tools:
 ```
 
 ### health_check
+
 **Purpose**: Verify MCP server and database connectivity
 
 ```json
@@ -204,6 +218,7 @@ The MCP server exposes the following tools:
 ```
 
 ### list_tools
+
 **Purpose**: List all available RAG tools
 
 ```json
@@ -223,16 +238,16 @@ The MCP server exposes the following tools:
 
 Set these in the `env` section of your Claude Desktop config:
 
-| Variable | Required | Description | Default |
-|----------|---------|-------------|---------|
-| `OPENAI_API_KEY` | Yes | OpenAI API key for LLM | - |
-| `ANTHROPIC_API_KEY` | No | Anthropic API key (alternative to OpenAI) | - |
-| `IRIS_HOST` | Yes | IRIS database host | localhost |
-| `IRIS_PORT` | Yes | IRIS database port | 1972 |
-| `IRIS_NAMESPACE` | Yes | IRIS namespace | USER |
-| `IRIS_USER` | Yes | IRIS username | _SYSTEM |
-| `IRIS_PASSWORD` | Yes | IRIS password | SYS |
-| `TAVILY_API_KEY` | No | Tavily API key (for CRAG web search) | - |
+| Variable            | Required | Description                               | Default   |
+| ------------------- | -------- | ----------------------------------------- | --------- |
+| `OPENAI_API_KEY`    | Yes      | OpenAI API key for LLM                    | -         |
+| `ANTHROPIC_API_KEY` | No       | Anthropic API key (alternative to OpenAI) | -         |
+| `IRIS_HOST`         | Yes      | IRIS database host                        | localhost |
+| `IRIS_PORT`         | Yes      | IRIS database port                        | 1972      |
+| `IRIS_NAMESPACE`    | Yes      | IRIS namespace                            | USER      |
+| `IRIS_USER`         | Yes      | IRIS username                             | \_SYSTEM  |
+| `IRIS_PASSWORD`     | Yes      | IRIS password                             | SYS       |
+| `TAVILY_API_KEY`    | No       | Tavily API key (for CRAG web search)      | -         |
 
 ### Custom Pipeline Configuration
 
@@ -243,6 +258,7 @@ To use custom pipeline configurations with MCP:
 3. Restart MCP server
 
 Example `config/pipelines.yaml`:
+
 ```yaml
 basic:
   top_k: 10
@@ -258,6 +274,7 @@ graphrag:
 ### Example 1: Basic Query
 
 **Claude Desktop Conversation**:
+
 ```
 User: What does my documentation say about diabetes?
 
@@ -271,6 +288,7 @@ Response: Based on your medical documentation, diabetes is a metabolic disorder.
 ### Example 2: Complex Entity Query
 
 **Claude Desktop Conversation**:
+
 ```
 User: What medications interact with metformin?
 
@@ -287,6 +305,7 @@ Response: According to your knowledge base, metformin has the following interact
 ### Example 3: Current Events with CRAG
 
 **Claude Desktop Conversation**:
+
 ```
 User: What's the latest guidance on diabetes treatment?
 
@@ -396,6 +415,7 @@ print(json.dumps(result, indent=2))
 **Symptom**: `python -m iris_vector_rag.mcp` fails
 
 **Solutions**:
+
 1. Check Python version: `python --version` (requires 3.11+)
 2. Verify installation: `pip list | grep iris-vector-rag`
 3. Check database connection: `ping <IRIS_HOST>`
@@ -406,6 +426,7 @@ print(json.dumps(result, indent=2))
 **Symptom**: Claude shows "Tool unavailable" error
 
 **Solutions**:
+
 1. Verify MCP server is running: `curl http://localhost:8000/mcp/health`
 2. Check Claude Desktop config path: `~/Library/Application Support/Claude/claude_desktop_config.json`
 3. Restart Claude Desktop after config changes
@@ -416,6 +437,7 @@ print(json.dumps(result, indent=2))
 **Symptom**: MCP tools execute but return no documents
 
 **Solutions**:
+
 1. Verify documents are loaded: `SELECT COUNT(*) FROM documents`
 2. Check embeddings exist: `SELECT COUNT(*) FROM embeddings`
 3. Test pipeline directly: `python -c "from iris_vector_rag import create_pipeline; pipeline = create_pipeline('basic'); print(pipeline.query('test'))"`
@@ -426,6 +448,7 @@ print(json.dumps(result, indent=2))
 **Symptom**: MCP queries take >5 seconds
 
 **Solutions**:
+
 1. Use faster pipeline: Switch from `graphrag` to `basic`
 2. Reduce top_k: `top_k=3` instead of `top_k=10`
 3. Use smaller LLM: `gpt-3.5-turbo` instead of `gpt-4`
@@ -436,6 +459,7 @@ print(json.dumps(result, indent=2))
 **Symptom**: `rag_crag` doesn't trigger web search
 
 **Solutions**:
+
 1. Set Tavily API key: `export TAVILY_API_KEY=your-key`
 2. Check relevance threshold: May be too low (increase to 0.7)
 3. Verify CRAG configuration: `cat config/pipelines.yaml`
@@ -506,7 +530,7 @@ def register_tools():
   "mcpServers": {
     "iris-rag": {
       "env": {
-        "OPENAI_API_KEY": "${OPENAI_API_KEY}",  // Read from shell env
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}" // Read from shell env
       }
     }
   }
@@ -514,6 +538,7 @@ def register_tools():
 ```
 
 Set in shell:
+
 ```bash
 export OPENAI_API_KEY=your-key
 ```
@@ -584,6 +609,7 @@ WantedBy=multi-user.target
 ```
 
 Enable and start:
+
 ```bash
 sudo systemctl enable iris-rag-mcp
 sudo systemctl start iris-rag-mcp

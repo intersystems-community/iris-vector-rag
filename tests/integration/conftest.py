@@ -6,9 +6,11 @@ mock external APIs (LLM, embeddings).
 """
 
 import pytest
+import os
 import subprocess
 import sys
-from typing import Dict, Any
+from pathlib import Path
+from typing import Dict, Any, Generator
 from unittest.mock import Mock
 
 
@@ -16,25 +18,35 @@ from unittest.mock import Mock
 def iris_connection_config():
     """IRIS database connection configuration for integration tests.
 
-    Uses port discovery to find available IRIS instance:
-    - 31972: Test database (docker-compose.test.yml)
-    - 1972: System/production database
-    - Other configured ports
+    Uses port discovery to find available IRIS instance.
+    Priority: env var IRIS_PORT, then known project ports.
     """
-    test_ports = [31972, 1972, 11972, 21972]
+    # Honour explicit env config first (e.g. IRIS_PORT=51972 from .env / CI)
+    env_port = os.environ.get("IRIS_PORT")
+    host = os.environ.get("IRIS_HOST", "localhost")
+    username = os.environ.get("IRIS_USERNAME", "_SYSTEM")
+    password = os.environ.get("IRIS_PASSWORD", "SYS")
+    namespace = os.environ.get("IRIS_NAMESPACE", "USER")
 
-    for port in test_ports:
+    candidate_ports = []
+    if env_port:
+        candidate_ports.append(int(env_port))
+    # Known project ports (iris-vector-rag-iris=51972, others as fallback)
+    candidate_ports += [51972, 31972, 1972, 11972, 21972]
+
+    for port in candidate_ports:
         try:
-            # Test connection
             result = subprocess.run([
                 sys.executable, "-c",
                 f"""
-import sqlalchemy_iris
-from sqlalchemy import create_engine, text
+import iris
 try:
-    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
-    with engine.connect() as conn:
-        conn.execute(text('SELECT 1'))
+    conn = iris.connect({host!r}, {port}, {namespace!r}, {username!r}, {password!r})
+    cursor = conn.cursor()
+    cursor.execute('SELECT 1')
+    cursor.fetchone()
+    cursor.close()
+    conn.close()
     print('SUCCESS')
 except Exception:
     print('FAILED')
@@ -43,55 +55,37 @@ except Exception:
 
             if "SUCCESS" in result.stdout:
                 return {
-                    "host": "localhost",
+                    "host": host,
                     "port": port,
-                    "username": "_SYSTEM",
-                    "password": "SYS",
-                    "namespace": "USER",
-                    "connection_string": f"iris://_SYSTEM:SYS@localhost:{port}/USER"
+                    "username": username,
+                    "password": password,
+                    "namespace": namespace,
+                    "connection_string": f"iris://{username}:{password}@{host}:{port}/{namespace}",
                 }
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             continue
 
-    # No IRIS instance found - skip integration tests
     pytest.skip("No IRIS database available for integration tests")
 
 
 @pytest.fixture(scope="session")
 def iris_engine(iris_connection_config):
-    """Create SQLAlchemy engine for IRIS database."""
+    """Native IRIS connection as a session-scoped 'engine' substitute."""
     try:
-        from sqlalchemy import create_engine
-
-        engine = create_engine(iris_connection_config["connection_string"])
-
-        # Test connection
-        with engine.connect() as conn:
-            from sqlalchemy import text
-            conn.execute(text("SELECT 1"))
-
-        yield engine
-
-        # Cleanup
-        engine.dispose()
+        import iris as _iris
+        cfg = iris_connection_config
+        conn = _iris.connect(cfg["host"], cfg["port"], cfg["namespace"], cfg["username"], cfg["password"])
+        yield conn
+        conn.close()
     except Exception as e:
-        pytest.skip(f"Could not create IRIS engine: {e}")
+        pytest.skip(f"Could not create IRIS connection: {e}")
 
 
 @pytest.fixture
 def iris_connection(iris_engine):
     """Provide IRIS database connection for integration tests."""
-    conn = iris_engine.connect()
-
-    try:
-        yield conn
-    finally:
-        # Rollback any uncommitted changes
-        try:
-            conn.rollback()
-        except Exception:
-            pass
-        conn.close()
+    # iris_engine IS the connection (native iris, not SQLAlchemy)
+    yield iris_engine
 
 
 @pytest.fixture
@@ -299,21 +293,22 @@ def cleanup_test_data(iris_connection):
     """Cleanup test data after each integration test."""
     yield
 
-    # Cleanup test tables
-    from sqlalchemy import text
     test_tables = [
         "integration_test_vectors",
         "test_documents",
         "test_entities",
-        "test_relationships"
+        "test_relationships",
     ]
-
-    for table in test_tables:
-        try:
-            iris_connection.execute(text(f"DROP TABLE IF EXISTS {table}"))
-            iris_connection.commit()
-        except Exception:
-            pass  # Ignore cleanup errors
+    try:
+        cursor = iris_connection.cursor()
+        for table in test_tables:
+            try:
+                cursor.execute(f"DROP TABLE IF EXISTS {table}")
+            except Exception:
+                pass
+        cursor.close()
+    except Exception:
+        pass
 
 
 @pytest.fixture
@@ -343,19 +338,25 @@ def iris_schema_manager(iris_connection):
 @pytest.fixture(scope="session", autouse=True)
 def verify_iris_available():
     """Verify IRIS is available before running integration tests."""
-    test_ports = [31972, 1972, 11972]
+    env_port = os.environ.get("IRIS_PORT")
+    candidate_ports = []
+    if env_port:
+        candidate_ports.append(int(env_port))
+    candidate_ports += [51972, 31972, 1972, 11972, 21972]
 
-    for port in test_ports:
+    for port in candidate_ports:
         try:
             result = subprocess.run([
                 sys.executable, "-c",
                 f"""
-import sqlalchemy_iris
-from sqlalchemy import create_engine, text
+import iris
 try:
-    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
-    with engine.connect() as conn:
-        conn.execute(text('SELECT 1'))
+    conn = iris.connect('localhost', {port}, 'USER', '_SYSTEM', 'SYS')
+    cursor = conn.cursor()
+    cursor.execute('SELECT 1')
+    cursor.fetchone()
+    cursor.close()
+    conn.close()
     print('AVAILABLE')
 except Exception:
     pass
@@ -364,8 +365,7 @@ except Exception:
 
             if "AVAILABLE" in result.stdout:
                 return  # IRIS is available
-        except Exception:
+        except:
             continue
 
-    # No IRIS available - warn but don't fail session
-    print("\nWARNING: No IRIS database available. Integration tests will be skipped.\n")
+    pytest.skip("No IRIS database available. Start with: docker start iris-vector-rag-iris")

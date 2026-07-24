@@ -55,6 +55,8 @@ class MultiQueryRRFPipeline(RAGPipeline):
         use_llm_expansion: Whether to use LLM for query expansion
     """
 
+    supported_retrieval_modes = ["vector", "text", "hybrid", "rrf"]
+
     def __init__(
         self,
         connection_manager=None,
@@ -245,8 +247,8 @@ Return only the alternative queries, one per line, without numbering.
 
     def query(
         self,
-        query: str,
-        top_k: int = 20,
+        query: str = None,
+        top_k: int = 5,
         generate_answer: bool = True,
         **kwargs
     ) -> Dict[str, Any]:
@@ -271,6 +273,14 @@ Return only the alternative queries, one per line, without numbering.
                     - raw_result_count: Total documents before fusion
                     - execution_time: Total execution time
         """
+        # FR-005: normalize query / query_text alias
+        from iris_vector_rag.core.query_options import normalize_query_params
+
+        query_text_kwarg = kwargs.pop("query_text", None)
+        opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k, **{k: v for k, v in kwargs.items() if k in ("rerank", "retrieval", "weights", "metadata_filter", "similarity_threshold", "custom_prompt")})
+        query = opts.query
+        top_k = opts.top_k
+
         start_time = time.time()
 
         logger.info(f"Multi-query RRF pipeline query: '{query}'")
@@ -288,9 +298,8 @@ Return only the alternative queries, one per line, without numbering.
             logger.debug(f"Executing search {i}/{len(queries)}: {q}")
 
             try:
-                results = self.vector_store.similarity_search(
-                    query=q,
-                    k=self.retrieved_k
+                results = self.vector_store.search_by_text(
+                    q, top_k=self.retrieved_k
                 )
 
                 # Add source query to metadata
@@ -332,14 +341,26 @@ Answer:"""
                 logger.error(f"Answer generation failed: {e}")
                 answer = "Answer generation failed. Please check the retrieved documents."
 
+        # FR-007: apply query-time reranking after RRF fusion
+        rerank_degraded = False
+        if opts.rerank:
+            from iris_vector_rag.core.composable_query import ComposableQueryMixin
+            fused_results, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                self, fused_results, opts
+            )
+
         # Build response
         execution_time = time.time() - start_time
 
+        include_sources = kwargs.get("include_sources", True)
+        sources = [doc.id for doc in fused_results if doc.id] if include_sources else []
+
         result = {
+            'query': query,
             'answer': answer,
             'retrieved_documents': fused_results,
             'contexts': [doc.page_content for doc in fused_results],
-            'sources': [doc.id for doc in fused_results if doc.id],
+            'sources': sources,
             'metadata': {
                 'pipeline': 'multi_query_rrf',
                 'queries': queries,
@@ -349,15 +370,19 @@ Answer:"""
                 'rrf_k': self.rrf_k,
                 'execution_time': execution_time,
                 'execution_time_ms': int(execution_time * 1000),
-                'use_llm_expansion': self.use_llm_expansion
+                'use_llm_expansion': self.use_llm_expansion,
+                **( {"rerank_degraded": True} if rerank_degraded else {} ),
             }
         }
 
+        rerank_strategy = (
+            opts.rerank if isinstance(opts.rerank, str) else ("cross-encoder" if opts.rerank else None)
+        )
         logger.info(
-            f"Multi-query RRF complete: {len(queries)} queries, "
-            f"{result['metadata']['raw_result_count']} raw results, "
-            f"{len(fused_results)} final results, "
-            f"{execution_time:.2f}s"
+            "Multi-query RRF complete: queries=%d raw=%d final=%d elapsed=%.2fs "
+            "retrieval_mode=%s rerank_strategy=%s rerank_degraded=%s",
+            len(queries), result['metadata']['raw_result_count'], len(fused_results), execution_time,
+            opts.retrieval or "rrf", rerank_strategy, rerank_degraded,
         )
 
         return result

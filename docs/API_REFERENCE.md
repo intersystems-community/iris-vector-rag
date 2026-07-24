@@ -1,7 +1,7 @@
 # RAG-Templates API Reference
 
-**Version**: 0.1.0
-**Last Updated**: 2025-10-08
+**Version**: 0.6.0
+**Last Updated**: 2026-07-24
 
 ## Overview
 
@@ -29,6 +29,7 @@ result = pipeline.query("What is machine learning?", top_k=5)
 Factory function to create RAG pipeline instances with automatic validation.
 
 **Signature:**
+
 ```python
 def create_pipeline(
     pipeline_type: str,
@@ -43,6 +44,7 @@ def create_pipeline(
 ```
 
 **Parameters:**
+
 - `pipeline_type` (str): Pipeline type to create
   - `"basic"` - BasicRAG with vector similarity
   - `"basic_rerank"` - BasicRAG + cross-encoder reranking
@@ -60,10 +62,12 @@ def create_pipeline(
 **Returns:** RAGPipeline instance
 
 **Raises:**
+
 - `ValueError`: If pipeline_type is unknown
 - `PipelineValidationError`: If validation fails and auto_setup is False
 
 **Example:**
+
 ```python
 from iris_vector_rag import create_pipeline
 
@@ -82,6 +86,7 @@ pipeline = create_pipeline("crag", validate_requirements=True, auto_setup=True)
 Validate pipeline requirements without creating an instance.
 
 **Signature:**
+
 ```python
 def validate_pipeline(
     pipeline_type: str,
@@ -93,6 +98,7 @@ def validate_pipeline(
 **Returns:** Validation results dictionary with detailed status
 
 **Example:**
+
 ```python
 from iris_vector_rag import validate_pipeline
 
@@ -106,6 +112,7 @@ print(f"Issues: {status['issues']}")
 Set up all requirements for a pipeline type.
 
 **Signature:**
+
 ```python
 def setup_pipeline(
     pipeline_type: str,
@@ -117,6 +124,7 @@ def setup_pipeline(
 **Returns:** Setup results dictionary
 
 **Example:**
+
 ```python
 from iris_vector_rag import setup_pipeline
 
@@ -133,6 +141,7 @@ All pipeline classes implement these core methods with identical signatures.
 Load documents into the pipeline for retrieval.
 
 **Signature:**
+
 ```python
 def load_documents(
     self,
@@ -143,11 +152,13 @@ def load_documents(
 ```
 
 **Parameters:**
+
 - `documents` (List[Document], optional): List of Document objects to load
 - `documents_path` (str, optional): Path to documents file (JSON)
 - `**kwargs`: Pipeline-specific parameters
 
 **Returns:**
+
 ```python
 {
     "documents_loaded": int,       # Number successfully loaded
@@ -157,11 +168,13 @@ def load_documents(
 ```
 
 **Validation:**
+
 - Requires either `documents` or `documents_path` (not both None)
 - Rejects empty document lists with actionable error message
 - Validates Document objects have required fields
 
 **Example:**
+
 ```python
 from iris_rag.core.models import Document
 
@@ -188,6 +201,7 @@ result = pipeline.load_documents(documents_path="data/docs.json")
 Execute a RAG query with document retrieval and optional answer generation.
 
 **Signature:**
+
 ```python
 def query(
     self,
@@ -195,18 +209,29 @@ def query(
     top_k: int = 5,
     generate_answer: bool = True,
     include_sources: bool = True,
+    retrieval: str | None = None,
+    weights: dict | None = None,
+    rerank: bool | str | callable | None = None,
+    metadata_filter: dict | None = None,
+    similarity_threshold: float | None = None,
     **kwargs
 ) -> Dict[str, Any]
 ```
 
 **Parameters:**
-- `query` (str): The query text (required, cannot be empty)
-- `top_k` (int): Number of documents to return, range [1-100] (default: 5)
-- `generate_answer` (bool): Generate LLM answer (default: True)
-- `include_sources` (bool): Include source metadata (default: True)
-- `**kwargs`: Pipeline-specific parameters
+
+- `query` (str): The query text; `query_text=` accepted as alias (backward-compat)
+- `top_k` (int): Documents to retrieve, range [1-100] (default: 5)
+- `generate_answer` (bool): Call LLM to generate answer (default: True)
+- `include_sources` (bool): Include source metadata in response (default: True)
+- `retrieval` (str | None): Retrieval mode — `"vector"` (default), `"text"`, `"hybrid"`, `"rrf"`. `"text"` and fusion modes require `iris-vector-graph`.
+- `weights` (dict | None): Score-fusion weights, e.g. `{"vector": 0.7, "text": 0.3}`. Used with `"hybrid"` or `"rrf"`.
+- `rerank` (bool | str | callable | None): Apply reranking after retrieval. `True` uses the default cross-encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2`). A string names a strategy (`"cross-encoder"`). A callable receives `(query, docs)` and returns reordered docs. Model loads once per process (cached).
+- `metadata_filter` (dict | None): Restrict results by metadata field, e.g. `{"source": "pubmed"}`. Allowed keys vary by pipeline; unknown keys raise `VectorStoreConfigurationError`.
+- `similarity_threshold` (float | None): Exclude documents below this cosine similarity score (0.0–1.0).
 
 **Returns:**
+
 ```python
 {
     "query": str,                            # Original query
@@ -219,7 +244,10 @@ def query(
         "num_retrieved": int,                # Documents retrieved
         "processing_time": float,
         "pipeline_type": str,                # Pipeline identifier
-        "retrieval_method": str,             # Retrieval strategy used
+        "retrieval_mode": str,               # Retrieval strategy used ("vector", "text", "hybrid", "rrf")
+        "rerank_strategy": str | None,       # "cross-encoder", custom name, or None
+        "rerank_degraded": bool,             # True if reranking fell back due to error
+        "weights": dict | None,              # Fusion weights applied
         "context_count": int,                # Number of contexts
         "sources": List[Dict],               # Also in metadata
         # Pipeline-specific fields...
@@ -228,11 +256,13 @@ def query(
 ```
 
 **Validation:**
+
 - Query cannot be empty or whitespace-only
 - top_k must be between 1 and 100 (inclusive)
 - Raises `ValueError` with 5-part error message on validation failure
 
 **Error Message Format:**
+
 ```
 Error: <what went wrong>
 Context: <where it happened>
@@ -242,6 +272,7 @@ Fix: <how to fix it>
 ```
 
 **Example:**
+
 ```python
 # Basic query
 result = pipeline.query("What is diabetes?", top_k=5)
@@ -274,6 +305,7 @@ evaluation = evaluate(
 Get information about the pipeline's configuration.
 
 **Signature:**
+
 ```python
 def get_pipeline_info(self) -> Dict[str, Any]
 ```
@@ -281,17 +313,75 @@ def get_pipeline_info(self) -> Dict[str, Any]
 **Returns:** Dictionary with pipeline configuration details
 
 **Example:**
+
 ```python
 info = pipeline.get_pipeline_info()
 print(f"Type: {info['pipeline_type']}")
 print(f"Config: {info}")
 ```
 
+## Vector Store API
+
+### `IRISVectorStore.search_by_text()`
+
+Explicit text-search entry point. Returns documents ranked by BM25/text relevance.
+
+```python
+docs: List[Document] = vector_store.search_by_text(query="insulin resistance", top_k=10)
+```
+
+- Requires `iris-vector-graph` with a BM25 index populated on the table.
+- Returns `List[Document]` (predictable type, unlike the legacy polymorphic `similarity_search`).
+
+### `IRISVectorStore.search_by_vector()`
+
+Explicit vector-search entry point. Returns documents with their similarity scores.
+
+```python
+results: List[Tuple[Document, float]] = vector_store.search_by_vector(embedding=[...], top_k=10)
+```
+
+- `embedding` must match the vector dimension of the table (e.g. 384 for `all-MiniLM-L6-v2`).
+- Returns `List[Tuple[Document, float]]` where the float is cosine similarity.
+
+The legacy `similarity_search(query, k, **kwargs)` method remains unchanged.
+
+---
+
+## Reranker API
+
+### `iris_vector_rag.retrieval.rerank.resolve_reranker()`
+
+Public resolver that returns a cached reranker callable. The underlying model loads **once per `(strategy, model_name)` tuple per process** and is shared across all callers.
+
+```python
+from iris_vector_rag.retrieval.rerank import resolve_reranker
+
+# Default cross-encoder
+fn = resolve_reranker(True)
+
+# Named strategy with custom model
+fn = resolve_reranker("cross-encoder", model_name="cross-encoder/ms-marco-MiniLM-L-12-v2")
+
+# Custom callable — passed through directly, never cached
+fn = resolve_reranker(lambda query, docs: sorted(docs, key=my_score_fn))
+
+# Use the reranker
+reranked_docs = fn(query="What is insulin?", docs=retrieved_docs)
+```
+
+**Callable signature:** `(query: str, docs: List[Document]) -> List[Document]`
+
+Thread-safe: concurrent first-load calls for the same key load the model exactly once.
+
+---
+
 ## Pipeline-Specific Features
 
 ### BasicRAGReranking
 
 Additional metadata fields:
+
 ```python
 result["metadata"]["reranked"]            # bool: Whether reranking was applied
 result["metadata"]["initial_candidates"]  # int: Initial retrieval count
@@ -299,6 +389,7 @@ result["metadata"]["rerank_factor"]       # int: Reranking multiplier
 ```
 
 Configuration:
+
 ```python
 pipeline = create_pipeline("basic_rerank")
 # Retrieves rerank_factor * top_k documents, reranks, returns top_k
@@ -307,6 +398,7 @@ pipeline = create_pipeline("basic_rerank")
 ### CRAG (Corrective RAG)
 
 Additional metadata fields:
+
 ```python
 result["metadata"]["evaluation_score"]    # float: Relevance evaluation
 result["metadata"]["corrected"]           # bool: Whether correction applied
@@ -315,6 +407,7 @@ result["metadata"]["corrected"]           # bool: Whether correction applied
 ### HybridGraphRAG
 
 Pipeline-specific query parameters:
+
 ```python
 result = pipeline.query(
     query_text="cancer targets",
@@ -327,6 +420,7 @@ result = pipeline.query(
 ```
 
 Additional metadata fields:
+
 ```python
 result["metadata"]["fusion_method"]       # str: Fusion strategy used
 result["metadata"]["vector_score"]        # float: Vector search contribution
@@ -337,6 +431,7 @@ result["metadata"]["graph_score"]         # float: Graph traversal contribution
 ### PyLateColBERT
 
 Additional metadata fields:
+
 ```python
 result["metadata"]["native_reranking"]    # bool: PyLate reranking used
 result["metadata"]["model_name"]          # str: ColBERT model identifier
@@ -363,6 +458,7 @@ doc = Document(
 ```
 
 **Fields:**
+
 - `page_content` (str): The main text content
 - `metadata` (dict): Dictionary of metadata fields
 
@@ -391,22 +487,26 @@ except ValueError as e:
 ### Common Errors
 
 **Empty Query:**
+
 ```python
 pipeline.query("")  # Raises ValueError
 ```
 
 **Invalid top_k:**
+
 ```python
 pipeline.query("test", top_k=0)    # Raises ValueError (< 1)
 pipeline.query("test", top_k=101)  # Raises ValueError (> 100)
 ```
 
 **Empty Document List:**
+
 ```python
 pipeline.load_documents(documents=[])  # Raises ValueError
 ```
 
 **Missing Required Parameter:**
+
 ```python
 pipeline.load_documents()  # Raises ValueError (need documents or documents_path)
 ```
@@ -514,11 +614,13 @@ result["metadata"]["num_retrieved"]  # Standardized structure
 ## Best Practices
 
 1. **Always use validation in production:**
+
    ```python
    pipeline = create_pipeline("basic", validate_requirements=True)
    ```
 
 2. **Handle errors with specific exceptions:**
+
    ```python
    try:
        result = pipeline.query(user_input, top_k=5)
@@ -527,12 +629,14 @@ result["metadata"]["num_retrieved"]  # Standardized structure
    ```
 
 3. **Use Document objects for metadata preservation:**
+
    ```python
    docs = [Document(page_content=text, metadata={"source": file})]
    pipeline.load_documents(documents=docs)
    ```
 
 4. **Access results with framework-specific interfaces:**
+
    ```python
    # For LangChain
    documents = result["retrieved_documents"]

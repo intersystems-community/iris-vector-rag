@@ -164,13 +164,15 @@ class IRISVectorStore(VectorStore):
                 [self.table_name]
             )
             row = cursor.fetchone()
+            # Extract value before close — iris DataRow is invalidated by cursor.close()
+            params = str(row[0]) if row and row[0] else None
             cursor.close()
-            if row and row[0]:
-                params = str(row[0])
+            if params:
                 if "DATATYPE,DOUBLE" in params:
                     return "DOUBLE"
                 if "DATATYPE,FLOAT" in params:
                     return "FLOAT"
+
         except Exception as e:
             logger.debug(f"Failed to detect vector data type for {self.table_name}: {e}")
         
@@ -1575,6 +1577,39 @@ class IRISVectorStore(VectorStore):
             return self.similarity_search_by_embedding(
                 query_embedding, top_k, filter_param
             )
+
+    def search_by_text(
+        self,
+        query: str,
+        top_k: int = 5,
+        metadata_filter: Optional[Dict[str, Any]] = None,
+    ) -> List[Document]:
+        """Return List[Document] for a text query (FR-014).
+
+        Embeds ``query`` and delegates to similarity_search_by_embedding.
+        Always returns plain Documents — scores are available via search_by_vector.
+        """
+        embedding = self._embed_query(query)
+        results = self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+        return [doc for doc, _ in results]
+
+    def search_by_vector(
+        self,
+        embedding: List[float],
+        top_k: int = 5,
+        metadata_filter: Optional[Dict[str, Any]] = None,
+    ) -> List[Tuple[Document, float]]:
+        """Return List[Tuple[Document, float]] for a pre-computed embedding (FR-014).
+
+        Always returns (Document, score) tuples — use search_by_text for plain docs.
+        """
+        return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+
+    def _embed_query(self, query: str) -> List[float]:
+        """Embed a text query using the configured EmbeddingManager."""
+        from ..embeddings.manager import EmbeddingManager
+        embedding_manager = EmbeddingManager(self.config_manager)
+        return embedding_manager.embed_text(query)
 
     def similarity_search_with_score(self, query: str, k: int = 4, filter: Optional[Dict[str, Any]] = None) -> List[Tuple[Document, float]]:
         """
