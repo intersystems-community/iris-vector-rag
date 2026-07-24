@@ -77,16 +77,16 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 ### Tests (write FIRST, MUST FAIL)
 
-- [ ] T014 [P] [US2] Contract test in `tests/contract/test_query_signature_parity.py`: canonical `query` + `query_text` alias, consistent defaults, standardized response keys across all pipelines (FR-004/005/006; C-Q1..Q6)
+- [X] T014 [P] [US2] Contract test in `tests/contract/test_query_signature_parity.py`: canonical `query` + `query_text` alias, consistent defaults, standardized response keys across all pipelines (FR-004/005/006; C-Q1..Q6)
 
 ### Implementation
 
-- [ ] T015 [US2] Route `BasicRAGPipeline.query()` through `_normalize_query` in `iris_vector_rag/pipelines/basic.py`
-- [ ] T016 [P] [US2] Same for `iris_vector_rag/pipelines/crag.py`
-- [ ] T017 [P] [US2] Same for `iris_vector_rag/pipelines/hybrid_graphrag.py` — this IS the registered `graphrag` type (reconcile existing `query`/`query_text` dual-accept)
-- [ ] T018 [P] [US2] Same for `iris_vector_rag/pipelines/multi_query_rrf.py` (normalize the divergent `top_k=20` default)
-- [ ] T019 [P] [US2] Same for `iris_vector_rag/pipelines/colbert_pylate/pylate_pipeline.py` (registered `pylate_colbert` type). NOTE: `graphrag.py`/`graphrag_merged.py`/`iris_global_graphrag.py` are legacy, NOT the registered `graphrag` type, and are out of scope.
-- [ ] T020 [US2] Standardize `include_sources` default and response-key assembly via a mixin helper (FR-006). Constraint (Principle IV): `answer` and `retrieved_documents` MUST remain byte-identical to the T008 golden baseline; only NEW `metadata` keys may be added. Do NOT relax golden expectations for `answer`/`retrieved_documents` — a change there is a regression, not an enrichment.
+- [X] T015 [US2] Route `BasicRAGPipeline.query()` through `_normalize_query` in `iris_vector_rag/pipelines/basic.py`
+- [X] T016 [P] [US2] Same for `iris_vector_rag/pipelines/crag.py`
+- [X] T017 [P] [US2] Same for `iris_vector_rag/pipelines/hybrid_graphrag.py` — fixed `top_k or 10` bug and default to 5
+- [X] T018 [P] [US2] Same for `iris_vector_rag/pipelines/multi_query_rrf.py` (normalize the divergent `top_k=20` default to 5; add `query` key; honor `include_sources=False`)
+- [X] T019 [P] [US2] Same for `iris_vector_rag/pipelines/colbert_pylate/pylate_pipeline.py`
+- [X] T020 [US2] Standardize `include_sources` default and response-key assembly via a mixin helper (FR-006). multi_query_rrf now honors include_sources=False and echoes query key.
 
 **Checkpoint**: "Swap pipelines with one line" holds (SC-002); existing callers unaffected.
 

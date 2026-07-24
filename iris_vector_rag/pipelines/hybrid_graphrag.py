@@ -153,7 +153,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         self,
         query: str = None,
         query_text: str = None,
-        top_k: int = None,
+        top_k: int = 5,
         method: str = "hybrid",
         generate_answer: bool = True,
         custom_prompt: str = None,
@@ -179,16 +179,12 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         # FR-005: normalize query / query_text alias with deprecation warning
         from iris_vector_rag.core.query_options import normalize_query_params
 
-        opts = normalize_query_params(query=query, query_text=query_text, top_k=top_k or 10)
+        opts = normalize_query_params(query=query, query_text=query_text, top_k=top_k if top_k is not None else 5)
         query_text = opts.query
-        if top_k is None:
-            top_k = opts.top_k
+        top_k = opts.top_k
 
         start_time = time.time()
         start_perf = time.perf_counter()
-
-        if top_k is None:
-            top_k = self.default_top_k
 
         # Validate knowledge graph
         self._validate_knowledge_graph()

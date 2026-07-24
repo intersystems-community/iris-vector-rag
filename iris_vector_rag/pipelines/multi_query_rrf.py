@@ -264,7 +264,7 @@ Return only the alternative queries, one per line, without numbering.
     def query(
         self,
         query: str = None,
-        top_k: int = 20,
+        top_k: int = 5,
         generate_answer: bool = True,
         **kwargs
     ) -> Dict[str, Any]:
@@ -361,11 +361,15 @@ Answer:"""
         # Build response
         execution_time = time.time() - start_time
 
+        include_sources = kwargs.get("include_sources", True)
+        sources = [doc.id for doc in fused_results if doc.id] if include_sources else []
+
         result = {
+            'query': query,
             'answer': answer,
             'retrieved_documents': fused_results,
             'contexts': [doc.page_content for doc in fused_results],
-            'sources': [doc.id for doc in fused_results if doc.id],
+            'sources': sources,
             'metadata': {
                 'pipeline': 'multi_query_rrf',
                 'queries': queries,
