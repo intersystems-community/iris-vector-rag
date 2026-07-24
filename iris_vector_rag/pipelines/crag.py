@@ -273,7 +273,7 @@ class CRAGPipeline(RAGPipeline):
         from iris_vector_rag.core.query_options import normalize_query_params
 
         query_text_kwarg = kwargs.pop("query_text", None)
-        opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k)
+        opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k, **{k: v for k, v in kwargs.items() if k in ("rerank", "retrieval", "weights", "metadata_filter", "similarity_threshold", "custom_prompt")})
         query = opts.query
         top_k = opts.top_k
 
@@ -333,6 +333,14 @@ class CRAGPipeline(RAGPipeline):
                 if answer is None:
                     answer = "No relevant documents found to answer the query."
 
+            # FR-007: apply query-time reranking after corrective retrieval
+            rerank_degraded = False
+            if opts.rerank:
+                from iris_vector_rag.core.composable_query import ComposableQueryMixin
+                corrected_docs, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                    self, corrected_docs, opts
+                )
+
             execution_time = time.time() - start_time
 
             # Extract sources for metadata
@@ -344,7 +352,7 @@ class CRAGPipeline(RAGPipeline):
                 "answer": answer,
                 "retrieved_documents": corrected_docs,
                 "contexts": contexts_list,
-                "sources": sources,  # FR-006: top-level sources key
+                "sources": sources,
                 "execution_time": execution_time,
                 "metadata": {
                     "num_retrieved": len(corrected_docs),
@@ -353,10 +361,11 @@ class CRAGPipeline(RAGPipeline):
                     "retrieval_status": retrieval_status,
                     "initial_doc_count": len(initial_docs),
                     "final_doc_count": len(corrected_docs),
-                    "retrieval_method": retrieval_method,  # FR-003: Include retrieval method
-                    "context_count": len(contexts_list),  # FR-003: Include context count
-                    "sources": sources,  # FR-003: Include sources in metadata
+                    "retrieval_method": retrieval_method,
+                    "context_count": len(contexts_list),
+                    "sources": sources,
                     "processing_time": execution_time,
+                    **( {"rerank_degraded": True} if rerank_degraded else {} ),
                 },
             }
 

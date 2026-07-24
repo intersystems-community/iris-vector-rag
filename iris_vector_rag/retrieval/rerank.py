@@ -13,12 +13,14 @@ Degradation is handled by the caller (ComposableQueryMixin._maybe_rerank).
 from __future__ import annotations
 
 import logging
+import threading
 from typing import Any, Callable, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 _DEFAULT_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 _RERANKER_CACHE: Dict[tuple, Any] = {}
+_RERANKER_LOCK = threading.Lock()
 
 
 def resolve_reranker(
@@ -48,15 +50,20 @@ def resolve_reranker(
     if cache_key in _RERANKER_CACHE:
         return _RERANKER_CACHE[cache_key]
 
-    if strategy == "cross-encoder":
+    with _RERANKER_LOCK:
+        # Double-checked locking: re-test inside the lock
+        if cache_key in _RERANKER_CACHE:
+            return _RERANKER_CACHE[cache_key]
+
+        if strategy != "cross-encoder":
+            raise ValueError(
+                f"Unknown reranker strategy: {strategy!r}. "
+                f"Supported: 'cross-encoder' or True (default)."
+            )
+
         reranker = _build_cross_encoder_reranker(resolved_model)
         _RERANKER_CACHE[cache_key] = reranker
         return reranker
-
-    raise ValueError(
-        f"Unknown reranker strategy: {strategy!r}. "
-        f"Supported: 'cross-encoder' or True (default)."
-    )
 
 
 def _build_cross_encoder_reranker(model_name: str) -> Callable[[str, List[Any]], List[Any]]:

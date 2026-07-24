@@ -92,8 +92,12 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
             "reranker_model", "cross-encoder/ms-marco-MiniLM-L-6-v2"
         )
 
-        # Set reranker function (default to HuggingFace if none provided)
-        self.reranker_func = reranker_func or hf_reranker
+        # Set reranker function — custom callable takes precedence; otherwise use cached resolver
+        if reranker_func is not None:
+            self.reranker_func = reranker_func
+        else:
+            from iris_vector_rag.retrieval.rerank import resolve_reranker
+            self.reranker_func = resolve_reranker(True, model_name=self.reranker_model)
 
         logger.info(
             f"Initialized BasicRAGRerankingPipeline with rerank_factor={self.rerank_factor}"

@@ -179,7 +179,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         # FR-005: normalize query / query_text alias with deprecation warning
         from iris_vector_rag.core.query_options import normalize_query_params
 
-        opts = normalize_query_params(query=query, query_text=query_text, top_k=top_k if top_k is not None else 5)
+        opts = normalize_query_params(query=query, query_text=query_text, top_k=top_k if top_k is not None else 5, **{k: v for k, v in kwargs.items() if k in ("rerank", "retrieval", "weights", "metadata_filter", "similarity_threshold")})
         query_text = opts.query
         top_k = opts.top_k
 
@@ -230,6 +230,14 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         else:
             answer = "No LLM function provided. Retrieved documents only."
 
+        # FR-007: apply query-time reranking after retrieval
+        rerank_degraded = False
+        if opts.rerank:
+            from iris_vector_rag.core.composable_query import ComposableQueryMixin
+            retrieved_documents, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                self, retrieved_documents, opts
+            )
+
         execution_time = time.time() - start_time
         execution_time_ms = (time.perf_counter() - start_perf) * 1000.0
 
@@ -247,6 +255,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 "retrieval_method": retrieval_method,
                 "generated_answer": generate_answer and answer is not None,
                 "iris_vector_graph_enabled": self.iris_engine is not None,
+                **( {"rerank_degraded": True} if rerank_degraded else {} ),
             },
         }
 

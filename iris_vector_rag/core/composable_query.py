@@ -11,6 +11,24 @@ from typing import Any, Callable, Dict, List, Optional, Union
 logger = logging.getLogger(__name__)
 
 
+def _unpack_rerank_result(raw: List[Any]) -> List[Any]:
+    """Normalize reranker output: handle both plain docs and (doc, score) tuples.
+
+    If the reranker returns ``list[tuple[doc, float]]``, extract the score into
+    ``doc.metadata["rerank_score"]`` and return the plain doc list (FR-008).
+    """
+    if not raw:
+        return raw
+    first = raw[0]
+    if isinstance(first, tuple) and len(first) == 2:
+        result = []
+        for item, score in raw:
+            item.metadata["rerank_score"] = float(score)
+            result.append(item)
+        return result
+    return list(raw)
+
+
 class ComposableQueryMixin:
     """Mixin providing the composable query delegation seam for RAG pipelines.
 
@@ -51,44 +69,54 @@ class ComposableQueryMixin:
             )
         return self._do_retrieval(opts)
 
-    def _maybe_rerank(self, docs: List[Any], opts) -> List[Any]:
+    def _maybe_rerank(self, docs: List[Any], opts) -> tuple:
         """Apply reranking if opts.rerank is set; degrade gracefully on failure.
+
+        Returns:
+            (reranked_docs, degraded) where degraded=True means reranking failed
+            and original order was preserved.
 
         Supports:
           - ``None`` / ``False`` — pass-through (no reranking)
-          - ``callable`` — called as ``rerank_fn(opts.query, docs)``
-          - ``True`` / ``str`` — resolved via the reranker registry (US3, not yet wired)
+          - ``callable`` — called as ``rerank_fn(opts.query, docs)``; may return
+            plain ``list[Document]`` or ``list[tuple[Document, float]]``
+          - ``True`` / ``str`` — resolved via the reranker registry
         """
         rerank_spec = opts.rerank
         if not rerank_spec:
-            return docs
+            return docs, False
+
+        def _apply(rerank_fn):
+            raw = rerank_fn(opts.query, docs)
+            return _unpack_rerank_result(raw)
 
         if callable(rerank_spec):
             try:
-                return rerank_spec(opts.query, docs)
+                return _apply(rerank_spec), False
             except Exception:
                 logger.warning(
                     "Reranker raised an exception; falling back to original ordering.",
                     exc_info=True,
                 )
-                return docs
+                return docs, True
 
-        # bool True or str — reranker registry (US3 implementation wires this up)
+        # bool True or str — reranker registry
         try:
             from iris_vector_rag.retrieval.rerank import resolve_reranker
 
             reranker = resolve_reranker(rerank_spec)
-            return reranker(opts.query, docs)
+            return _apply(reranker), False
         except Exception:
             logger.warning(
                 "Reranker resolution/execution failed; falling back to original ordering.",
                 exc_info=True,
             )
-            return docs
+            return docs, True
 
     # ------------------------------------------------------------------
     # Abstract hook — concrete pipeline overrides this
     # ------------------------------------------------------------------
+
 
     def _do_retrieval(self, opts) -> List[Any]:  # pragma: no cover
         """Execute retrieval using the pipeline's native mechanism.

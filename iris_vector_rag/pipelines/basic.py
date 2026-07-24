@@ -545,10 +545,11 @@ class BasicRAGPipeline(RAGPipeline):
             )
 
         # Step 1b: Apply query-time reranking (FR-007 / US3)
+        rerank_degraded = False
         if opts.rerank:
             from iris_vector_rag.core.composable_query import ComposableQueryMixin
 
-            retrieved_documents = ComposableQueryMixin._maybe_rerank(
+            retrieved_documents, rerank_degraded = ComposableQueryMixin._maybe_rerank(
                 self, retrieved_documents, opts
             )
 
@@ -587,9 +588,10 @@ class BasicRAGPipeline(RAGPipeline):
                 "processing_time": execution_time,
                 "pipeline_type": "basic_rag",
                 "generated_answer": generate_answer and answer is not None,
-                "retrieval_method": retrieval_method,  # FR-003: Include retrieval method
-                "context_count": len(contexts_list),  # FR-003: Include context count
-                "sources": sources,  # FR-003: Include sources in metadata
+                "retrieval_method": retrieval_method,
+                "context_count": len(contexts_list),
+                "sources": sources,
+                **( {"rerank_degraded": True} if rerank_degraded else {} ),
             },
         }
 

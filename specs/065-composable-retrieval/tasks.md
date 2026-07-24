@@ -100,13 +100,13 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 ### Tests (write FIRST, MUST FAIL)
 
-- [ ] T021 [P] [US3] Contract test in `tests/contract/test_rerank_option.py`: bool/str/callable, post-fusion ordering, degradation fallback (FR-007/008/009; C-R1..R6)
+- [X] T021 [P] [US3] Contract test in `tests/contract/test_rerank_option.py`: bool/str/callable, post-fusion ordering, degradation fallback (FR-007/008/009; C-R1..R6)
 
 ### Implementation
 
-- [ ] T022 [US3] Implement reranker resolver + process-level cache in `iris_vector_rag/retrieval/rerank.py` (extract cross-encoder from `basic_rerank.py`; cache key `(name, model, config)`; callables uncached) (research U4, FR-015)
-- [ ] T023 [US3] Wire `rerank` through `ComposableQueryMixin._maybe_rerank` in `iris_vector_rag/core/composable_query.py` (after retrieval/fusion; set `metadata["rerank_degraded"]` on failure)
-- [ ] T024 [US3] Refactor `iris_vector_rag/pipelines/basic_rerank.py` to reuse the cached resolver (equivalent to `basic` + `rerank=True`)
+- [X] T022 [US3] Implement reranker resolver + process-level cache in `iris_vector_rag/retrieval/rerank.py` (extract cross-encoder from `basic_rerank.py`; cache key `(name, model, config)`; callables uncached) (research U4, FR-015)
+- [X] T023 [US3] Wire `rerank` through `ComposableQueryMixin._maybe_rerank` in `iris_vector_rag/core/composable_query.py` (after retrieval/fusion; set `metadata["rerank_degraded"]` on failure)
+- [X] T024 [US3] Refactor `iris_vector_rag/pipelines/basic_rerank.py` to reuse the cached resolver (equivalent to `basic` + `rerank=True`)
 
 **Checkpoint**: Reranking is a one-argument, any-pipeline option (SC-003).
 
@@ -162,12 +162,12 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 ### Tests (write FIRST, MUST FAIL)
 
-- [ ] T035 [P] [US6] Unit test in `tests/unit/test_reranker_cache.py`: single load across N queries, separate configs cached separately, thread-safe (FR-015)
+- [X] T035 [P] [US6] Unit test in `tests/unit/test_reranker_cache.py`: single load across N queries, separate configs cached separately, thread-safe (FR-015)
 - [ ] T036 [P] [US6] Benchmark in `tests/benchmarks/test_reranker_cache.py`: steady-state per-query reranking excludes model-load cost (SC-005)
 
 ### Implementation
 
-- [ ] T037 [US6] Harden the cache in `iris_vector_rag/retrieval/rerank.py` (module lock, multi-config keying) — core resolver from T022
+- [X] T037 [US6] Harden the cache in `iris_vector_rag/retrieval/rerank.py` (module lock, multi-config keying) — core resolver from T022
 
 **Checkpoint**: Reranked-query throughput no longer pays per-call model load.
 

@@ -293,7 +293,7 @@ Return only the alternative queries, one per line, without numbering.
         from iris_vector_rag.core.query_options import normalize_query_params
 
         query_text_kwarg = kwargs.pop("query_text", None)
-        opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k)
+        opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k, **{k: v for k, v in kwargs.items() if k in ("rerank", "retrieval", "weights", "metadata_filter", "similarity_threshold", "custom_prompt")})
         query = opts.query
         top_k = opts.top_k
 
@@ -358,6 +358,14 @@ Answer:"""
                 logger.error(f"Answer generation failed: {e}")
                 answer = "Answer generation failed. Please check the retrieved documents."
 
+        # FR-007: apply query-time reranking after RRF fusion
+        rerank_degraded = False
+        if opts.rerank:
+            from iris_vector_rag.core.composable_query import ComposableQueryMixin
+            fused_results, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                self, fused_results, opts
+            )
+
         # Build response
         execution_time = time.time() - start_time
 
@@ -379,7 +387,8 @@ Answer:"""
                 'rrf_k': self.rrf_k,
                 'execution_time': execution_time,
                 'execution_time_ms': int(execution_time * 1000),
-                'use_llm_expansion': self.use_llm_expansion
+                'use_llm_expansion': self.use_llm_expansion,
+                **( {"rerank_degraded": True} if rerank_degraded else {} ),
             }
         }
 
