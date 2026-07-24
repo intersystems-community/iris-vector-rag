@@ -50,9 +50,10 @@ def _force_venv_iris_import():
             for item in os_module.listdir(venv_lib):
                 if item.startswith('python3.'):
                     site_packages = os_module.path.join(venv_lib, item, 'site-packages')
-                    if os_module.path.isdir(site_packages) and site_packages not in sys_module.path:
-                        sys_module.path.insert(0, site_packages)
-                        return
+                    if os_module.path.isdir(site_packages):
+                        if site_packages not in sys_module.path:
+                            sys_module.path.insert(0, site_packages)
+                        return  # always stop after the first valid venv
 
 # Force venv iris import BEFORE any other imports
 _force_venv_iris_import()
