@@ -289,7 +289,7 @@ class GraphRAGPipeline(RAGPipeline):
     def _fallback_to_vector_search(self, query_text: str, top_k: int) -> List[Document]:
         if not self.vector_store: return []
         query_embedding = self.embedding_manager.embed_text(query_text)
-        results = self.vector_store.similarity_search(query_embedding=query_embedding, top_k=top_k)
+        results = self.vector_store.search_by_vector(query_embedding, top_k=top_k)
         return [r[0] for r in results]
 
     def _generate_answer(self, query: str, documents: List[Document]) -> str:

@@ -314,9 +314,8 @@ Return only the alternative queries, one per line, without numbering.
             logger.debug(f"Executing search {i}/{len(queries)}: {q}")
 
             try:
-                results = self.vector_store.similarity_search(
-                    query=q,
-                    k=self.retrieved_k
+                results = self.vector_store.search_by_text(
+                    q, top_k=self.retrieved_k
                 )
 
                 # Add source query to metadata

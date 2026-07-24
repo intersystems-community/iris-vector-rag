@@ -511,8 +511,8 @@ class BasicRAGPipeline(RAGPipeline):
                 retrieved_documents = engine.retrieve(opts)
             elif hasattr(self, "vector_store") and self.vector_store:
                 # Use vector store for retrieval, forwarding the metadata filter (FR-001)
-                retrieved_documents = self.vector_store.similarity_search(
-                    query, k=top_k, filter=metadata_filter
+                retrieved_documents = self.vector_store.search_by_text(
+                    query, top_k=top_k, metadata_filter=metadata_filter
                 )
             else:
                 logger.warning("No vector store available")

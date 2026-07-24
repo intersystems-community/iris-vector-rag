@@ -83,8 +83,9 @@ class TestComposableQueryMixinMaybeRerank:
         docs = [Document(id="1", page_content="a", metadata={})]
         mixin = ComposableQueryMixin()
         opts = QueryOptions(query="test", rerank=None)
-        result = mixin._maybe_rerank(docs, opts)
+        result, degraded = mixin._maybe_rerank(docs, opts)
         assert result == docs
+        assert degraded is False
 
     def test_no_rerank_when_opts_rerank_false(self):
         from iris_vector_rag.core.composable_query import ComposableQueryMixin
@@ -94,8 +95,9 @@ class TestComposableQueryMixinMaybeRerank:
         docs = [Document(id="1", page_content="a", metadata={})]
         mixin = ComposableQueryMixin()
         opts = QueryOptions(query="test", rerank=False)
-        result = mixin._maybe_rerank(docs, opts)
+        result, degraded = mixin._maybe_rerank(docs, opts)
         assert result == docs
+        assert degraded is False
 
     def test_callable_rerank_used_directly(self):
         from iris_vector_rag.core.composable_query import ComposableQueryMixin
@@ -109,9 +111,10 @@ class TestComposableQueryMixinMaybeRerank:
 
         mixin = ComposableQueryMixin()
         opts = QueryOptions(query="test", rerank=rerank_fn)
-        result = mixin._maybe_rerank([doc_a, doc_b], opts)
+        result, degraded = mixin._maybe_rerank([doc_a, doc_b], opts)
         rerank_fn.assert_called_once()
         assert result == reranked
+        assert degraded is False
 
     def test_rerank_failure_falls_back_gracefully(self):
         from iris_vector_rag.core.composable_query import ComposableQueryMixin
@@ -123,8 +126,9 @@ class TestComposableQueryMixinMaybeRerank:
 
         mixin = ComposableQueryMixin()
         opts = QueryOptions(query="test", rerank=failing_rerank)
-        result = mixin._maybe_rerank([doc], opts)
+        result, degraded = mixin._maybe_rerank([doc], opts)
         assert result == [doc]  # original order preserved
+        assert degraded is True
 
 
 class TestSupportedRetrievalModes:

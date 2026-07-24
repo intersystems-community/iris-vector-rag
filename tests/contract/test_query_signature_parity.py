@@ -43,6 +43,7 @@ def _make_basic():
     p.config_manager.get = MagicMock(side_effect=lambda k, d=None: d)
     p.vector_store = MagicMock()
     p.vector_store.similarity_search.return_value = STUB_DOCS
+    p.vector_store.search_by_text.return_value = STUB_DOCS
     p.llm_func = MagicMock(return_value="")
     p.embedding_manager = MagicMock()
     p.embedding_config = None
@@ -61,6 +62,7 @@ def _make_crag():
     p.connection_manager = MagicMock()
     p.vector_store = MagicMock()
     p.vector_store.similarity_search.return_value = STUB_DOCS
+    p.vector_store.search_by_text.return_value = STUB_DOCS
     p.llm_func = None
     p.config_manager = MagicMock()
     p.top_k = 5
@@ -76,6 +78,7 @@ def _make_multi_query_rrf():
     p.connection_manager = MagicMock()
     p.vector_store = MagicMock()
     p.vector_store.similarity_search.return_value = STUB_DOCS
+    p.vector_store.search_by_text.return_value = STUB_DOCS
     p.llm_func = None
     p.config_manager = MagicMock()
     p.rrf_k = 60
@@ -92,6 +95,7 @@ def _make_hybrid_graphrag():
     p.connection_manager = MagicMock()
     p.vector_store = MagicMock()
     p.vector_store.similarity_search.return_value = STUB_DOCS
+    p.vector_store.search_by_text.return_value = STUB_DOCS
     p.llm_func = None
     p.config_manager = MagicMock()
     p.iris_engine = None
@@ -109,6 +113,7 @@ def _make_pylate():
     p.connection_manager = MagicMock()
     p.vector_store = MagicMock()
     p.vector_store.similarity_search.return_value = STUB_DOCS
+    p.vector_store.search_by_text.return_value = STUB_DOCS
     p.llm_func = None
     p.use_native_reranking = False
     p.is_initialized = False

@@ -17,29 +17,36 @@ from iris_vector_rag.exceptions import VectorStoreConfigurationError
 
 
 class _FakeVectorStore:
-    """Records similarity_search calls and simulates store-side filtering."""
+    """Records search_by_text calls and simulates store-side filtering."""
 
     def __init__(self, docs, bad_keys=("nonexistent_key",)):
         self.docs = docs
         self.bad_keys = set(bad_keys)
         self.calls = []
 
-    def similarity_search(self, query, k=4, filter=None, **kwargs):
-        self.calls.append({"query": query, "k": k, "filter": filter})
-        if filter:
-            for key in filter:
+    def _filter_docs(self, top_k, metadata_filter):
+        if metadata_filter:
+            for key in metadata_filter:
                 if key in self.bad_keys:
                     raise VectorStoreConfigurationError(
                         f"Invalid filter key: '{key}' is not an allowed metadata field"
                     )
         results = self.docs
-        if filter:
+        if metadata_filter:
             results = [
                 d
                 for d in results
-                if all(str(d.metadata.get(fk)) == str(fv) for fk, fv in filter.items())
+                if all(str(d.metadata.get(fk)) == str(fv) for fk, fv in metadata_filter.items())
             ]
-        return list(results)[:k]
+        return list(results)[:top_k]
+
+    def search_by_text(self, query, top_k=5, metadata_filter=None, **kwargs):
+        self.calls.append({"query": query, "top_k": top_k, "filter": metadata_filter})
+        return self._filter_docs(top_k, metadata_filter)
+
+    def similarity_search(self, query, k=4, filter=None, **kwargs):
+        self.calls.append({"query": query, "k": k, "filter": filter})
+        return self._filter_docs(k, filter)
 
 
 def _doc(content, source, score):

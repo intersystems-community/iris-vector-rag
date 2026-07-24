@@ -15,6 +15,13 @@ STUB_DOCS = [
 ]
 
 
+def _stub_vector_store():
+    vs = MagicMock()
+    vs.similarity_search.return_value = list(STUB_DOCS)
+    vs.search_by_text.return_value = list(STUB_DOCS)
+    return vs
+
+
 def _basic_pipeline():
     from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 
@@ -23,8 +30,7 @@ def _basic_pipeline():
     p.connection_manager = MagicMock()
     p.config_manager = MagicMock()
     p.config_manager.get = MagicMock(side_effect=lambda k, d=None: d)
-    p.vector_store = MagicMock()
-    p.vector_store.similarity_search.return_value = list(STUB_DOCS)
+    p.vector_store = _stub_vector_store()
     p.logger = MagicMock()
     p.llm_func = None
     p.embedding_manager = MagicMock()
@@ -42,8 +48,7 @@ def _crag_pipeline():
     with patch.object(CRAGPipeline, "__init__", lambda self, *a, **kw: None):
         p = CRAGPipeline.__new__(CRAGPipeline)
     p.connection_manager = MagicMock()
-    p.vector_store = MagicMock()
-    p.vector_store.similarity_search.return_value = list(STUB_DOCS)
+    p.vector_store = _stub_vector_store()
     p.llm_func = None
     p.config_manager = MagicMock()
     p.top_k = 5
@@ -60,8 +65,7 @@ def _multi_query_rrf_pipeline():
     with patch.object(MultiQueryRRFPipeline, "__init__", lambda self, *a, **kw: None):
         p = MultiQueryRRFPipeline.__new__(MultiQueryRRFPipeline)
     p.connection_manager = MagicMock()
-    p.vector_store = MagicMock()
-    p.vector_store.similarity_search.return_value = list(STUB_DOCS)
+    p.vector_store = _stub_vector_store()
     p.llm_func = None
     p.config_manager = MagicMock()
     p.rrf_k = 60
@@ -76,8 +80,7 @@ def _hybrid_graphrag_pipeline():
     with patch.object(HybridGraphRAGPipeline, "__init__", lambda self, *a, **kw: None):
         p = HybridGraphRAGPipeline.__new__(HybridGraphRAGPipeline)
     p.connection_manager = MagicMock()
-    p.vector_store = MagicMock()
-    p.vector_store.similarity_search.return_value = list(STUB_DOCS)
+    p.vector_store = _stub_vector_store()
     p.llm_func = None
     p.config_manager = MagicMock()
     p.iris_engine = None
@@ -126,6 +129,7 @@ class TestRerankCallable:
         doc = Document(id="1", page_content="test doc", metadata={})
         p = _basic_pipeline()
         p.vector_store.similarity_search.return_value = [doc]
+        p.vector_store.search_by_text.return_value = [doc]
 
         rerank_fn = MagicMock(return_value=[doc])
         result = p.query(query="test", generate_answer=False, rerank=rerank_fn)
@@ -143,6 +147,7 @@ class TestRerankCallable:
         doc_b = Document(id="2", page_content="B", metadata={})
         p = _basic_pipeline()
         p.vector_store.similarity_search.return_value = [doc_a, doc_b]
+        p.vector_store.search_by_text.return_value = [doc_a, doc_b]
 
         # Callable reverses the order
         rerank_fn = MagicMock(return_value=[doc_b, doc_a])
@@ -205,6 +210,7 @@ class TestRerankDegradation:
         doc_b = Document(id="2", page_content="B", metadata={})
         p = _basic_pipeline()
         p.vector_store.similarity_search.return_value = [doc_a, doc_b]
+        p.vector_store.search_by_text.return_value = [doc_a, doc_b]
 
         failing_rerank = MagicMock(side_effect=RuntimeError("reranker crashed"))
         result = p.query(query="test", generate_answer=False, rerank=failing_rerank)
@@ -227,6 +233,7 @@ class TestRerankScoreInMetadata:
         doc_b = Document(id="2", page_content="B", metadata={})
         p = _basic_pipeline()
         p.vector_store.similarity_search.return_value = [doc_a, doc_b]
+        p.vector_store.search_by_text.return_value = [doc_a, doc_b]
 
         # Callable returns (doc, score) tuples
         def scoring_reranker(query, docs):
@@ -245,6 +252,7 @@ class TestRerankScoreInMetadata:
         doc_a = Document(id="1", page_content="A", metadata={})
         p = _basic_pipeline()
         p.vector_store.similarity_search.return_value = [doc_a]
+        p.vector_store.search_by_text.return_value = [doc_a]
 
         def mock_reranker(query, docs):
             return [(doc_a, 0.95)]
@@ -271,6 +279,7 @@ class TestRerankDegradedFlag:
         doc_a = Document(id="1", page_content="A", metadata={})
         p = _basic_pipeline()
         p.vector_store.similarity_search.return_value = [doc_a]
+        p.vector_store.search_by_text.return_value = [doc_a]
 
         failing_rerank = MagicMock(side_effect=RuntimeError("boom"))
         result = p.query(query="test", generate_answer=False, rerank=failing_rerank)

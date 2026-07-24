@@ -54,7 +54,7 @@ class RetrievalEngine:
             raise NotImplementedError(f"Mode {mode_name!r} is registered but not implemented.")
 
     def _retrieve_vector(self, opts: Any) -> List[Any]:
-        return self.vector_store.similarity_search(opts.query, k=opts.top_k)
+        return self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
 
     def _retrieve_text(self, opts: Any) -> List[Any]:
         from iris_vector_graph.text_search import TextSearchEngine  # type: ignore[import]
@@ -65,7 +65,7 @@ class RetrievalEngine:
     def _retrieve_fusion(self, opts: Any, mode_name: str) -> List[Any]:
         from iris_vector_graph.text_search import TextSearchEngine  # type: ignore[import]
 
-        vector_docs = self.vector_store.similarity_search(opts.query, k=opts.top_k)
+        vector_docs = self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
         text_engine = TextSearchEngine(connection=self.connection)
         text_docs = text_engine.search_documents(opts.query, top_k=opts.top_k)
 

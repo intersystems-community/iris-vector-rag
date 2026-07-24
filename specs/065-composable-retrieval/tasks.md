@@ -26,7 +26,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 > does not use them, so per Principle IX (YAGNI — no unused code) they are deferred to
 > the foundational PR that lands US2. Left unchecked intentionally.
 
-- [ ] T001 Create `iris_vector_rag/retrieval/` package with stub modules `__init__.py`, `engine.py`, `modes.py`, `rerank.py` *(deferred — not needed by the slice)*
+- [X] T001 Create `iris_vector_rag/retrieval/` package with stub modules `__init__.py`, `engine.py`, `modes.py`, `rerank.py` *(deferred — not needed by the slice)*
 - [ ] T002 [P] Add additive, documented config keys to `iris_vector_rag/config/default_config.yaml` (`retrieval.default_mode`, `rerank` defaults, `embeddings.mode`/`text_in` toggle) — defaults MUST reproduce current behavior (Principle IV) *(deferred — not needed by the slice)*
 - [ ] T003 [P] Add benchmark scaffold `tests/benchmarks/test_composable_overhead.py` asserting <5ms added overhead when no composable options passed (Principle VI) *(deferred — no composable options in the slice)*
 
@@ -38,11 +38,11 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 **⚠️ CRITICAL**: US2, US3, US4 cannot begin until this phase is complete.
 
-- [ ] T004 [P] Unit test for parameter normalization in `tests/unit/test_query_options.py` (query/query_text alias precedence + warning, defaults, weights-without-fusion validation) — write FIRST, MUST FAIL
-- [ ] T005 [US-FDN] Implement `QueryOptions` dataclass + `normalize_query_params()` in `iris_vector_rag/core/query_options.py` (depends on T004)
-- [ ] T006 [P] Unit test for the delegation seam in `tests/unit/test_composable_mixin.py` (normalize → run_retrieval → maybe_rerank; supported_retrieval_modes gate) — write FIRST, MUST FAIL
-- [ ] T007 [US-FDN] Implement `ComposableQueryMixin` in `iris_vector_rag/core/composable_query.py` (`_normalize_query`, `_run_retrieval`, `_maybe_rerank`, `supported_retrieval_modes`) (depends on T005, T006)
-- [ ] T008 [US-FDN] Backward-compat golden-response harness in `tests/contract/test_backward_compat_golden.py` capturing current query outputs for ALL registered pipelines (`basic`, `basic_rerank`, `crag`, `graphrag`, `pylate_colbert`, `multi_query_rrf`) (Principle IV safety net, supports SC-007 and FR-013 parity)
+- [X] T004 [P] Unit test for parameter normalization in `tests/unit/test_query_options.py` (query/query_text alias precedence + warning, defaults, weights-without-fusion validation) — write FIRST, MUST FAIL
+- [X] T005 [US-FDN] Implement `QueryOptions` dataclass + `normalize_query_params()` in `iris_vector_rag/core/query_options.py` (depends on T004)
+- [X] T006 [P] Unit test for the delegation seam in `tests/unit/test_composable_mixin.py` (normalize → run_retrieval → maybe_rerank; supported_retrieval_modes gate) — write FIRST, MUST FAIL
+- [X] T007 [US-FDN] Implement `ComposableQueryMixin` in `iris_vector_rag/core/composable_query.py` (`_normalize_query`, `_run_retrieval`, `_maybe_rerank`, `supported_retrieval_modes`) (depends on T005, T006)
+- [X] T008 [US-FDN] Backward-compat golden-response harness in `tests/contract/test_backward_compat_golden.py` capturing current query outputs for ALL registered pipelines (`basic`, `basic_rerank`, `crag`, `graphrag`, `pylate_colbert`, `multi_query_rrf`) (Principle IV safety net, supports SC-007 and FR-013 parity)
 
 **Checkpoint**: Composable plumbing ready; unified-signature and composable-option stories can proceed.
 
@@ -143,12 +143,12 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 ### Tests (write FIRST, MUST FAIL)
 
-- [ ] T032 [P] [US5] Contract test in `tests/contract/test_search_return_types.py`: each explicit entry point returns one documented shape; legacy `similarity_search` behavior unchanged (FR-014; C-Q back-compat)
+- [X] T032 [P] [US5] Contract test in `tests/contract/test_search_return_types.py`: each explicit entry point returns one documented shape; legacy `similarity_search` behavior unchanged (FR-014; C-Q back-compat)
 
 ### Implementation
 
-- [ ] T033 [US5] Add `search_by_text()` and `search_by_vector()` wrappers in `iris_vector_rag/storage/vector_store_iris.py` (additive; leave polymorphic `similarity_search` intact) (research U3)
-- [ ] T034 [US5] Migrate internal callers (pipelines, retrieval engine) to the explicit methods; document the retained polymorphism
+- [X] T033 [US5] Add `search_by_text()` and `search_by_vector()` wrappers in `iris_vector_rag/storage/vector_store_iris.py` (additive; leave polymorphic `similarity_search` intact) (research U3)
+- [X] T034 [US5] Migrate internal callers (pipelines, retrieval engine) to the explicit methods; document the retained polymorphism
 
 **Checkpoint**: New code has predictable typing; no breaking change.
 

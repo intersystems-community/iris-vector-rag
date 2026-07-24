@@ -116,11 +116,11 @@ class TestRetrievalEngineDispatch:
         from iris_vector_rag.core.query_options import QueryOptions
 
         vs = MagicMock()
-        vs.similarity_search.return_value = []
+        vs.search_by_text.return_value = []
         engine = RetrievalEngine(vector_store=vs)
         opts = QueryOptions(query="test", retrieval="vector", top_k=5)
         engine.retrieve(opts)
-        vs.similarity_search.assert_called_once()
+        vs.search_by_text.assert_called_once()
 
     def test_unsupported_mode_raises(self):
         from iris_vector_rag.retrieval.engine import RetrievalEngine
