@@ -2,9 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CRITICAL: IRIS-Specific Rules (Read First)
+
+### IRIS is ALWAYS available
+
+Container: `iris-vector-rag-iris` on port 51972. If not running: `docker start iris-vector-rag-iris`.
+Never skip integration/e2e tests because "IRIS is unavailable" — start the container and run them.
+
+### IRIS VECTOR columns always appear as `varchar` in INFORMATION_SCHEMA / dbapi
+
+`INFORMATION_SCHEMA.COLUMNS` and the dbapi cursor report `VECTOR(FLOAT, N)` columns as `varchar`. This is a driver limitation, NOT a schema defect. NEVER conclude the column is wrong type from this output. NEVER ALTER TABLE or recreate schema based on this. To verify a column is truly VECTOR-typed, run: `SELECT VECTOR_COSINE(embedding, embedding) FROM table` — if it returns a result, the column is correctly typed.
+
 ## Development Commands
 
 ### Environment Setup
+
 ```bash
 # Initial setup (using uv for modern Python package management)
 make setup-env    # Create .venv using uv
@@ -18,6 +30,7 @@ make load-data        # Load sample data
 ```
 
 ### Testing
+
 ```bash
 # Run tests using the script runner
 ./scripts/ci/run-tests.sh           # Run all tests
@@ -40,6 +53,7 @@ IRIS_BACKEND_MODE=community pytest tests/  # Manual backend mode override
 ```
 
 ### Linting and Formatting
+
 ```bash
 # Format code (apply isort and black per pyproject.toml configuration)
 black .
@@ -51,6 +65,7 @@ mypy iris_rag/
 ```
 
 ### Docker Operations
+
 ```bash
 # Core services
 make docker-up        # Start core services (IRIS, Redis, API, Streamlit)
@@ -67,6 +82,7 @@ make docker-dev       # Start dev environment, wait for health, init data
 ```
 
 ### RAGAS Evaluation
+
 ```bash
 # Quick evaluation on sample data
 make test-ragas-sample
@@ -82,6 +98,7 @@ make test-ragas-1000-docker
 ## Architecture Overview
 
 ### Core Framework Structure
+
 - **iris_rag/**: Main RAG framework package
   - **core/**: Abstract base classes (RAGPipeline, VectorStore) and models
   - **pipelines/**: RAG pipeline implementations (BasicRAG, CRAG, GraphRAG, HybridGraphRAG)
@@ -92,22 +109,24 @@ make test-ragas-1000-docker
   - **memory/**: Memory management and incremental indexing components
 
 ### Available RAG Pipelines (via `create_pipeline()`)
+
 1. **`basic`** → BasicRAGPipeline - Standard vector similarity search
 2. **`basic_rerank`** → BasicRAGRerankingPipeline - Vector search + cross-encoder reranking
 3. **`crag`** → CRAGPipeline - Corrective RAG with self-evaluation
 4. **`graphrag`** → HybridGraphRAGPipeline - Hybrid search (vector + text + graph + RRF)
 5. **`pylate_colbert`** → PyLateColBERTPipeline - ColBERT late interaction retrieval
 
-**Additional Pipeline (Direct Import):**
-6. **IRIS-Global-GraphRAG** - Academic papers with 3D visualization and global communities
+**Additional Pipeline (Direct Import):** 6. **IRIS-Global-GraphRAG** - Academic papers with 3D visualization and global communities
 
 ### Key Integration Points
+
 - **Vector Database**: InterSystems IRIS with native vector search capabilities
 - **LLM Integration**: OpenAI and Anthropic APIs via common.utils.get_llm_func
 - **Bridge Adapters**: Generic memory components for external system integration
 - **Validation Framework**: Automated pipeline requirement validation and setup
 
 ### Pipeline Factory Pattern
+
 ```python
 from iris_rag import create_pipeline
 
@@ -130,6 +149,7 @@ result = pipeline.query(query="What is diabetes?", top_k=5)
 ```
 
 ### Testing Architecture
+
 - **Unit Tests**: `tests/unit/` - Component-level testing
 - **Integration Tests**: `tests/integration/` - Cross-component functionality
 - **E2E Tests**: `tests/e2e/` - Full pipeline workflows
@@ -141,11 +161,13 @@ result = pipeline.query(query="What is diabetes?", top_k=5)
 **Constitutional Requirement**: All integration and E2E tests with ≥10 entities MUST use .DAT fixtures loaded via iris-devtools. See `.specify/memory/constitution.md` for complete IRIS testing principles.
 
 **Performance Benefits**:
+
 - **.DAT fixtures**: 0.5-2 seconds for 100 entities (binary IRIS format)
 - **JSON fixtures**: 39-75 seconds for same data
 - **Speedup**: 100-200x faster test execution
 
 **When to Use What**:
+
 ```
 Need test data?
 ├─ Unit test (mocked components)?
@@ -163,6 +185,7 @@ Need test data?
 ```
 
 **Fixture Management Commands**:
+
 ```bash
 # List available fixtures
 make fixture-list
@@ -181,6 +204,7 @@ make fixture-validate FIXTURE=medical-graphrag-20
 ```
 
 **Using Fixtures in Tests**:
+
 ```python
 # Automatic fixture loading via pytest marker
 @pytest.mark.dat_fixture("medical-graphrag-20")
@@ -204,6 +228,7 @@ def test_manual_load():
 
 **Fixture Infrastructure** (✅ Production Ready):
 The unified fixture infrastructure provides:
+
 - **Fast .DAT Loading**: 100-200x faster than JSON (via iris-devtools)
 - **Checksum Validation**: SHA256 integrity checking for data consistency
 - **Version Management**: Semantic versioning with migration history tracking
@@ -211,24 +236,29 @@ The unified fixture infrastructure provides:
 - **pytest Integration**: Automatic cleanup via `@pytest.mark.dat_fixture` decorator
 
 **Fixture Documentation**:
+
 - **Complete Status**: `FIXTURE_INFRASTRUCTURE_COMPLETE.md` (implementation overview)
 - **CLI Reference**: `python -m tests.fixtures.cli --help`
 - **API Documentation**: `tests/fixtures/manager.py` (FixtureManager class)
 - **Constitution**: `.specify/memory/constitution.md` (Principle II)
 
 ### Backend Mode Configuration (Feature 035)
+
 **Purpose**: Prevent license pool exhaustion in IRIS Community Edition while allowing parallel execution in Enterprise Edition.
 
 **Modes**:
+
 - **Community**: Single connection limit, sequential test execution
 - **Enterprise**: 999 connections, parallel test execution
 
 **Configuration Precedence** (highest to lowest):
+
 1. `IRIS_BACKEND_MODE` environment variable
 2. `.specify/config/backend_modes.yaml` file
 3. Default (community mode)
 
 **Usage Examples**:
+
 ```python
 # Pytest fixtures (auto-configured)
 def test_example(iris_connection, backend_configuration):
@@ -245,26 +275,32 @@ with pool.acquire() as conn:
 ```
 
 **Troubleshooting**:
+
 - **License pool exhaustion**: Switch to `IRIS_BACKEND_MODE=community`
 - **Tests timing out**: Check connection pool limits with `config.max_connections`
 - **Edition mismatch error**: Set `IRIS_BACKEND_MODE` to match your IRIS edition
 
 ### Configuration Management
+
 - **Default Config**: `iris_rag/config/default_config.yaml`
 - **Pipeline Configs**: `config/pipelines.yaml`
 - **Environment**: `.env` file for API keys and database connections
 - **Docker Compose**: Multiple compose files for different deployment scenarios
 
 ### HybridGraphRAG Required Dependencies
+
 The HybridGraphRAG pipeline requires iris-vector-graph for operation:
 
 **Installation:**
+
 ```bash
 pip install rag-templates[hybrid-graphrag]
 ```
+
 This installs the `iris-vector-graph` package providing iris_graph_core integration for 50x performance improvements.
 
 **Requirements:**
+
 - iris-vector-graph>=2.0.0 is now a mandatory dependency
 - No fallback mechanisms - the pipeline will fail fast with clear error messages if the package is missing
 - All retrieval methods (hybrid, rrf, text, vector, kg) require iris-vector-graph
@@ -272,11 +308,13 @@ This installs the `iris-vector-graph` package providing iris_graph_core integrat
 ### Testing GraphRAG Pipelines
 
 **Important**: HybridGraphRAG integration tests are **intentionally skipped** in CI because they require:
+
 1. Configured LLM for entity extraction from documents
 2. iris-vector-graph tables populated with embeddings and optimized indexes
 3. Full knowledge graph (entities + relationships) extracted from documents
 
 **Test fixtures cannot provide this setup** because:
+
 - Entity extraction requires LLM API calls (not available/practical in test environment)
 - iris-vector-graph requires optimized HNSW tables with real embeddings
 - Simple 3-document fixtures cannot replicate the complexity of real knowledge graphs
@@ -286,20 +324,24 @@ This installs the `iris-vector-graph` package providing iris_graph_core integrat
 GraphRAG testing uses a pragmatic three-tier approach:
 
 **Tier 1: Contract Tests** (Automated CI) ✅
+
 ```bash
 pytest tests/contract/test_graphrag_fixtures.py  # 13/13 passing
 ```
+
 - Purpose: Validate API interfaces and fixture loading
 - Coverage: Data structures, fixture service, validation logic
 - Run in CI: Yes - fast (< 1s), reliable, no dependencies
 - When to run: Always (part of standard test suite)
 
 **Tier 2: Realistic Integration Tests** (Manual, Development) ℹ️
+
 ```bash
 # Run against real database with 221K+ entities
 IRIS_PORT=21972 pytest tests/integration/test_graphrag_realistic.py -v
 IRIS_PORT=21972 pytest tests/integration/test_graphrag_with_real_data.py -v
 ```
+
 - Purpose: Validate GraphRAG against production-like data
 - Coverage: KG traversal, vector fallback, metadata completeness
 - Run in CI: No - requires IRIS_PORT environment configuration
@@ -307,19 +349,23 @@ IRIS_PORT=21972 pytest tests/integration/test_graphrag_with_real_data.py -v
 - Database requirement: 100+ entities, 50+ relationships
 
 **Tier 3: E2E HybridGraphRAG Tests** (Skipped) ⏭️
+
 ```bash
 pytest tests/integration/test_hybridgraphrag_e2e.py  # All skipped with clear reasons
 ```
+
 - Purpose: End-to-end validation of all 5 query methods
 - Status: Intentionally skipped - requires LLM + iris-vector-graph setup
 - Alternative: Manual testing with real data (see below)
 
 **Why Integration Tests are Skipped:**
+
 - Previous "passing" integration tests were **false positives** - they used 2,376 pre-existing documents in the database, not the 3-document test fixtures
 - Maintaining complex LLM mocking + iris-vector-graph setup is brittle and provides little value
 - Contract tests + manual validation with real data provides better signal
 
 ### Data Flow
+
 1. **Document Ingestion**: Load documents via pipeline.load_documents()
 2. **Chunking & Embedding**: Automatic text segmentation and vector generation
 3. **Storage**: Vectors and metadata stored in IRIS vector tables
@@ -334,6 +380,7 @@ pytest tests/integration/test_hybridgraphrag_e2e.py  # All skipped with clear re
 The REST API provides production-ready HTTP endpoints for all RAG pipelines with enterprise features:
 
 **Features**:
+
 - API key authentication (bcrypt-hashed)
 - Three-tier rate limiting (60/100/1000 requests/min)
 - Request/response logging with audit trail
@@ -344,6 +391,7 @@ The REST API provides production-ready HTTP endpoints for all RAG pipelines with
 - 100% LangChain & RAGAS compatible
 
 **Quick Start**:
+
 ```bash
 # Setup database tables
 make api-setup-db
@@ -362,6 +410,7 @@ make api-docs  # http://localhost:8000/docs
 ```
 
 **CLI Commands**:
+
 ```bash
 # Server operations
 python -m iris_rag.api.cli run [--host HOST] [--port PORT] [--workers N] [--reload]
@@ -380,6 +429,7 @@ python -m iris_rag.api.cleanup_job
 ```
 
 **API Endpoints**:
+
 - `POST /{pipeline}/_search` - Execute query (requires auth)
 - `GET /api/v1/pipelines` - List available pipelines (public)
 - `GET /api/v1/pipelines/{name}` - Get pipeline details (public)
@@ -389,6 +439,7 @@ python -m iris_rag.api.cleanup_job
 - `WS /ws` - WebSocket streaming (requires auth)
 
 **Authentication**:
+
 ```bash
 # All requests (except /health and /pipelines) require API key
 Authorization: ApiKey <base64(key_id:key_secret)>
@@ -398,6 +449,7 @@ Authorization: ApiKey N2M5ZTY2NzktNzQyNS00MGRlLTk0NGItZTA3ZmMxZjkwYWU3Om15X3NlY3
 ```
 
 **Query Example**:
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/basic/_search \
   -H "Authorization: ApiKey <your-key>" \
@@ -409,6 +461,7 @@ curl -X POST http://localhost:8000/api/v1/basic/_search \
 ```
 
 **Response Format** (RAGAS compatible):
+
 ```json
 {
   "response_id": "uuid",
@@ -419,7 +472,7 @@ curl -X POST http://localhost:8000/api/v1/basic/_search \
       "doc_id": "uuid",
       "content": "Document text...",
       "score": 0.95,
-      "metadata": {"source": "file.pdf", "page_number": 127}
+      "metadata": { "source": "file.pdf", "page_number": 127 }
     }
   ],
   "sources": ["file.pdf"],
@@ -433,13 +486,15 @@ curl -X POST http://localhost:8000/api/v1/basic/_search \
 ```
 
 **Rate Limiting**:
-| Tier | Requests/Minute | Requests/Hour | Max Concurrent |
-|------|----------------|---------------|----------------|
-| Basic | 60 | 1,000 | 5 |
-| Premium | 100 | 5,000 | 10 |
-| Enterprise | 1,000 | 50,000 | 20 |
+
+| Tier       | Requests/Minute | Requests/Hour | Max Concurrent |
+| ---------- | --------------- | ------------- | -------------- |
+| Basic      | 60              | 1,000         | 5              |
+| Premium    | 100             | 5,000         | 10             |
+| Enterprise | 1,000           | 50,000        | 20             |
 
 **Error Handling** (Elasticsearch-inspired):
+
 ```json
 {
   "error": {
@@ -457,6 +512,7 @@ curl -X POST http://localhost:8000/api/v1/basic/_search \
 ```
 
 **Database Cleanup**:
+
 ```bash
 # Run cleanup job manually
 python -m iris_rag.api.cleanup_job
@@ -466,6 +522,7 @@ python -m iris_rag.api.cleanup_job
 ```
 
 **Testing**:
+
 ```bash
 make api-test                 # Run all API tests
 make api-test-contracts       # Run contract tests (TDD)
@@ -473,6 +530,7 @@ make api-test-integration     # Run integration tests
 ```
 
 **Configuration**: `config/api_config.yaml`
+
 ```yaml
 server:
   host: 0.0.0.0
@@ -495,12 +553,13 @@ logging:
 
 **Complete Documentation**: `iris_rag/api/README.md`
 
-
 ## Active Technologies
+
 - Python 3.10+ (existing codebase uses 3.10-3.12) (051-enterprise-enhancements)
 - InterSystems IRIS database (RAG.SourceDocuments table - existing) (051-enterprise-enhancements)
 - Python 3.10–3.12 (matches existing codebase) + InterSystems IRIS (native vector search); `iris-vector-graph` ≥2.0.0 (`iris_graph_core`) for BM25 text ranking and RRF/score fusion; `sentence-transformers` `CrossEncoder` for reranking; existing `ConfigurationManager` (065-composable-retrieval)
 - IRIS `RAG.SourceDocuments` + vector tables; `iris_graph_core` BM25/text index (065-composable-retrieval)
 
 ## Recent Changes
+
 - 051-enterprise-enhancements: Added Python 3.10+ (existing codebase uses 3.10-3.12)

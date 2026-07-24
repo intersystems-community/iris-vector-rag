@@ -29,6 +29,10 @@ class BasicRAGPipeline(RAGPipeline):
     3. Context augmentation and LLM generation
     """
 
+    # FR-010/T031: all four modes accepted; text/hybrid/rrf raise prereq error if
+    # iris-vector-graph BM25 is unavailable (handled by RetrievalEngine.retrieve).
+    supported_retrieval_modes = ["vector", "text", "hybrid", "rrf"]
+
     def __init__(
         self,
         connection_manager: Optional[ConnectionManager] = None,
@@ -448,6 +452,8 @@ class BasicRAGPipeline(RAGPipeline):
                         "similarity_threshold",
                         "custom_prompt",
                         "rerank",
+                        "retrieval",
+                        "weights",
                     )
                     if k in kwargs
                 },
@@ -494,8 +500,17 @@ class BasicRAGPipeline(RAGPipeline):
 
         # Step 1: Retrieve relevant documents
         try:
-            # Use vector store for retrieval, forwarding the metadata filter (FR-001)
-            if hasattr(self, "vector_store") and self.vector_store:
+            # FR-010: dispatch via RetrievalEngine when retrieval mode is explicitly set
+            if opts.retrieval and opts.retrieval != "vector" and hasattr(self, "vector_store") and self.vector_store:
+                from iris_vector_rag.retrieval.engine import RetrievalEngine
+
+                engine = RetrievalEngine(
+                    vector_store=self.vector_store,
+                    connection=getattr(self.connection_manager, "connection", None) if self.connection_manager else None,
+                )
+                retrieved_documents = engine.retrieve(opts)
+            elif hasattr(self, "vector_store") and self.vector_store:
+                # Use vector store for retrieval, forwarding the metadata filter (FR-001)
                 retrieved_documents = self.vector_store.similarity_search(
                     query, k=top_k, filter=metadata_filter
                 )

@@ -120,16 +120,16 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 ### Tests (write FIRST, MUST FAIL)
 
-- [ ] T025 [P] [US4] Contract test in `tests/contract/test_retrieval_modes.py`: mode selection, `hybrid`=weighted score fusion vs `rrf`=rank fusion, per-source scores in metadata, prereq error not silent fallback (FR-010/011/012; C-M1..M7)
-- [ ] T026 [P] [US4] Integration test in `tests/integration/test_hybrid_rrf_modes.py`: hybrid vs rrf differ; weights shift ranking (SC-004). **Fixture**: no ≥10-doc `.DAT` fixture with a BM25 text index exists today (only `mcp-basic-rag-5docs` and JSON graphrag fixtures). Provision one (≥10 docs in `RAG.SourceDocuments` + iris-vector-graph BM25 index) via `make fixture-create` — required by Principle II for ≥10 entities.
+- [X] T025 [P] [US4] Contract test in `tests/contract/test_retrieval_modes.py`: mode selection, `hybrid`=weighted score fusion vs `rrf`=rank fusion, per-source scores in metadata, prereq error not silent fallback (FR-010/011/012; C-M1..M7)
+- [X] T026 [P] [US4] Integration test in `tests/integration/test_hybrid_rrf_modes.py`: hybrid vs rrf differ; weights shift ranking (SC-004). **Fixture**: no ≥10-doc `.DAT` fixture with a BM25 text index exists today (only `mcp-basic-rag-5docs` and JSON graphrag fixtures). Provision one (≥10 docs in `RAG.SourceDocuments` + iris-vector-graph BM25 index) via `make fixture-create` — required by Principle II for ≥10 entities.
 
 ### Implementation
 
-- [ ] T027 [US4] Implement `RetrievalMode` registry + prerequisite checks + clear named errors in `iris_vector_rag/retrieval/modes.py` (FR-012)
-- [ ] T028 [US4] Implement `RetrievalEngine` mapping modes→strategies, reusing `HybridRetrievalMethods` and `_hybrid_utils`, in `iris_vector_rag/retrieval/engine.py`
-- [ ] T029 [US4] Confirm the iris-vector-graph BM25 entry point and wire the `text` source (research U1 follow-up) in `iris_vector_rag/retrieval/engine.py`
-- [ ] T030 [US4] Wire `retrieval`/`weights` through `ComposableQueryMixin._run_retrieval`; echo `vector_score`/`text_score`/`fusion_score` into `Document.metadata` (FR-011)
-- [ ] T031 [US4] Declare `supported_retrieval_modes` on each registered pipeline and enforce parity (accept every mode arg; serve or raise prereq error) (retrieval_modes.md parity contract). For `pylate_colbert`: map modes onto late-interaction retrieval where sensible, otherwise raise the FR-012 prerequisite error naming the unsupported mode (spec edge case); `rerank` still applies.
+- [X] T027 [US4] Implement `RetrievalMode` registry + prerequisite checks + clear named errors in `iris_vector_rag/retrieval/modes.py` (FR-012)
+- [X] T028 [US4] Implement `RetrievalEngine` mapping modes→strategies, reusing `HybridRetrievalMethods` and `_hybrid_utils`, in `iris_vector_rag/retrieval/engine.py`
+- [X] T029 [US4] Confirm the iris-vector-graph BM25 entry point and wire the `text` source (research U1 follow-up) in `iris_vector_rag/retrieval/engine.py`
+- [X] T030 [US4] Wire `retrieval`/`weights` through `ComposableQueryMixin._run_retrieval`; echo `vector_score`/`text_score`/`fusion_score` into `Document.metadata` (FR-011)
+- [X] T031 [US4] Declare `supported_retrieval_modes` on each registered pipeline and enforce parity (accept every mode arg; serve or raise prereq error) (retrieval_modes.md parity contract). For `pylate_colbert`: map modes onto late-interaction retrieval where sensible, otherwise raise the FR-012 prerequisite error naming the unsupported mode (spec edge case); `rerank` still applies.
 
 **Checkpoint**: MongoDB-style composable hybrid+rerank works across pipelines (SC-004); combined `retrieval="rrf", rerank=True` verified (C-R6).
 

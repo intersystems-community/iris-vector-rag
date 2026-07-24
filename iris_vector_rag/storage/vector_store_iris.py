@@ -165,13 +165,15 @@ class IRISVectorStore(VectorStore):
                 [self.table_name]
             )
             row = cursor.fetchone()
+            # Extract value before close — iris DataRow is invalidated by cursor.close()
+            params = str(row[0]) if row and row[0] else None
             cursor.close()
-            if row and row[0]:
-                params = str(row[0])
+            if params:
                 if "DATATYPE,DOUBLE" in params:
                     return "DOUBLE"
                 if "DATATYPE,FLOAT" in params:
                     return "FLOAT"
+
         except Exception as e:
             logger.debug(f"Failed to detect vector data type for {self.table_name}: {e}")
         

@@ -49,6 +49,8 @@ class MultiQueryRRFPipeline(RAGPipeline):
         use_llm_expansion: Whether to use LLM for query expansion
     """
 
+    supported_retrieval_modes = ["vector", "text", "hybrid", "rrf"]
+
     def __init__(
         self,
         connection_manager=None,

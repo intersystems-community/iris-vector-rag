@@ -33,6 +33,15 @@ def basic_pipeline():
 
 @pytest.fixture(scope="module")
 def loaded_corpus(basic_pipeline):
+    # Clear any stale data from previous runs before loading fresh docs.
+    try:
+        conn = basic_pipeline.connection_manager.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM RAG.SourceDocuments")
+        cursor.close()
+    except Exception:
+        pass
+
     tag = uuid.uuid4().hex[:8]
     docs = [
         Document(page_content=f"Insulin regulates blood glucose. [{tag}]", metadata={"source": "pubmed"}),

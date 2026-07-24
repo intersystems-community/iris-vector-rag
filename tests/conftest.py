@@ -439,21 +439,28 @@ def pytest_sessionstart(session):
     if all("unit" in path for path in test_paths):
         return
 
-    # Try to find IRIS on common ports
-    iris_ports = [11972, 21972, 1972]
-    iris_available = False
+    # Try to find IRIS — honour env var, then known project ports
+    import os as _os
+    _env_port = _os.environ.get("IRIS_PORT")
+    _candidate_ports = []
+    if _env_port:
+        _candidate_ports.append(int(_env_port))
+    _candidate_ports += [51972, 11972, 21972, 1972]
 
-    for port in iris_ports:
+    iris_available = False
+    for port in _candidate_ports:
         try:
             result = subprocess.run([
                 sys.executable, "-c",
                 f"""
-import sqlalchemy_iris
-from sqlalchemy import create_engine, text
+import iris
 try:
-    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
-    with engine.connect() as conn:
-        conn.execute(text('SELECT 1'))
+    conn = iris.connect('localhost', {port}, 'USER', '_SYSTEM', 'SYS')
+    cursor = conn.cursor()
+    cursor.execute('SELECT 1')
+    cursor.fetchone()
+    cursor.close()
+    conn.close()
     print('SUCCESS')
 except Exception:
     print('FAILED')
@@ -469,8 +476,8 @@ except Exception:
     if not iris_available and any("e2e" in path or "integration" in path for path in test_paths):
         pytest.exit(
             "IRIS database not running. E2E and integration tests require IRIS.\n"
-            "Start IRIS with: docker-compose up -d\n"
-            "Verify with: docker logs iris-pgwire-db --tail 50",
+            "Start with: docker start iris-vector-rag-iris\n"
+            "Verify with: docker ps | grep iris-vector-rag-iris",
             returncode=1
         )
 

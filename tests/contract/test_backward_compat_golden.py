@@ -165,16 +165,96 @@ class TestMultiQueryRRFGolden:
         )
 
 
-# NOTE: HybridGraphRAG and PyLateColBERT require heavy external deps
-# (iris-vector-graph, PyLate) — tested at integration level.
-# Their golden shape is validated in tests/integration/ when IRIS is available.
-@pytest.mark.skip(reason="requires iris-vector-graph external dep")
 class TestHybridGraphRAGGolden:
+    """hybrid graphrag pipeline golden shape (fully mocked — no iris-vector-graph needed)."""
+
+    def _make_pipeline(self):
+        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+
+        cm, cfg, vs = _make_minimal_mocks()
+        # Bypass __init__ entirely — it tries to connect to IRIS
+        with patch.object(HybridGraphRAGPipeline, "__init__", lambda self, *a, **kw: None):
+            p = HybridGraphRAGPipeline.__new__(HybridGraphRAGPipeline)
+        p.connection_manager = cm
+        p.config_manager = cfg
+        p.vector_store = vs
+        p.logger = MagicMock()
+        p.llm_func = MagicMock(return_value="golden answer")
+        p.embedding_manager = MagicMock()
+        p.embedding_config = None
+        p.use_iris_embedding = False
+        p.pipeline_config = {}
+        p.default_top_k = 10
+        # iris_engine=None triggers enhanced_hybrid_fallback → _fallback_to_vector_search
+        p.iris_engine = None
+        p.retrieval_methods = None
+        return p
+
     def test_response_has_required_keys(self):
-        pass
+        p = self._make_pipeline()
+        # _validate_knowledge_graph hits DB; patch it out
+        with patch.object(p, "_validate_knowledge_graph"):
+            with patch.object(p, "_enhanced_hybrid_fallback", return_value=([], "fallback")):
+                result = p.query(query="test", generate_answer=False)
+
+        assert REQUIRED_KEYS.issubset(result.keys()), (
+            f"Missing keys: {REQUIRED_KEYS - result.keys()}"
+        )
+
+    def test_sources_key_always_present(self):
+        p = self._make_pipeline()
+        with patch.object(p, "_validate_knowledge_graph"):
+            with patch.object(p, "_enhanced_hybrid_fallback", return_value=([], "fallback")):
+                result = p.query(query="test", generate_answer=False, include_sources=False)
+        assert "sources" in result
+        assert isinstance(result["sources"], list)
 
 
-@pytest.mark.skip(reason="requires PyLate external dep")
 class TestPyLateColBERTGolden:
+    """pylate_colbert pipeline golden shape (fully mocked — no PyLate needed)."""
+
+    def _make_pipeline(self):
+        from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+
+        cm, cfg, vs = _make_minimal_mocks()
+        with patch.object(PyLateColBERTPipeline, "__init__", lambda self, *a, **kw: None):
+            p = PyLateColBERTPipeline.__new__(PyLateColBERTPipeline)
+        p.connection_manager = cm
+        p.config_manager = cfg
+        p.vector_store = vs
+        p.logger = MagicMock()
+        p.llm_func = None
+        p.embedding_manager = MagicMock()
+        p.embedding_config = None
+        p.use_iris_embedding = False
+        p.pipeline_config = {}
+        p.chunk_size = 1000
+        p.chunk_overlap = 200
+        p.default_top_k = 5
+        # ColBERT-specific attrs
+        p.rerank_factor = 2
+        p.model_name = "lightonai/GTE-ModernColBERT-v1"
+        p.batch_size = 32
+        p.use_native_reranking = False  # skip _pylate_rerank
+        p.is_initialized = False
+        p._document_store = {}
+        p._embedding_cache = {}
+        p.stats = {"queries_processed": 0, "documents_indexed": 0, "reranking_operations": 0}
+        return p
+
     def test_response_has_required_keys(self):
-        pass
+        p = self._make_pipeline()
+        # _restore_metadata is on the instance; patch it
+        with patch.object(p, "_restore_metadata", side_effect=lambda docs: docs):
+            result = p.query(query="test", generate_answer=False)
+
+        assert REQUIRED_KEYS.issubset(result.keys()), (
+            f"Missing keys: {REQUIRED_KEYS - result.keys()}"
+        )
+
+    def test_sources_key_always_present(self):
+        p = self._make_pipeline()
+        with patch.object(p, "_restore_metadata", side_effect=lambda docs: docs):
+            result = p.query(query="test", generate_answer=False, include_sources=False)
+        assert "sources" in result
+        assert isinstance(result["sources"], list)

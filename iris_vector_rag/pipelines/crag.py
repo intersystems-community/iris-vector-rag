@@ -29,6 +29,8 @@ class CRAGPipeline(RAGPipeline):
     to improve answer generation.
     """
 
+    supported_retrieval_modes = ["vector", "text", "hybrid", "rrf"]
+
     def __init__(
         self,
         connection_manager=None,
