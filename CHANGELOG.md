@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] — 065-composable-retrieval
+## [0.6.0] — 2026-07-24
 
 ### Added
 

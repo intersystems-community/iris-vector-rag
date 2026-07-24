@@ -1,6 +1,6 @@
 # RAG-Templates API Reference
 
-**Version**: 0.13.0
+**Version**: 0.6.0
 **Last Updated**: 2026-07-24
 
 ## Overview
