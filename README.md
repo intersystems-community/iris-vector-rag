@@ -1,8 +1,6 @@
 # IRIS Vector RAG Templates
 
-**Production-ready Retrieval-Augmented Generation (RAG) pipelines powered by InterSystems IRIS Vector Search**
-
-Build intelligent applications that combine large language models with your enterprise data using battle-tested RAG patterns and native vector search capabilities.
+**RAG pipelines for InterSystems IRIS vector search — six pipeline types, one unified API.**
 
 **Author: Thomas Dyar** (<thomas.dyar@intersystems.com>)
 
@@ -12,17 +10,9 @@ Build intelligent applications that combine large language models with your ente
 
 ## Why IRIS Vector RAG?
 
-🚀 **Production-Ready** - Six proven RAG architectures ready to deploy, not research prototypes
-
-⚡ **Blazing Fast** - Native IRIS vector search with HNSW indexing, no external vector databases needed
-
-🔧 **Unified API** - Swap between RAG strategies with a single line of code
-
-📊 **Enterprise-Grade** - ACID transactions, connection pooling, and horizontal scaling built-in
-
-🎯 **100% Compatible** - Works seamlessly with LangChain, RAGAS, and your existing ML stack
-
-🧪 **Fully Validated** - Comprehensive test suite with automated contract validation
+Six RAG architectures ready to deploy against IRIS native vector search — no external vector
+database required. All pipelines share one API, so switching strategies is a one-line change.
+IRIS provides ACID transactions, connection pooling, and SQL + vector in a single platform.
 
 ## Available RAG Pipelines
 
@@ -115,7 +105,7 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 
 ## Unified API Across All Pipelines
 
-**Switch RAG strategies with one line** - all pipelines share the same interface:
+All pipelines share the same interface:
 
 ```python
 from iris_vector_rag import create_pipeline
@@ -140,7 +130,7 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 
 ### Standardized Response Format
 
-**100% LangChain & RAGAS compatible** responses:
+LangChain & RAGAS compatible responses:
 
 ```python
 {
@@ -162,8 +152,7 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 
 ## Composable Query-Time Options
 
-Retrieval behavior is controlled **at query time** — no need to choose a different pipeline type.
-This mirrors MongoDB's `$rankFusion` / `$scoreFusion` / `$rerank` composability.
+Retrieval behavior is controlled at query time — no need to switch pipeline types.
 
 ### Filtered search
 
@@ -227,7 +216,7 @@ for kind in ["basic", "crag", "graphrag"]:
 
 ## Pipeline Selection
 
-**Each pipeline uses the same API** - just change the pipeline type:
+Each pipeline uses the same API — just change the pipeline type:
 
 - **`basic`** - Fast vector similarity search, great for getting started
 - **`basic_rerank`** - Vector + cross-encoder reranking for higher accuracy
@@ -242,8 +231,6 @@ for kind in ["basic", "crag", "graphrag"]:
 
 ### Production-Ready Database
 
-**IRIS provides everything you need in one database:**
-
 - ✅ Native vector search (no external vector DB needed)
 - ✅ ACID transactions (your data is safe)
 - ✅ SQL + NoSQL + Vector in one platform
@@ -251,8 +238,6 @@ for kind in ["basic", "crag", "graphrag"]:
 - ✅ Enterprise-grade security and compliance
 
 ### Connection Pooling
-
-**Automatic concurrency management:**
 
 ```python
 from iris_vector_rag.storage import IRISVectorStore
@@ -266,8 +251,6 @@ store = IRISVectorStore()
 
 ### Automatic Schema Management
 
-**Database schema created and migrated automatically:**
-
 ```python
 pipeline = create_pipeline('basic', validate_requirements=True)
 # ✅ Checks database connection
@@ -277,8 +260,6 @@ pipeline = create_pipeline('basic', validate_requirements=True)
 ```
 
 ### RAGAS Evaluation Built-In
-
-**Measure your RAG pipeline performance:**
 
 ```bash
 # Evaluate all pipelines on your data
@@ -294,13 +275,9 @@ make test-ragas-sample
 
 ### IRIS EMBEDDING: Auto-Vectorization
 
-**Automatic embedding generation with model caching** - eliminates repeated model loading overhead for faster document vectorization.
-
-**Key Features**:
-
-- ⚡ Intelligent model caching - models stay in memory across operations
-- 🎯 Multi-field vectorization - combine title, abstract, and content fields
-- 💾 Automatic device selection - GPU, Apple Silicon (MPS), or CPU fallback
+Automatic embedding generation with model caching eliminates repeated model loading overhead.
+Models stay in memory across operations, multi-field vectorization combines title, abstract, and
+content fields, and device selection (GPU, Apple Silicon MPS, or CPU) is automatic.
 
 ```python
 from iris_vector_rag import create_pipeline
@@ -319,11 +296,11 @@ pipeline.load_documents(documents=docs)
 
 ### Fast Iteration & Evaluation (New)
 
-**Develop and benchmark RAG pipelines with minimal latency and cost.**
-
-- 💾 **Persistent Disk Caching** - Cache LLM responses to local JSON files to avoid redundant API costs and enable offline development.
-- ⚡ **Auto-Hardening Bypass** - Automatically bypasses IRIS password locks for instant connectivity in local/CI containers.
-- 📊 **Unified Evaluation Framework** - Standardized multi-hop metrics (Recall@K, EM, F1) and dataset loaders (HotpotQA, MuSiQue).
+Develop and benchmark RAG pipelines with minimal latency and cost. LLM responses can be cached
+to local JSON files to avoid redundant API calls and enable offline development. IRIS password
+locks are automatically bypassed for instant connectivity in local and CI containers. Evaluation
+uses standardized multi-hop metrics (Recall@K, EM, F1) with dataset loaders for HotpotQA and
+MuSiQue.
 
 ```python
 # Enable disk-based caching
@@ -337,7 +314,8 @@ queries = loader.load('musique', sample_size=100)
 
 ## Model Context Protocol (MCP) Support
 
-**Expose RAG pipelines as MCP tools** for Claude Desktop and other MCP clients - enables conversational RAG workflows where Claude queries your documents during conversations.
+Expose RAG pipelines as MCP tools for Claude Desktop and other MCP clients — enables
+conversational RAG workflows where Claude queries your documents during conversations.
 
 ```bash
 # Start MCP server
@@ -350,15 +328,14 @@ All pipelines available as MCP tools: `rag_basic`, `rag_basic_rerank`, `rag_crag
 
 ## Architecture Overview
 
-**Framework-first design** with abstract base classes (`RAGPipeline`, `VectorStore`) and concrete implementations for 6 production-ready pipelines.
+Framework-first design with abstract base classes (`RAGPipeline`, `VectorStore`) and concrete
+implementations for 6 production-ready pipelines.
 
 **Key Components**: Core abstractions, pipeline implementations, IRIS vector store, MCP server, REST API, validation framework.
 
 📖 **[Comprehensive Architecture Guide →](docs/architecture/COMPREHENSIVE_ARCHITECTURE_OVERVIEW.md)** - System design, component interactions, extension points
 
 ## Documentation
-
-📚 **Comprehensive documentation for every use case:**
 
 - **[User Guide](docs/USER_GUIDE.md)** - Complete installation and usage
 - **[API Reference](docs/API_REFERENCE.md)** - Detailed API documentation
@@ -389,9 +366,9 @@ We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for develo
 
 ## Community & Support
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/intersystems-community/iris-vector-rag/issues)
-- 📖 **Documentation**: [Full Documentation](docs/)
-- 🏢 **Enterprise Support**: [InterSystems Support](https://www.intersystems.com/support/)
+- **Issues**: [GitHub Issues](https://github.com/intersystems-community/iris-vector-rag/issues)
+- **Documentation**: [Full Documentation](docs/)
+- **Enterprise Support**: [InterSystems Support](https://www.intersystems.com/support/)
 
 ## License
 
