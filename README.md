@@ -4,7 +4,7 @@
 
 Build intelligent applications that combine large language models with your enterprise data using battle-tested RAG patterns and native vector search capabilities.
 
-**Author: Thomas Dyar** (thomas.dyar@intersystems.com)
+**Author: Thomas Dyar** (<thomas.dyar@intersystems.com>)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -26,14 +26,14 @@ Build intelligent applications that combine large language models with your ente
 
 ## Available RAG Pipelines
 
-| Pipeline Type | Use Case | Retrieval Method | When to Use |
-|---------------|----------|------------------|-------------|
-| **basic** | Standard retrieval | Vector similarity | General Q&A, getting started, baseline comparisons |
-| **basic_rerank** | Improved precision | Vector + cross-encoder reranking | Higher accuracy requirements, legal/medical domains |
-| **crag** | Self-correcting | Vector + evaluation + web search fallback | Dynamic knowledge, fact-checking, current events |
-| **graphrag** | Knowledge graphs | Vector + text + graph + RRF fusion | Complex entity relationships, research, medical knowledge |
-| **multi_query_rrf** | Multi-perspective | Query expansion + reciprocal rank fusion | Complex queries, comprehensive coverage needed |
-| **pylate_colbert** | Fine-grained matching | ColBERT late interaction embeddings | Nuanced semantic understanding, high precision |
+| Pipeline Type       | Use Case              | Retrieval Method                          | When to Use                                               |
+| ------------------- | --------------------- | ----------------------------------------- | --------------------------------------------------------- |
+| **basic**           | Standard retrieval    | Vector similarity                         | General Q&A, getting started, baseline comparisons        |
+| **basic_rerank**    | Improved precision    | Vector + cross-encoder reranking          | Higher accuracy requirements, legal/medical domains       |
+| **crag**            | Self-correcting       | Vector + evaluation + web search fallback | Dynamic knowledge, fact-checking, current events          |
+| **graphrag**        | Knowledge graphs      | Vector + text + graph + RRF fusion        | Complex entity relationships, research, medical knowledge |
+| **multi_query_rrf** | Multi-perspective     | Query expansion + reciprocal rank fusion  | Complex queries, comprehensive coverage needed            |
+| **pylate_colbert**  | Fine-grained matching | ColBERT late interaction embeddings       | Nuanced semantic understanding, high precision            |
 
 ## Quick Start
 
@@ -160,6 +160,71 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 }
 ```
 
+## Composable Query-Time Options
+
+Retrieval behavior is controlled **at query time** — no need to choose a different pipeline type.
+This mirrors MongoDB's `$rankFusion` / `$scoreFusion` / `$rerank` composability.
+
+### Filtered search
+
+```python
+result = pipeline.query(
+    "What is diabetes?",
+    top_k=5,
+    metadata_filter={"source": "pubmed"},
+    similarity_threshold=0.7,
+)
+assert all(d.metadata["source"] == "pubmed" for d in result["retrieved_documents"])
+```
+
+### Reranking — one argument, any pipeline
+
+```python
+# Rerank with the default cross-encoder
+result = pipeline.query("What is diabetes?", top_k=5, rerank=True)
+
+# Custom reranker callable
+result = pipeline.query("...", top_k=5, rerank=my_cross_encoder_fn)
+```
+
+### Hybrid & RRF fusion
+
+```python
+# Weighted relative-score fusion (like MongoDB $scoreFusion)
+result = pipeline.query(
+    "insulin resistance",
+    retrieval="hybrid",
+    weights={"vector": 0.7, "text": 0.3},
+)
+
+# Reciprocal rank fusion (like $rankFusion)
+result = pipeline.query("insulin resistance", retrieval="rrf")
+
+# Per-source scores in document metadata
+for d in result["retrieved_documents"]:
+    print(d.metadata.get("vector_score"), d.metadata.get("text_score"))
+```
+
+### Compose (retrieve → fuse → rerank)
+
+```python
+result = pipeline.query(
+    "insulin resistance",
+    retrieval="rrf",
+    rerank=True,
+    metadata_filter={"source": "pubmed"},
+    top_k=5,
+)
+```
+
+### Same call, every pipeline
+
+```python
+for kind in ["basic", "crag", "graphrag"]:
+    p = create_pipeline(kind)
+    r = p.query("What is diabetes?", top_k=5, rerank=True)
+```
+
 ## Pipeline Selection
 
 **Each pipeline uses the same API** - just change the pipeline type:
@@ -232,6 +297,7 @@ make test-ragas-sample
 **Automatic embedding generation with model caching** - eliminates repeated model loading overhead for faster document vectorization.
 
 **Key Features**:
+
 - ⚡ Intelligent model caching - models stay in memory across operations
 - 🎯 Multi-field vectorization - combine title, abstract, and content fields
 - 💾 Automatic device selection - GPU, Apple Silicon (MPS), or CPU fallback

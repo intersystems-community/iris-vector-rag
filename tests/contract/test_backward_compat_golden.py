@@ -24,6 +24,7 @@ def _make_minimal_mocks():
     vs = MagicMock()
     vs.similarity_search.return_value = []
     vs.similarity_search_with_score.return_value = []
+    vs.search_by_text.return_value = []
     return cm, cfg, vs
 
 
