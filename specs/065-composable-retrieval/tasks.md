@@ -27,8 +27,8 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 > the foundational PR that lands US2. Left unchecked intentionally.
 
 - [X] T001 Create `iris_vector_rag/retrieval/` package with stub modules `__init__.py`, `engine.py`, `modes.py`, `rerank.py` *(deferred — not needed by the slice)*
-- [ ] T002 [P] Add additive, documented config keys to `iris_vector_rag/config/default_config.yaml` (`retrieval.default_mode`, `rerank` defaults, `embeddings.mode`/`text_in` toggle) — defaults MUST reproduce current behavior (Principle IV) *(deferred — not needed by the slice)*
-- [ ] T003 [P] Add benchmark scaffold `tests/benchmarks/test_composable_overhead.py` asserting <5ms added overhead when no composable options passed (Principle VI) *(deferred — no composable options in the slice)*
+- [X] T002 [P] Add additive, documented config keys to `iris_vector_rag/config/default_config.yaml` (`retrieval.default_mode`, `rerank` defaults, `embeddings.mode`/`text_in` toggle) — defaults MUST reproduce current behavior (Principle IV)
+- [X] T003 [P] Add benchmark scaffold `tests/benchmarks/test_composable_overhead.py` asserting <5ms added overhead when no composable options passed (Principle VI)
 
 ---
 
@@ -163,7 +163,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 ### Tests (write FIRST, MUST FAIL)
 
 - [X] T035 [P] [US6] Unit test in `tests/unit/test_reranker_cache.py`: single load across N queries, separate configs cached separately, thread-safe (FR-015)
-- [ ] T036 [P] [US6] Benchmark in `tests/benchmarks/test_reranker_cache.py`: steady-state per-query reranking excludes model-load cost (SC-005)
+- [X] T036 [P] [US6] Benchmark in `tests/benchmarks/test_reranker_cache.py`: steady-state per-query reranking excludes model-load cost (SC-005)
 
 ### Implementation
 
@@ -214,7 +214,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 - [X] T043 [P] Update `README.md` with composable query examples drawn from `specs/065-composable-retrieval/quickstart.md`
 - [X] T044 Run `quickstart.md` scenarios end-to-end and record results
-- [ ] T045 Confirm <5ms disabled-overhead benchmark passes (T003) (Principle VI)
+- [X] T045 Confirm <5ms disabled-overhead benchmark passes (T003) (Principle VI)
 - [X] T046 Run the full existing test suite; confirm zero regressions (Principle IV, SC-007)
 - [X] T047 [P] Verify structured logs/OTel spans emit `retrieval_mode`, `weights`, `rerank_strategy`, degradation flags across all paths (Principle VII)
 
