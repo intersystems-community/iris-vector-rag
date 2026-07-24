@@ -186,7 +186,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 ### Implementation
 
 - [X] T039 [US7] Wire the opt-in native EMBEDDING path + precedence + availability check via `search_with_embedding`/`query_embedding_config` in `iris_vector_rag/storage/vector_store_iris.py` and config plumbing (research U6)
-- [ ] T040 [US7] Integration test in `tests/integration/test_text_in_embedding.py`: end-to-end semantic search with zero embedding config (SC-008)
+- [X] T040 [US7] Integration test in `tests/integration/test_text_in_embedding.py`: end-to-end semantic search with zero embedding config (SC-008)
 
 **Checkpoint**: Getting started needs no external embedding wiring when native is available.
 
