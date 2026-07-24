@@ -51,9 +51,9 @@ def seeded_pipeline(basic_pipeline):
 def test_search_by_text_returns_documents(seeded_pipeline):
     """SC-008: query with no embedding_config routes through search_by_text and returns results."""
     pipeline, tag = seeded_pipeline
-    assert not getattr(pipeline, "use_iris_embedding", False), (
-        "This test requires the pipeline to be in normal (non-native) embedding mode"
-    )
+    assert not getattr(
+        pipeline, "use_iris_embedding", False
+    ), "This test requires the pipeline to be in normal (non-native) embedding mode"
 
     result = pipeline.query(
         f"insulin blood glucose regulation [{tag}]",
@@ -78,9 +78,9 @@ def test_search_by_text_semantic_relevance(seeded_pipeline):
     )
     docs = result["retrieved_documents"]
     assert docs, "expected documents"
-    assert all(d.metadata.get("source") == "medical" for d in docs), (
-        f"filter leaked non-medical: {[d.metadata.get('source') for d in docs]}"
-    )
+    assert all(
+        d.metadata.get("source") == "medical" for d in docs
+    ), f"filter leaked non-medical: {[d.metadata.get('source') for d in docs]}"
 
 
 def test_search_by_text_top_result_contains_query_terms(seeded_pipeline):
@@ -95,6 +95,6 @@ def test_search_by_text_top_result_contains_query_terms(seeded_pipeline):
     docs = result["retrieved_documents"]
     assert docs
     top_content = docs[0].page_content.lower()
-    assert any(term in top_content for term in ("diabetes", "metabolic", "insulin", "glucose")), (
-        f"Top result not semantically relevant: {top_content[:100]}"
-    )
+    assert any(
+        term in top_content for term in ("diabetes", "metabolic", "insulin", "glucose")
+    ), f"Top result not semantically relevant: {top_content[:100]}"

@@ -1,4 +1,5 @@
 """Benchmark: reranker cache ensures model-load cost excluded from steady-state queries (T036 / SC-005)."""
+
 import time
 
 import pytest
@@ -36,16 +37,22 @@ def test_reranker_cache_amortizes_load_cost():
 def test_steady_state_rerank_excludes_model_load():
     """Steady-state reranking (model already loaded) returns docs; second call not slower."""
     from iris_vector_rag.core.models import Document
-    from iris_vector_rag.retrieval.rerank import _build_cross_encoder_reranker, _DEFAULT_MODEL
+    from iris_vector_rag.retrieval.rerank import (
+        _build_cross_encoder_reranker,
+        _DEFAULT_MODEL,
+    )
 
     docs = [
-        Document(page_content=f"document number {i} about diabetes and insulin", metadata={})
+        Document(
+            page_content=f"document number {i} about diabetes and insulin", metadata={}
+        )
         for i in range(5)
     ]
 
     # Verify CrossEncoder is real before building
     import sentence_transformers as _st
     import sys
+
     print(f"\n  CrossEncoder type: {type(_st.CrossEncoder)}", file=sys.stderr)
 
     # Build a fresh reranker (model load here, not timed)
@@ -64,6 +71,6 @@ def test_steady_state_rerank_excludes_model_load():
     second_ms = (time.perf_counter() - t2) * 1000
 
     assert result, "reranker returned no results"
-    assert second_ms < first_ms * 3 + 50, (
-        f"second call ({second_ms:.1f}ms) much slower than first ({first_ms:.1f}ms)"
-    )
+    assert (
+        second_ms < first_ms * 3 + 50
+    ), f"second call ({second_ms:.1f}ms) much slower than first ({first_ms:.1f}ms)"

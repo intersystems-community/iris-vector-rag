@@ -992,12 +992,14 @@ ANTHROPIC_API_KEY=test_key
         """Test make targets with custom compose file configuration."""
         # Create custom compose file
         custom_compose = temp_project_dir / "docker-compose.custom.yml"
-        custom_compose.write_text("""
+        custom_compose.write_text(
+            """
 version: '3.8'
 services:
   test:
     image: hello-world
-""")
+"""
+        )
 
         # Test with custom COMPOSE_FILE environment variable
         env = os.environ.copy()

@@ -126,11 +126,13 @@ class EntityStorageAdapter:
                 schema, table = "RAG", self.entities_table
 
             try:
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     SELECT COLUMN_NAME
                     FROM INFORMATION_SCHEMA.COLUMNS
                     WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
-                    """)
+                    """
+                )
                 columns = {row[0].lower() for row in cursor.fetchall()}
             except Exception as exc:
                 logger.warning(

@@ -1,4 +1,5 @@
 """Benchmark: composable layer overhead must be <5ms when no options are set (Principle VI)."""
+
 import time
 from unittest.mock import MagicMock, patch
 

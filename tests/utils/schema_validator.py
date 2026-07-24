@@ -56,11 +56,13 @@ class SchemaValidator:
             cursor = conn.cursor()
 
             # Get list of existing tables in RAG schema
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT TABLE_NAME
                 FROM INFORMATION_SCHEMA.TABLES
                 WHERE TABLE_SCHEMA = 'RAG'
-            """)
+            """
+            )
             existing_tables = {row[0] for row in cursor.fetchall()}
 
             validated_tables = []

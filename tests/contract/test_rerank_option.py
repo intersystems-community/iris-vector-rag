@@ -3,6 +3,7 @@
 Covers FR-007 (rerank at query time), FR-008 (rerank_score in metadata), FR-009 (degradation fallback),
 C-R1..R6 from contracts/reranker.md.
 """
+
 from unittest.mock import MagicMock, patch, call
 import pytest
 
@@ -45,6 +46,7 @@ def _basic_pipeline():
 
 def _crag_pipeline():
     from iris_vector_rag.pipelines.crag import CRAGPipeline
+
     with patch.object(CRAGPipeline, "__init__", lambda self, *a, **kw: None):
         p = CRAGPipeline.__new__(CRAGPipeline)
     p.connection_manager = MagicMock()
@@ -62,6 +64,7 @@ def _crag_pipeline():
 
 def _multi_query_rrf_pipeline():
     from iris_vector_rag.pipelines.multi_query_rrf import MultiQueryRRFPipeline
+
     with patch.object(MultiQueryRRFPipeline, "__init__", lambda self, *a, **kw: None):
         p = MultiQueryRRFPipeline.__new__(MultiQueryRRFPipeline)
     p.connection_manager = MagicMock()
@@ -77,6 +80,7 @@ def _multi_query_rrf_pipeline():
 
 def _hybrid_graphrag_pipeline():
     from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+
     with patch.object(HybridGraphRAGPipeline, "__init__", lambda self, *a, **kw: None):
         p = HybridGraphRAGPipeline.__new__(HybridGraphRAGPipeline)
     p.connection_manager = MagicMock()
@@ -95,13 +99,27 @@ def _run_pipeline_query(name, factory, **kwargs):
     p = factory()
     ctx = {}
     if name == "crag":
-        ctx["ir"] = patch.object(type(p), "_initial_retrieval", return_value=list(STUB_DOCS), create=True)
-        ctx["ca"] = patch.object(type(p), "_apply_corrective_actions", return_value=list(STUB_DOCS), create=True)
+        ctx["ir"] = patch.object(
+            type(p), "_initial_retrieval", return_value=list(STUB_DOCS), create=True
+        )
+        ctx["ca"] = patch.object(
+            type(p),
+            "_apply_corrective_actions",
+            return_value=list(STUB_DOCS),
+            create=True,
+        )
         p.evaluator = MagicMock()
         p.evaluator.evaluate.return_value = "CORRECT"
     if name == "hybrid_graphrag":
-        ctx["vkg"] = patch.object(type(p), "_validate_knowledge_graph", lambda *a, **kw: None, create=True)
-        ctx["ehf"] = patch.object(type(p), "_enhanced_hybrid_fallback", return_value=(list(STUB_DOCS), "fallback"), create=True)
+        ctx["vkg"] = patch.object(
+            type(p), "_validate_knowledge_graph", lambda *a, **kw: None, create=True
+        )
+        ctx["ehf"] = patch.object(
+            type(p),
+            "_enhanced_hybrid_fallback",
+            return_value=(list(STUB_DOCS), "fallback"),
+            create=True,
+        )
     patches = list(ctx.values())
     for ptch in patches:
         ptch.start()
@@ -224,6 +242,7 @@ class TestRerankDegradation:
 # C-R1 / FR-008: rerank_score in doc.metadata after reranking
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestRerankScoreInMetadata:
     """FR-008: reranked docs must have rerank_score in their metadata."""
 
@@ -257,7 +276,10 @@ class TestRerankScoreInMetadata:
         def mock_reranker(query, docs):
             return [(doc_a, 0.95)]
 
-        with patch("iris_vector_rag.retrieval.rerank.resolve_reranker", return_value=mock_reranker):
+        with patch(
+            "iris_vector_rag.retrieval.rerank.resolve_reranker",
+            return_value=mock_reranker,
+        ):
             result = p.query(query="test", generate_answer=False, rerank=True)
 
         docs = result["retrieved_documents"]
@@ -271,6 +293,7 @@ class TestRerankScoreInMetadata:
 # ──────────────────────────────────────────────────────────────────────────────
 # FR-009: rerank_degraded flag in response metadata
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class TestRerankDegradedFlag:
     """FR-009: metadata["rerank_degraded"]=True when reranking fails."""
@@ -307,7 +330,10 @@ class TestRerankDegradedFlag:
 # C-R2 / FR-007: rerank= accepted on ALL registered pipelines
 # ──────────────────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("name,factory", ALL_PIPELINES, ids=[n for n, _ in ALL_PIPELINES])
+
+@pytest.mark.parametrize(
+    "name,factory", ALL_PIPELINES, ids=[n for n, _ in ALL_PIPELINES]
+)
 def test_rerank_callable_accepted_on_all_pipelines(name, factory):
     """C-R2 / FR-007: rerank=callable works on every registered pipeline."""
     rerank_fn = MagicMock(return_value=list(STUB_DOCS))
@@ -317,7 +343,9 @@ def test_rerank_callable_accepted_on_all_pipelines(name, factory):
     rerank_fn.assert_called_once()
 
 
-@pytest.mark.parametrize("name,factory", ALL_PIPELINES, ids=[n for n, _ in ALL_PIPELINES])
+@pytest.mark.parametrize(
+    "name,factory", ALL_PIPELINES, ids=[n for n, _ in ALL_PIPELINES]
+)
 def test_rerank_none_passthrough_on_all_pipelines(name, factory):
     """C-R4 / FR-013: rerank=None (default) is identical to no-rerank path."""
     result = _run_pipeline_query(name, factory, rerank=None)

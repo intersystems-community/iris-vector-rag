@@ -10,6 +10,7 @@ Supports:
 Cache key: (name, model_name) — process-level dict.  Callables are not cached.
 Degradation is handled by the caller (ComposableQueryMixin._maybe_rerank).
 """
+
 from __future__ import annotations
 
 import logging
@@ -66,7 +67,9 @@ def resolve_reranker(
         return reranker
 
 
-def _build_cross_encoder_reranker(model_name: str) -> Callable[[str, List[Any]], List[Any]]:
+def _build_cross_encoder_reranker(
+    model_name: str,
+) -> Callable[[str, List[Any]], List[Any]]:
     """Build a cross-encoder reranker using sentence-transformers CrossEncoder."""
     try:
         from sentence_transformers import CrossEncoder  # type: ignore[import]

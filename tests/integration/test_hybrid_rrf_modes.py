@@ -72,6 +72,7 @@ def loaded_corpus(basic_pipeline):
 # Helper: build Document stubs that TextSearchEngine.search_documents returns
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 def _text_docs(page_contents: List[str]) -> List[Document]:
     return [Document(page_content=c, metadata={}) for c in page_contents]
 
@@ -84,7 +85,9 @@ def _text_docs(page_contents: List[str]) -> List[Document]:
 def test_vector_mode_returns_documents(loaded_corpus):
     """Baseline: vector mode retrieves documents from real IRIS."""
     pipeline, _ = loaded_corpus
-    result = pipeline.query("glucose regulation", top_k=3, retrieval="vector", generate_answer=False)
+    result = pipeline.query(
+        "glucose regulation", top_k=3, retrieval="vector", generate_answer=False
+    )
     docs = result["retrieved_documents"]
     assert docs, "vector mode must return at least one document"
     assert all(hasattr(d, "page_content") for d in docs)
@@ -100,9 +103,7 @@ def test_rrf_metadata_contains_per_source_scores(loaded_corpus):
         metadata={"source": "bio", "topic": "insulin"},
     )
 
-    with patch(
-        "iris_vector_graph.text_search.TextSearchEngine"
-    ) as MockTSE:
+    with patch("iris_vector_graph.text_search.TextSearchEngine") as MockTSE:
         instance = MockTSE.return_value
         instance.search_documents.return_value = [bio_text_doc]
 
@@ -114,13 +115,13 @@ def test_rrf_metadata_contains_per_source_scores(loaded_corpus):
     assert docs, "rrf mode must return documents"
     # At least the first doc should have fusion metadata
     first = docs[0]
-    assert "fusion_score" in first.metadata, (
-        "rrf must set fusion_score in doc.metadata (FR-011)"
-    )
+    assert (
+        "fusion_score" in first.metadata
+    ), "rrf must set fusion_score in doc.metadata (FR-011)"
     # vector_score or text_score must appear on docs that came from both legs
-    assert "vector_score" in first.metadata or "text_score" in first.metadata, (
-        "rrf must record per-source contribution scores in metadata (FR-011)"
-    )
+    assert (
+        "vector_score" in first.metadata or "text_score" in first.metadata
+    ), "rrf must record per-source contribution scores in metadata (FR-011)"
 
 
 def test_hybrid_metadata_contains_per_source_scores(loaded_corpus):
@@ -266,10 +267,14 @@ def test_unknown_mode_returns_empty_with_warning(loaded_corpus, caplog):
 
     pipeline, _ = loaded_corpus
     with caplog.at_level(logging.WARNING, logger="iris_vector_rag.pipelines.basic"):
-        result = pipeline.query("test", top_k=1, retrieval="bogus_mode", generate_answer=False)
+        result = pipeline.query(
+            "test", top_k=1, retrieval="bogus_mode", generate_answer=False
+        )
 
     # Empty results (not a crash)
-    assert result["retrieved_documents"] == [], "unknown mode must return empty docs, not crash"
+    assert (
+        result["retrieved_documents"] == []
+    ), "unknown mode must return empty docs, not crash"
 
     # Error is named — the mode name appears in the warning
     assert any(

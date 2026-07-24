@@ -3,6 +3,7 @@ separately, thread-safe first-load (T035 — TDD, must fail before T037).
 
 FR-015: Reranker models are loaded once per (strategy, model_name) tuple per process.
 """
+
 from __future__ import annotations
 
 import threading
@@ -15,8 +16,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _clear_cache():
     from iris_vector_rag.retrieval import rerank
+
     rerank._RERANKER_CACHE.clear()
 
 
@@ -50,6 +53,7 @@ _PATCH = "iris_vector_rag.retrieval.rerank._build_cross_encoder_reranker"
 # FR-015 / SC-005: model loaded ONCE per (strategy, model) config
 # ---------------------------------------------------------------------------
 
+
 class TestSingleLoadAcrossQueries:
     def test_resolve_reranker_true_loads_model_once(self):
         """resolve_reranker(True) called N times → _build called once."""
@@ -57,14 +61,15 @@ class TestSingleLoadAcrossQueries:
         build, cnt = _make_mock_build()
         with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
+
             r1 = resolve_reranker(True)
             r2 = resolve_reranker(True)
             r3 = resolve_reranker(True)
 
         assert r1 is r2 is r3, "Same callable must be returned from cache"
-        assert cnt["n"] == 1, (
-            f"_build_cross_encoder_reranker must be called exactly once; got {cnt['n']}"
-        )
+        assert (
+            cnt["n"] == 1
+        ), f"_build_cross_encoder_reranker must be called exactly once; got {cnt['n']}"
 
     def test_resolve_reranker_returns_same_callable(self):
         """Cache returns same callable object on repeated calls."""
@@ -72,6 +77,7 @@ class TestSingleLoadAcrossQueries:
         build, _ = _make_mock_build()
         with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
+
             r1 = resolve_reranker(True)
             r2 = resolve_reranker(True)
 
@@ -83,6 +89,7 @@ class TestSingleLoadAcrossQueries:
         build, cnt = _make_mock_build()
         with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
+
             r1 = resolve_reranker("cross-encoder")
             r2 = resolve_reranker("cross-encoder")
 
@@ -94,6 +101,7 @@ class TestSingleLoadAcrossQueries:
 # Separate configs cached separately
 # ---------------------------------------------------------------------------
 
+
 class TestSeparateConfigsCachedSeparately:
     def test_different_model_names_get_different_cache_entries(self):
         """Two different model names → two _build calls."""
@@ -101,13 +109,18 @@ class TestSeparateConfigsCachedSeparately:
         build, cnt = _make_mock_build()
         with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
-            r1 = resolve_reranker(True, model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
-            r2 = resolve_reranker(True, model_name="cross-encoder/ms-marco-MiniLM-L-12-v2")
 
-        assert r1 is not r2, "Different model names must produce different reranker instances"
-        assert cnt["n"] == 2, (
-            f"Expected 2 _build calls; got {cnt['n']}"
-        )
+            r1 = resolve_reranker(
+                True, model_name="cross-encoder/ms-marco-MiniLM-L-6-v2"
+            )
+            r2 = resolve_reranker(
+                True, model_name="cross-encoder/ms-marco-MiniLM-L-12-v2"
+            )
+
+        assert (
+            r1 is not r2
+        ), "Different model names must produce different reranker instances"
+        assert cnt["n"] == 2, f"Expected 2 _build calls; got {cnt['n']}"
 
     def test_same_model_name_reuses_cached_instance(self):
         """Same model name → single _build call."""
@@ -115,6 +128,7 @@ class TestSeparateConfigsCachedSeparately:
         build, cnt = _make_mock_build()
         with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
+
             r1 = resolve_reranker(True, model_name="my-model")
             r2 = resolve_reranker(True, model_name="my-model")
 
@@ -125,9 +139,11 @@ class TestSeparateConfigsCachedSeparately:
         """resolve_reranker(True) uses default model; same as passing default explicitly."""
         _clear_cache()
         from iris_vector_rag.retrieval.rerank import _DEFAULT_MODEL
+
         build, cnt = _make_mock_build()
         with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
+
             r1 = resolve_reranker(True)
             r2 = resolve_reranker(True, model_name=_DEFAULT_MODEL)
 
@@ -138,6 +154,7 @@ class TestSeparateConfigsCachedSeparately:
 # ---------------------------------------------------------------------------
 # Thread-safety: first-load under concurrent callers
 # ---------------------------------------------------------------------------
+
 
 class TestThreadSafeFirstLoad:
     def test_concurrent_calls_load_model_once(self):
@@ -152,7 +169,10 @@ class TestThreadSafeFirstLoad:
             fn.return_value = []
             return fn
 
-        with patch("iris_vector_rag.retrieval.rerank._build_cross_encoder_reranker", side_effect=counting_build):
+        with patch(
+            "iris_vector_rag.retrieval.rerank._build_cross_encoder_reranker",
+            side_effect=counting_build,
+        ):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
 
             results = []
@@ -173,17 +193,18 @@ class TestThreadSafeFirstLoad:
         assert not errors, f"Threads raised exceptions: {errors}"
         assert len(results) == 10, "All threads must get a result"
         # All threads must get the same callable
-        assert len(set(id(r) for r in results)) == 1, (
-            "All concurrent calls must return the same cached callable"
-        )
-        assert call_count["n"] == 1, (
-            f"CrossEncoder must be instantiated exactly once; got {call_count['n']}"
-        )
+        assert (
+            len(set(id(r) for r in results)) == 1
+        ), "All concurrent calls must return the same cached callable"
+        assert (
+            call_count["n"] == 1
+        ), f"CrossEncoder must be instantiated exactly once; got {call_count['n']}"
 
 
 # ---------------------------------------------------------------------------
 # Callables are never cached (FR-015 spec)
 # ---------------------------------------------------------------------------
+
 
 class TestCallablesUncached:
     def test_callable_returned_directly_not_cached(self):
@@ -191,6 +212,7 @@ class TestCallablesUncached:
         _clear_cache()
         my_fn = lambda q, docs: docs
         from iris_vector_rag.retrieval.rerank import resolve_reranker, _RERANKER_CACHE
+
         result = resolve_reranker(my_fn)
         assert result is my_fn
         # No cache entry created for callable

@@ -4,6 +4,7 @@ Dispatches query execution to the appropriate retrieval strategy based on
 QueryOptions.retrieval. Supports vector mode natively; text/hybrid/rrf
 modes require iris-vector-graph BM25 support (FR-010, FR-012).
 """
+
 from __future__ import annotations
 
 import logging
@@ -51,7 +52,9 @@ class RetrievalEngine:
         elif mode_name in ("hybrid", "rrf"):
             return self._retrieve_fusion(opts, mode_name)
         else:
-            raise NotImplementedError(f"Mode {mode_name!r} is registered but not implemented.")
+            raise NotImplementedError(
+                f"Mode {mode_name!r} is registered but not implemented."
+            )
 
     def _retrieve_vector(self, opts: Any) -> List[Any]:
         return self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
@@ -68,7 +71,11 @@ class RetrievalEngine:
                     # Already a Document (mock path)
                     docs.append(doc_id)
                 else:
-                    doc = Document(id=str(doc_id), page_content="", metadata={"text_score": float(score)})
+                    doc = Document(
+                        id=str(doc_id),
+                        page_content="",
+                        metadata={"text_score": float(score)},
+                    )
                     docs.append(doc)
             else:
                 docs.append(item)

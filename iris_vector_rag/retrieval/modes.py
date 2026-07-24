@@ -3,6 +3,7 @@
 Defines the four standard modes: vector, text, hybrid, rrf.
 Prerequisites are checked before execution — never a silent fallback (FR-012).
 """
+
 from __future__ import annotations
 
 import logging
@@ -63,9 +64,7 @@ def get_mode(name: str) -> RetrievalMode:
     """Return the named mode or raise ValueError."""
     if name not in _REGISTRY:
         available = list(_REGISTRY.keys())
-        raise ValueError(
-            f"Unknown retrieval mode: {name!r}. Available: {available}"
-        )
+        raise ValueError(f"Unknown retrieval mode: {name!r}. Available: {available}")
     return _REGISTRY[name]
 
 
@@ -104,7 +103,9 @@ def check_prerequisites(mode_name: str, connection: Any = None) -> None:
                     f"Install with: pip install iris-vector-graph"
                 )
         else:
-            logger.warning("Unknown prerequisite %r for mode %r — skipping check", req, mode_name)
+            logger.warning(
+                "Unknown prerequisite %r for mode %r — skipping check", req, mode_name
+            )
 
 
 class RetrievalPrerequisiteError(RuntimeError):

@@ -242,9 +242,7 @@ def test_no_silent_failures_llm_config_warning(caplog):
 
     # Should warn about missing LLM config
     log_text = caplog.text
-    assert (
-        "⚠️  No LLM configuration found" in log_text or "⚠️  No LLM config" in log_text
-    )
+    assert "⚠️  No LLM configuration found" in log_text or "⚠️  No LLM config" in log_text
 
 
 if __name__ == "__main__":

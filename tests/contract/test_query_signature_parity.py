@@ -9,6 +9,7 @@ C-Q1..C-Q6 from contracts/query_api.md.
 
 All tests are unit-level; no IRIS connection required.
 """
+
 import warnings
 from typing import Any, Dict
 from unittest.mock import MagicMock, patch
@@ -27,15 +28,23 @@ STUB_DOCS = [
 ]
 
 # FR-006: every pipeline must return at least these top-level keys
-REQUIRED_RESPONSE_KEYS = {"query", "answer", "retrieved_documents", "contexts", "metadata"}
+REQUIRED_RESPONSE_KEYS = {
+    "query",
+    "answer",
+    "retrieved_documents",
+    "contexts",
+    "metadata",
+}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Pipeline stub factories
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 def _make_basic():
     from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+
     with patch.object(BasicRAGPipeline, "__init__", lambda self, *a, **kw: None):
         p = BasicRAGPipeline.__new__(BasicRAGPipeline)
     p.connection_manager = MagicMock()
@@ -57,6 +66,7 @@ def _make_basic():
 
 def _make_crag():
     from iris_vector_rag.pipelines.crag import CRAGPipeline
+
     with patch.object(CRAGPipeline, "__init__", lambda self, *a, **kw: None):
         p = CRAGPipeline.__new__(CRAGPipeline)
     p.connection_manager = MagicMock()
@@ -73,6 +83,7 @@ def _make_crag():
 
 def _make_multi_query_rrf():
     from iris_vector_rag.pipelines.multi_query_rrf import MultiQueryRRFPipeline
+
     with patch.object(MultiQueryRRFPipeline, "__init__", lambda self, *a, **kw: None):
         p = MultiQueryRRFPipeline.__new__(MultiQueryRRFPipeline)
     p.connection_manager = MagicMock()
@@ -90,6 +101,7 @@ def _make_multi_query_rrf():
 
 def _make_hybrid_graphrag():
     from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+
     with patch.object(HybridGraphRAGPipeline, "__init__", lambda self, *a, **kw: None):
         p = HybridGraphRAGPipeline.__new__(HybridGraphRAGPipeline)
     p.connection_manager = MagicMock()
@@ -107,7 +119,10 @@ def _make_hybrid_graphrag():
 
 
 def _make_pylate():
-    from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+    from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
+        PyLateColBERTPipeline,
+    )
+
     with patch.object(PyLateColBERTPipeline, "__init__", lambda self, *a, **kw: None):
         p = PyLateColBERTPipeline.__new__(PyLateColBERTPipeline)
     p.connection_manager = MagicMock()
@@ -122,7 +137,11 @@ def _make_pylate():
     p.model_name = "colbert-test"
     p._document_store = {}
     p._embedding_cache = {}
-    p.stats = {"queries_processed": 0, "reranking_operations": 0, "documents_indexed": 0}
+    p.stats = {
+        "queries_processed": 0,
+        "reranking_operations": 0,
+        "documents_indexed": 0,
+    }
     return p
 
 
@@ -133,8 +152,15 @@ def _run_query(name: str, factory, query: str = "test query", **kwargs):
     p = factory()
     ctx = {}
     if name == "hybrid_graphrag":
-        ctx["vkg"] = patch.object(type(p), "_validate_knowledge_graph", lambda *a, **kw: None, create=True)
-        ctx["ehf"] = patch.object(type(p), "_enhanced_hybrid_fallback", return_value=(STUB_DOCS, "fallback"), create=True)
+        ctx["vkg"] = patch.object(
+            type(p), "_validate_knowledge_graph", lambda *a, **kw: None, create=True
+        )
+        ctx["ehf"] = patch.object(
+            type(p),
+            "_enhanced_hybrid_fallback",
+            return_value=(STUB_DOCS, "fallback"),
+            create=True,
+        )
     if name == "pylate":
         ctx["rm"] = patch.object(p, "_restore_metadata", side_effect=lambda docs: docs)
 
@@ -163,6 +189,7 @@ PIPELINE_IDS = [name for name, _ in PIPELINES]
 # C-Q1 / FR-004: canonical params accepted, same defaults
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize("name,factory", PIPELINES, ids=PIPELINE_IDS)
 def test_canonical_query_param_accepted(name, factory):
     """C-Q1 / FR-004: query(query=...) works on every pipeline."""
@@ -179,38 +206,49 @@ def test_default_top_k_param_is_5(name, factory):
     Verified by inspecting the function signature.
     """
     import inspect
+
     if name == "pylate":
-        from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+        from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
+            PyLateColBERTPipeline,
+        )
+
         fn = PyLateColBERTPipeline.query
     elif name == "multi_query_rrf":
         from iris_vector_rag.pipelines.multi_query_rrf import MultiQueryRRFPipeline
+
         fn = MultiQueryRRFPipeline.query
     elif name == "hybrid_graphrag":
         from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+
         fn = HybridGraphRAGPipeline.query
     elif name == "crag":
         from iris_vector_rag.pipelines.crag import CRAGPipeline
+
         fn = CRAGPipeline.query
     else:
         from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+
         fn = BasicRAGPipeline.query
 
     sig = inspect.signature(fn)
     default = sig.parameters.get("top_k")
     assert default is not None, f"{name}: query() must have a top_k parameter"
-    assert default.default == 5, (
-        f"{name}: default top_k must be 5, got {default.default!r} (FR-004)"
-    )
+    assert (
+        default.default == 5
+    ), f"{name}: default top_k must be 5, got {default.default!r} (FR-004)"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # C-Q2 / FR-005: query_text= alias
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize("name,factory", PIPELINES, ids=PIPELINE_IDS)
 def test_query_text_alias_accepted(name, factory):
     """C-Q2 / FR-005: query_text= is an accepted alias for query=."""
-    result = _run_query(name, factory, query=None, query_text="alias query", generate_answer=False)
+    result = _run_query(
+        name, factory, query=None, query_text="alias query", generate_answer=False
+    )
     assert isinstance(result, dict), f"{name}: query_text= alias must work"
 
 
@@ -218,37 +256,39 @@ def test_query_text_alias_accepted(name, factory):
 # C-Q5 / FR-006: standardized response keys
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize("name,factory", PIPELINES, ids=PIPELINE_IDS)
 def test_response_has_required_keys(name, factory):
     """C-Q5 / FR-006: response must include query, answer, retrieved_documents, contexts, metadata."""
     result = _run_query(name, factory, generate_answer=False)
     missing = REQUIRED_RESPONSE_KEYS - result.keys()
-    assert not missing, (
-        f"{name}: response missing keys {missing} (FR-006). Got: {set(result.keys())}"
-    )
+    assert (
+        not missing
+    ), f"{name}: response missing keys {missing} (FR-006). Got: {set(result.keys())}"
 
 
 @pytest.mark.parametrize("name,factory", PIPELINES, ids=PIPELINE_IDS)
 def test_response_echoes_query_string(name, factory):
     """C-Q5 / FR-006: response['query'] must echo back the input query string."""
     result = _run_query(name, factory, query="echo this back", generate_answer=False)
-    assert result.get("query") == "echo this back", (
-        f"{name}: response['query'] must echo the input. Got: {result.get('query')!r}"
-    )
+    assert (
+        result.get("query") == "echo this back"
+    ), f"{name}: response['query'] must echo the input. Got: {result.get('query')!r}"
 
 
 @pytest.mark.parametrize("name,factory", PIPELINES, ids=PIPELINE_IDS)
 def test_include_sources_false_returns_empty_sources(name, factory):
     """C-Q5 / FR-006: include_sources=False means response['sources'] is empty."""
     result = _run_query(name, factory, generate_answer=False, include_sources=False)
-    assert result.get("sources", []) == [], (
-        f"{name}: include_sources=False must produce empty sources. Got: {result.get('sources')}"
-    )
+    assert (
+        result.get("sources", []) == []
+    ), f"{name}: include_sources=False must produce empty sources. Got: {result.get('sources')}"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # C-Q6: invalid top_k raises
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.parametrize("name,factory", PIPELINES, ids=PIPELINE_IDS)
 def test_top_k_zero_raises(name, factory):

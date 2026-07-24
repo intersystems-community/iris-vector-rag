@@ -4,6 +4,7 @@ FR-016: When embeddings.mode=native and no embedding_func supplied, search route
         IRISVectorStore.search_with_embedding(). Explicit embedding_func always wins.
         Unavailable native raises a clear prerequisite error.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch, call
@@ -45,6 +46,7 @@ def _make_basic_pipeline(embedding_config=None):
 # FR-016 (a): explicit embedding_func always takes precedence
 # ---------------------------------------------------------------------------
 
+
 class TestExplicitEmbeddingFuncPrecedence:
     def test_explicit_embedding_func_used_when_supplied(self):
         """When embedding_func is passed, it takes precedence over native path."""
@@ -72,6 +74,7 @@ class TestExplicitEmbeddingFuncPrecedence:
 # FR-016 (b): native path used when config present and no embedding_func
 # ---------------------------------------------------------------------------
 
+
 class TestNativeEmbeddingPath:
     def test_native_path_invoked_when_configured_and_no_func(self):
         """With embedding_config and no embedding_func, search_with_embedding is called."""
@@ -96,6 +99,7 @@ class TestNativeEmbeddingPath:
 # ---------------------------------------------------------------------------
 # FR-016 (c): clear error when native unavailable
 # ---------------------------------------------------------------------------
+
 
 class TestNativeUnavailableRaisesPrereqError:
     def test_native_config_but_unavailable_raises_clear_error(self):

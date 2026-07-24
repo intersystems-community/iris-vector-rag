@@ -8,6 +8,7 @@ Pipelines covered (matching iris_vector_rag/__init__.py factory map):
   basic, basic_rerank, crag, graphrag (→ hybrid_graphrag.py),
   pylate_colbert, multi_query_rrf
 """
+
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -55,9 +56,9 @@ class TestBasicRAGPipelineGolden:
     def test_response_has_required_keys(self):
         p = _make_basic_pipeline()
         result = p.query(query="test", top_k=3, generate_answer=True)
-        assert REQUIRED_KEYS.issubset(result.keys()), (
-            f"Missing keys: {REQUIRED_KEYS - result.keys()}"
-        )
+        assert REQUIRED_KEYS.issubset(
+            result.keys()
+        ), f"Missing keys: {REQUIRED_KEYS - result.keys()}"
 
     def test_retrieved_documents_is_list(self):
         p = _make_basic_pipeline()
@@ -95,9 +96,9 @@ class TestBasicRerankPipelineGolden:
         p.reranker_func = None
 
         result = p.query(query="test", generate_answer=True)
-        assert REQUIRED_KEYS.issubset(result.keys()), (
-            f"Missing keys: {REQUIRED_KEYS - result.keys()}"
-        )
+        assert REQUIRED_KEYS.issubset(
+            result.keys()
+        ), f"Missing keys: {REQUIRED_KEYS - result.keys()}"
 
 
 class TestCRAGPipelineGolden:
@@ -133,9 +134,9 @@ class TestCRAGPipelineGolden:
             with patch.object(p, "_apply_corrective_actions", return_value=[]):
                 result = p.query(query="test", generate_answer=True)
 
-        assert self.CRAG_KEYS.issubset(result.keys()), (
-            f"Missing keys: {self.CRAG_KEYS - result.keys()}"
-        )
+        assert self.CRAG_KEYS.issubset(
+            result.keys()
+        ), f"Missing keys: {self.CRAG_KEYS - result.keys()}"
 
 
 class TestMultiQueryRRFGolden:
@@ -145,7 +146,9 @@ class TestMultiQueryRRFGolden:
         from iris_vector_rag.pipelines.multi_query_rrf import MultiQueryRRFPipeline
 
         cm, cfg, vs = _make_minimal_mocks()
-        with patch.object(MultiQueryRRFPipeline, "__init__", lambda self, *a, **kw: None):
+        with patch.object(
+            MultiQueryRRFPipeline, "__init__", lambda self, *a, **kw: None
+        ):
             p = MultiQueryRRFPipeline.__new__(MultiQueryRRFPipeline)
         p.connection_manager = cm
         p.config_manager = cfg
@@ -161,9 +164,9 @@ class TestMultiQueryRRFGolden:
         with patch.object(p, "generate_query_variations", return_value=["test"]):
             result = p.query(query="test", generate_answer=False)
 
-        assert REQUIRED_KEYS.issubset(result.keys()), (
-            f"Missing keys: {REQUIRED_KEYS - result.keys()}"
-        )
+        assert REQUIRED_KEYS.issubset(
+            result.keys()
+        ), f"Missing keys: {REQUIRED_KEYS - result.keys()}"
 
 
 class TestHybridGraphRAGGolden:
@@ -174,7 +177,9 @@ class TestHybridGraphRAGGolden:
 
         cm, cfg, vs = _make_minimal_mocks()
         # Bypass __init__ entirely — it tries to connect to IRIS
-        with patch.object(HybridGraphRAGPipeline, "__init__", lambda self, *a, **kw: None):
+        with patch.object(
+            HybridGraphRAGPipeline, "__init__", lambda self, *a, **kw: None
+        ):
             p = HybridGraphRAGPipeline.__new__(HybridGraphRAGPipeline)
         p.connection_manager = cm
         p.config_manager = cfg
@@ -195,18 +200,24 @@ class TestHybridGraphRAGGolden:
         p = self._make_pipeline()
         # _validate_knowledge_graph hits DB; patch it out
         with patch.object(p, "_validate_knowledge_graph"):
-            with patch.object(p, "_enhanced_hybrid_fallback", return_value=([], "fallback")):
+            with patch.object(
+                p, "_enhanced_hybrid_fallback", return_value=([], "fallback")
+            ):
                 result = p.query(query="test", generate_answer=False)
 
-        assert REQUIRED_KEYS.issubset(result.keys()), (
-            f"Missing keys: {REQUIRED_KEYS - result.keys()}"
-        )
+        assert REQUIRED_KEYS.issubset(
+            result.keys()
+        ), f"Missing keys: {REQUIRED_KEYS - result.keys()}"
 
     def test_sources_key_always_present(self):
         p = self._make_pipeline()
         with patch.object(p, "_validate_knowledge_graph"):
-            with patch.object(p, "_enhanced_hybrid_fallback", return_value=([], "fallback")):
-                result = p.query(query="test", generate_answer=False, include_sources=False)
+            with patch.object(
+                p, "_enhanced_hybrid_fallback", return_value=([], "fallback")
+            ):
+                result = p.query(
+                    query="test", generate_answer=False, include_sources=False
+                )
         assert "sources" in result
         assert isinstance(result["sources"], list)
 
@@ -215,10 +226,14 @@ class TestPyLateColBERTGolden:
     """pylate_colbert pipeline golden shape (fully mocked — no PyLate needed)."""
 
     def _make_pipeline(self):
-        from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+        from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
+            PyLateColBERTPipeline,
+        )
 
         cm, cfg, vs = _make_minimal_mocks()
-        with patch.object(PyLateColBERTPipeline, "__init__", lambda self, *a, **kw: None):
+        with patch.object(
+            PyLateColBERTPipeline, "__init__", lambda self, *a, **kw: None
+        ):
             p = PyLateColBERTPipeline.__new__(PyLateColBERTPipeline)
         p.connection_manager = cm
         p.config_manager = cfg
@@ -240,7 +255,11 @@ class TestPyLateColBERTGolden:
         p.is_initialized = False
         p._document_store = {}
         p._embedding_cache = {}
-        p.stats = {"queries_processed": 0, "documents_indexed": 0, "reranking_operations": 0}
+        p.stats = {
+            "queries_processed": 0,
+            "documents_indexed": 0,
+            "reranking_operations": 0,
+        }
         return p
 
     def test_response_has_required_keys(self):
@@ -249,9 +268,9 @@ class TestPyLateColBERTGolden:
         with patch.object(p, "_restore_metadata", side_effect=lambda docs: docs):
             result = p.query(query="test", generate_answer=False)
 
-        assert REQUIRED_KEYS.issubset(result.keys()), (
-            f"Missing keys: {REQUIRED_KEYS - result.keys()}"
-        )
+        assert REQUIRED_KEYS.issubset(
+            result.keys()
+        ), f"Missing keys: {REQUIRED_KEYS - result.keys()}"
 
     def test_sources_key_always_present(self):
         p = self._make_pipeline()

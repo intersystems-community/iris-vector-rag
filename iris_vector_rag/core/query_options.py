@@ -1,4 +1,5 @@
 """QueryOptions dataclass and normalize_query_params() (feature 065 — composable retrieval)."""
+
 from __future__ import annotations
 
 import logging

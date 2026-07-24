@@ -44,10 +44,22 @@ def loaded_corpus(basic_pipeline):
 
     tag = uuid.uuid4().hex[:8]
     docs = [
-        Document(page_content=f"Insulin regulates blood glucose. [{tag}]", metadata={"source": "pubmed"}),
-        Document(page_content=f"Diabetes mellitus affects glucose metabolism. [{tag}]", metadata={"source": "pubmed"}),
-        Document(page_content=f"A transformer is a neural network architecture. [{tag}]", metadata={"source": "arxiv"}),
-        Document(page_content=f"Attention mechanisms improve sequence models. [{tag}]", metadata={"source": "arxiv"}),
+        Document(
+            page_content=f"Insulin regulates blood glucose. [{tag}]",
+            metadata={"source": "pubmed"},
+        ),
+        Document(
+            page_content=f"Diabetes mellitus affects glucose metabolism. [{tag}]",
+            metadata={"source": "pubmed"},
+        ),
+        Document(
+            page_content=f"A transformer is a neural network architecture. [{tag}]",
+            metadata={"source": "arxiv"},
+        ),
+        Document(
+            page_content=f"Attention mechanisms improve sequence models. [{tag}]",
+            metadata={"source": "arxiv"},
+        ),
     ]
     basic_pipeline.load_documents(documents=docs)
     return basic_pipeline, tag

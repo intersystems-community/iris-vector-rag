@@ -30,7 +30,8 @@ def clean_database_once():
     conn.commit()
 
     # Recreate with DOUBLE datatype
-    cursor.execute("""
+    cursor.execute(
+        """
     CREATE TABLE RAG.SourceDocuments (
         doc_id VARCHAR(255) PRIMARY KEY,
         text_content TEXT,
@@ -38,12 +39,14 @@ def clean_database_once():
         embedding VECTOR(DOUBLE, 384),
         created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-    """)
+    """
+    )
     cursor.execute(
         "CREATE INDEX idx_hnsw_source_embedding ON RAG.SourceDocuments (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')"
     )
 
-    cursor.execute("""
+    cursor.execute(
+        """
     CREATE TABLE RAG.DocumentChunks (
         id VARCHAR(255) PRIMARY KEY,
         chunk_id VARCHAR(255),
@@ -56,7 +59,8 @@ def clean_database_once():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
     )
-    """)
+    """
+    )
     cursor.execute("CREATE INDEX idx_chunks_doc_id ON RAG.DocumentChunks (doc_id)")
     cursor.execute("CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)")
     cursor.execute(

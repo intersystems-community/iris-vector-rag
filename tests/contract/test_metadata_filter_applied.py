@@ -36,7 +36,10 @@ class _FakeVectorStore:
             results = [
                 d
                 for d in results
-                if all(str(d.metadata.get(fk)) == str(fv) for fk, fv in metadata_filter.items())
+                if all(
+                    str(d.metadata.get(fk)) == str(fv)
+                    for fk, fv in metadata_filter.items()
+                )
             ]
         return list(results)[:top_k]
 
@@ -83,7 +86,9 @@ def pipeline(monkeypatch):
 def test_metadata_filter_is_forwarded_to_store(pipeline):
     """FR-001: a supplied metadata_filter reaches the vector store."""
     p, store = pipeline
-    result = p.query("q", top_k=5, metadata_filter={"source": "A"}, generate_answer=False)
+    result = p.query(
+        "q", top_k=5, metadata_filter={"source": "A"}, generate_answer=False
+    )
 
     assert store.calls[-1]["filter"] == {"source": "A"}
     assert result["retrieved_documents"], "expected matching documents"
@@ -113,7 +118,12 @@ def test_invalid_filter_key_raises_clear_error(pipeline):
     """FR-003: an invalid filter key raises, rather than being silently ignored."""
     p, _ = pipeline
     with pytest.raises(VectorStoreConfigurationError):
-        p.query("q", top_k=5, metadata_filter={"nonexistent_key": "x"}, generate_answer=False)
+        p.query(
+            "q",
+            top_k=5,
+            metadata_filter={"nonexistent_key": "x"},
+            generate_answer=False,
+        )
 
 
 def test_filter_value_forwarded_verbatim(pipeline):

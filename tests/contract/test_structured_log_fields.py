@@ -3,6 +3,7 @@
 Verifies that each pipeline emits INFO-level log records containing
 retrieval_mode, rerank_strategy, and rerank_degraded after query().
 """
+
 from __future__ import annotations
 
 import logging
@@ -59,7 +60,9 @@ class TestBasicPipelineStructuredLog:
         p.chunk_overlap = 200
         p.default_top_k = 5
 
-        records, handler, log, old_level = _capture_logs("iris_vector_rag.pipelines.basic")
+        records, handler, log, old_level = _capture_logs(
+            "iris_vector_rag.pipelines.basic"
+        )
         try:
             p.query(query="test", top_k=3, generate_answer=False, rerank=False)
         finally:
@@ -93,7 +96,9 @@ class TestBasicPipelineStructuredLog:
         p.chunk_overlap = 200
         p.default_top_k = 5
 
-        records, handler, log, old_level = _capture_logs("iris_vector_rag.pipelines.basic")
+        records, handler, log, old_level = _capture_logs(
+            "iris_vector_rag.pipelines.basic"
+        )
         try:
             p.query(query="test", top_k=3, generate_answer=False, retrieval="rrf")
         finally:

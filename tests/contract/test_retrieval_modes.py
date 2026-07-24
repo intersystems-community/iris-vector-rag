@@ -3,6 +3,7 @@
 Covers FR-010 (mode selection), FR-011 (weights), FR-012 (prereq error not silent),
 C-M1..M7 from contracts/retrieval_modes.md.
 """
+
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -78,10 +79,15 @@ class TestPrerequisiteErrors:
         from iris_vector_rag.retrieval.modes import check_prerequisites
 
         # Simulate text mode missing iris-vector-graph BM25
-        with patch("iris_vector_rag.retrieval.modes._check_bm25_available", return_value=False):
+        with patch(
+            "iris_vector_rag.retrieval.modes._check_bm25_available", return_value=False
+        ):
             with pytest.raises(Exception) as exc_info:
                 check_prerequisites("text", connection=MagicMock())
-            assert "bm25" in str(exc_info.value).lower() or "text" in str(exc_info.value).lower()
+            assert (
+                "bm25" in str(exc_info.value).lower()
+                or "text" in str(exc_info.value).lower()
+            )
 
 
 class TestWeightValidation:

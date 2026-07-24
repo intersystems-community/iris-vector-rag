@@ -173,12 +173,14 @@ class PreflightChecker:
             cursor = conn.cursor()
 
             # Query for RAG schema tables
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT TABLE_NAME
                 FROM INFORMATION_SCHEMA.TABLES
                 WHERE TABLE_SCHEMA = 'RAG'
                 ORDER BY TABLE_NAME
-            """)
+            """
+            )
 
             tables = [row[0] for row in cursor.fetchall()]
             duration_ms = int((time.time() - start) * 1000)

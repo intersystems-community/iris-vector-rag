@@ -1,4 +1,5 @@
 """Unit tests for ComposableQueryMixin delegation seam (T006 — TDD, must fail before T007)."""
+
 from unittest.mock import MagicMock, patch, call
 
 import pytest

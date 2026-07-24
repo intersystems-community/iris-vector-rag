@@ -3,6 +3,7 @@
 Pipelines mix this in to gain composable query-time options without changing
 their external interface (Principle IV — zero breaking changes).
 """
+
 from __future__ import annotations
 
 import logging
@@ -116,7 +117,6 @@ class ComposableQueryMixin:
     # ------------------------------------------------------------------
     # Abstract hook — concrete pipeline overrides this
     # ------------------------------------------------------------------
-
 
     def _do_retrieval(self, opts) -> List[Any]:  # pragma: no cover
         """Execute retrieval using the pipeline's native mechanism.

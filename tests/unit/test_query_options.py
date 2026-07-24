@@ -1,4 +1,5 @@
 """Unit tests for QueryOptions and normalize_query_params (T004 — TDD, must fail before T005)."""
+
 import warnings
 
 import pytest
