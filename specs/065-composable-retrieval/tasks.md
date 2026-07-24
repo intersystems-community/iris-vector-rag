@@ -213,7 +213,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 ## Phase 11: Polish & Cross-Cutting Concerns
 
 - [X] T043 [P] Update `README.md` with composable query examples drawn from `specs/065-composable-retrieval/quickstart.md`
-- [ ] T044 Run `quickstart.md` scenarios end-to-end and record results
+- [X] T044 Run `quickstart.md` scenarios end-to-end and record results
 - [ ] T045 Confirm <5ms disabled-overhead benchmark passes (T003) (Principle VI)
 - [X] T046 Run the full existing test suite; confirm zero regressions (Principle IV, SC-007)
 - [ ] T047 [P] Verify structured logs/OTel spans emit `retrieval_mode`, `weights`, `rerank_strategy`, degradation flags across all paths (Principle VII)

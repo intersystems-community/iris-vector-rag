@@ -533,6 +533,9 @@ class BasicRAGPipeline(RAGPipeline):
             # with a clear error instead of silently returning unfiltered/empty results.
             raise
         except Exception as e:
+            from iris_vector_rag.retrieval.modes import RetrievalPrerequisiteError
+            if isinstance(e, (RetrievalPrerequisiteError,)):
+                raise
             logger.warning(f"Document retrieval failed: {e}")
             retrieved_documents = []
 

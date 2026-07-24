@@ -56,18 +56,38 @@ class RetrievalEngine:
     def _retrieve_vector(self, opts: Any) -> List[Any]:
         return self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
 
+    def _text_search_to_docs(self, results: List[Any]) -> List[Any]:
+        """Convert (doc_id, score) tuples from TextSearchEngine to Document objects."""
+        from iris_vector_rag.core.models import Document
+
+        docs = []
+        for item in results:
+            if isinstance(item, tuple) and len(item) == 2:
+                doc_id, score = item
+                if hasattr(doc_id, "page_content"):
+                    # Already a Document (mock path)
+                    docs.append(doc_id)
+                else:
+                    doc = Document(id=str(doc_id), page_content="", metadata={"text_score": float(score)})
+                    docs.append(doc)
+            else:
+                docs.append(item)
+        return docs
+
     def _retrieve_text(self, opts: Any) -> List[Any]:
         from iris_vector_graph.text_search import TextSearchEngine  # type: ignore[import]
 
         engine = TextSearchEngine(connection=self.connection)
-        return engine.search_documents(opts.query, top_k=opts.top_k)
+        raw = engine.search_documents(opts.query, k=opts.top_k)
+        return self._text_search_to_docs(raw)
 
     def _retrieve_fusion(self, opts: Any, mode_name: str) -> List[Any]:
         from iris_vector_graph.text_search import TextSearchEngine  # type: ignore[import]
 
         vector_docs = self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
         text_engine = TextSearchEngine(connection=self.connection)
-        text_docs = text_engine.search_documents(opts.query, top_k=opts.top_k)
+        raw_text = text_engine.search_documents(opts.query, k=opts.top_k)
+        text_docs = self._text_search_to_docs(raw_text)
 
         if mode_name == "rrf":
             return _reciprocal_rank_fusion([vector_docs, text_docs], top_k=opts.top_k)
