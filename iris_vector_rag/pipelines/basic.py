@@ -510,10 +510,21 @@ class BasicRAGPipeline(RAGPipeline):
                 )
                 retrieved_documents = engine.retrieve(opts)
             elif hasattr(self, "vector_store") and self.vector_store:
-                # Use vector store for retrieval, forwarding the metadata filter (FR-001)
-                retrieved_documents = self.vector_store.search_by_text(
-                    query, top_k=top_k, metadata_filter=metadata_filter
-                )
+                # FR-016: native EMBEDDING path when configured and no explicit embedding_func
+                explicit_embed_func = kwargs.get("embedding_func")
+                if (
+                    not explicit_embed_func
+                    and getattr(self, "use_iris_embedding", False)
+                    and getattr(self.vector_store, "use_iris_embedding", False)
+                ):
+                    raw = self.vector_store.search_with_embedding(
+                        query, top_k=top_k, filter=metadata_filter
+                    )
+                    retrieved_documents = [doc for doc, _ in raw]
+                else:
+                    retrieved_documents = self.vector_store.search_by_text(
+                        query, top_k=top_k, metadata_filter=metadata_filter
+                    )
             else:
                 logger.warning("No vector store available")
                 retrieved_documents = []
