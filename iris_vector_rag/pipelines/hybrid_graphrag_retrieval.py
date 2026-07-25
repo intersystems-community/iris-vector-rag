@@ -140,7 +140,9 @@ class HybridRetrievalMethods:
         try:
             min_confidence = kwargs.get("min_confidence", 0)
 
-            if self.text_engine is not None and callable(getattr(self.text_engine, "search", None)):
+            if self.text_engine is not None and callable(
+                getattr(self.text_engine, "search", None)
+            ):
                 text_results = self.text_engine.search(
                     query_text, k=top_k, min_confidence=min_confidence
                 )

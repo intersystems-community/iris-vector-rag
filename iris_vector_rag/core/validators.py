@@ -97,7 +97,7 @@ class PipelineValidator:
        - context_count: int (number of contexts returned)
 
     4. Backward Compatibility:
-       - Support deprecated query_text parameter (aliased to query)
+       - Support deprecated query_text parameter (backward-compat alias for query)
     """
 
     # Required methods all pipelines must implement
@@ -105,9 +105,11 @@ class PipelineValidator:
 
     # Query method contract
     QUERY_METHOD_CONTRACT = {
-        "required_params": ["query_text"],
+        "required_params": ["query"],
         "optional_params": ["top_k", "kwargs"],
-        "deprecated_params": ["query"],  # Old name, replaced by query_text (AUD-006)
+        "deprecated_params": [
+            "query_text"
+        ],  # Legacy alias; canonical param is now 'query'
         "required_response_fields": [
             "answer",
             "retrieved_documents",

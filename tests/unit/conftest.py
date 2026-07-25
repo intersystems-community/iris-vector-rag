@@ -32,6 +32,8 @@ def mock_vector_store():
     mock_store.add_documents = Mock(return_value=["doc1", "doc2"])
     mock_store.similarity_search = Mock(return_value=[])
     mock_store.similarity_search_with_score = Mock(return_value=[])
+    mock_store.search_by_text = Mock(return_value=[])
+    mock_store.search_by_vector = Mock(return_value=[])
     mock_store.delete = Mock(return_value=True)
     mock_store.get_document_count = Mock(return_value=0)
 

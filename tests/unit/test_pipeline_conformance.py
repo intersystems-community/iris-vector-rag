@@ -31,6 +31,14 @@ class MockVectorStore:
         """Mock similarity_search returns empty list."""
         return []
 
+    def search_by_text(self, query, top_k=5, metadata_filter=None):
+        """Mock search_by_text returns empty list."""
+        return []
+
+    def search_by_vector(self, embedding, top_k=5):
+        """Mock search_by_vector returns empty list."""
+        return []
+
     def fetch_documents_by_ids(self, doc_ids):
         """Mock fetch returns Document objects."""
         return [

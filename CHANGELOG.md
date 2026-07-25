@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.12.1
+
+- Added `IVGTextSearchBackend` — pluggable BM25 text search via `IVG Graph.KG.BM25Index`, injectable into `HybridRetrievalMethods.text_engine`. Implements the same call contract as `IRISGraphEngine.kg_TXT`.
+- `HybridRetrievalMethods.retrieve_via_enhanced_text` dispatches to `text_engine.search()` when injected, falls back to `iris_engine.kg_TXT()` otherwise.
+- Fixed `graphrag.py` `_execute_sql` method body was misnamed as `_validate_knowledge_graph`; fixed stray `cursor.close()` with no cursor in scope.
+- Fixed black formatting across 40 files to match black 26.x; pinned `black==26.5.1` in CI.
+
 ## v0.12.0
 
 ### Composable query-time retrieval (065)

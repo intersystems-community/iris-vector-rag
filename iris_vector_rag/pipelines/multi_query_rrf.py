@@ -276,16 +276,17 @@ Return only the alternative queries, one per line, without numbering.
         return results
 
     def query(
-        self, query_text: str, top_k: int = 20, generate_answer: bool = True, **kwargs
+        self, query: str = None, top_k: int = 20, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Execute multi-query retrieval with RRF fusion.
 
         Args:
-            query_text: User query
+            query: User query (canonical; ``query_text`` accepted as alias).
             top_k: Number of final results to return
             generate_answer: Whether to generate LLM answer
-            **kwargs: Additional arguments
+            **kwargs: Additional arguments including ``query_text`` alias and
+                retrieval=, weights=, rerank=, metadata_filter=, similarity_threshold=.
 
         Returns:
             Dict containing:
@@ -298,8 +299,33 @@ Return only the alternative queries, one per line, without numbering.
                     - num_queries: Number of queries executed
                     - raw_result_count: Total documents before fusion
                     - execution_time: Total execution time
-                - error: None or error dict
         """
+        # FR-005: normalize query / query_text alias
+        from iris_vector_rag.core.query_options import normalize_query_params
+
+        query_text_kwarg = kwargs.pop("query_text", None)
+        opts = normalize_query_params(
+            query=query,
+            query_text=query_text_kwarg,
+            top_k=top_k,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k
+                in (
+                    "rerank",
+                    "retrieval",
+                    "weights",
+                    "metadata_filter",
+                    "similarity_threshold",
+                    "custom_prompt",
+                )
+            },
+        )
+        query = opts.query
+        top_k = opts.top_k
+        query_text = query
+
         start_time = time.time()
 
         logger.info(f"Multi-query RRF pipeline query: '{query_text}'")
@@ -336,6 +362,15 @@ Return only the alternative queries, one per line, without numbering.
 
         # Step 3: RRF fusion
         fused_results = self._reciprocal_rank_fusion(all_results, top_k=top_k)
+
+        # FR-007: apply query-time reranking after RRF fusion
+        rerank_degraded = False
+        if opts.rerank:
+            from iris_vector_rag.core.composable_query import ComposableQueryMixin
+
+            fused_results, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                self, fused_results, opts
+            )
 
         # Step 4: Generate answer (if requested)
         answer = None

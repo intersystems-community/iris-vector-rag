@@ -383,6 +383,8 @@ class GraphRAGPipeline(RAGPipeline):
         return str(data)
 
     def _execute_sql(self, sql: str, params: Optional[List] = None) -> List[dict]:
+        if self._executor is not None:
+            return self._executor.execute(sql, params)
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
         try:
@@ -402,10 +404,9 @@ class GraphRAGPipeline(RAGPipeline):
                 return False
             count = next(iter(rows[0].values()), 0)
             if count == 0:
-                raise KnowledgeGraphNotPopulatedException("Knowledge graph is empty")
+                logger.warning("Knowledge graph is empty")
+                return False
             return True
-        except KnowledgeGraphNotPopulatedException:
-            raise
         except Exception as e:
             logger.warning(f"Could not validate knowledge graph: {e}")
             return False

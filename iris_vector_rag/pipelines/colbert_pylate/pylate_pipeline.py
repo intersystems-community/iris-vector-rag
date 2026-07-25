@@ -205,7 +205,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
             return result
 
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query: str = None, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute ColBERT query with PyLate native reranking.
 
@@ -215,21 +215,53 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         3. Return top_k documents with consistent response format
 
         Args:
-            query_text: The query text
+            query: The query text (canonical; ``query_text`` accepted as alias).
             top_k: Number of documents to return after reranking (must be between 1 and 100)
-            **kwargs: Additional arguments
+            **kwargs: Additional arguments including ``query_text`` alias and
+                retrieval=, weights=, rerank=, metadata_filter=, similarity_threshold=.
 
         Returns:
             Dictionary with complete RAG response including reranked documents
         """
-        # Validate query
+        # FR-005: normalize query / query_text alias
+        from iris_vector_rag.core.query_options import normalize_query_params
+
+        query_text_kwarg = kwargs.pop("query_text", None)
+        try:
+            opts = normalize_query_params(
+                query=query, query_text=query_text_kwarg, top_k=top_k
+            )
+        except ValueError as exc:
+            msg = str(exc)
+            if "query" in msg.lower():
+                raise ValueError(
+                    "Error: Query parameter is required and cannot be empty\n"
+                    "Context: PyLateColBERT pipeline query operation\n"
+                    "Expected: Non-empty query string\n"
+                    "Actual: Empty or whitespace-only string\n"
+                    "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
+                ) from exc
+            if "top_k" in msg.lower():
+                raise ValueError(
+                    f"Error: top_k parameter out of valid range\n"
+                    f"Context: PyLateColBERT pipeline query operation\n"
+                    f"Expected: Integer between 1 and 100 (inclusive)\n"
+                    f"Actual: {top_k}\n"
+                    f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
+                ) from exc
+            raise
+        query = opts.query
+        top_k = opts.top_k
+        query_text = query
+
+        # Validate query (backward compat — normalize_query_params already raised on empty)
         if not query_text or query_text.strip() == "":
             raise ValueError(
                 "Error: Query parameter is required and cannot be empty\n"
                 "Context: PyLateColBERT pipeline query operation\n"
                 "Expected: Non-empty query string\n"
                 "Actual: Empty or whitespace-only string\n"
-                "Fix: Provide a valid query string, e.g., query_text='What is diabetes?'"
+                "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
             )
 
         if kwargs.get("generate_answer", True) and not os.environ.get("OPENAI_API_KEY"):

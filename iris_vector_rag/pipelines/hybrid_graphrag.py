@@ -289,33 +289,54 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
 
     def query(
         self,
-        query_text: Optional[str] = None,
-        top_k: int = 10,
+        query: str = None,
+        query_text: str = None,
+        top_k: int = 5,
+        method: str = "hybrid",
         generate_answer: bool = True,
-        query: Optional[str] = None,
+        custom_prompt: str = None,
+        include_sources: bool = False,
         **kwargs,
     ) -> Dict[str, Any]:
         """
         Enhanced query method with hybrid search capabilities.
 
         Args:
-            query_text: Query string
+            query: The query string (standard parameter name)
+            query_text: Alias for query (deprecated, for backward compatibility)
             top_k: Number of documents to retrieve
+            method: Retrieval method - "hybrid", "rrf", "kg", "vector", "text"
             generate_answer: Whether to generate an answer
-            **kwargs: Additional parameters including method, custom_prompt, include_sources
+            custom_prompt: Custom prompt for answer generation
+            include_sources: Whether to include source information
+            **kwargs: Additional parameters including vector_query, fusion_weights,
+                retrieval=, weights=, rerank=, metadata_filter=, similarity_threshold=
 
         Returns:
             Dictionary with query results and metadata
         """
-        if query is not None:
-            query_text = query
+        # FR-005: normalize query / query_text alias with deprecation warning
+        from iris_vector_rag.core.query_options import normalize_query_params
 
-        method = kwargs.pop("method", "hybrid")
-        custom_prompt = kwargs.pop("custom_prompt", None)
-        include_sources = kwargs.pop("include_sources", False)
-        query_override = kwargs.pop("query", None)
-        if query_override is not None:
-            query_text = query_override
+        opts = normalize_query_params(
+            query=query,
+            query_text=query_text,
+            top_k=top_k if top_k is not None else 5,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k
+                in (
+                    "rerank",
+                    "retrieval",
+                    "weights",
+                    "metadata_filter",
+                    "similarity_threshold",
+                )
+            },
+        )
+        query_text = opts.query
+        top_k = opts.top_k
 
         if not query_text:
             raise ValueError("Query text cannot be empty")
@@ -332,34 +353,28 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         self._validate_knowledge_graph()
 
         # Route to appropriate retrieval method
-        if method == "hybrid":
-            if retrieval_methods is None:
-                raise RuntimeError("Hybrid retrieval methods not initialized")
+        if method == "hybrid" and retrieval_methods:
             retrieved_documents, retrieval_method = self._retrieve_via_hybrid_fusion(
                 query_text, top_k, **kwargs
             )
-        elif method == "rrf":
-            if retrieval_methods is None:
-                raise RuntimeError("Hybrid retrieval methods not initialized")
+        elif method == "rrf" and retrieval_methods:
             retrieved_documents, retrieval_method = self._retrieve_via_rrf(
                 query_text, top_k, **kwargs
             )
-        elif method == "text":
-            if retrieval_methods is None:
-                raise RuntimeError("Hybrid retrieval methods not initialized")
+        elif method == "text" and retrieval_methods:
             retrieved_documents, retrieval_method = self._retrieve_via_enhanced_text(
                 query_text, top_k, **kwargs
             )
-        elif method == "vector":
-            if retrieval_methods is None:
-                raise RuntimeError("Hybrid retrieval methods not initialized")
+        elif method == "vector" and retrieval_methods:
             retrieved_documents, retrieval_method = self._retrieve_via_hnsw_vector(
                 query_text, top_k, **kwargs
             )
         else:
-            logger.info(f"Using vector fallback search for method: {method}")
-            retrieved_documents = self._fallback_to_vector_search(query_text, top_k)
-            retrieval_method = "vector_fallback"
+            # Enhanced fallback with intelligent hybrid search strategies
+            logger.info(f"Using enhanced fallback hybrid search for method: {method}")
+            retrieved_documents, retrieval_method = self._enhanced_hybrid_fallback(
+                query_text, top_k, method, **kwargs
+            )
 
         if method == "kg" and retrieval_method == "no_matching_entities":
             logger.info(
@@ -387,34 +402,58 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         else:
             answer = "No LLM function provided. Retrieved documents only."
 
+        # FR-007: apply query-time reranking after retrieval
+        rerank_degraded = False
+        if opts.rerank:
+            from iris_vector_rag.core.composable_query import ComposableQueryMixin
+
+            retrieved_documents, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                self, retrieved_documents, opts
+            )
+
         execution_time = time.time() - start_time
         execution_time_ms = (time.perf_counter() - start_perf) * 1000.0
 
-        sources = self._extract_sources(retrieved_documents) if include_sources else []
-
+        contexts_list = [doc.page_content for doc in retrieved_documents]
         response = {
             "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
-            "contexts": retrieved_documents,
-            "sources": sources,
-            "error": None,
+            "contexts": contexts_list,
             "execution_time": execution_time,
+            "error": None,
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
                 "processing_time": execution_time,
                 "processing_time_ms": execution_time_ms,
-                "execution_time": execution_time,
                 "pipeline_type": "hybrid_graphrag",
                 "retrieval_method": retrieval_method,
                 "generated_answer": generate_answer and answer is not None,
+                "context_count": len(contexts_list),
                 "iris_vector_graph_enabled": self.iris_engine is not None,
+                **({"rerank_degraded": True} if rerank_degraded else {}),
             },
         }
 
+        # FR-006: always include sources key; populate when include_sources=True
+        response["sources"] = (
+            self._extract_sources(retrieved_documents) if include_sources else []
+        )
+
+        rerank_strategy = (
+            opts.rerank
+            if isinstance(opts.rerank, str)
+            else ("cross-encoder" if opts.rerank else None)
+        )
         logger.info(
-            f"Hybrid GraphRAG query completed in {execution_time:.2f}s ({execution_time_ms:.1f}ms) - "
-            f"{len(retrieved_documents)} docs via {retrieval_method}"
+            "Hybrid GraphRAG query completed: elapsed=%.2fs docs=%d retrieval_mode=%s "
+            "rerank_strategy=%s rerank_degraded=%s weights=%s",
+            execution_time,
+            len(retrieved_documents),
+            opts.retrieval or retrieval_method,
+            rerank_strategy,
+            rerank_degraded,
+            opts.weights,
         )
         return response
 
@@ -532,6 +571,146 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             logger.info("Falling back to IRISVectorStore vector search")
             fallback_docs = self._fallback_to_vector_search(query_text, top_k)
             return fallback_docs, "vector_fallback"
+
+    def _enhanced_hybrid_fallback(
+        self, query_text: str, top_k: int, method: str, **kwargs
+    ) -> tuple:
+        """
+        Enhanced hybrid search fallback when iris_vector_graph is not available.
+
+        Implements intelligent search strategies combining knowledge graph traversal
+        with vector search to provide hybrid capabilities.
+        """
+        try:
+            # Analyze query to determine best hybrid strategy
+            query_analysis = self._analyze_query_for_hybrid_strategy(query_text)
+
+            if method == "hybrid" or method == "rrf":
+                # Intelligent hybrid: try KG first, then combine with vector search
+                return self._intelligent_hybrid_search(
+                    query_text, top_k, query_analysis, **kwargs
+                )
+
+            elif method == "text":
+                # Enhanced text search using entity matching + vector fallback
+                return self._enhanced_text_search_fallback(query_text, top_k, **kwargs)
+
+            elif method == "vector":
+                # Enhanced vector search with entity context
+                return self._enhanced_vector_search_fallback(
+                    query_text, top_k, **kwargs
+                )
+
+            else:
+                # Default to enhanced knowledge graph traversal
+                return self._retrieve_via_kg(query_text, top_k)
+
+        except Exception as e:
+            logger.error(f"Enhanced hybrid fallback failed: {e}")
+            # Final fallback to standard GraphRAG
+            return super()._retrieve_via_kg(query_text, top_k)
+
+    def _intelligent_hybrid_search(
+        self, query_text: str, top_k: int, analysis: Dict[str, Any], **kwargs
+    ) -> tuple:
+        """Intelligent hybrid search combining KG and vector strategies."""
+        strategy = analysis["recommended_strategy"]
+
+        if strategy == "kg_primary":
+            # Try KG first, supplement with vector if needed
+            try:
+                kg_docs, kg_method = self._retrieve_via_kg(query_text, top_k)
+                if len(kg_docs) >= top_k * 0.7:  # Good KG coverage
+                    return kg_docs, f"{kg_method}_primary"
+                else:
+                    # Supplement with vector search
+                    vector_docs = self._fallback_to_vector_search(
+                        query_text, top_k - len(kg_docs)
+                    )
+                    combined_docs = kg_docs + vector_docs[: top_k - len(kg_docs)]
+                    return combined_docs, "kg_vector_hybrid"
+            except Exception:
+                return (
+                    self._fallback_to_vector_search(query_text, top_k),
+                    "vector_fallback",
+                )
+
+        elif strategy == "kg_vector_hybrid":
+            # Balance between KG and vector
+            try:
+                kg_docs, _ = self._retrieve_via_kg(query_text, max(2, top_k // 2))
+                vector_docs = self._fallback_to_vector_search(query_text, top_k)
+
+                # Merge and deduplicate
+                combined_docs = self._merge_and_rank_results(
+                    kg_docs, vector_docs, top_k
+                )
+                return combined_docs, "balanced_hybrid"
+            except Exception:
+                return (
+                    self._fallback_to_vector_search(query_text, top_k),
+                    "vector_fallback",
+                )
+
+        else:  # vector_primary
+            # Vector first with KG enhancement
+            vector_docs = self._fallback_to_vector_search(query_text, top_k)
+            return vector_docs, "vector_primary"
+
+    def _enhanced_text_search_fallback(
+        self, query_text: str, top_k: int, **kwargs
+    ) -> tuple:
+        """Enhanced text search using entity matching and content filtering."""
+        try:
+            # First try to find relevant entities
+            seed_entities = self._find_seed_entities(query_text)
+
+            if seed_entities:
+                # Use entity-guided document retrieval
+                entity_docs, _ = self._get_documents_from_entities(
+                    {e[0] for e in seed_entities}, top_k
+                )
+                return entity_docs, "entity_guided_text"
+            else:
+                # Fallback to vector search
+                return (
+                    self._fallback_to_vector_search(query_text, top_k),
+                    "text_vector_fallback",
+                )
+
+        except Exception as e:
+            logger.warning(f"Enhanced text search fallback failed: {e}")
+            vector_docs = self._fallback_to_vector_search(query_text, top_k)
+            return vector_docs, "vector_fallback"
+
+    def _enhanced_vector_search_fallback(
+        self, query_text: str, top_k: int, **kwargs
+    ) -> tuple:
+        """Enhanced vector search with knowledge graph context."""
+        try:
+            # Get base vector results
+            vector_docs = self._fallback_to_vector_search(query_text, top_k * 2)
+
+            # Try to enhance with entity context
+            try:
+                seed_entities = self._find_seed_entities(query_text)
+                if seed_entities:
+                    entity_docs, _ = self._get_documents_from_entities(
+                        {e[0] for e in seed_entities}, top_k
+                    )
+                    # Merge entity context with vector results
+                    enhanced_docs = self._merge_and_rank_results(
+                        entity_docs, vector_docs, top_k
+                    )
+                    return enhanced_docs, "vector_entity_enhanced"
+            except Exception:
+                pass
+
+            return vector_docs[:top_k], "vector_only"
+
+        except Exception as e:
+            logger.error(f"Enhanced vector search failed: {e}")
+            return [], "vector_search_failed"
 
     def _analyze_query_for_hybrid_strategy(self, query_text: str) -> Dict[str, Any]:
         """Analyze query to determine the best hybrid search strategy."""

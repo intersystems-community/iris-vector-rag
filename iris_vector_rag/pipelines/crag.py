@@ -285,22 +285,48 @@ class CRAGPipeline(RAGPipeline):
         }
 
     def query(
-        self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs
+        self, query: str = None, top_k: int = 5, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Execute the CRAG pipeline implementation.
 
         Args:
-            query_text: The input query string
+            query: The input query string (canonical; ``query_text`` accepted as alias).
             top_k: Number of top relevant documents to retrieve (must be between 1 and 100)
             generate_answer: Whether to generate an answer
-            **kwargs: Additional keyword arguments
+            **kwargs: Additional keyword arguments including ``query_text`` alias and
+                retrieval=, weights=, rerank=, metadata_filter=, similarity_threshold=.
 
         Returns:
             Standardized response with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
+        # FR-005: normalize query / query_text alias
+        from iris_vector_rag.core.query_options import normalize_query_params
+
+        query_text_kwarg = kwargs.pop("query_text", None)
+        opts = normalize_query_params(
+            query=query,
+            query_text=query_text_kwarg,
+            top_k=top_k,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k
+                in (
+                    "rerank",
+                    "retrieval",
+                    "weights",
+                    "metadata_filter",
+                    "similarity_threshold",
+                    "custom_prompt",
+                )
+            },
+        )
+        query = opts.query
+        top_k = opts.top_k
+
         # Validation: query parameter is required and cannot be empty
-        if not query_text or query_text.strip() == "":
+        if not query or query.strip() == "":
             raise ValueError(
                 "Error: Query parameter is required and cannot be empty\n"
                 "Context: CRAG pipeline query operation\n"
@@ -319,12 +345,8 @@ class CRAGPipeline(RAGPipeline):
                 f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
             )
 
+        query_text = query
         logger.info(f"CRAG: Processing query: '{query_text[:50]}...'")
-
-        # Validate query embedding dimensions (contract requirement FR-022)
-        if hasattr(self, "embedding_manager") and self.embedding_manager:
-            query_embedding = self.embedding_manager.generate_embedding(query_text)
-            self._validate_embedding_dimension(query_embedding)
 
         # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
         if generate_answer and not os.environ.get("OPENAI_API_KEY"):
@@ -429,6 +451,15 @@ class CRAGPipeline(RAGPipeline):
                 # Ensure answer is always a string when generate_answer=True
                 if answer is None:
                     answer = "No relevant documents found to answer the query."
+
+            # FR-007: apply query-time reranking after corrective retrieval
+            rerank_degraded = False
+            if opts.rerank:
+                from iris_vector_rag.core.composable_query import ComposableQueryMixin
+
+                corrected_docs, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                    self, corrected_docs, opts
+                )
 
             execution_time = time.time() - start_time
 

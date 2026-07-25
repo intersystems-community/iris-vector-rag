@@ -198,12 +198,12 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
         # Pipeline catches exceptions and returns graceful error response
         result = pipeline.query("Test query")
 
-        # Should still return a response with error message
+        # Should still return a response; retrieval error is captured in error key
         self.assertIsInstance(result, dict)
         self.assertIn("answer", result)
-        self.assertEqual(
-            result["answer"], "No relevant documents found to answer the query."
-        )
+        self.assertIsNone(result["answer"])
+        self.assertIsNotNone(result["error"])
+        self.assertEqual(result["error"]["type"], "RetrievalError")
 
     def test_error_handling_llm_error(self):
         """Test error handling when LLM fails."""
@@ -220,13 +220,18 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
         )
 
         # Pipeline catches LLM exceptions and returns graceful error response
-        result = pipeline.query("Test query")
+        from unittest.mock import patch as _patch
 
-        # Should still return a response with error message (includes exception details)
+        with _patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
+            result = pipeline.query("Test query")
+
+        # Should still return a response; generation error is captured in error key
         self.assertIsInstance(result, dict)
         self.assertIn("answer", result)
-        self.assertIn("Error generating answer", result["answer"])
-        self.assertIn("LLM error", result["answer"])
+        self.assertIsNone(result["answer"])
+        self.assertIsNotNone(result["error"])
+        self.assertEqual(result["error"]["type"], "GenerationError")
+        self.assertIn("LLM error", result["error"]["message"])
 
     def test_get_pipeline_info(self):
         """Test getting pipeline information."""

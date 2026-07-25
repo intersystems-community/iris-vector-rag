@@ -89,7 +89,7 @@ class TestRetrievalErrorHandling:
         )
 
         mock_vector_store = MagicMock()
-        mock_vector_store.similarity_search.side_effect = RuntimeError(
+        mock_vector_store.search_by_text.side_effect = RuntimeError(
             "Database connection failed"
         )
         pipeline.vector_store = mock_vector_store
@@ -120,7 +120,7 @@ class TestRetrievalErrorHandling:
 
         # Mock vector store that returns empty list (legitimate case)
         mock_vector_store = MagicMock()
-        mock_vector_store.similarity_search.return_value = []  # Valid empty result
+        mock_vector_store.search_by_text.return_value = []  # Valid empty result
         pipeline.vector_store = mock_vector_store
 
         # Execute query
@@ -170,13 +170,14 @@ class TestGenerationErrorHandling:
 
         # Mock vector store that returns docs
         mock_vector_store = MagicMock()
-        mock_vector_store.similarity_search.return_value = [
+        mock_vector_store.search_by_text.return_value = [
             Document(page_content="Retrieved content", metadata={})
         ]
         pipeline.vector_store = mock_vector_store
 
-        # Execute query with generation enabled
-        result = pipeline.query("What is diabetes?", generate_answer=True)
+        # Execute query with generation enabled (patch API key to bypass env check)
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
+            result = pipeline.query("What is diabetes?", generate_answer=True)
 
         # Assert: error is captured, answer is None (not placeholder string)
         assert result["answer"] is None
@@ -208,13 +209,14 @@ class TestGenerationErrorHandling:
 
         # Mock vector store
         mock_vector_store = MagicMock()
-        mock_vector_store.similarity_search.return_value = [
+        mock_vector_store.search_by_text.return_value = [
             Document(page_content="Diabetes info", metadata={})
         ]
         pipeline.vector_store = mock_vector_store
 
-        # Execute query
-        result = pipeline.query("What is diabetes?", generate_answer=True)
+        # Execute query (patch API key to bypass env check)
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
+            result = pipeline.query("What is diabetes?", generate_answer=True)
 
         # Assert: successful generation
         assert result["answer"] == "Diabetes is a metabolic disease."
@@ -253,9 +255,7 @@ class TestComprehensiveErrorScenarios:
 
         # Mock retrieval failure
         mock_vector_store = MagicMock()
-        mock_vector_store.similarity_search.side_effect = RuntimeError(
-            "Vector DB offline"
-        )
+        mock_vector_store.search_by_text.side_effect = RuntimeError("Vector DB offline")
         pipeline.vector_store = mock_vector_store
 
         # Mock LLM (should not be called)
@@ -289,7 +289,7 @@ class TestComprehensiveErrorScenarios:
 
         # Mock successful retrieval
         mock_vector_store = MagicMock()
-        mock_vector_store.similarity_search.return_value = [
+        mock_vector_store.search_by_text.return_value = [
             Document(page_content="Relevant content", metadata={})
         ]
         pipeline.vector_store = mock_vector_store
@@ -297,8 +297,9 @@ class TestComprehensiveErrorScenarios:
         # Mock successful generation
         pipeline.llm_func = lambda text: "Generated answer"
 
-        # Execute query
-        result = pipeline.query("Query", generate_answer=True)
+        # Execute query (patch API key to bypass env check)
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
+            result = pipeline.query("Query", generate_answer=True)
 
         # Assert: successful path
         assert result["answer"] == "Generated answer"

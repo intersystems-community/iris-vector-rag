@@ -15,7 +15,12 @@ from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
-from ..exceptions import IngestionError, RetrievalError, GenerationError
+from ..exceptions import (
+    IngestionError,
+    RetrievalError,
+    GenerationError,
+    VectorStoreConfigurationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +94,7 @@ class BasicRAGPipeline(RAGPipeline):
             )
 
     def load_documents(
-        self, documents=None, documents_path: Optional[str] = None, **kwargs
+        self, documents_path: Optional[str] = None, documents=None, **kwargs
     ) -> Dict[str, Any]:
         """
         Load and process documents into the pipeline's knowledge base.
@@ -441,7 +446,7 @@ class BasicRAGPipeline(RAGPipeline):
                 "pipeline_type": "basic",
             }
 
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query: str = None, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute RAG query - THE single method for all RAG operations.
 
@@ -449,14 +454,18 @@ class BasicRAGPipeline(RAGPipeline):
         Replaces the old query()/execute()/run() method confusion.
 
         Args:
-            query_text: The query text
+            query: The query text (canonical param; ``query_text`` accepted as alias).
             top_k: Number of documents to retrieve (must be between 1 and 100)
             **kwargs: Additional arguments including:
+                - query_text: Alias for ``query`` (deprecated; use ``query``).
                 - include_sources: Whether to include source information (default: True)
                 - custom_prompt: Custom prompt template
                 - metadata_filter: Optional metadata filters
                 - similarity_threshold: Minimum similarity score
                 - generate_answer: Whether to generate LLM answer (default: True)
+                - retrieval: Retrieval mode (e.g. "vector", "text", "hybrid")
+                - weights: Fusion weights for hybrid retrieval
+                - rerank: Reranking strategy (bool or str)
 
         Returns:
             Dictionary with complete RAG response:
@@ -467,47 +476,78 @@ class BasicRAGPipeline(RAGPipeline):
                 "contexts": List[str],
                 "sources": List[Dict],
                 "metadata": Dict,
-                "execution_time": float,
-                "error": Optional error dict
+                "execution_time": float
             }
         """
-        # Feature 078: Pure Constructors - lazy initialization on first use
-        self._ensure_initialized()
-
         start_time = time.time()
 
-        # Validation: query parameter is required and cannot be empty
-        if not query_text or query_text.strip() == "":
-            raise ValueError(
-                "Error: Query parameter is required and cannot be empty\n"
-                "Context: BasicRAG pipeline query operation\n"
-                "Expected: Non-empty query string\n"
-                "Actual: Empty or whitespace-only string\n"
-                "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
-            )
+        # FR-005: normalize query / query_text alias via the composable mixin
+        from iris_vector_rag.core.query_options import normalize_query_params
 
-        # Validation: top_k must be in valid range
-        if top_k < 1 or top_k > 100:
-            raise ValueError(
-                f"Error: top_k parameter out of valid range\n"
-                f"Context: BasicRAG pipeline query operation\n"
-                f"Expected: Integer between 1 and 100 (inclusive)\n"
-                f"Actual: {top_k}\n"
-                f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
+        query_text_kwarg = kwargs.pop("query_text", None)
+        try:
+            opts = normalize_query_params(
+                query=query,
+                query_text=query_text_kwarg,
+                top_k=top_k,
+                **{
+                    k: kwargs[k]
+                    for k in (
+                        "generate_answer",
+                        "include_sources",
+                        "metadata_filter",
+                        "similarity_threshold",
+                        "custom_prompt",
+                        "rerank",
+                        "retrieval",
+                        "weights",
+                    )
+                    if k in kwargs
+                },
             )
+        except ValueError as exc:
+            # Re-raise with pipeline-contextual messaging to preserve existing error format
+            msg = str(exc)
+            if "query" in msg.lower():
+                raise ValueError(
+                    "Error: Query parameter is required and cannot be empty\n"
+                    "Context: BasicRAG pipeline query operation\n"
+                    "Expected: Non-empty query string\n"
+                    "Actual: Empty or whitespace-only string\n"
+                    "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
+                ) from exc
+            if "top_k" in msg.lower():
+                raise ValueError(
+                    f"Error: top_k parameter out of valid range\n"
+                    f"Context: BasicRAG pipeline query operation\n"
+                    f"Expected: Integer between 1 and 100 (inclusive)\n"
+                    f"Actual: {top_k}\n"
+                    f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
+                ) from exc
+            raise
+
+        # Unpack normalized values
+        query = opts.query
+        top_k = opts.top_k
 
         # Get parameters
-        include_sources = kwargs.get("include_sources", True)
-        custom_prompt = kwargs.get("custom_prompt")
-        generate_answer = kwargs.get("generate_answer", True)
-        kwargs.get("metadata_filter")
-        kwargs.get("similarity_threshold", 0.0)
+        include_sources = opts.include_sources
+        custom_prompt = opts.custom_prompt
+        generate_answer = opts.generate_answer
+        metadata_filter = opts.metadata_filter
+        similarity_threshold = opts.similarity_threshold
         retrieval_method = kwargs.get("method", "vector")
 
-        # Validate query embedding dimensions (contract requirement FR-022)
-        if hasattr(self, "embedding_manager") and self.embedding_manager:
-            query_embedding = self.embedding_manager.generate_embedding(query_text)
-            self._validate_embedding_dimension(query_embedding)
+        logger.debug(
+            "BasicRAG retrieval: top_k=%s retrieval_mode=%s weights=%s rerank=%s "
+            "metadata_filter=%s similarity_threshold=%s",
+            top_k,
+            opts.retrieval or "vector",
+            opts.weights,
+            opts.rerank,
+            metadata_filter,
+            similarity_threshold,
+        )
 
         # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
         if generate_answer and not os.environ.get("OPENAI_API_KEY"):
@@ -534,41 +574,108 @@ class BasicRAGPipeline(RAGPipeline):
         # Step 1: Retrieve relevant documents
         retrieval_error = None
         try:
-            # Use vector store for retrieval
-            if hasattr(self, "vector_store") and self.vector_store:
-                retrieved_documents = self.vector_store.similarity_search(
-                    query_text, k=top_k
+            # FR-010: dispatch via RetrievalEngine when retrieval mode is explicitly set
+            if (
+                opts.retrieval
+                and opts.retrieval != "vector"
+                and hasattr(self, "vector_store")
+                and self.vector_store
+            ):
+                from iris_vector_rag.retrieval.engine import RetrievalEngine
+
+                engine = RetrievalEngine(
+                    vector_store=self.vector_store,
+                    connection=(
+                        getattr(self.connection_manager, "connection", None)
+                        if self.connection_manager
+                        else None
+                    ),
                 )
+                retrieved_documents = engine.retrieve(opts)
+            elif hasattr(self, "vector_store") and self.vector_store:
+                # FR-016: native EMBEDDING path when configured and no explicit embedding_func
+                explicit_embed_func = kwargs.get("embedding_func")
+                if (
+                    not explicit_embed_func
+                    and getattr(self, "use_iris_embedding", False)
+                    and getattr(self.vector_store, "use_iris_embedding", False)
+                ):
+                    raw = self.vector_store.search_with_embedding(
+                        query, top_k=top_k, filter=metadata_filter
+                    )
+                    retrieved_documents = [doc for doc, _ in raw]
+                else:
+                    retrieved_documents = self.vector_store.search_by_text(
+                        query, top_k=top_k, metadata_filter=metadata_filter
+                    )
             else:
                 logger.warning("No vector store available")
                 retrieved_documents = []
+        except VectorStoreConfigurationError:
+            # FR-003: surface invalid/unsupported filter keys (and non-scalar values)
+            # with a clear error instead of silently returning unfiltered/empty results.
+            raise
         except Exception as e:
-            logger.error(f"Document retrieval failed: {e}")
-            retrieved_documents = []
+            from iris_vector_rag.retrieval.modes import RetrievalPrerequisiteError
+
+            if isinstance(e, RetrievalPrerequisiteError):
+                raise
+            logger.warning(f"Document retrieval failed: {e}")
             retrieval_error = {
                 "type": "RetrievalError",
                 "message": str(e),
                 "error_class": type(e).__name__,
             }
+            retrieved_documents = []
+
+        # FR-002: apply similarity threshold post-retrieval. Scores are attached to
+        # each Document's metadata by the vector store ("score"/"similarity").
+        if similarity_threshold and similarity_threshold > 0.0:
+            before = len(retrieved_documents)
+            retrieved_documents = [
+                doc
+                for doc in retrieved_documents
+                if float(doc.metadata.get("score", doc.metadata.get("similarity", 0.0)))
+                >= similarity_threshold
+            ]
+            logger.debug(
+                "Applied similarity_threshold=%s: %s -> %s documents",
+                similarity_threshold,
+                before,
+                len(retrieved_documents),
+            )
+
+        # Step 1b: Apply query-time reranking (FR-007 / US3)
+        rerank_degraded = False
+        if opts.rerank:
+            from iris_vector_rag.core.composable_query import ComposableQueryMixin
+
+            retrieved_documents, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                self, retrieved_documents, opts
+            )
 
         # Step 2: Generate answer using LLM (if enabled and LLM available)
-        generation_error = None
-        if retrieval_error:
-            answer = None
-        elif generate_answer and self.llm_func and retrieved_documents:
+        if (
+            generate_answer
+            and self.llm_func
+            and retrieved_documents
+            and not retrieval_error
+        ):
             try:
                 answer = self._generate_answer(
-                    query_text, retrieved_documents, custom_prompt
+                    query, retrieved_documents, custom_prompt
                 )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = None
-                generation_error = {
+                retrieval_error = {
                     "type": "GenerationError",
                     "message": str(e),
                     "error_class": type(e).__name__,
                 }
         elif not generate_answer:
+            answer = None
+        elif retrieval_error:
             answer = None
         elif not retrieved_documents:
             answer = "No relevant documents found to answer the query."
@@ -584,25 +691,40 @@ class BasicRAGPipeline(RAGPipeline):
         # Step 3: Prepare complete response
         contexts_list = [doc.page_content for doc in retrieved_documents]
         response = {
-            "query": query_text,
+            "query": query,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
             "contexts": contexts_list,  # String contexts for RAGAS
-            "sources": sources,  # Top-level sources as per spec
             "execution_time": execution_time,  # Required for RAGAS debug harness
-            "error": retrieval_error or generation_error,
+            "error": retrieval_error,  # AUD-002: None on success, dict on retrieval failure
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
                 "processing_time": execution_time,
                 "pipeline_type": "basic_rag",
                 "generated_answer": generate_answer and answer is not None,
-                "retrieval_method": retrieval_method,  # FR-003: Include retrieval method
-                "context_count": len(contexts_list),  # FR-003: Include context count
+                "retrieval_method": retrieval_method,
+                "context_count": len(contexts_list),
+                **({"rerank_degraded": True} if rerank_degraded else {}),
             },
         }
 
+        # Always include sources key (FR-006: consistent response shape)
+        response["sources"] = sources
+
+        rerank_strategy = (
+            opts.rerank
+            if isinstance(opts.rerank, str)
+            else ("cross-encoder" if opts.rerank else None)
+        )
         logger.info(
-            f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved"
+            "RAG query completed: elapsed=%.2fs docs=%d retrieval_mode=%s weights=%s "
+            "rerank_strategy=%s rerank_degraded=%s",
+            execution_time,
+            len(retrieved_documents),
+            opts.retrieval or "vector",
+            opts.weights,
+            rerank_strategy,
+            rerank_degraded,
         )
         return response
 
