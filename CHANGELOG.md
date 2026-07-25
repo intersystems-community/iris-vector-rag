@@ -2,10 +2,32 @@
 
 ## v0.12.1
 
-- Added `IVGTextSearchBackend` — pluggable BM25 text search via `IVG Graph.KG.BM25Index`, injectable into `HybridRetrievalMethods.text_engine`. Implements the same call contract as `IRISGraphEngine.kg_TXT`.
-- `HybridRetrievalMethods.retrieve_via_enhanced_text` dispatches to `text_engine.search()` when injected, falls back to `iris_engine.kg_TXT()` otherwise.
-- Fixed `graphrag.py` `_execute_sql` method body was misnamed as `_validate_knowledge_graph`; fixed stray `cursor.close()` with no cursor in scope.
-- Fixed black formatting across 40 files to match black 26.x; pinned `black==26.5.1` in CI.
+### Composable retrieval (065) — restored and wired end-to-end
+
+- `IRISVectorStore.search_by_text(query, top_k, metadata_filter=)` → `List[Document]` — explicit text-search entry point; embeds query and delegates to `similarity_search_by_embedding`
+- `IRISVectorStore.search_by_vector(embedding, top_k)` → `List[Tuple[Document, float]]` — explicit vector entry point with scores; legacy `similarity_search` unchanged
+- `IRISVectorStore._embed_query(query)` → `List[float]` — shared embed helper used by both wrappers
+- All six pipelines (`basic`, `basic_rerank`, `crag`, `graphrag`, `hybrid_graphrag`, `pylate_colbert`) accept composable query-time params: `retrieval=`, `weights=`, `rerank=`, `metadata_filter=`, `similarity_threshold=` via `normalize_query_params()`
+
+### AUD-002 error handling
+
+- `BasicRAGPipeline.query()` response now always includes `"error"` key: `None` on success, `{"type": ..., "message": ..., "error_class": ...}` on retrieval or generation failure
+- `answer=None` on failure (was `"Error generating answer"`)
+- Generation failures captured as `"GenerationError"` type; retrieval failures as `"RetrievalError"`
+
+### BM25 / GraphRAG
+
+- Added `IVGTextSearchBackend` — pluggable BM25 text search via `IVG Graph.KG.BM25Index`, injectable into `HybridRetrievalMethods.text_engine`
+- Fixed `graphrag.py` `_execute_sql` dispatch: checks `self._executor` before falling back to direct connection
+- Fixed `_validate_knowledge_graph` raising `KnowledgeGraphNotPopulatedException` instead of returning `False` when count is 0
+- `hybrid_graphrag.py` response now includes `"error": None` and `"context_count"` metadata
+
+### Fixes
+
+- `validators.py` canonical query param corrected from `query_text` to `query`; `query_text` marked deprecated
+- `load_documents()` param order fixed (`documents_path` first) to match positional call sites
+- `sources` removed from `metadata` dict (kept at top level only) per interface conformance
+- Fixed black formatting across 40 files; pinned `black==26.5.1` in CI
 
 ## v0.12.0
 
