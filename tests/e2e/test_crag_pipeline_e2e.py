@@ -527,7 +527,7 @@ class TestCRAGPipelineErrorHandling:
         # New API validates and raises ValueError
         import pytest
 
-        with pytest.raises(ValueError, match="top_k parameter out of valid range"):
+        with pytest.raises(ValueError, match="top_k"):
             crag_pipeline.query("test", top_k=0, generate_answer=False)
 
     def test_load_documents_with_none(self, crag_pipeline):

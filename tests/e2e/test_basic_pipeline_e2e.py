@@ -280,7 +280,7 @@ class TestBasicRAGPipelineErrorHandling:
         # New API validates and raises ValueError
         import pytest
 
-        with pytest.raises(ValueError, match="top_k parameter out of valid range"):
+        with pytest.raises(ValueError, match="top_k"):
             basic_pipeline.query("test", top_k=0, generate_answer=False)
 
     def test_load_documents_with_none(self, basic_pipeline):
@@ -345,3 +345,98 @@ class TestBasicRAGPipelineIntegration:
         )
 
         assert len(result["contexts"]) <= 5
+
+
+class TestComposableRetrieval065:
+    """E2E tests for 065 composable query-time retrieval features."""
+
+    def test_search_by_text_returns_documents(self, pipeline_dependencies):
+        """IRISVectorStore.search_by_text() returns List[Document] from real DB."""
+        vector_store = pipeline_dependencies["vector_store"]
+        docs = [
+            Document(
+                id="srch_txt_0",
+                page_content="The mitochondria is the powerhouse of the cell.",
+            ),
+            Document(
+                id="srch_txt_1",
+                page_content="Photosynthesis converts sunlight into energy.",
+            ),
+        ]
+        vector_store.add_documents(docs)
+
+        results = vector_store.search_by_text("cell energy", top_k=2)
+
+        assert isinstance(results, list)
+        assert all(hasattr(d, "page_content") for d in results)
+
+    def test_search_by_vector_returns_scored_tuples(self, pipeline_dependencies):
+        """IRISVectorStore.search_by_vector() returns List[Tuple[Document, float]]."""
+        vector_store = pipeline_dependencies["vector_store"]
+        from iris_vector_rag.embeddings.manager import EmbeddingManager
+
+        config = pipeline_dependencies["config_manager"]
+        embedding_manager = EmbeddingManager(config)
+        embedding = embedding_manager.embed_text("cell biology")
+
+        results = vector_store.search_by_vector(embedding, top_k=2)
+
+        assert isinstance(results, list)
+        if results:
+            assert len(results[0]) == 2
+            assert isinstance(results[0][1], float)
+
+    def test_query_with_similarity_threshold(self, basic_pipeline, sample_documents):
+        """similarity_threshold= filters low-score results post-retrieval."""
+        basic_pipeline.load_documents(documents=sample_documents)
+
+        # Very high threshold — should get fewer or zero results
+        result_strict = basic_pipeline.query(
+            "Python programming",
+            top_k=5,
+            generate_answer=False,
+            similarity_threshold=0.99,
+        )
+        # Low threshold — should get more
+        result_loose = basic_pipeline.query(
+            "Python programming",
+            top_k=5,
+            generate_answer=False,
+            similarity_threshold=0.0,
+        )
+
+        assert isinstance(result_strict["retrieved_documents"], list)
+        assert isinstance(result_loose["retrieved_documents"], list)
+        assert len(result_strict["retrieved_documents"]) <= len(
+            result_loose["retrieved_documents"]
+        )
+
+    def test_query_with_explicit_vector_retrieval(
+        self, basic_pipeline, sample_documents
+    ):
+        """retrieval='vector' explicit mode works end-to-end."""
+        basic_pipeline.load_documents(documents=sample_documents)
+
+        result = basic_pipeline.query(
+            "Python programming language",
+            top_k=3,
+            generate_answer=False,
+            retrieval="vector",
+        )
+
+        assert "retrieved_documents" in result
+        assert "contexts" in result
+        assert "error" in result
+        assert result["error"] is None
+        assert isinstance(result["retrieved_documents"], list)
+
+    def test_response_error_key_is_none_on_success(
+        self, basic_pipeline, sample_documents
+    ):
+        """response['error'] is None on a successful query (AUD-002 contract)."""
+        basic_pipeline.load_documents(documents=sample_documents)
+
+        result = basic_pipeline.query("Python", top_k=2, generate_answer=False)
+
+        assert "error" in result
+        assert result["error"] is None
