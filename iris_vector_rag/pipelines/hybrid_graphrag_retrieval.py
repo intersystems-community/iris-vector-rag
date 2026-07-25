@@ -131,17 +131,24 @@ class HybridRetrievalMethods:
         self, query_text: str, top_k: int, get_content_func: Callable, **kwargs
     ) -> Tuple[List[Document], str]:
         """
-        Retrieve documents using enhanced IRIS iFind text search.
+        Retrieve documents using enhanced text search.
+
+        Uses self.text_engine.search() when text_engine has a search() method
+        (e.g. IVGTextSearchBackend with BM25), otherwise falls back to
+        self.iris_engine.kg_TXT() (iFind stored procedure).
         """
         try:
-            # Use enhanced text search with entity context
             min_confidence = kwargs.get("min_confidence", 0)
 
-            text_results = self.iris_engine.kg_TXT(
-                query_text=query_text, k=top_k, min_confidence=min_confidence
-            )
+            if self.text_engine is not None and callable(getattr(self.text_engine, "search", None)):
+                text_results = self.text_engine.search(
+                    query_text, k=top_k, min_confidence=min_confidence
+                )
+            else:
+                text_results = self.iris_engine.kg_TXT(
+                    query_text=query_text, k=top_k, min_confidence=min_confidence
+                )
 
-            # Convert text results to documents
             documents = convert_text_results_to_documents(
                 text_results, get_content_func
             )
