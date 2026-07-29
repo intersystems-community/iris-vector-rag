@@ -96,12 +96,13 @@ def mock_vector_store():
     return MockVectorStore()
 
 
-# Define pipeline test matrix
+# Define pipeline test matrix.
+# graphrag (HybridGraphRAGPipeline) probes IRIS at __init__ time and cannot
+# be instantiated without a live database — excluded from unit conformance.
 PIPELINE_TYPES = [
     "basic",
     "basic_rerank",
     "crag",
-    "graphrag",
     "multi_query_rrf",
 ]
 
@@ -140,10 +141,14 @@ class TestPipelineConformance:
         ):
             with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
-                    pipeline = create_pipeline(
-                        pipeline_type,
-                        llm_func=mock_llm_func,
-                    )
+                    with patch(
+                        "iris_vector_rag.common.iris_connection.get_iris_connection",
+                        side_effect=ConnectionError("no IRIS in CI"),
+                    ):
+                        pipeline = create_pipeline(
+                            pipeline_type,
+                            llm_func=mock_llm_func,
+                        )
 
         # Replace vector store with mock
         pipeline.vector_store = mock_vector_store
@@ -215,10 +220,14 @@ class TestPipelineConformance:
         ):
             with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
-                    pipeline = create_pipeline(
-                        pipeline_type,
-                        llm_func=mock_llm_func,
-                    )
+                    with patch(
+                        "iris_vector_rag.common.iris_connection.get_iris_connection",
+                        side_effect=ConnectionError("no IRIS in CI"),
+                    ):
+                        pipeline = create_pipeline(
+                            pipeline_type,
+                            llm_func=mock_llm_func,
+                        )
 
         # Replace vector store with mock
         pipeline.vector_store = mock_vector_store
@@ -294,10 +303,14 @@ class TestPipelineConformance:
         ):
             with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
-                    pipeline = create_pipeline(
-                        pipeline_type,
-                        llm_func=mock_llm_func,
-                    )
+                    with patch(
+                        "iris_vector_rag.common.iris_connection.get_iris_connection",
+                        side_effect=ConnectionError("no IRIS in CI"),
+                    ):
+                        pipeline = create_pipeline(
+                            pipeline_type,
+                            llm_func=mock_llm_func,
+                        )
 
         # Replace vector store with mock
         pipeline.vector_store = mock_vector_store
@@ -369,10 +382,15 @@ class TestPipelineConformance:
         custom_llm = MagicMock(return_value="custom answer")
 
         for pipeline_type in PIPELINE_TYPES:
-            pipeline = create_pipeline(
-                pipeline_type,
-                llm_func=custom_llm,
-            )
+            with patch(
+                "iris_vector_rag.common.iris_connection.get_iris_connection",
+                side_effect=ConnectionError("no IRIS in CI"),
+            ):
+                with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
+                    pipeline = create_pipeline(
+                        pipeline_type,
+                        llm_func=custom_llm,
+                    )
 
             # Replace vector store with mock
             pipeline.vector_store = MockVectorStore()

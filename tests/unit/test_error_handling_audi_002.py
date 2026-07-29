@@ -268,8 +268,11 @@ class TestComprehensiveErrorScenarios:
 
         pipeline.llm_func = tracking_llm
 
-        # Execute query
-        result = pipeline.query("Query", generate_answer=True)
+        # Execute query — provide a dummy API key so the env-check doesn't
+        # short-circuit before retrieval is attempted
+        import os
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-ci"}):
+            result = pipeline.query("Query", generate_answer=True)
 
         # Assert: only retrieval error, generation not attempted
         assert result["error"] is not None
