@@ -45,6 +45,11 @@ class ComposableQueryMixin:
 
     supported_retrieval_modes: List[str] = ["vector"]
 
+    # Optional KeywordExtractor override. When None, RetrievalEngine constructs
+    # one lazily. Set pipeline.keyword_extractor = KeywordExtractor(cheap_llm)
+    # to control the model used for global/mix mode keyword extraction.
+    keyword_extractor: Optional[Any] = None
+
     # ------------------------------------------------------------------
     # Public delegation hooks
     # ------------------------------------------------------------------
