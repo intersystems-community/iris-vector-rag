@@ -20,6 +20,14 @@ This feature adds LightRAG-style **`global`** (theme-level) and **`mix`** (compr
 - **Depends on Feature 065** (composable-retrieval): reuses the `ComposableQueryMixin`, the `RetrievalEngine`/`RetrievalMode` registry, `QueryOptions`, and the `retrieval=` selector. This feature adds two new modes (`global`, `mix`) and their supporting components. If 065 has not landed, the retrieval-mode plumbing is a prerequisite.
 - **Reuses** the existing knowledge-graph built by the `graphrag` entity/relation extraction, `iris_graph_core`, and IRIS native vector search.
 
+## Clarifications
+
+### Session 2026-07-29
+
+- Q: When `retrieval="global"` is requested and the relation-embedding index exists but is empty, should the system raise a hard prerequisite error or degrade gracefully? → A: Graceful degradation — fall back to entity-level retrieval, record `degraded=True` and reason in `metadata`; no exception raised.
+- Q: What metric defines "measurably better" for SC-001 (comprehensiveness of global/mix vs vector)? → A: Recall@K on a labeled set of thematic/cross-document queries — global/mix must surface at least one known-relevant document per query that vector-only misses.
+- Q: What is the default fusion strategy for `mix` when no `weights` are supplied? → A: RRF (reciprocal rank fusion) — score-scale-agnostic, consistent with Feature 065 `rrf` mode; explicit `weights` override this default.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Theme-level answers to abstract questions (Priority: P1)
@@ -86,7 +94,7 @@ For `global`/`mix` to work, relationship descriptions in the knowledge graph mus
 ### Edge Cases
 
 - Query yields low-level keywords but no high-level keywords (or vice versa) → the present level runs, the absent level is skipped, and metadata records which levels contributed.
-- Relation-embedding index exists but is empty (KG has entities but no relationships) → `global` degrades to a defined behavior (e.g. entity-level) with a recorded note, or raises the prerequisite error — behavior to be pinned in `/speckit.clarify`.
+- Relation-embedding index exists but is empty (KG has entities but no relationships) → `global` degrades gracefully to entity-level retrieval; `metadata` records `degraded=True` and the reason. No exception is raised — this is a normal early-ingestion state, not a hard error.
 - `mix` requested on a pipeline without a KG (e.g. `basic`) → clear prerequisite error naming the missing KG (consistent with Feature 065 FR-012).
 - Keyword-extraction LLM call fails or times out → defined fallback (e.g. treat the raw query as the keyword set) with recorded degradation, not a hard failure.
 
@@ -102,9 +110,9 @@ For `global`/`mix` to work, relationship descriptions in the knowledge graph mus
 - **FR-006**: The system MUST allow configuring the model used for keyword extraction independently of the generation model, defaulting to the pipeline's existing LLM when unset.
 - **FR-007**: The system MUST generate and store relationship (edge) embeddings in an IRIS-native searchable structure during KG construction, and MUST update them incrementally on new document ingestion without a full rebuild.
 - **FR-008**: When a requested mode's prerequisites are absent (no KG, no relation embeddings), the system MUST raise a clear, named prerequisite error rather than silently falling back (consistent with Feature 065 FR-012).
-- **FR-009**: When one keyword level is empty or a sub-retrieval fails, the system MUST degrade gracefully, run the available levels, and record the degradation in `metadata` (no hard failure).
+- **FR-009**: When one keyword level is empty, a sub-retrieval fails, or the relation-embedding index is empty, the system MUST degrade gracefully: run the available levels, record `degraded=True` and the reason in `metadata`, and return results rather than raising an exception.
 - **FR-010**: Omitting `retrieval` MUST reproduce the pipeline's current default behavior; `global`/`mix` are opt-in (backward compatible; new behavior default-disabled per constitution Principle IV).
-- **FR-011**: Optional fusion `weights` (Feature 065) MUST bias the `mix` fusion when supplied.
+- **FR-011**: `mix` fusion MUST default to RRF (reciprocal rank fusion) across the three sources (low-level, high-level, naive) — score-scale-agnostic and consistent with Feature 065's `rrf` mode. Optional fusion `weights` (Feature 065) MUST bias the fusion when supplied, overriding the RRF default.
 - **FR-012**: All new retrieval MUST use IRIS-native capabilities (native vector search over relation embeddings; `iris_graph_core` graph) — no non-IRIS backends (constitution Principle V).
 
 ### Key Entities
@@ -118,7 +126,7 @@ For `global`/`mix` to work, relationship descriptions in the knowledge graph mus
 
 ### Measurable Outcomes
 
-- **SC-001**: On a benchmark of thematic/cross-document questions, `retrieval="global"` and `retrieval="mix"` measurably improve answer comprehensiveness/coverage versus `retrieval="vector"` on the same corpus (define the metric during planning; target a clear, reported improvement).
+- **SC-001**: On a labeled benchmark of thematic/cross-document questions, `retrieval="global"` and `retrieval="mix"` achieve higher Recall@K than `retrieval="vector"` on the same corpus, where K equals the configured `top_k`. At least one known-relevant document per thematic query that vector-only misses must appear in the global/mix result set.
 - **SC-002**: A developer can select `global` or `mix` by changing a single query argument, with no pipeline-type change, on any KG-backed pipeline.
 - **SC-003**: 100% of `global`/`mix` responses expose the extracted low-level and high-level keywords in `metadata`.
 - **SC-004**: Keyword extraction can be pointed at a cheaper model, reducing per-query extraction cost without changing the generation model — verified by which model each step invokes.
