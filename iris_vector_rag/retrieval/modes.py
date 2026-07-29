@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,22 @@ _register(
         fusion="rrf",
     )
 )
+_register(
+    RetrievalMode(
+        name="global",
+        sources=["relation_embedding"],
+        requires=["knowledge_graph", "relation_embeddings"],
+        fusion=None,
+    )
+)
+_register(
+    RetrievalMode(
+        name="mix",
+        sources=["low_level", "relation_embedding", "vector"],
+        requires=["knowledge_graph", "relation_embeddings"],
+        fusion="rrf",
+    )
+)
 
 # ─── public API ──────────────────────────────────────────────────────────────
 
@@ -83,6 +99,36 @@ def _check_bm25_available(connection: Any = None) -> bool:
         return False
 
 
+def _check_knowledge_graph_available(connection: Any = None) -> bool:
+    """Return True if RAG.EntityRelationships and RAG.Entities tables exist."""
+    if connection is None:
+        try:
+            from iris_vector_rag.core.connection import ConnectionManager
+
+            conn = ConnectionManager().get_connection("iris")
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                "WHERE TABLE_SCHEMA='RAG' AND TABLE_NAME='EntityRelationships'"
+            )
+            row = cursor.fetchone()
+            cursor.close()
+            return bool(row and int(row[0]) > 0)
+        except Exception:
+            return False
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+            "WHERE TABLE_SCHEMA='RAG' AND TABLE_NAME='EntityRelationships'"
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        return bool(row and int(row[0]) > 0)
+    except Exception:
+        return False
+
+
 def check_prerequisites(mode_name: str, connection: Any = None) -> None:
     """Verify mode prerequisites are met; raise a named error if not (FR-012).
 
@@ -102,6 +148,17 @@ def check_prerequisites(mode_name: str, connection: Any = None) -> None:
                     f"text search support (iris_vector_graph.text_search.TextSearchEngine). "
                     f"Install with: pip install iris-vector-graph"
                 )
+        elif req == "knowledge_graph":
+            if not _check_knowledge_graph_available(connection):
+                raise RetrievalPrerequisiteError(
+                    f"Retrieval mode {mode_name!r} requires a knowledge graph "
+                    f"(RAG.EntityRelationships table). Run entity extraction first, "
+                    f"or use retrieval='vector' for document-only search.",
+                    missing="knowledge_graph",
+                )
+        elif req == "relation_embeddings":
+            # Soft check: empty index → graceful degradation (FR-009), not hard error.
+            pass
         else:
             logger.warning(
                 "Unknown prerequisite %r for mode %r — skipping check", req, mode_name
@@ -109,4 +166,12 @@ def check_prerequisites(mode_name: str, connection: Any = None) -> None:
 
 
 class RetrievalPrerequisiteError(RuntimeError):
-    """Raised when a retrieval mode's prerequisites are not met (FR-012)."""
+    """Raised when a retrieval mode's prerequisites are not met (FR-012).
+
+    Attributes:
+        missing: The name of the unmet prerequisite (e.g. 'knowledge_graph').
+    """
+
+    def __init__(self, message: str, missing: Optional[str] = None) -> None:
+        super().__init__(message)
+        self.missing = missing
