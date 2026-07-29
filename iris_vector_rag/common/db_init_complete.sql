@@ -72,6 +72,7 @@ CREATE TABLE RAG.EntityRelationships (
     relationship_type VARCHAR(255) NOT NULL,
     metadata TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    relation_embedding VECTOR(FLOAT, 384) NULL,
     FOREIGN KEY (source_entity_id) REFERENCES RAG.Entities(entity_id) ON DELETE CASCADE,
     FOREIGN KEY (target_entity_id) REFERENCES RAG.Entities(entity_id) ON DELETE CASCADE
 );
@@ -79,6 +80,8 @@ CREATE TABLE RAG.EntityRelationships (
 -- Indexes for EntityRelationships
 CREATE INDEX idx_rel_source ON RAG.EntityRelationships (source_entity_id);
 CREATE INDEX idx_rel_target ON RAG.EntityRelationships (target_entity_id);
+CREATE INDEX idx_hnsw_rel_embedding ON RAG.EntityRelationships (relation_embedding)
+  AS HNSW(M=16, efConstruction=200, Distance='COSINE');
 
 -- =====================================================
 -- 4. IRIS GRAPH CORE TABLES FOR HYBRID SEARCH

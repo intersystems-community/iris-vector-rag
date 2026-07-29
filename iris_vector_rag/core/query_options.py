@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
-_FUSION_MODES = frozenset({"hybrid", "rrf"})
+_FUSION_MODES = frozenset({"hybrid", "rrf", "mix", "global"})
 
 
 @dataclass
@@ -26,6 +26,8 @@ class QueryOptions:
     weights: Optional[Dict[str, float]] = None
     rerank: Optional[Union[bool, str, Callable]] = None  # type: ignore[type-arg]
     custom_prompt: Optional[str] = None
+    high_level_keywords: Optional[List[str]] = None
+    low_level_keywords: Optional[List[str]] = None
 
 
 def normalize_query_params(
@@ -41,6 +43,8 @@ def normalize_query_params(
     weights: Optional[Dict[str, float]] = None,
     rerank: Optional[Union[bool, str, Callable]] = None,  # type: ignore[type-arg]
     custom_prompt: Optional[str] = None,
+    high_level_keywords: Optional[List[str]] = None,
+    low_level_keywords: Optional[List[str]] = None,
     **_extra: Any,
 ) -> QueryOptions:
     """Resolve aliases, validate, and return a QueryOptions.
@@ -83,8 +87,8 @@ def normalize_query_params(
     # --- weights require a fusion mode ---
     if weights is not None and retrieval not in _FUSION_MODES:
         raise ValueError(
-            f"'weights' requires a fusion retrieval mode ('hybrid' or 'rrf'), "
-            f"but retrieval={retrieval!r}. Set retrieval='hybrid' or retrieval='rrf'."
+            f"'weights' requires a fusion retrieval mode {tuple(sorted(_FUSION_MODES))}, "
+            f"but retrieval={retrieval!r}."
         )
 
     return QueryOptions(
@@ -98,4 +102,6 @@ def normalize_query_params(
         weights=weights,
         rerank=rerank,
         custom_prompt=custom_prompt,
+        high_level_keywords=high_level_keywords,
+        low_level_keywords=low_level_keywords,
     )

@@ -17,11 +17,12 @@ def iris_connection_config():
     """IRIS database connection configuration for integration tests.
 
     Uses port discovery to find available IRIS instance:
+    - 51972: iris-vector-rag-iris container (this project)
     - 31972: Test database (docker-compose.test.yml)
     - 1972: System/production database
     - Other configured ports
     """
-    test_ports = [31972, 1972, 11972, 21972]
+    test_ports = [51972, 31972, 1972, 11972, 21972]
 
     for port in test_ports:
         try:
@@ -365,7 +366,7 @@ def iris_schema_manager(iris_connection):
 @pytest.fixture(scope="session", autouse=True)
 def verify_iris_available():
     """Verify IRIS is available before running integration tests."""
-    test_ports = [31972, 1972, 11972]
+    test_ports = [51972, 31972, 1972, 11972]
 
     for port in test_ports:
         try:

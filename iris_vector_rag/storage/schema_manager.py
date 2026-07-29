@@ -449,11 +449,11 @@ class SchemaManager:
                 "supports_graph_traversal": True,
             },
             "EntityRelationships": {
-                "embedding_column": None,
+                "embedding_column": "relation_embedding",
                 "uses_document_embeddings": False,
-                "default_model": self.base_embedding_model,  # Required by get_embedding_model
-                "dimension": 0,  # No embeddings
-                "supports_vector_search": False,
+                "default_model": self.base_embedding_model,
+                "dimension": 384,
+                "supports_vector_search": True,
                 "supports_graph_traversal": True,
             },
             # IRIS Graph Core Tables for Hybrid Search
