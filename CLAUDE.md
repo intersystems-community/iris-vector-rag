@@ -554,6 +554,8 @@ logging:
 **Complete Documentation**: `iris_rag/api/README.md`
 
 ## Active Technologies
+- Python 3.10–3.12 (matches existing codebase) + `iris_vector_graph` ≥2.0.0 (for `insert_vector`, `vector_similarity_search`); `sentence-transformers` (384d embeddings); existing `ConfigurationManager`, `ConnectionManager`, `ComposableQueryMixin`, `RetrievalEngine`, `QueryOptions` (081-dual-level-retrieval)
+- InterSystems IRIS — extend `RAG.EntityRelationships` with `relation_embedding VECTOR(FLOAT, 384) NULL` column + HNSW index; no new tables (081-dual-level-retrieval)
 
 - Python 3.10+ (existing codebase uses 3.10-3.12) (051-enterprise-enhancements)
 - InterSystems IRIS database (RAG.SourceDocuments table - existing) (051-enterprise-enhancements)
