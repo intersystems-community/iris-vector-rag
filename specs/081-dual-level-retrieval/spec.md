@@ -1,7 +1,7 @@
 # Feature Specification: Dual-Level (Global/Mix) Retrieval — LightRAG-Inspired
 
-**Feature Branch**: `claude/mongodb-vector-search-devx-ws3v6o` (speckit slot: `066-dual-level-retrieval`)
-**Created**: 2026-07-22
+**Feature Branch**: `081-dual-level-retrieval` (speckit slot: `081-dual-level-retrieval`)
+**Created**: 2026-07-29
 **Status**: Draft
 **Input**: "Research LightRAG and build a comparison matrix on features and opportunities for iris-vector-rag" → adopt LightRAG's dual-level retrieval as the top-ranked opportunity.
 
@@ -9,7 +9,7 @@
 
 ## Context
 
-[LightRAG](https://github.com/hkuds/lightrag) (HKUDS, EMNLP 2025) is a knowledge-graph RAG framework whose signature innovation is **dual-level retrieval**: at query time it extracts *low-level* keywords (specific entities) and *high-level* keywords (broad themes/concepts) from the question, then retrieves against **entity embeddings** for the low-level signal and **relation (edge) embeddings** for the high-level signal, and fuses them. This lets it answer both precise entity questions and abstract cross-document/thematic questions, while avoiding the expensive community-report and multi-hop machinery of Microsoft GraphRAG.
+[LightRAG](https://github.com/hkuds/lightrag) (HKUDS, EMNLP 2025) is a knowledge-graph RAG framework whose signature innovation is **dual-level retrieval**: at query time it extracts _low-level_ keywords (specific entities) and _high-level_ keywords (broad themes/concepts) from the question, then retrieves against **entity embeddings** for the low-level signal and **relation (edge) embeddings** for the high-level signal, and fuses them. This lets it answer both precise entity questions and abstract cross-document/thematic questions, while avoiding the expensive community-report and multi-hop machinery of Microsoft GraphRAG.
 
 A feature comparison against `iris-vector-rag` identified this as the single highest-value gap. Today the `graphrag` pipeline (HybridGraphRAGPipeline) offers `vector`, `text` (BM25), `kg` (graph traversal), `hybrid`, and `rrf` retrieval — all anchored on entity/chunk-level signals. It has **no** query-time low/high keyword split and **no** relation-embedding "theme-level" retrieval, so thematic and cross-document queries under-retrieve.
 
@@ -20,7 +20,7 @@ This feature adds LightRAG-style **`global`** (theme-level) and **`mix`** (compr
 - **Depends on Feature 065** (composable-retrieval): reuses the `ComposableQueryMixin`, the `RetrievalEngine`/`RetrievalMode` registry, `QueryOptions`, and the `retrieval=` selector. This feature adds two new modes (`global`, `mix`) and their supporting components. If 065 has not landed, the retrieval-mode plumbing is a prerequisite.
 - **Reuses** the existing knowledge-graph built by the `graphrag` entity/relation extraction, `iris_graph_core`, and IRIS native vector search.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Theme-level answers to abstract questions (Priority: P1)
 
@@ -90,7 +90,7 @@ For `global`/`mix` to work, relationship descriptions in the knowledge graph mus
 - `mix` requested on a pipeline without a KG (e.g. `basic`) → clear prerequisite error naming the missing KG (consistent with Feature 065 FR-012).
 - Keyword-extraction LLM call fails or times out → defined fallback (e.g. treat the raw query as the keyword set) with recorded degradation, not a hard failure.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -114,7 +114,7 @@ For `global`/`mix` to work, relationship descriptions in the knowledge graph mus
 - **Retrieval mode (`global`, `mix`)**: New entries in the Feature 065 `RetrievalMode` registry, with declared prerequisites (`knowledge_graph`, `relation_embeddings`) and fusion semantics.
 - **Dual-level result**: Retrieved items tagged by contributing level (low/high/naive) with per-level scores, surfaced in metadata.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
@@ -132,7 +132,7 @@ For `global`/`mix` to work, relationship descriptions in the knowledge graph mus
 - **KG availability**: `global`/`mix` apply to pipelines with a populated knowledge graph (primarily `graphrag`); other pipelines raise the prerequisite error, matching the Feature 065 parity model.
 - **Relation embeddings via IRIS**: relationship descriptions are embedded with the same embedding stack as entities/chunks and stored in IRIS-native vector structures (reusing `iris_graph_core` where possible).
 - **Keyword extraction is an LLM step**: low/high keyword extraction uses an LLM prompt (LightRAG-style); the exact prompt/format is an implementation detail for planning.
-- **No LightRAG dependency**: this adopts LightRAG's *technique*, not its code or storage stack; iris keeps its unified IRIS backend.
+- **No LightRAG dependency**: this adopts LightRAG's _technique_, not its code or storage stack; iris keeps its unified IRIS backend.
 
 ## Out of Scope
 
@@ -143,11 +143,11 @@ For `global`/`mix` to work, relationship descriptions in the knowledge graph mus
 
 ## Next steps (resume locally)
 
-Run in local dev on branch `claude/mongodb-vector-search-devx-ws3v6o`:
+Run in local dev on branch `081-dual-level-retrieval`:
+
 ```bash
-SPECIFY_FEATURE=066-dual-level-retrieval .specify/scripts/bash/check-prerequisites.sh --json
+SPECIFY_FEATURE=081-dual-level-retrieval .specify/scripts/bash/check-prerequisites.sh --json
 /speckit.clarify      # pin: empty-relation-embedding fallback, comprehensiveness metric, keyword-extraction prompt/format
 /speckit.plan
 /speckit.tasks
 ```
-Note the same branch reconciliation as Feature 065: keep work on the `claude/...` branch and pass `SPECIFY_FEATURE=066-dual-level-retrieval` to the speckit scripts (they key off branch name).

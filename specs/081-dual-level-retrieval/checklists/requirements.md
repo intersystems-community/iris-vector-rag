@@ -1,7 +1,7 @@
 # Specification Quality Checklist: Dual-Level (Global/Mix) Retrieval
 
 **Purpose**: Validate specification completeness and quality before `/speckit.clarify` / `/speckit.plan`
-**Created**: 2026-07-22
+**Created**: 2026-07-29
 **Feature**: [spec.md](../spec.md) · Analysis: [lightrag-comparison.md](../lightrag-comparison.md)
 
 ## Content Quality
@@ -39,4 +39,4 @@
 ## Notes
 
 - Depends on Feature 065 (composable-retrieval) plumbing; if not merged, that is a prerequisite.
-- Adopts LightRAG's *technique*, not its code/storage — iris keeps its unified IRIS backend (constitution Principle V).
+- Adopts LightRAG's _technique_, not its code/storage — iris keeps its unified IRIS backend (constitution Principle V).
