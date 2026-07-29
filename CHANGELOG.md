@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — 081 Dual-Level (Global/Mix) Retrieval
+## v0.13.0 — Dual-Level (Global/Mix) Retrieval
 
 ### New retrieval modes: `global` and `mix`
 
