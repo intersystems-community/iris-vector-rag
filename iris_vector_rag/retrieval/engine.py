@@ -220,6 +220,16 @@ class RetrievalEngine:
         if extractor is not None:
             extraction_model = getattr(extractor, "model_name", None)
 
+        logger.debug(
+            "global retrieval complete",
+            extra={
+                "retrieval_mode": "global",
+                "high_level_keywords_count": len(high_kws),
+                "low_level_keywords_count": 0,
+                "degraded": degraded,
+                "result_count": len(docs),
+            },
+        )
         return {
             "retrieved_documents": docs,
             "metadata": {
@@ -313,6 +323,18 @@ class RetrievalEngine:
         if extractor is not None:
             extraction_model = getattr(extractor, "model_name", None)
 
+        degraded_mix = not high_kws and not low_kws
+        logger.debug(
+            "mix retrieval complete",
+            extra={
+                "retrieval_mode": "mix",
+                "fusion_method": fusion_method,
+                "high_level_keywords_count": len(high_kws),
+                "low_level_keywords_count": len(low_kws),
+                "degraded": degraded_mix,
+                "result_count": len(fused),
+            },
+        )
         return {
             "retrieved_documents": fused,
             "metadata": {
@@ -322,7 +344,7 @@ class RetrievalEngine:
                 "naive_count": len(naive_docs),
                 "high_level_keywords": high_kws,
                 "low_level_keywords": low_kws,
-                "degraded": (not high_kws and not low_kws),
+                "degraded": degraded_mix,
                 "retrieval_mode": "mix",
                 "extraction_model": extraction_model,
             },

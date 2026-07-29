@@ -1,5 +1,66 @@
 # Changelog
 
+## Unreleased — 081 Dual-Level (Global/Mix) Retrieval
+
+### New retrieval modes: `global` and `mix`
+
+- `retrieval="global"` — theme-level retrieval via relation embeddings (LightRAG-inspired):
+  extracts `high_level_keywords` via `KeywordExtractor`, embeds them, searches
+  `RAG.EntityRelationships.relation_embedding` HNSW index for semantically similar relationships.
+  Graceful degradation (FR-009) when index empty: `metadata["degraded"]=True` with reason.
+  Hard error (FR-008) via `RetrievalPrerequisiteError` when KG tables absent.
+
+- `retrieval="mix"` — comprehensive RRF-fused retrieval across three sources:
+  high-level relation embeddings, low-level entity vector search, naive chunk vector search.
+  Default fusion: RRF. Optional: pass `weights={"relation":0.6,"vector":0.4}` for weighted-score.
+  Response `metadata["fusion_method"]` is `"rrf"` or `"weighted_score"`.
+
+### New components
+
+- `RelationEmbeddingStore` (`iris_vector_rag/storage/relation_embedding_store.py`):
+  manages `relation_embedding VECTOR(FLOAT,384) NULL` column on `RAG.EntityRelationships`.
+  Methods: `_ensure_schema()` (idempotent ALTER TABLE + HNSW index),
+  `embed_and_store(relationship_id, type, src, tgt, description)` (UPDATE via `TO_VECTOR`),
+  `search(query_embedding, top_k)` → `List[Dict]` with float `score`,
+  `count_embedded()` → int.
+
+- `KeywordExtractor` (`iris_vector_rag/retrieval/keyword_extractor.py`):
+  LLM-backed dual-level keyword extraction. Accepts any `llm_func(prompt) -> str` callable.
+  `extract(query)` → `(high_level_keywords, low_level_keywords)` tuple of lists.
+  Returns `([], [])` on any error (LLM exception, bad JSON, timeout).
+  `parse_keywords(raw)` module-level function strips markdown fences before JSON parse.
+
+### New `QueryOptions` fields
+
+- `high_level_keywords: Optional[List[str]]` — pre-supply to skip LLM keyword extraction
+- `low_level_keywords: Optional[List[str]]` — pre-supply to skip LLM keyword extraction
+
+### Response metadata keys added
+
+All `global` and `mix` results include:
+
+- `metadata["high_level_keywords"]` — extracted or pre-supplied high-level themes
+- `metadata["low_level_keywords"]` — extracted or pre-supplied entity-level terms
+- `metadata["degraded"]` — bool; True when index empty or extraction failed
+- `metadata["degradation_reason"]` — string; explains why degraded
+- `metadata["retrieval_mode"]` — `"global"` or `"mix"`
+- `metadata["extraction_model"]` — model name of configured `KeywordExtractor`
+- `metadata["fusion_method"]` — (`mix` only) `"rrf"` or `"weighted_score"`
+- `metadata["low_level_count"]`, `metadata["high_level_count"]`, `metadata["naive_count"]` — (`mix` only) per-source doc counts
+
+### Tunability
+
+- `pipeline.keyword_extractor = KeywordExtractor(cheap_llm, model_name="gpt-4o-mini")`
+  overrides the default extractor for `global` and `mix` modes on any pipeline.
+- Pre-supplying `high_level_keywords=` or `low_level_keywords=` in `pipeline.query(...)`
+  skips the LLM extraction call entirely.
+
+### Schema changes
+
+- `RAG.EntityRelationships`: new column `relation_embedding VECTOR(FLOAT,384) NULL`
+- `RAG.EntityRelationships`: new HNSW index `idx_hnsw_rel_embedding` (COSINE, M=16, efConstruction=200)
+- `db_init_complete.sql` updated to include above (fresh installs only; existing instances use `_ensure_schema()`)
+
 ## v0.12.1
 
 ### Composable retrieval (065) — restored and wired end-to-end

@@ -82,7 +82,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          uv run pytest tests/unit/ \
+          uv run pytest tests/unit/ tests/contract/ \
             --cov=iris_vector_rag \
             --cov-report=xml \
             --cov-report=term-missing \

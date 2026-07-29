@@ -29,14 +29,29 @@
 - [x] Feature meets measurable outcomes defined in Success Criteria
 - [x] No unresolved implementation leakage that blocks planning
 
-## Open decisions to resolve in `/speckit.clarify` (recorded, non-blocking)
+## Resolved decisions (implementation complete 2026-07-29)
 
-- Empty-relation-embedding fallback for `global`: degrade to entity-level vs raise prerequisite error (spec edge case + FR-008/FR-009 tension).
-- The comprehensiveness/coverage metric for SC-001 (how "better thematic answers" is measured).
-- Keyword-extraction prompt/format and how low vs high keywords are delimited.
-- Whether `mix` fusion defaults to RRF (rank) or weighted-score fusion when no weights given (align with Feature 065 `hybrid` vs `rrf` semantics).
+- **Empty-relation-embedding fallback for `global`**: ✅ **B — graceful degradation** (FR-009).
+  Empty index → `metadata["degraded"]=True` with `degradation_reason`, no exception raised.
+  KG tables absent → hard `RetrievalPrerequisiteError` (FR-008). Both paths implemented.
+- **SC-001 metric**: ✅ **Recall@K** via `TestRecallBenchmark` in `tests/e2e/test_dual_level_retrieval_e2e.py`.
+  Asserts `recall_global >= recall_vector` on labeled thematic queries (xfail until labeled data populated).
+- **Keyword extraction**: ✅ **LightRAG JSON format** — `{"high_level_keywords":[...],"low_level_keywords":[...]}`.
+  `KeywordExtractor` uses this format; `parse_keywords()` strips markdown fences.
+- **`mix` default fusion**: ✅ **A — RRF** (`metadata["fusion_method"]=="rrf"` when no `weights=` given).
+  Pass `weights={"relation":0.6,"vector":0.4}` to switch to `"weighted_score"`.
+
+## Implementation status
+
+- ✅ Phase 2: QueryOptions extended (`high/low_level_keywords`, `global`/`mix` accepted by `_FUSION_MODES`)
+- ✅ Phase 3: RelationEmbeddingStore (schema, embed_and_store, search, count_embedded)
+- ✅ Phase 4: KeywordExtractor + parse_keywords
+- ✅ Phase 5: `global` mode — RetrievalEngine dispatch, modes registry, check_prerequisites
+- ✅ Phase 6: `mix` mode — RRF/weighted fusion, per-source metadata
+- ✅ Phase 7: US3 tunability — pre-supplied keywords skip extraction, injection of cheap_llm
+- ✅ Phase 8: Logging, CI, CHANGELOG
 
 ## Notes
 
-- Depends on Feature 065 (composable-retrieval) plumbing; if not merged, that is a prerequisite.
+- Depends on Feature 065 (composable-retrieval) plumbing; merged in v0.12.1.
 - Adopts LightRAG's _technique_, not its code/storage — iris keeps its unified IRIS backend (constitution Principle V).
