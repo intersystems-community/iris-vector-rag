@@ -5,8 +5,9 @@ Comprehensive unit tests for RAG pipeline implementations with mocked dependenci
 These tests achieve high coverage by testing all code paths and error conditions.
 """
 
+import os
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline
@@ -114,7 +115,8 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
             vector_store=self.mock_vector_store,
         )
 
-        result = pipeline.query("What is machine learning?", top_k=5)
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-ci"}):
+            result = pipeline.query("What is machine learning?", top_k=5)
 
         self.assertIsInstance(result, dict)
         self.assertIn("answer", result)
@@ -144,7 +146,8 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
             vector_store=self.mock_vector_store,
         )
 
-        result = pipeline.query("Obscure query with no results", top_k=5)
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-ci"}):
+            result = pipeline.query("Obscure query with no results", top_k=5)
 
         self.assertIsInstance(result, dict)
         self.assertIn("answer", result)
@@ -174,7 +177,8 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
         if hasattr(pipeline, "prompt_template"):
             pipeline.prompt_template = custom_template
 
-        result = pipeline.query("Test question")
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-ci"}):
+            result = pipeline.query("Test question")
 
         self.assertIsInstance(result, dict)
         self.mock_llm_func.assert_called_once()
@@ -196,7 +200,8 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
         )
 
         # Pipeline catches exceptions and returns graceful error response
-        result = pipeline.query("Test query")
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-ci"}):
+            result = pipeline.query("Test query")
 
         # Should still return a response; retrieval error is captured in error key
         self.assertIsInstance(result, dict)
