@@ -34,7 +34,7 @@ nltk>=3.8
 ftfy>=6.1.0
 
 # Report generation
-jinja2>=3.1.0
+jinja2>=3.1.6
 markdown>=3.4.0
 pyyaml>=6.0
 
