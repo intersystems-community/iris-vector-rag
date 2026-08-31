@@ -54,11 +54,18 @@ class RelationEmbeddingStore:
             try:
                 cursor.execute(_ALTER_SQL)
                 conn.commit()
-                logger.debug("Added relation_embedding column to RAG.EntityRelationships")
+                logger.debug(
+                    "Added relation_embedding column to RAG.EntityRelationships"
+                )
             except Exception as exc:
                 code = getattr(exc, "errorCode", None) or getattr(exc, "sqlcode", None)
-                if code in _ALREADY_EXISTS_CODES or "already exists" in str(exc).lower():
-                    logger.debug("relation_embedding column already exists — skipping ALTER")
+                if (
+                    code in _ALREADY_EXISTS_CODES
+                    or "already exists" in str(exc).lower()
+                ):
+                    logger.debug(
+                        "relation_embedding column already exists — skipping ALTER"
+                    )
                     conn.rollback()
                 else:
                     conn.rollback()
@@ -71,8 +78,15 @@ class RelationEmbeddingStore:
             except Exception as exc:
                 code = getattr(exc, "errorCode", None) or getattr(exc, "sqlcode", None)
                 msg = str(exc).lower()
-                if code in _ALREADY_EXISTS_CODES or "already defined" in msg or "already exists" in msg or "duplicate" in msg:
-                    logger.debug("HNSW index idx_hnsw_rel_embedding already exists — skipping")
+                if (
+                    code in _ALREADY_EXISTS_CODES
+                    or "already defined" in msg
+                    or "already exists" in msg
+                    or "duplicate" in msg
+                ):
+                    logger.debug(
+                        "HNSW index idx_hnsw_rel_embedding already exists — skipping"
+                    )
                     conn.rollback()
                 else:
                     conn.rollback()
@@ -149,7 +163,7 @@ class RelationEmbeddingStore:
         Returns list of dicts with keys: relationship_id, source_entity_id,
         target_entity_id, relationship_type, score.
         """
-        from iris_vector_graph.dbapi_utils import vector_similarity_search
+        from iris_vector_rag.common.db_vector_utils import vector_similarity_search
 
         conn = self._conn_mgr.get_connection("iris")
         cursor = conn.cursor()
@@ -164,7 +178,11 @@ class RelationEmbeddingStore:
                 query_vector=query_embedding,
                 top_k=top_k,
                 id_column="relationship_id",
-                return_columns=["source_entity_id", "target_entity_id", "relationship_type"],
+                return_columns=[
+                    "source_entity_id",
+                    "target_entity_id",
+                    "relationship_type",
+                ],
                 metric="COSINE",
                 dtype="FLOAT",
             )
