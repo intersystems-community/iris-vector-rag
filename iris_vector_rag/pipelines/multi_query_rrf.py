@@ -21,15 +21,15 @@ Example:
     >>> # ranked by RRF score
 """
 
-from collections import defaultdict
-from typing import Any, Dict, List, Optional
 import logging
 import time
+from collections import defaultdict
+from typing import Any, Dict, List, Optional
 
+from iris_vector_rag.common.utils import get_llm_func
 from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
-from iris_vector_rag.common.utils import get_llm_func
 
 try:
     from iris_vector_graph import RRFFusion as _IVGRRFFusion
@@ -86,8 +86,8 @@ class MultiQueryRRFPipeline(RAGPipeline):
         """
         # If no connection/config managers provided, create minimal ones
         if connection_manager is None or config_manager is None:
-            from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
 
             if config_manager is None:
                 config_manager = ConfigurationManager()
@@ -276,7 +276,7 @@ Return only the alternative queries, one per line, without numbering.
         return results
 
     def query(
-        self, query: str = None, top_k: int = 20, generate_answer: bool = True, **kwargs
+        self, query: str = None, top_k: int = 5, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Execute multi-query retrieval with RRF fusion.
@@ -404,11 +404,15 @@ Answer:"""
         # Build response
         execution_time = time.time() - start_time
 
+        include_sources = kwargs.get("include_sources", True)
+        sources = [doc.id for doc in fused_results if doc.id] if include_sources else []
+
         result = {
             "answer": answer,
+            "query": query,
             "retrieved_documents": fused_results,
             "contexts": [doc.page_content for doc in fused_results],
-            "sources": [doc.id for doc in fused_results if doc.id],
+            "sources": sources,
             "error": generation_error,
             "metadata": {
                 "pipeline": "multi_query_rrf",
