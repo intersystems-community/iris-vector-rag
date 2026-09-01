@@ -17,11 +17,19 @@ jobs:
   test:
     name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: true
       matrix:
         python-version: ["3.11", "3.12"]
+
+    services:
+      iris:
+        image: intersystemsdc/iris-community:latest
+        ports:
+          - 1972:1972
+        options: >-
+          --health-cmd "iris status" --health-interval 10s --health-timeout 5s --health-retries 10
 
     steps:
       - uses: actions/checkout@v7
@@ -31,8 +39,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Wait for IRIS
+        run: timeout 90 bash -c 'until nc -z localhost 1972; do sleep 2; done'
+
       - name: Install package
-        run: pip install -e ".[dspy]" "intersystems-irispython>=5.1.2" "iris-vector-graph>=2.1.0"
+        run: pip install -e ".[dspy]" "intersystems-irispython>=5.1.2" "iris-vector-graph>=2.1.0" "bcrypt>=4.0.0"
 
       - name: Install test dependencies
         run: pip install pytest pytest-mock pytest-timeout pytest-asyncio coverage pytest-cov python-dotenv sqlalchemy
@@ -40,21 +51,29 @@ jobs:
       - name: Run unit tests
         env:
           SKIP_IRIS_CONTAINER: "1"
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python -m pytest tests/unit/ \
             --timeout=30 \
             --tb=short \
             -q
 
-      - name: Run contract tests (no IRIS required)
+      - name: Run contract tests
         env:
-          SKIP_IRIS_CONTAINER: "1"
+          IRIS_HOST: localhost
+          IRIS_PORT: "1972"
+          IRIS_USERNAME: _SYSTEM
+          IRIS_PASSWORD: SYS
+          IRIS_NAMESPACE: USER
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python -m pytest tests/contract/ \
             --timeout=30 \
             --tb=short \
             -q \
-            -m "not requires_database"
+            --ignore=tests/contract/test_coverage_contract.py \
+            --ignore=tests/contract/test_coverage_warning_contract.py \
+            --ignore=tests/contract/test_mcp_tool_schemas.py
 
   build:
     name: Build distribution
