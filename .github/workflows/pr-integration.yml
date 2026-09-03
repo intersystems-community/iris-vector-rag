@@ -17,7 +17,7 @@ jobs:
 
     services:
       iris:
-        image: intersystemsdc/iris-community:latest
+        image: intersystemsdc/iris-community:2026.1
         env:
           IRIS_USERNAME: SuperUser
           IRIS_PASSWORD: SYS
