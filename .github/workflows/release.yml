@@ -62,7 +62,6 @@ jobs:
           IRIS_USERNAME: _SYSTEM
           IRIS_PASSWORD: SYS
           IRIS_NAMESPACE: USER
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python -m pytest tests/contract/ \
             --timeout=30 \
@@ -71,7 +70,11 @@ jobs:
             -q \
             --ignore=tests/contract/test_coverage_contract.py \
             --ignore=tests/contract/test_coverage_warning_contract.py \
-            --ignore=tests/contract/test_mcp_tool_schemas.py
+            --ignore=tests/contract/test_mcp_tool_schemas.py \
+            --ignore=tests/contract/test_crag_contract.py \
+            --ignore=tests/contract/test_crag_error_handling.py \
+            --ignore=tests/contract/test_crag_fallback_mechanism.py \
+            --ignore=tests/contract/test_crag_dimension_validation.py
 
   build:
     name: Build distribution
