@@ -920,6 +920,17 @@ class IRISVectorStore(VectorStore):
         # Use the _store_documents method to handle the actual storage
         return self._store_documents(processed_documents, embeddings)
 
+    def _get_id_column(self, cursor) -> str:
+        table_parts = self.table_name.split(".")
+        schema = table_parts[0] if len(table_parts) > 1 else "RAG"
+        table = table_parts[-1]
+        cursor.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=?",
+            [schema, table],
+        )
+        columns = {row[0].lower() for row in cursor.fetchall()}
+        return "id" if "id" in columns else "doc_id"
+
     def delete_documents(self, ids: List[str]) -> bool:
         """
         Delete documents from the IRIS vector store by their IDs.
@@ -937,9 +948,10 @@ class IRISVectorStore(VectorStore):
         cursor = connection.cursor()
 
         try:
+            id_col = self._get_id_column(cursor)
             placeholders = ",".join(["?" for _ in ids])
             delete_sql = (
-                f"DELETE FROM {self.table_name} WHERE doc_id IN ({placeholders})"
+                f"DELETE FROM {self.table_name} WHERE {id_col} IN ({placeholders})"
             )
             cursor.execute(delete_sql, ids)
 
