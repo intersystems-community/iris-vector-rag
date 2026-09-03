@@ -66,6 +66,7 @@ jobs:
         run: |
           python -m pytest tests/contract/ \
             --timeout=30 \
+            --timeout-method=thread \
             --tb=short \
             -q \
             --ignore=tests/contract/test_coverage_contract.py \
