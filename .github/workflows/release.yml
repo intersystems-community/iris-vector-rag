@@ -35,7 +35,8 @@ jobs:
         run: |
           docker run --detach --name iris \
             -p 1972:1972 \
-            intersystemsdc/iris-community:2026.1 || true
+            -e IRIS_INIT=1 \
+            intersystemsdc/iris-community:2026.1
           timeout 90 bash -c 'until nc -z localhost 1972; do sleep 2; done'
 
       - name: Install package
