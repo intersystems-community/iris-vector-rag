@@ -284,6 +284,7 @@ def get_iris_connection(
                         namespace=n,
                         username=u,
                         password=pwd,
+                        sharedmemory=False,
                     )
                 elif hasattr(iris_mod, "createConnection"):
                     conn = iris_mod.createConnection(h, p, n, u, pwd)
