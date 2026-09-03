@@ -877,3 +877,62 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             "vector_optimizer_available": self.vector_optimizer is not None,
             "graph_core_path": graph_core_path,
         }
+
+    def delete_node(self, node_id: str) -> None:
+        """Remove a node from all stores managed by this pipeline.
+
+        Symmetric counterpart to index_node(). Removes the node from:
+        - Knowledge graph tables (via iris_engine.delete_node)
+        - Vector document store (via vector_store.delete_documents)
+        - BM25 index: no per-doc delete API exists in iris_vector_graph; the node's
+          text properties are removed by the KG deletion, making BM25 results inert.
+
+        Raises:
+            ValueError: If node_id is empty string or None.
+            Exception: Any unexpected store error propagates after a WARNING log.
+        """
+        if not node_id or not isinstance(node_id, str):
+            raise ValueError(f"node_id must be a non-empty string, got: {node_id!r}")
+
+        graph_deleted = False
+        vector_deleted = False
+        graph_error: Optional[Exception] = None
+        vector_error: Optional[Exception] = None
+
+        if self.iris_engine is not None:
+            try:
+                graph_deleted = bool(self.iris_engine.delete_node(node_id))
+            except Exception as exc:
+                graph_error = exc
+                logger.warning(
+                    "delete_node(%s): partial failure in graph store: %s", node_id, exc
+                )
+                if self.vector_store is not None:
+                    try:
+                        self.vector_store.delete_documents([node_id])
+                    except Exception:
+                        pass
+                raise
+
+        if self.vector_store is not None:
+            try:
+                self.vector_store.delete_documents([node_id])
+                vector_deleted = True
+            except Exception as exc:
+                vector_error = exc
+                logger.warning(
+                    "delete_node(%s): partial failure in vector store: %s", node_id, exc
+                )
+                raise
+
+        if graph_deleted or vector_deleted:
+            logger.debug(
+                "delete_node(%s): removed from graph=%r vector=%r",
+                node_id,
+                graph_deleted,
+                vector_deleted,
+            )
+        else:
+            logger.debug(
+                "delete_node(%s): node not found in any store (no-op)", node_id
+            )
