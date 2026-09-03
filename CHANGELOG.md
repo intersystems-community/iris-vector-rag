@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.14.0 — delete_node + delete_documents fix
+
+### New: `HybridGraphRAGPipeline.delete_node`
+
+- `delete_node(node_id: str) -> None` — symmetric teardown counterpart to `index_node()`.
+  Removes a node from all stores managed by the pipeline:
+  - Knowledge graph tables via `iris_engine.delete_node(node_id)`
+  - Vector document store via `vector_store.delete_documents([node_id])`
+  - BM25: no per-document delete API in iris_vector_graph 2.3.1; KG deletion makes BM25 results inert
+- Raises `ValueError` for empty/None `node_id`. Idempotent for nonexistent nodes.
+- Partial store failures log `WARNING` and propagate.
+- 8 contract tests + live IRIS integration test.
+
+### Fix: `IRISVectorStore.delete_documents` column detection
+
+- Hard-coded `WHERE doc_id` caused `SQLCODE -29` on tables where the id column is named `id`.
+- Added `_get_id_column()` to detect the correct column name at runtime via `INFORMATION_SCHEMA`.
+
 ## v0.13.0 — Dual-Level (Global/Mix) Retrieval
 
 ### New retrieval modes: `global` and `mix`
