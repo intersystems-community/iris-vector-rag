@@ -12,6 +12,7 @@ Feature: 051-simplify-iris-connection
 Feature: 064-llm-cache-disk (Connection hardening bypass)
 """
 
+import concurrent.futures
 import logging
 import os
 import re
@@ -277,25 +278,39 @@ def get_iris_connection(
                 raise ConnectionError("Cannot import IRIS DBAPI module")
 
             try:
-                if hasattr(iris_mod, "dbapi") and hasattr(iris_mod.dbapi, "connect"):
-                    conn = iris_mod.dbapi.connect(
+                connect_timeout = int(os.environ.get("IRIS_CONNECT_TIMEOUT", "15"))
+
+                def _do_connect():
+                    if hasattr(iris_mod, "dbapi") and hasattr(
+                        iris_mod.dbapi, "connect"
+                    ):
+                        return iris_mod.dbapi.connect(
+                            hostname=h,
+                            port=p,
+                            namespace=n,
+                            username=u,
+                            password=pwd,
+                            sharedmemory=False,
+                        )
+                    if hasattr(iris_mod, "createConnection"):
+                        return iris_mod.createConnection(h, p, n, u, pwd)
+                    return iris_mod.connect(
                         hostname=h,
                         port=p,
                         namespace=n,
                         username=u,
                         password=pwd,
-                        sharedmemory=False,
                     )
-                elif hasattr(iris_mod, "createConnection"):
-                    conn = iris_mod.createConnection(h, p, n, u, pwd)
-                else:
-                    conn = iris_mod.connect(
-                        hostname=h,
-                        port=p,
-                        namespace=n,
-                        username=u,
-                        password=pwd,
-                    )
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _pool:
+                    _future = _pool.submit(_do_connect)
+                    try:
+                        conn = _future.result(timeout=connect_timeout)
+                    except concurrent.futures.TimeoutError:
+                        raise ConnectionError(
+                            f"IRIS connection timed out after {connect_timeout}s "
+                            f"connecting to {h}:{p}/{n} (DBAPI handshake hung)"
+                        )
                 _connection_cache[cache_key] = conn
                 logger.info(f"✅ Connected to IRIS at {h}:{p}/{n}")
                 return conn
