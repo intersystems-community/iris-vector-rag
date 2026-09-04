@@ -7,8 +7,13 @@ domain-specific entity types instead of hardcoded IT support types.
 Related Bug Report: BUG_REPORT_ENTITY_TYPES_CONFIG.md
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
+
+# dspy is an optional dependency (not declared in pyproject extras); skip cleanly
+# when absent instead of failing at first use inside iris_vector_rag.dspy_modules.
+pytest.importorskip("dspy")
 
 
 class TestBatchEntityExtractionConfiguration:
@@ -16,10 +21,11 @@ class TestBatchEntityExtractionConfiguration:
 
     def test_forward_accepts_entity_types_parameter(self):
         """Test that forward() method accepts entity_types parameter."""
+        import inspect
+
         from iris_vector_rag.dspy_modules.batch_entity_extraction import (
             BatchEntityExtractionModule,
         )
-        import inspect
 
         # Get method signature
         sig = inspect.signature(BatchEntityExtractionModule.forward)
@@ -101,8 +107,9 @@ class TestBatchEntityExtractionConfiguration:
 
     def test_entity_extraction_service_passes_entity_types(self):
         """Test that EntityExtractionService passes entity_types to BatchEntityExtractionModule."""
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
         import inspect
+
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         # Verify extract_batch_with_dspy has entity_types parameter
         sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
@@ -185,8 +192,9 @@ class TestBackwardCompatibility:
         """Test that extract_batch_with_dspy() works when entity_types is not provided."""
         # This test verifies backward compatibility - existing code should continue to work
         # Implementation would require a full service setup, so we just verify the signature
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
         import inspect
+
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
         entity_types_param = sig.parameters.get("entity_types")

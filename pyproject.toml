@@ -115,7 +115,8 @@ api = [
     "websockets>=12.0",
     "redis>=5.0.0",
     "bcrypt>=4.0.0",
-    "python-jose[cryptography]>=3.3.0"
+    "python-jose[cryptography]>=3.3.0",
+    "email-validator>=2.0.0"
 ]
 all = [
     "uv>=0.1.0",
@@ -139,6 +140,7 @@ all = [
     "redis>=5.0.0",
     "bcrypt>=4.0.0",
     "python-jose[cryptography]>=3.3.0",
+    "email-validator>=2.0.0",
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
     "opentelemetry-exporter-otlp>=1.20.0",

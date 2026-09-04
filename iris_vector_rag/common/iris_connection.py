@@ -12,12 +12,12 @@ Feature: 051-simplify-iris-connection
 Feature: 064-llm-cache-disk (Connection hardening bypass)
 """
 
-import concurrent.futures
 import logging
 import os
 import re
 import subprocess
 import threading
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from iris_vector_rag.common.exceptions import ValidationError
@@ -30,6 +30,10 @@ _cache_lock = threading.Lock()
 
 # Module-level edition cache (session-wide)
 _edition_cache: Optional[Tuple[str, int]] = None
+
+# Endpoints whose DBAPI handshake recently hung: cache_key -> monotonic expiry.
+# Lets callers fail fast instead of each waiting out IRIS_CONNECT_TIMEOUT.
+_handshake_backoff: Dict[Tuple[str, int, str, str], float] = {}
 
 
 def _get_iris_dbapi_module():
@@ -153,15 +157,10 @@ def _hard_fix_iris_passwords(host: str, port: int):
         if not container_name:
             return False
         logger.info(f"Bypassing IRIS hardening for: {container_name}")
+        # UnExpireUserPasswords is the documented, version-stable way to clear the
+        # "Password change required" state a fresh Community container ships with.
         cmds = [
-            'Set user = ##class(Security.Users).%OpenId("SuperUser")',
-            'Do user.PasswordSet("SYS")',
-            "Do user.UnExpirePassword()",
-            "Do user.%Save()",
-            'Set user = ##class(Security.Users).%OpenId("_SYSTEM")',
-            'Do user.PasswordSet("SYS")',
-            "Do user.UnExpirePassword()",
-            "Do user.%Save()",
+            'Do ##class(Security.Users).UnExpireUserPasswords("*")',
             "Halt",
         ]
         subprocess.run(
@@ -278,7 +277,16 @@ def get_iris_connection(
                 raise ConnectionError("Cannot import IRIS DBAPI module")
 
             try:
-                connect_timeout = int(os.environ.get("IRIS_CONNECT_TIMEOUT", "15"))
+                connect_timeout = float(os.environ.get("IRIS_CONNECT_TIMEOUT", "10"))
+                backoff_secs = float(os.environ.get("IRIS_CONNECT_BACKOFF", "30"))
+
+                backoff_until = _handshake_backoff.get(cache_key, 0.0)
+                if time.monotonic() < backoff_until:
+                    raise ConnectionError(
+                        f"IRIS DBAPI handshake to {h}:{p}/{n} hung within the last "
+                        f"{backoff_secs:.0f}s; refusing to retry yet"
+                    )
+                _handshake_backoff.pop(cache_key, None)
 
                 def _do_connect():
                     if hasattr(iris_mod, "dbapi") and hasattr(
@@ -302,15 +310,31 @@ def get_iris_connection(
                         password=pwd,
                     )
 
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _pool:
-                    _future = _pool.submit(_do_connect)
+                # Run the driver handshake on a daemon thread: the native connect
+                # can block forever (no socket timeout on the IRIS protocol layer),
+                # and a daemon thread is abandoned rather than joined at exit.
+                _result: Dict[str, Any] = {}
+
+                def _runner():
                     try:
-                        conn = _future.result(timeout=connect_timeout)
-                    except concurrent.futures.TimeoutError:
-                        raise ConnectionError(
-                            f"IRIS connection timed out after {connect_timeout}s "
-                            f"connecting to {h}:{p}/{n} (DBAPI handshake hung)"
-                        )
+                        _result["conn"] = _do_connect()
+                    except BaseException as exc:  # noqa: BLE001
+                        _result["exc"] = exc
+
+                _t = threading.Thread(
+                    target=_runner, name="iris-dbapi-connect", daemon=True
+                )
+                _t.start()
+                _t.join(connect_timeout)
+                if _t.is_alive():
+                    _handshake_backoff[cache_key] = time.monotonic() + backoff_secs
+                    raise ConnectionError(
+                        f"IRIS connection timed out after {connect_timeout:.0f}s "
+                        f"connecting to {h}:{p}/{n} (DBAPI handshake hung)"
+                    )
+                if "exc" in _result:
+                    raise _result["exc"]
+                conn = _result["conn"]
                 _connection_cache[cache_key] = conn
                 logger.info(f"✅ Connected to IRIS at {h}:{p}/{n}")
                 return conn

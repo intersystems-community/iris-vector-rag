@@ -10,7 +10,7 @@ Success Criteria: SC-004
 
 import pytest
 
-from iris_vector_rag import create_validated_pipeline
+from iris_vector_rag import create_pipeline
 from iris_vector_rag.core.models import Document
 
 
@@ -27,11 +27,12 @@ class TestSmoke:
         When: Pipeline loads 1 document and queries for it
         Then: Retrieved documents include the ingested content
         """
-        # Create pipeline with validated factory (auto-setup)
-        pipeline = create_validated_pipeline(
+        # Create pipeline with validation + auto-setup; managers resolve from
+        # ConfigurationManager (env > YAML > defaults), so a fresh IRIS works.
+        pipeline = create_pipeline(
             pipeline_type="basic",
-            auto_setup=True,
             validate_requirements=True,
+            auto_setup=True,
         )
 
         # Ingest 1 document
@@ -39,7 +40,7 @@ class TestSmoke:
             page_content="IRIS vector database stores embeddings for RAG.",
             metadata={"source": "smoke_test"},
         )
-        load_result = pipeline.load_documents([doc])
+        load_result = pipeline.load_documents(documents=[doc])
 
         # Assert ingestion succeeded
         assert load_result["documents_loaded"] >= 1, "Smoke test: ingest failed"

@@ -1256,13 +1256,15 @@ class SchemaManager:
         """
         try:
             # Check if chunk_id column exists
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 SELECT COLUMN_NAME
                 FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_SCHEMA = '{self.schema_prefix}'
                   AND TABLE_NAME = 'DOCUMENTCHUNKS'
                   AND COLUMN_NAME = 'chunk_id'
-            """)
+            """
+            )
             if cursor.fetchone():
                 logger.info("chunk_id column already exists, skipping migration")
                 return
@@ -1297,11 +1299,13 @@ class SchemaManager:
             )
 
             # Check if table exists
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 SELECT COUNT(*)
                 FROM INFORMATION_SCHEMA.TABLES
                 WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'DOCUMENTCHUNKS'
-            """)
+            """
+            )
             table_exists = cursor.fetchone()[0] > 0
 
             if table_exists and preserve_data:
@@ -1331,7 +1335,7 @@ class SchemaManager:
                 chunk_type VARCHAR(100),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_document_id) REFERENCES {self._qn("SourceDocuments")}(id)
+                FOREIGN KEY (source_document_id) REFERENCES {self._qn("SourceDocuments")}(doc_id)
             )
             """
             cursor.execute(create_sql)
@@ -1884,8 +1888,8 @@ class SchemaManager:
         try:
             cursor.execute(
                 """
-                SELECT COLUMN_NAME, DATA_TYPE 
-                FROM INFORMATION_SCHEMA.COLUMNS 
+                SELECT COLUMN_NAME, DATA_TYPE
+                FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE UPPER(TABLE_SCHEMA) = UPPER(?) AND UPPER(TABLE_NAME) = UPPER(?)
                 ORDER BY ORDINAL_POSITION
             """,
@@ -2240,22 +2244,26 @@ class SchemaManager:
             cursor = conn.cursor()
 
             # Check if table exists
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 SELECT COUNT(*)
                 FROM INFORMATION_SCHEMA.TABLES
                 WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = '{table_name}'
-            """)
+            """
+            )
 
             exists = cursor.fetchone()[0] > 0
 
             if exists:
                 if table_name == "SourceDocuments":
                     try:
-                        cursor.execute(f"""
+                        cursor.execute(
+                            f"""
                             SELECT COLUMN_NAME
                             FROM INFORMATION_SCHEMA.COLUMNS
                             WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'SourceDocuments'
-                            """)
+                            """
+                        )
                         columns = {row[0].lower() for row in cursor.fetchall()}
 
                         if "text_content" not in columns:
@@ -2291,11 +2299,13 @@ class SchemaManager:
                         )
                 if table_name == "Entities":
                     try:
-                        cursor.execute(f"""
+                        cursor.execute(
+                            f"""
                             SELECT COLUMN_NAME
                             FROM INFORMATION_SCHEMA.COLUMNS
                             WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'Entities'
-                            """)
+                            """
+                        )
                         columns = {row[0].lower() for row in cursor.fetchall()}
 
                         if "entity_id" not in columns:
@@ -2518,7 +2528,7 @@ class SchemaManager:
                 chunk_type VARCHAR(100),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_document_id) REFERENCES {self._qn("SourceDocuments")}(id)
+                FOREIGN KEY (source_document_id) REFERENCES {self._qn("SourceDocuments")}(doc_id)
             )
             """
             cursor.execute(create_sql)

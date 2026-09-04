@@ -18,6 +18,35 @@
 - Hard-coded `WHERE doc_id` caused `SQLCODE -29` on tables where the id column is named `id`.
 - Added `_get_id_column()` to detect the correct column name at runtime via `INFORMATION_SCHEMA`.
 
+### Fix: `auto_setup=True` on a fresh IRIS produced an unusable schema
+
+- `SetupOrchestrator` created `RAG.SourceDocuments` from a legacy inline DDL
+  (`id INTEGER IDENTITY`, `filename`, ...) that conflicted with `SchemaManager`'s
+  canonical layout (`doc_id VARCHAR PRIMARY KEY`, `embedding VECTOR`). First-run
+  ingest then failed with `SQLCODE -104` and vector search with `SQLCODE -254`.
+  The orchestrator now delegates the standard RAG tables to `SchemaManager`.
+- `DocumentChunks` foreign keys referenced `SourceDocuments(id)`; now `doc_id`.
+- Smoke test (`tests/contract/test_smoke.py`) updated to current pipeline API and
+  verified against a pristine IRIS 2026.1 container.
+
+### Fix: IRIS connection robustness
+
+- `get_iris_connection()` bounds the native DBAPI handshake with
+  `IRIS_CONNECT_TIMEOUT` (default 10s) on a daemon thread and raises
+  `ConnectionError` instead of blocking forever; a hung endpoint is remembered for
+  `IRIS_CONNECT_BACKOFF` seconds (default 30) so callers fail fast.
+- `dbapi.connect` is forced to TCP (`sharedmemory=False`).
+- Expired-password recovery now uses `Security.Users.UnExpireUserPasswords("*")`,
+  which works on fresh Community containers (2026.1 included).
+
+### Packaging / CI
+
+- `email-validator` added to the `api` and `all` extras (required by
+  `iris_vector_rag.api.models.auth`).
+- Release workflow runs against a pristine `intersystemsdc/iris-community:2026.1`
+  started by `scripts/ci/start-iris.sh`; pre-existing contract failures that need a
+  pre-populated corpus are tracked in `tests/contract/ci_known_failures.txt`.
+
 ## v0.13.0 — Dual-Level (Global/Mix) Retrieval
 
 ### New retrieval modes: `global` and `mix`
