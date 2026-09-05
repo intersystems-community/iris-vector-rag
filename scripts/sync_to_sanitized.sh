@@ -177,8 +177,8 @@ if [[ -f "$REDACTION_LOG" ]]; then
     echo -e "${BLUE}📊 Redaction Summary:${NC}"
 
     # Extract key stats from JSON log
-    FILES_MODIFIED=$(cat "$REDACTION_LOG" | python -c "import sys, json; data = json.load(sys.stdin); print(len(data))")
-    TOTAL_REPLACEMENTS=$(cat "$REDACTION_LOG" | python -c "import sys, json; data = json.load(sys.stdin); print(sum(item['replacements'] for item in data))")
+    FILES_MODIFIED=$(python -c "import sys, json; data = json.load(sys.stdin); print(len(data))" < "$REDACTION_LOG")
+    TOTAL_REPLACEMENTS=$(python -c "import sys, json; data = json.load(sys.stdin); print(sum(item['replacements'] for item in data))" < "$REDACTION_LOG")
 
     echo -e "  Files modified: ${GREEN}$FILES_MODIFIED${NC}"
     echo -e "  Total replacements: ${GREEN}$TOTAL_REPLACEMENTS${NC}"
@@ -186,13 +186,13 @@ if [[ -f "$REDACTION_LOG" ]]; then
     # Show top 5 most modified files
     echo ""
     echo -e "${BLUE}  Top modified files:${NC}"
-    cat "$REDACTION_LOG" | python -c "
+    python -c "
 import sys, json
 data = json.load(sys.stdin)
 sorted_data = sorted(data, key=lambda x: x['replacements'], reverse=True)[:5]
 for item in sorted_data:
     print(f\"    • {item['file']}: {item['replacements']} replacements\")
-"
+" < "$REDACTION_LOG"
 fi
 
 # Step 6: Git status in sanitized directory

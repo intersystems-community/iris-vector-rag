@@ -344,7 +344,7 @@ show_results_summary() {
 }
 
 # Cleanup function (registered with `trap cleanup EXIT` inside main)
-# shellcheck disable=SC2329
+# shellcheck disable=SC2329,SC2317
 cleanup() {
     if [[ $? -ne 0 ]]; then
         log_error "Evaluation failed. Check the logs for details."

@@ -1,0 +1,7 @@
+# Pinned so local == CI. prettier resolves config by walking up to $HOME, where a
+# global .prettierrc with these same values exists on developer machines; CI
+# runners have none and would fall back to defaults (printWidth 80) and fail
+# the format gate on files that are clean locally.
+proseWrap: preserve
+printWidth: 100
+tabWidth: 2
