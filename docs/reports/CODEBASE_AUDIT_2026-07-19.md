@@ -43,18 +43,18 @@ Until that path is a release gate, “Beta” is an accurate label;
 
 ## Scorecard
 
-| Area | Current assessment | Direction |
-|---|---:|---|
-| Root onboarding | 3.5 / 5 | Materially improved |
-| Ability to identify entry point | 4 / 5 | Materially improved |
-| Reproducible basic start | 2 / 5 | Plausible, not proven here |
-| Core data integrity | 1 / 5 | Release blocker |
-| API consistency | 2 / 5 | Multiple incompatible paths |
-| Configuration clarity | 2 / 5 | Three overlapping authorities |
-| Documentation correctness | 2 / 5 | Root improved; corpus remains stale |
-| Automated verification | 2 / 5 | Unit suite healthy; release path ungated |
-| Maintainability | 1.5 / 5 | Excessive surface and large components |
-| Security/operations posture | 2.5 / 5 | Some good controls; production defaults absent |
+| Area                            | Current assessment | Direction                                      |
+| ------------------------------- | -----------------: | ---------------------------------------------- |
+| Root onboarding                 |            3.5 / 5 | Materially improved                            |
+| Ability to identify entry point |              4 / 5 | Materially improved                            |
+| Reproducible basic start        |              2 / 5 | Plausible, not proven here                     |
+| Core data integrity             |              1 / 5 | Release blocker                                |
+| API consistency                 |              2 / 5 | Multiple incompatible paths                    |
+| Configuration clarity           |              2 / 5 | Three overlapping authorities                  |
+| Documentation correctness       |              2 / 5 | Root improved; corpus remains stale            |
+| Automated verification          |              2 / 5 | Unit suite healthy; release path ungated       |
+| Maintainability                 |            1.5 / 5 | Excessive surface and large components         |
+| Security/operations posture     |            2.5 / 5 | Some good controls; production defaults absent |
 
 ## Reassessment of the supplied review
 
@@ -150,20 +150,20 @@ from the unverified live path.
 
 ### Verification snapshot
 
-| Check | Result |
-|---|---|
-| docker compose config --quiet | Pass |
-| Unit tests | 203 passed, 1 skipped |
-| Documentation contracts | 8 passed, 8 failed |
-| Contract suite | Interrupted at 62% after 6:04: 319 passed, 4 skipped, 27 failed, 77 errors |
-| Configured mypy run | 859 errors across 93 files |
-| Black check | 71 files would be reformatted |
-| Flake8 | Configuration fails to parse; isolated fatal-error scan found F824 in common/utils.py:92 |
-| uv pip check | 168 installed packages compatible |
-| MCP module start | Fails: expected nodejs/dist/mcp/cli.js is absent |
-| Package version check | Distribution 0.11.4; iris_vector_rag.__version__ 0.10.2 |
-| make setup-db | Exits successfully after failing to open missing common/db_init_complete.sql |
-| Secret-pattern spot check | No obvious committed private key or common API-key pattern found |
+| Check                         | Result                                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------------------------- |
+| docker compose config --quiet | Pass                                                                                     |
+| Unit tests                    | 203 passed, 1 skipped                                                                    |
+| Documentation contracts       | 8 passed, 8 failed                                                                       |
+| Contract suite                | Interrupted at 62% after 6:04: 319 passed, 4 skipped, 27 failed, 77 errors               |
+| Configured mypy run           | 859 errors across 93 files                                                               |
+| Black check                   | 71 files would be reformatted                                                            |
+| Flake8                        | Configuration fails to parse; isolated fatal-error scan found F824 in common/utils.py:92 |
+| uv pip check                  | 168 installed packages compatible                                                        |
+| MCP module start              | Fails: expected nodejs/dist/mcp/cli.js is absent                                         |
+| Package version check         | Distribution 0.11.4; iris_vector_rag.**version** 0.10.2                                  |
+| make setup-db                 | Exits successfully after failing to open missing common/db_init_complete.sql             |
+| Secret-pattern spot check     | No obvious committed private key or common API-key pattern found                         |
 
 The partial contract result should not be read as a product pass/fail ratio.
 Many errors were caused by a missing pytest-mock plugin and unavailable IRIS,
@@ -250,7 +250,7 @@ database.
 - README.md:126-133 and docs/USER_GUIDE.md:101-108 advertise Dockerfile.mcp.
 - Dockerfile.mcp references five absent build inputs and the legacy iris_rag
   package.
-- iris_vector_rag/mcp/__main__.py:41-42 and mcp/cli.py:31 expect a root nodejs
+- iris_vector_rag/mcp/**main**.py:41-42 and mcp/cli.py:31 expect a root nodejs
   directory; source is under tools/nodejs.
 - Python bridge and dual mode contain placeholder “would start” behavior rather
   than an implemented server lifecycle.
@@ -299,12 +299,11 @@ instead of retaining, targets for services no longer supported.
 **Evidence**
 
 - Root Compose and .env.example use port 1972.
-- default_config.yaml and ConfigurationManager.get_database_config() default to
-  1974.
+- default_config.yaml and ConfigurationManager.get_database_config() default to 1974.
 - ConnectionManager stores ConfigurationManager but get_connection() ignores
   it and delegates to get_iris_connection(), which reads IRIS_* environment
   variables/defaults directly.
-- ConfigurationManager supports nested RAG_* variables and legacy IRIS_*
+- ConfigurationManager supports nested RAG__variables and legacy IRIS__
   variables.
 - create_pipeline() calls ConfigurationManager.get("llm.provider") and
   get("llm.model_name"), but get() accepts colon-delimited keys; the configured
@@ -424,7 +423,7 @@ core boundary, enforce it, then expand by package.
 
 - RAGPipeline constructs IRISVectorStore when none is provided.
 - IRISVectorStore constructs SchemaManager.
-- SchemaManager.__init__ calls ensure_schema_metadata_table(), opening a
+- SchemaManager.**init** calls ensure_schema_metadata_table(), opening a
   connection and mutating schema during object construction.
 
 **Impact**
@@ -463,7 +462,7 @@ connection consolidation actually delivered.
 
 **Evidence**
 
-- pyproject.toml declares 0.11.4; iris_vector_rag.__version__ is 0.10.2.
+- pyproject.toml declares 0.11.4; iris_vector_rag.**version** is 0.10.2.
 - requires-python is >=3.11 while classifiers include Python 3.10.
 - Black targets 3.8-3.12, Mypy targets 3.10, Tox includes old paths and Python
   assumptions, and CI tests 3.11/3.12.
@@ -589,7 +588,7 @@ Preserve these improvements:
 
 Keep a library-first core and make HTTP/MCP thin, separately verified adapters.
 
-~~~text
+```text
 README quick-start / Python application
                  |
           Public create_pipeline
@@ -616,7 +615,7 @@ EmbeddingProvider |          LLMProvider
 Optional, separately gated:
   FastAPI adapter -> public pipeline protocol
   MCP adapter     -> public pipeline protocol
-~~~
+```
 
 The validation orchestrator should become a small doctor/migration service,
 not a second factory architecture. Test fakes should implement the same

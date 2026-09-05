@@ -25,6 +25,7 @@ This document presents the comprehensive design for a Desired-State Reconciliati
 **Core Goal**: Establish a Desired-State Reconciliation architecture that provides automatic data integrity management, quality validation, and state healing capabilities for RAG pipeline implementations.
 
 **Specific Objectives**:
+
 - **Automated Data Integrity**: Eliminate manual data validation through automated reconciliation processes
 - **Quality Assurance**: Detect and remediate mock embeddings, low diversity, and incomplete data
 - **Continuous Monitoring**: Provide daemon-mode operation for continuous system health monitoring
@@ -34,11 +35,13 @@ This document presents the comprehensive design for a Desired-State Reconciliati
 ### 1.3 In-Scope Components
 
 **RAG Pipelines** (Primary focus on ColBERT):
+
 - [`ColBERTRAGPipeline`](iris_rag/pipelines/colbert.py:21) - Token-level embeddings with MaxSim
 - [`BasicRAGPipeline`](iris_rag/pipelines/basic.py:21) - Standard vector similarity retrieval
 - Other RAG pipelines as configured
 
 **Core Infrastructure Components**:
+
 - [`ReconciliationController`](iris_rag/controllers/reconciliation.py:38) - Main orchestration controller
 - [`StateObserver`](iris_rag/controllers/reconciliation_components/state_observer.py:26) - System state observation
 - [`DriftAnalyzer`](iris_rag/controllers/reconciliation_components/drift_analyzer.py:23) - Drift detection and analysis
@@ -60,7 +63,7 @@ graph TB
     subgraph "CLI Interface"
         CLI[reconcile_cli.py]
     end
-    
+
     subgraph "Reconciliation Framework"
         RC[ReconciliationController]
         SO[StateObserver]
@@ -70,36 +73,36 @@ graph TB
         DC[DaemonController]
         DS[DocumentService]
     end
-    
+
     subgraph "Configuration & Validation"
         CM[ConfigurationManager]
         EV[EmbeddingValidator]
     end
-    
+
     subgraph "Data Layer"
         IRIS[(IRIS Database)]
         SD[RAG.SourceDocuments]
         DTE[RAG.DocumentTokenEmbeddings]
         DC_TABLE[RAG.DocumentChunks]
     end
-    
+
     CLI --> RC
     RC --> SO
     RC --> DA
     RC --> RE
     RC --> CV
     RC --> DC
-    
+
     SO --> CM
     SO --> EV
     RE --> DS
     DS --> IRIS
-    
+
     SO --> IRIS
     RE --> IRIS
     CV --> SO
     CV --> DA
-    
+
     IRIS --> SD
     IRIS --> DTE
     IRIS --> DC_TABLE
@@ -108,22 +111,26 @@ graph TB
 ### 2.2 Core Design Principles
 
 **1. Focused Reconciliation Design**
+
 - Reconciliation logic operates on specific pipeline types (primarily ColBERT)
 - Common interface through standardized data models and APIs
 - Pipeline-specific configuration and validation patterns
 
 **2. Observe-Analyze-Remediate-Verify Pattern**
+
 - **Observe**: Current system state observation through [`StateObserver`](iris_rag/controllers/reconciliation_components/state_observer.py:51)
 - **Analyze**: Drift detection through [`DriftAnalyzer`](iris_rag/controllers/reconciliation_components/drift_analyzer.py:36)
 - **Remediate**: Automated healing through [`RemediationEngine`](iris_rag/controllers/reconciliation_components/remediation_engine.py:82)
 - **Verify**: Convergence validation through [`ConvergenceVerifier`](iris_rag/controllers/reconciliation_components/convergence_verifier.py:46)
 
 **3. Modular Component Architecture**
+
 - Clean separation of concerns between observation, analysis, remediation, and verification
 - Extensible design supporting new pipeline types through configuration
 - Independent component lifecycle management
 
 **4. Quality-First Data Management**
+
 - Embedding quality analysis using [`EmbeddingValidator`](iris_rag/validation/embedding_validator.py)
 - Mock embedding detection and remediation
 - Diversity score analysis and low-quality embedding identification
@@ -135,6 +142,7 @@ graph TB
 **Service Boundary**: Main orchestration controller for reconciliation operations.
 
 **Interface Definition**:
+
 ```python
 class ReconciliationController:
     def reconcile(self, pipeline_type: str = "colbert", force: bool = False) -> ReconciliationResult
@@ -145,6 +153,7 @@ class ReconciliationController:
 ```
 
 **Key Responsibilities**:
+
 - Orchestrate the complete reconciliation workflow
 - Coordinate between observation, analysis, remediation, and verification components
 - Manage reconciliation sessions and progress tracking
@@ -155,6 +164,7 @@ class ReconciliationController:
 **Service Boundary**: Observes current system state and determines desired state configurations.
 
 **Interface Definition**:
+
 ```python
 class StateObserver:
     def observe_current_state(self) -> SystemState
@@ -162,6 +172,7 @@ class StateObserver:
 ```
 
 **Key Responsibilities**:
+
 - Query current document and embedding counts from database
 - Analyze embedding quality using [`EmbeddingValidator`](iris_rag/validation/embedding_validator.py)
 - Determine desired state from configuration
@@ -172,12 +183,14 @@ class StateObserver:
 **Service Boundary**: Analyzes drift between current and desired system states.
 
 **Interface Definition**:
+
 ```python
 class DriftAnalyzer:
     def analyze_drift(self, current_state: SystemState, desired_state: DesiredState) -> DriftAnalysis
 ```
 
 **Key Responsibilities**:
+
 - Detect mock embedding contamination
 - Identify low diversity embeddings
 - Find missing or incomplete token embeddings
@@ -189,13 +202,15 @@ class DriftAnalyzer:
 **Service Boundary**: Executes remediation actions to fix detected drift issues.
 
 **Interface Definition**:
+
 ```python
 class RemediationEngine:
-    def remediate_drift(self, drift_analysis: DriftAnalysis, desired_state: DesiredState, 
+    def remediate_drift(self, drift_analysis: DriftAnalysis, desired_state: DesiredState,
                        current_state: SystemState) -> List[ReconciliationAction]
 ```
 
 **Key Responsibilities**:
+
 - Clear and regenerate contaminated embeddings
 - Generate missing embeddings for documents
 - Process documents in optimized batches
@@ -207,12 +222,14 @@ class RemediationEngine:
 **Service Boundary**: Verifies system convergence to desired state after remediation.
 
 **Interface Definition**:
+
 ```python
 class ConvergenceVerifier:
     def check_convergence(self, desired_state: DesiredState, actions_taken: List[ReconciliationAction]) -> ConvergenceCheck
 ```
 
 **Key Responsibilities**:
+
 - Re-observe system state after remediation
 - Re-analyze drift to confirm convergence
 - Report remaining issues if convergence not achieved
@@ -223,6 +240,7 @@ class ConvergenceVerifier:
 **Service Boundary**: Manages continuous reconciliation operations and daemon mode execution.
 
 **Interface Definition**:
+
 ```python
 class DaemonController:
     def run_daemon(self, interval: Optional[int] = None, max_iterations: Optional[int] = None) -> None
@@ -232,6 +250,7 @@ class DaemonController:
 ```
 
 **Key Responsibilities**:
+
 - Execute continuous reconciliation loops
 - Handle signal-based graceful shutdown
 - Manage iteration counting and interval timing
@@ -250,22 +269,22 @@ sequenceDiagram
     participant RE as RemediationEngine
     participant CV as ConvergenceVerifier
     participant DB as IRIS Database
-    
+
     CLI->>RC: reconcile(pipeline_type, force)
-    
+
     Note over RC,DB: Phase 1: OBSERVE
     RC->>SO: observe_current_state()
     SO->>DB: Query documents and embeddings
     DB-->>SO: Current state data
     SO-->>RC: SystemState
-    
+
     RC->>SO: get_desired_state(pipeline_type)
     SO-->>RC: DesiredState
-    
+
     Note over RC,DB: Phase 2: ANALYZE
     RC->>DA: analyze_drift(current_state, desired_state)
     DA-->>RC: DriftAnalysis
-    
+
     Note over RC,DB: Phase 3: REMEDIATE
     alt drift detected or force=true
         RC->>RE: remediate_drift(drift_analysis, desired_state, current_state)
@@ -274,13 +293,13 @@ sequenceDiagram
         end
         RE-->>RC: List[ReconciliationAction]
     end
-    
+
     Note over RC,DB: Phase 4: VERIFY
     RC->>CV: check_convergence(desired_state, actions_taken)
     CV->>SO: observe_current_state()
     CV->>DA: analyze_drift(new_state, desired_state)
     CV-->>RC: ConvergenceCheck
-    
+
     RC-->>CLI: ReconciliationResult
 ```
 
@@ -291,6 +310,7 @@ sequenceDiagram
 ### 3.1 Core Data Structures
 
 #### Configuration Models
+
 ```python
 @dataclass
 class SystemState:
@@ -320,6 +340,7 @@ class CompletenessRequirements:
 ```
 
 #### Progress Tracking Models
+
 ```python
 @dataclass
 class DriftIssue:
@@ -348,31 +369,31 @@ class ReconciliationResult:
 def execute_reconciliation_operation(pipeline_type: str, force: bool = False) -> ReconciliationResult:
     """
     Main reconciliation operation executor.
-    
+
     ALGORITHM:
     1. OBSERVE_CURRENT_STATE:
        - Query document count from RAG.SourceDocuments
        - Query token embedding count from RAG.DocumentTokenEmbeddings
        - Analyze embedding quality using EmbeddingValidator
        - Identify documents with missing/incomplete embeddings
-       
+
     2. GET_DESIRED_STATE:
        - Load configuration for specified pipeline_type
        - Extract target document count and embedding requirements
        - Set quality thresholds and completeness requirements
-       
+
     3. ANALYZE_DRIFT:
        - Compare current vs desired document counts
        - Check for mock embedding contamination
        - Identify low diversity embeddings
        - Find missing or incomplete token embeddings
-       
+
     4. REMEDIATE_DRIFT:
        - Clear and regenerate contaminated embeddings
        - Generate missing embeddings for documents
        - Process in optimized batches with memory management
        - Use insert_vector utility for consistent storage
-       
+
     5. VERIFY_CONVERGENCE:
        - Re-observe system state after remediation
        - Re-analyze drift to confirm convergence
@@ -383,6 +404,7 @@ def execute_reconciliation_operation(pipeline_type: str, force: bool = False) ->
 ### 3.3 Pipeline-Specific Reconciliation Logic
 
 #### ColBERT Pipeline Reconciliation
+
 ```python
 def reconcile_colbert_pipeline(target_doc_count: int) -> ReconciliationResult:
     """
@@ -404,21 +426,22 @@ def reconcile_colbert_pipeline(target_doc_count: int) -> ReconciliationResult:
 ### 4.1 Configuration Management
 
 #### ColBERT Configuration Schema
+
 ```yaml
 # ColBERT Reconciliation Configuration
 reconciliation:
   enabled: true
-  mode: "progressive"  # progressive | complete | emergency
+  mode: "progressive" # progressive | complete | emergency
   interval_hours: 24
   error_retry_minutes: 5
-  
+
   performance:
     max_concurrent_pipelines: 3
     batch_size_documents: 100
     batch_size_embeddings: 50
     memory_limit_gb: 8
     cpu_limit_percent: 70
-    
+
   error_handling:
     max_retries: 3
     retry_delay_seconds: 30
@@ -428,19 +451,19 @@ colbert:
   target_document_count: 1000
   model_name: "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT"
   token_dimension: 768
-  
+
   validation:
     diversity_threshold: 0.7
     mock_detection_enabled: true
     min_embedding_quality_score: 0.8
-    
+
   completeness:
     require_all_docs: true
     require_token_embeddings: true
     min_completeness_percent: 95.0
     max_missing_documents: 50
     min_embeddings_per_doc: 5
-    
+
   remediation:
     auto_heal_missing_embeddings: true
     auto_migrate_schema: false
@@ -450,6 +473,7 @@ colbert:
 ```
 
 #### Environment Variable Resolution
+
 ```python
 # Environment variable resolution pattern
 ${ENV_VAR_NAME:default_value}
@@ -458,7 +482,7 @@ ${ENV_VAR_NAME:default_value}
 database:
   db_host: "${IRIS_HOST:localhost}"
   db_port: "${IRIS_PORT:1972}"
-  
+
 reconciliation:
   performance:
     memory_limit_gb: "${RECONCILIATION_MEMORY_GB:8}"
@@ -469,6 +493,7 @@ reconciliation:
 #### Existing RAG Tables (Used by Reconciliation)
 
 **RAG.SourceDocuments**:
+
 ```sql
 -- Primary table for document storage
 -- Contains document content and metadata
@@ -476,6 +501,7 @@ reconciliation:
 ```
 
 **RAG.DocumentTokenEmbeddings**:
+
 ```sql
 -- Primary table for token-level embeddings
 -- Contains token_text, token_embedding, doc_id, token_index
@@ -483,6 +509,7 @@ reconciliation:
 ```
 
 **RAG.DocumentChunks**:
+
 ```sql
 -- Optional table for document chunking
 -- Used by some pipelines for hierarchical processing
@@ -491,6 +518,7 @@ reconciliation:
 ### 4.3 CLI Interface
 
 #### Command Structure
+
 ```bash
 # Execute reconciliation
 python -m iris_rag.cli.reconcile_cli reconcile run --pipeline colbert
@@ -505,6 +533,7 @@ python -m iris_rag.cli.reconcile_cli reconcile daemon --pipeline colbert --inter
 ```
 
 #### CLI Implementation Features
+
 - **Dry-run mode**: Analyze drift without executing remediation
 - **Force mode**: Execute reconciliation regardless of drift detection
 - **Status reporting**: Detailed system state and drift analysis
@@ -519,6 +548,7 @@ python -m iris_rag.cli.reconcile_cli reconcile daemon --pipeline colbert --inter
 ### 5.1 TDD Implementation Approach
 
 **Core Principles**:
+
 - **Test-First Development**: Write failing tests before implementing functional code (Red-Green-Refactor cycle)
 - **pytest Framework**: All tests implemented using `pytest`, leveraging fixtures and assertion capabilities
 - **Test Isolation**: Each test case independent, ensuring no reliance on state of other tests
@@ -529,27 +559,32 @@ python -m iris_rag.cli.reconcile_cli reconcile daemon --pipeline colbert --inter
 ### 5.2 Prioritized Test Areas
 
 **P0: Core Components Unit Tests**
+
 - [`ReconciliationController`](iris_rag/controllers/reconciliation.py:38)
 - [`StateObserver`](iris_rag/controllers/reconciliation_components/state_observer.py:26)
 - [`DriftAnalyzer`](iris_rag/controllers/reconciliation_components/drift_analyzer.py:23)
 - [`RemediationEngine`](iris_rag/controllers/reconciliation_components/remediation_engine.py:29)
 
 **P1: Configuration Management**
+
 - Configuration loading and validation
 - Environment variable resolution
 - Pipeline-specific configuration parsing
 
 **P2: Component Integration Tests**
+
 - [`ReconciliationController`](iris_rag/controllers/reconciliation.py:38) with all components
 - [`StateObserver`](iris_rag/controllers/reconciliation_components/state_observer.py:26) with [`ConfigurationManager`](iris_rag/config/manager.py:10) and [`ConnectionManager`](iris_rag/core/connection.py)
 - [`RemediationEngine`](iris_rag/controllers/reconciliation_components/remediation_engine.py:29) with [`DocumentService`](iris_rag/controllers/reconciliation_components/document_service.py:18)
 
 **P3: Database Operations**
+
 - Document and embedding CRUD operations
 - Vector insertion using [`insert_vector`](common/db_vector_utils.py) utility
 - Quality analysis and mock detection
 
 **P4: End-to-End Reconciliation**
+
 - Full reconciliation cycle (Observe, Analyze, Remediate, Verify)
 - Daemon mode operation and signal handling
 - CLI interface and command execution
@@ -557,11 +592,13 @@ python -m iris_rag.cli.reconcile_cli reconcile daemon --pipeline colbert --inter
 ### 5.3 Test Data Requirements
 
 **Mock Objects**:
+
 - Mock [`ConnectionManager`](iris_rag/core/connection.py) to simulate various database states
 - Mock [`ConfigurationManager`](iris_rag/config/manager.py:10) to provide different configurations
 - Mock embedding functions for controlled testing
 
 **Sample IRIS Database States**:
+
 - Empty database (no documents or embeddings)
 - Correctly populated state with complete embeddings
 - State with missing embeddings for some documents
@@ -569,6 +606,7 @@ python -m iris_rag.cli.reconcile_cli reconcile daemon --pipeline colbert --inter
 - State with incomplete token embeddings
 
 **Real Data**:
+
 - Dataset of at least 1000 PMC documents for E2E tests requiring actual data processing and embedding generation
 
 ---
@@ -578,6 +616,7 @@ python -m iris_rag.cli.reconcile_cli reconcile daemon --pipeline colbert --inter
 ### 6.1 Database Query Optimization
 
 **Batch Query Optimization**:
+
 ```python
 # Optimized approach for document processing
 documents = retrieve_documents_batch(missing_doc_ids, batch_size=100)
@@ -587,6 +626,7 @@ cursor.execute("SELECT TOP 5 token_embedding FROM RAG.DocumentTokenEmbeddings")
 ```
 
 **Memory Management**:
+
 - Process documents in configurable batches (default: 10 documents per batch)
 - Use streaming for CLOB content reading
 - Implement garbage collection triggers for large operations
@@ -594,6 +634,7 @@ cursor.execute("SELECT TOP 5 token_embedding FROM RAG.DocumentTokenEmbeddings")
 ### 6.2 Embedding Generation Optimization
 
 **Batch Processing**:
+
 ```python
 # Process embeddings in optimized batches
 batch_size = config.get('embedding_generation_batch_size', 32)
@@ -603,6 +644,7 @@ for i in range(0, len(tokens), batch_size):
 ```
 
 **Vector Storage Optimization**:
+
 - Use [`insert_vector`](common/db_vector_utils.py) utility for consistent vector handling
 - Automatic dimension validation and padding/truncation
 - Proper TO_VECTOR() syntax for IRIS database
@@ -610,12 +652,13 @@ for i in range(0, len(tokens), batch_size):
 ### 6.3 Daemon Mode Optimization
 
 **Responsive Shutdown**:
+
 ```python
 # Sleep in chunks to allow for responsive shutdown
 def _interruptible_sleep(self, sleep_interval: int) -> None:
     sleep_chunks = max(1, sleep_interval // 10)
     chunk_duration = sleep_interval / sleep_chunks
-    
+
     for _ in range(sleep_chunks):
         if self._stop_event.is_set():
             break
@@ -623,6 +666,7 @@ def _interruptible_sleep(self, sleep_interval: int) -> None:
 ```
 
 **Error Recovery**:
+
 - Use shorter retry intervals after failures
 - Implement exponential backoff for persistent errors
 - Graceful degradation under resource constraints
@@ -634,6 +678,7 @@ def _interruptible_sleep(self, sleep_interval: int) -> None:
 ### 7.1 Input Validation
 
 **Pipeline Type Validation**:
+
 ```python
 ALLOWED_PIPELINE_TYPES = {'basic', 'colbert', 'noderag', 'graphrag', 'hyde', 'crag', 'hybrid_ifind'}
 
@@ -644,6 +689,7 @@ def validate_pipeline_type(pipeline_type: str) -> str:
 ```
 
 **SQL Injection Prevention**:
+
 - Use parameterized queries exclusively
 - Validate all user inputs before database operations
 - Implement input sanitization for configuration values
@@ -651,6 +697,7 @@ def validate_pipeline_type(pipeline_type: str) -> str:
 ### 7.2 Configuration Security
 
 **Secure Configuration Management**:
+
 ```python
 # Environment variable resolution with validation
 def get_secure_config_value(key: str, default: Any = None) -> Any:
@@ -661,6 +708,7 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 ```
 
 **Credential Management**:
+
 - Use environment variables for sensitive configuration
 - Implement configuration validation and type checking
 - Avoid logging sensitive configuration values
@@ -668,11 +716,13 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 ### 7.3 Database Security
 
 **Connection Security**:
+
 - Use connection pooling with proper timeout settings
 - Implement proper error handling for database operations
 - Validate database schema before operations
 
 **Data Integrity**:
+
 - Use transactions for multi-step operations
 - Implement rollback mechanisms for failed operations
 - Validate data consistency after modifications
@@ -684,49 +734,61 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 ### 8.1 Implementation Phases
 
 #### Phase 1: Core Infrastructure (Weeks 1-2)
+
 **Deliverables**:
+
 - [`ReconciliationController`](iris_rag/controllers/reconciliation.py:38) implementation with basic reconciliation loop
 - [`StateObserver`](iris_rag/controllers/reconciliation_components/state_observer.py:26) with current state observation
 - [`ConfigurationManager`](iris_rag/config/manager.py:10) with environment variable resolution
 - Basic unit tests for core components
 
 **Success Criteria**:
+
 - Can observe current system state from database
 - Configuration loading works with environment variables
 - Basic reconciliation loop executes without errors
 
 #### Phase 2: Drift Analysis and Remediation (Weeks 3-4)
+
 **Deliverables**:
+
 - [`DriftAnalyzer`](iris_rag/controllers/reconciliation_components/drift_analyzer.py:23) implementation with quality analysis
 - [`RemediationEngine`](iris_rag/controllers/reconciliation_components/remediation_engine.py:29) with embedding generation
 - [`DocumentService`](iris_rag/controllers/reconciliation_components/document_service.py:18) with CRUD operations
 - Integration tests between components
 
 **Success Criteria**:
+
 - Can detect mock embeddings and low diversity issues
 - Can generate missing embeddings for documents
 - Error recovery works for transient failures
 
 #### Phase 3: Verification and CLI (Weeks 5-6)
+
 **Deliverables**:
+
 - [`ConvergenceVerifier`](iris_rag/controllers/reconciliation_components/convergence_verifier.py:25) implementation
 - [`CLI interface`](iris_rag/cli/reconcile_cli.py) with all commands
 - [`DaemonController`](iris_rag/controllers/reconciliation_components/daemon_controller.py:23) for continuous operation
 - Comprehensive end-to-end testing
 
 **Success Criteria**:
+
 - Convergence verification works correctly
 - CLI provides user-friendly interface
 - Daemon mode operates reliably
 
 #### Phase 4: Optimization and Production Readiness (Weeks 7-8)
+
 **Deliverables**:
+
 - Performance optimization and batch processing
 - Security hardening implementation
 - Monitoring and alerting capabilities
 - Production deployment procedures
 
 **Success Criteria**:
+
 - Performance targets met for 1K+ document reconciliation
 - Security vulnerabilities addressed
 - Production deployment procedures validated
@@ -734,6 +796,7 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 ### 8.2 Operational Procedures
 
 #### Daily Operations Checklist
+
 1. **Health Check**: Verify reconciliation system status using CLI
 2. **Resource Monitoring**: Check memory and CPU usage trends
 3. **Error Review**: Analyze any reconciliation failures from previous day
@@ -743,6 +806,7 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 #### Incident Response Procedures
 
 **Reconciliation Failure Response**:
+
 1. **Immediate**: Check system resources and database connectivity
 2. **Investigate**: Review error logs and identify root cause
 3. **Mitigate**: Execute rollback if data corruption detected
@@ -750,6 +814,7 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 5. **Follow-up**: Update monitoring to prevent similar issues
 
 **Performance Degradation Response**:
+
 1. **Assess**: Identify which pipelines are affected
 2. **Scale**: Reduce batch sizes or concurrent operations
 3. **Optimize**: Review and adjust resource limits
@@ -765,16 +830,19 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 #### Phase 2 Enhancements (Months 3-6)
 
 **1. Multi-Pipeline Support**
+
 - Extend reconciliation to support all RAG pipeline types
 - Pipeline-specific validation and remediation strategies
 - Cross-pipeline dependency management
 
 **2. Advanced Quality Analysis**
+
 - Machine learning-based quality scoring
 - Anomaly detection for embedding patterns
 - Automated quality threshold adjustment
 
 **3. Performance Optimization**
+
 - Parallel processing for multiple pipelines
 - Advanced memory management and streaming
 - Caching strategies for frequently accessed data
@@ -782,16 +850,19 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 #### Phase 3 Enhancements (Months 6-12)
 
 **1. Real-Time Reconciliation**
+
 - Event-driven reconciliation triggers
 - Stream processing for continuous validation
 - Real-time dashboard for system status
 
 **2. Advanced Analytics**
+
 - Reconciliation performance analytics and reporting
 - Data quality metrics and trending
 - Predictive maintenance for pipeline health
 
 **3. Enterprise Features**
+
 - Multi-tenant support with isolation
 - Advanced security and compliance features
 - Integration with enterprise monitoring systems
@@ -799,13 +870,14 @@ def get_secure_config_value(key: str, default: Any = None) -> Any:
 ### 9.2 Extensibility Framework
 
 #### Plugin Architecture
+
 ```python
 class ReconciliationPlugin(ABC):
     @abstractmethod
     def validate_pipeline_data(self, pipeline_type: str, data_state: SystemState) -> ValidationResult:
         """Custom validation logic for specific pipeline types."""
         pass
-    
+
     @abstractmethod
     def remediate_data_issues(self, issues: List[DriftIssue]) -> RemediationResult:
         """Custom remediation logic for specific data issues."""
@@ -813,12 +885,13 @@ class ReconciliationPlugin(ABC):
 ```
 
 #### API Extensions
+
 ```python
 class ReconciliationAPI:
     def register_custom_validator(self, pipeline_type: str, validator: CustomValidator) -> None:
         """Register custom validation logic for specific pipeline types."""
         pass
-    
+
     def register_custom_remediator(self, issue_type: str, remediator: CustomRemediator) -> None:
         """Register custom remediation logic for specific data issues."""
         pass
@@ -827,12 +900,14 @@ class ReconciliationAPI:
 ### 9.3 Integration Opportunities
 
 #### External System Integration
+
 - **Monitoring Systems**: Integration with Prometheus/Grafana for advanced monitoring
 - **Workflow Orchestration**: Integration with Apache Airflow for scheduled reconciliation
 - **CI/CD Pipelines**: Integration with GitLab CI/CD for automated reconciliation testing
 - **Alerting Systems**: Integration with PagerDuty or similar for incident management
 
 #### Enterprise Features
+
 - **Authentication**: Integration with LDAP/Active Directory for user management
 - **Logging**: Integration with ELK stack for centralized logging
 - **Compliance**: GDPR and SOX compliance features for data handling
@@ -845,13 +920,15 @@ class ReconciliationAPI:
 The Comprehensive Generalized Reconciliation Architecture provides a robust, focused, and scalable foundation for maintaining data integrity across RAG pipeline implementations. The current implementation delivers:
 
 **Key Benefits**:
+
 - **Automated Data Integrity**: Continuous monitoring and healing of data quality issues
-mode operation with minimal manual intervention
+  mode operation with minimal manual intervention
 - **Developer Experience**: Clear APIs and comprehensive CLI interface
 - **Quality Assurance**: Advanced embedding quality analysis and mock detection
 - **Scalability**: Performance-optimized design supporting production-scale deployments
 
 **Implementation Success Factors**:
+
 - **Test-Driven Development**: Comprehensive test coverage ensuring reliability
 - **Modular Architecture**: Clean separation of concerns enabling maintainability
 - **Security-First Design**: Input validation and secure configuration management
@@ -861,6 +938,7 @@ mode operation with minimal manual intervention
 This architecture serves as the definitive guide for implementing a production-ready reconciliation system that ensures the long-term reliability and maintainability of RAG pipeline data integrity.
 
 **Next Steps**:
+
 1. Begin Phase 1 implementation with core infrastructure components
 2. Establish TDD workflow with initial test cases for [`ReconciliationController`](iris_rag/controllers/reconciliation.py:38)
 3. Set up development environment with proper configuration management
@@ -868,4 +946,5 @@ This architecture serves as the definitive guide for implementing a production-r
 5. Establish monitoring and operational procedures for daemon mode
 
 The successful implementation of this architecture provides a solid foundation for scaling RAG operations while maintaining the highest standards of data integrity, quality assurance, and operational reliability.
+
 - **Operational Excellence**: Daemon-

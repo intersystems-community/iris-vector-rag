@@ -73,7 +73,7 @@ fi
 
 # Step 2: Create temporary working directory
 TEMP_DIR=$(mktemp -d)
-trap "rm -rf $TEMP_DIR" EXIT
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
 echo "📂 Creating temporary working directory: $TEMP_DIR"
 

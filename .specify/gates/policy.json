@@ -1,0 +1,148 @@
+{
+  "_comment": "spec-gates policy (USER-OWNED; init seeds, upgrade never overwrites). Adapted for iris-vector-rag: block_main_commits=false because this repo commits to master directly; specs/, generated reports, caches, .venv and .claude are out of scope. Schema: .specify/gates/policy.schema.json.",
+  "hooks": {
+    "prettier": {
+      "include": [
+        "**/*.md",
+        "**/*.yml",
+        "**/*.yaml",
+        "**/*.json"
+      ],
+      "exclude": [
+        "**/.mypy_cache/**",
+        "**/.pytest_cache/**",
+        "**/.ruff_cache/**",
+        "**/.venv/**",
+        "**/__pycache__/**",
+        "**/node_modules/**",
+        "**/tests/fixtures/**",
+        "*.egg-info/**",
+        ".agents/**",
+        ".claude/**",
+        ".git/**",
+        ".mypy_cache/**",
+        ".opencode/**",
+        ".pytest_cache/**",
+        ".ruff_cache/**",
+        ".specify/**",
+        ".venv/**",
+        "LICENSE",
+        "build/**",
+        "data/**",
+        "dist/**",
+        "docs/archived/**",
+        "evaluation_framework/evaluation_results/**",
+        "htmlcov/**",
+        "node_modules/**",
+        "outputs/**",
+        "scripts/validation/reports/**",
+        "specs/**",
+        "tools/nodejs/**"
+      ],
+      "orchestrator": "none",
+      "severity": "error"
+    },
+    "markdownlint": {
+      "include": [
+        "**/*.md"
+      ],
+      "exclude": [
+        "**/.mypy_cache/**",
+        "**/.pytest_cache/**",
+        "**/.ruff_cache/**",
+        "**/.venv/**",
+        "**/__pycache__/**",
+        "**/node_modules/**",
+        "**/target/**",
+        "**/tests/fixtures/**",
+        "*.egg-info/**",
+        ".agents/**",
+        ".claude/**",
+        ".git/**",
+        ".mypy_cache/**",
+        ".opencode/**",
+        ".pytest_cache/**",
+        ".ruff_cache/**",
+        ".specify/**",
+        ".venv/**",
+        "build/**",
+        "data/**",
+        "dist/**",
+        "docs/archived/**",
+        "evaluation_framework/evaluation_results/**",
+        "htmlcov/**",
+        "node_modules/**",
+        "outputs/**",
+        "scripts/validation/reports/**",
+        "specs/**",
+        "target/**",
+        "tools/nodejs/**"
+      ],
+      "orchestrator": "none",
+      "severity": "error"
+    },
+    "shellcheck": {
+      "include": [
+        "**/*.sh"
+      ],
+      "exclude": [
+        "**/.mypy_cache/**",
+        "**/.pytest_cache/**",
+        "**/.ruff_cache/**",
+        "**/.venv/**",
+        "**/__pycache__/**",
+        "**/dist/**",
+        "**/node_modules/**",
+        "**/target/**",
+        ".agents/**",
+        ".claude/**",
+        ".git/**",
+        ".mypy_cache/**",
+        ".opencode/**",
+        ".pytest_cache/**",
+        ".ruff_cache/**",
+        ".specify/**",
+        ".venv/**",
+        "build/**",
+        "data/**",
+        "dist/**",
+        "node_modules/**",
+        "scripts/setup/*_deprecated.sh",
+        "specs/**",
+        "target/**",
+        "tools/nodejs/**"
+      ],
+      "orchestrator": "none",
+      "severity": "error"
+    },
+    "verify-quality": {
+      "orchestrator": "none",
+      "severity": "error"
+    }
+  },
+  "protected_files": {
+    "extra": [
+      ".specify/memory/constitution.md",
+      ".specify/gates/policy.json"
+    ]
+  },
+  "git": {
+    "block_main_commits": false,
+    "conventional_commits": true,
+    "forbid_ai_isms": true
+  },
+  "attestation": {
+    "enabled": true,
+    "max_records": 200,
+    "parity": "error"
+  },
+  "spec": {
+    "enabled": true,
+    "severity": "error",
+    "include": [
+      "*"
+    ],
+    "exclude": [],
+    "timeout_s": 30
+  }
+}

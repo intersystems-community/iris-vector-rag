@@ -12,7 +12,7 @@
           "expected_topics": ["machine learning", "definition", "algorithms", "data"]
         },
         {
-          "id": "basic_002", 
+          "id": "basic_002",
           "query": "How does a neural network work?",
           "category": "explanation",
           "difficulty": "easy",
@@ -42,7 +42,7 @@
       ]
     },
     "intermediate": {
-      "name": "Intermediate Questions", 
+      "name": "Intermediate Questions",
       "description": "More complex questions requiring deeper understanding",
       "queries": [
         {
@@ -56,7 +56,7 @@
           "id": "inter_002",
           "query": "What is the bias-variance tradeoff and why is it important?",
           "category": "theory",
-          "difficulty": "medium", 
+          "difficulty": "medium",
           "expected_topics": ["bias", "variance", "tradeoff", "model complexity"]
         },
         {
@@ -91,7 +91,12 @@
           "query": "How would you design a recommendation system for a large e-commerce platform, considering scalability, real-time updates, and cold start problems?",
           "category": "system_design",
           "difficulty": "hard",
-          "expected_topics": ["recommendation systems", "scalability", "cold start", "collaborative filtering"]
+          "expected_topics": [
+            "recommendation systems",
+            "scalability",
+            "cold start",
+            "collaborative filtering"
+          ]
         },
         {
           "id": "adv_002",
@@ -112,14 +117,23 @@
           "query": "Design a distributed machine learning system for training models on petabyte-scale datasets",
           "category": "architecture",
           "difficulty": "hard",
-          "expected_topics": ["distributed computing", "big data", "model parallelism", "data parallelism"]
+          "expected_topics": [
+            "distributed computing",
+            "big data",
+            "model parallelism",
+            "data parallelism"
+          ]
         },
         {
           "id": "adv_005",
           "query": "How do you implement differential privacy in machine learning while maintaining model performance?",
           "category": "privacy",
           "difficulty": "hard",
-          "expected_topics": ["differential privacy", "privacy-preserving ML", "performance tradeoffs"]
+          "expected_topics": [
+            "differential privacy",
+            "privacy-preserving ML",
+            "performance tradeoffs"
+          ]
         }
       ]
     },
@@ -214,12 +228,18 @@
           "query": "If transformer models use attention mechanisms and attention mechanisms help with long-range dependencies, how do transformers compare to LSTMs for sequence modeling?",
           "category": "multi_step",
           "difficulty": "hard",
-          "expected_topics": ["transformers", "attention", "LSTM", "sequence modeling", "comparison"]
+          "expected_topics": [
+            "transformers",
+            "attention",
+            "LSTM",
+            "sequence modeling",
+            "comparison"
+          ]
         },
         {
           "id": "multi_002",
           "query": "Given that gradient descent is used for optimization and neural networks use backpropagation for training, what are the limitations of gradient-based optimization in deep learning?",
-          "category": "multi_step", 
+          "category": "multi_step",
           "difficulty": "hard",
           "expected_topics": ["gradient descent", "backpropagation", "optimization", "limitations"]
         },
@@ -250,7 +270,7 @@
           }
         },
         {
-          "id": "comp_002", 
+          "id": "comp_002",
           "name": "Complex Query Test",
           "query": "How do attention mechanisms in transformers address the limitations of RNNs in handling long sequences?",
           "expected_differences": {
@@ -270,7 +290,7 @@
     "total_queries": 27,
     "categories": [
       "basic",
-      "intermediate", 
+      "intermediate",
       "advanced",
       "domain_specific",
       "rag_specific",
@@ -279,7 +299,7 @@
     "difficulty_levels": ["easy", "medium", "hard"],
     "usage_notes": [
       "Basic queries are suitable for initial testing and demonstrations",
-      "Intermediate queries test deeper understanding and retrieval quality", 
+      "Intermediate queries test deeper understanding and retrieval quality",
       "Advanced queries challenge the system with complex, multi-faceted problems",
       "Domain-specific queries test knowledge in specialized areas",
       "RAG-specific queries are designed to test RAG system capabilities",

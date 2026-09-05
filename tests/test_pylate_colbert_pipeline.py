@@ -445,7 +445,7 @@ class TestPyLateColBERTPipeline:
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(return_value=[])
-            pipeline.load_documents([])
+            pipeline.load_documents(documents=[])
 
         assert pipeline.stats["documents_indexed"] == 0
 
@@ -467,7 +467,7 @@ class TestPyLateColBERTPipeline:
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(return_value=["id1"])
-            pipeline.load_documents([sample_documents[0]])
+            pipeline.load_documents(documents=[sample_documents[0]])
 
         assert len(pipeline._document_store) == 1
         assert pipeline.stats["documents_indexed"] == 1

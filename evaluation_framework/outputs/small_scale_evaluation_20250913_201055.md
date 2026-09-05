@@ -1,6 +1,7 @@
 # Small-Scale Biomedical RAG Evaluation Report
 
 ## Executive Summary
+
 - **Evaluation Date**: 20250913_201055
 - **Documents Processed**: 5
 - **Questions Evaluated**: 5
@@ -25,7 +26,7 @@
 ## Technical Validation
 
 ✅ Document loading functional
-✅ Question generation operational  
+✅ Question generation operational
 ✅ Pipeline execution successful
 ✅ RAGAS metrics calculated
 ✅ Statistical analysis performed

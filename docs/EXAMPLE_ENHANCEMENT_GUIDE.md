@@ -34,14 +34,16 @@ Examples serve as the primary interface between the RAG-Templates framework and 
 **Target Audience**: New users, integration testing
 **Complexity**: Low to Medium
 
-#### Guidelines:
+#### Guidelines
+
 - Focus on single RAG pipeline functionality
 - Use clear, descriptive variable names
 - Include comprehensive error handling
 - Provide sample queries and expected outputs
 - Keep execution time under 3 minutes
 
-#### Template Structure:
+#### Template Structure
+
 ```python
 #!/usr/bin/env python3
 """
@@ -132,14 +134,16 @@ if __name__ == "__main__":
 **Target Audience**: Advanced users, researchers
 **Complexity**: Medium to High
 
-#### Guidelines:
+#### Guidelines
+
 - Demonstrate multiple retrieval strategies
 - Include performance comparisons
 - Show error correction and quality assessment
 - Provide detailed metrics and analysis
 - Support configurable parameters
 
-#### Advanced Features:
+#### Advanced Features
+
 - Relevance evaluation and correction
 - Multi-step reasoning
 - Graph-based retrieval
@@ -152,7 +156,8 @@ if __name__ == "__main__":
 **Target Audience**: Presentations, educational content
 **Complexity**: Variable
 
-#### Guidelines:
+#### Guidelines
+
 - Emphasize visual and interactive elements
 - Generate exportable artifacts (HTML, JSON, images)
 - Include step-by-step explanations
@@ -164,6 +169,7 @@ if __name__ == "__main__":
 ### Code Quality
 
 #### Import Management
+
 ```python
 # Standard library imports first
 import os
@@ -182,6 +188,7 @@ from common.utils import get_llm_func
 ```
 
 #### Error Handling
+
 ```python
 def robust_pipeline_creation(pipeline_type: str) -> Pipeline:
     """Create pipeline with comprehensive error handling."""
@@ -206,6 +213,7 @@ def robust_pipeline_creation(pipeline_type: str) -> Pipeline:
 ```
 
 #### Configuration Management
+
 ```python
 class ExampleConfig:
     """Centralized configuration for examples."""
@@ -227,6 +235,7 @@ class ExampleConfig:
 ### Performance Optimization
 
 #### Resource Management
+
 ```python
 import psutil
 from contextlib import contextmanager
@@ -256,6 +265,7 @@ with resource_monitor("Pipeline Creation"):
 ```
 
 #### Efficient Data Handling
+
 ```python
 def load_sample_data(limit: int = 100) -> List[Document]:
     """Load sample data with memory efficiency."""
@@ -373,7 +383,7 @@ def example_function(query: str, top_k: int = 5) -> Dict[str, Any]:
 
 Each example directory should include a README.md:
 
-```markdown
+````markdown
 # Category Examples
 
 Brief description of the examples in this category.
@@ -381,15 +391,18 @@ Brief description of the examples in this category.
 ## Examples
 
 ### `try_example_name.py`
+
 **Purpose**: Brief description
 **Complexity**: Low/Medium/High
 **Runtime**: ~X minutes
 **Dependencies**: List key requirements
 
 **Usage**:
+
 ```bash
 python try_example_name.py
 ```
+````
 
 **Expected Output**: Description of what users should see
 
@@ -400,7 +413,6 @@ Environment variables and configuration options.
 ## Troubleshooting
 
 Common issues and solutions.
-```
 
 ## Performance Guidelines
 
@@ -419,23 +431,25 @@ Common issues and solutions.
 ### Optimization Techniques
 
 #### Lazy Loading
-```python
+
+````python
 def load_documents_lazy(source_dir: Path):
     """Load documents on-demand to reduce memory usage."""
     for file_path in source_dir.glob("*.txt"):
         yield Document.from_file(file_path)
-```
 
 #### Batch Processing
+
 ```python
 def process_queries_batch(queries: List[str], batch_size: int = 5):
     """Process queries in batches to manage resources."""
     for i in range(0, len(queries), batch_size):
         batch = queries[i:i + batch_size]
         yield [pipeline.query(q) for q in batch]
-```
+````
 
 #### Resource Cleanup
+
 ```python
 def cleanup_resources(pipeline):
     """Clean up resources after example completion."""
@@ -591,11 +605,12 @@ def process_with_progress(items: List, description: str):
             yield item
 ```
 
-## Troubleshooting
+## Troubleshooting Examples
 
 ### Common Issues
 
 #### Import Errors
+
 ```python
 # Solution: Add project root to Python path
 project_root = Path(__file__).parent.parent.parent
@@ -603,6 +618,7 @@ sys.path.insert(0, str(project_root))
 ```
 
 #### Database Connection Issues
+
 ```python
 def check_database_connection():
     """Verify database connectivity before starting."""
@@ -620,6 +636,7 @@ def check_database_connection():
 ```
 
 #### API Key Issues
+
 ```python
 def validate_api_keys():
     """Check required API keys are available."""

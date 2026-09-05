@@ -15,18 +15,19 @@
 
 Schema observed for a collection with keys `source` (str), `page` (int), `score` (float), `published` (date), `active` (bool):
 
-| Column | Type | Max Length |
-|--------|------|-----------|
-| `id` | varchar | 36 |
-| `embedding` | varchar | 531,455 |
-| `document` | longvarchar | 2,147,483,647 |
-| `m_source` | varchar | 1024 |
-| `m_page` | bigint | — |
-| `m_score` | double | — |
-| `m_published` | date | — |
-| `m_active` | bit | — |
+| Column        | Type        | Max Length    |
+| ------------- | ----------- | ------------- |
+| `id`          | varchar     | 36            |
+| `embedding`   | varchar     | 531,455       |
+| `document`    | longvarchar | 2,147,483,647 |
+| `m_source`    | varchar     | 1024          |
+| `m_page`      | bigint      | —             |
+| `m_score`     | double      | —             |
+| `m_published` | date        | —             |
+| `m_active`    | bit         | —             |
 
 **Key observations:**
+
 - Metadata columns are prefixed `m_` and use native IRIS SQL types (bigint, double, date, bit) — not JSON blob
 - `embedding` stored as varchar (serialized vector string), not a native VECTOR column — this is pre-IRIS-2025.1 approach; may change when official package ships
 - Type mapping works automatically: Python `int` → `bigint`, `float` → `double`, `datetime.date` → `date`, `bool` → `bit`, `str` → `varchar(1024)`
@@ -40,15 +41,16 @@ Schema observed for a collection with keys `source` (str), `page` (int), `score`
 
 **Answer: Works well. All filter types succeed. Date range returned 0 results due to test data randomization — the filter itself executed without error.**
 
-| Test | Result |
-|------|--------|
-| Add 10 FHIR-like docs with `resource_type`, `subject`, `status`, `category`, `effective_date` | ✅ SUCCESS |
-| `filter={'subject': 'Patient/10406821'}` (equality) | ✅ 1 result |
-| `filter={'subject': (Predicate.STARTS_WITH, 'Patient/')}` | ✅ 5 results |
+| Test                                                                                                            | Result                                                                       |
+| --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Add 10 FHIR-like docs with `resource_type`, `subject`, `status`, `category`, `effective_date`                   | ✅ SUCCESS                                                                   |
+| `filter={'subject': 'Patient/10406821'}` (equality)                                                             | ✅ 1 result                                                                  |
+| `filter={'subject': (Predicate.STARTS_WITH, 'Patient/')}`                                                       | ✅ 5 results                                                                 |
 | `filter={Predicate.AND: [{'resource_type': 'DiagnosticReport'}, {'effective_date': (Predicate.BETWEEN, ...)}]}` | ✅ 0 results (filter executed correctly; test data dates fell outside range) |
-| `filter={'category': 'radiology'}` | ✅ 5 results (exactly half, as expected) |
+| `filter={'category': 'radiology'}`                                                                              | ✅ 5 results (exactly half, as expected)                                     |
 
 **FHIR-specific concerns:**
+
 - `subject` values like `Patient/10406825` stored as varchar — `STARTS_WITH` predicate works for patient scoping
 - `datetime.date` metadata works natively — date range filtering is SQL `BETWEEN`
 - No issues with mixed metadata keys or FHIR reference patterns
@@ -61,20 +63,22 @@ Schema observed for a collection with keys `source` (str), `page` (int), `score`
 
 **Setup**: 200 docs, random medical text (~100 words each), 3 metadata fields, OpenAI embeddings (network-bound).
 
-| Metric | Value |
-|--------|-------|
-| Ingest rate (200 docs) | **21.0 docs/sec** (9.54s total) |
-| Unfiltered query p50 | **248.7 ms** |
-| Filtered query p50 | **214.0 ms** |
-| Filter overhead | **-13.9%** (filtered is *faster* — IRIS SQL planner uses column index) |
+| Metric                 | Value                                                                  |
+| ---------------------- | ---------------------------------------------------------------------- |
+| Ingest rate (200 docs) | **21.0 docs/sec** (9.54s total)                                        |
+| Unfiltered query p50   | **248.7 ms**                                                           |
+| Filtered query p50     | **214.0 ms**                                                           |
+| Filter overhead        | **-13.9%** (filtered is _faster_ — IRIS SQL planner uses column index) |
 
 **Notes:**
+
 - Ingest is dominated by OpenAI API latency (1536-dim embeddings). Local embeddings (HuggingFace) would be ~10x faster for ingest.
 - Query latency is dominated by the OpenAI embedding call for the query (~200ms). Pure IRIS vector search is sub-10ms.
 - Filtered queries are marginally faster than unfiltered — consistent with IRIS SQL optimizer using the metadata column in the WHERE clause to reduce the candidate set before vector scoring.
 - No HNSW index was observed being created automatically. Production deployments should add one manually.
 
 **AIML71 talking points** (conservative, dominated by OpenAI API):
+
 - "Ingest 200 clinical notes in under 10 seconds"
 - "Sub-250ms end-to-end queries including embedding generation"
 - "Filtered search adds zero overhead — metadata columns are native SQL"
@@ -85,11 +89,11 @@ Schema observed for a collection with keys `source` (str), `page` (int), `score`
 
 **Answer: DROP + RECREATE. The table is dropped and recreated from scratch.**
 
-| Action | Row count |
-|--------|-----------|
-| First `add_documents(5 docs)` | 5 |
-| Re-init with `replace_collection=True`, then `add_documents(2 docs)` | **2** (table was dropped) |
-| Re-init with `replace_collection=False`, then `add_documents(2 more)` | **4** (appended) |
+| Action                                                                | Row count                 |
+| --------------------------------------------------------------------- | ------------------------- |
+| First `add_documents(5 docs)`                                         | 5                         |
+| Re-init with `replace_collection=True`, then `add_documents(2 docs)`  | **2** (table was dropped) |
+| Re-init with `replace_collection=False`, then `add_documents(2 more)` | **4** (appended)          |
 
 **Hackathon implication**: `replace_collection=True` is safe for demo re-runs — attendees can re-run `demo.py` and get a fresh collection each time. No leftover data from previous runs. HNSW index (if any) would also be rebuilt.
 
@@ -111,10 +115,10 @@ Schema observed for a collection with keys `source` (str), `page` (int), `score`
 
 **Answer: Full async support — both `asimilarity_search` and `aadd_documents` work.**
 
-| Method | Exists | Works |
-|--------|--------|-------|
-| `asimilarity_search` | ✅ | ✅ SUCCESS |
-| `aadd_documents` | ✅ | ✅ SUCCESS |
+| Method               | Exists | Works      |
+| -------------------- | ------ | ---------- |
+| `asimilarity_search` | ✅     | ✅ SUCCESS |
+| `aadd_documents`     | ✅     | ✅ SUCCESS |
 
 **Implication**: Drop-in compatible with async LangChain chains (LCEL). No `asyncio.to_thread` wrapper needed in async pipelines.
 
@@ -124,12 +128,13 @@ Schema observed for a collection with keys `source` (str), `page` (int), `score`
 
 **Answer: Works with any LangChain Embeddings object — OpenAI and HuggingFace both confirmed.**
 
-| Provider | Model | Result |
-|----------|-------|--------|
-| OpenAI | `text-embedding-3-small` (1536-dim) | ✅ SUCCESS |
-| HuggingFace | `all-MiniLM-L6-v2` (384-dim) | ✅ SUCCESS |
+| Provider    | Model                               | Result     |
+| ----------- | ----------------------------------- | ---------- |
+| OpenAI      | `text-embedding-3-small` (1536-dim) | ✅ SUCCESS |
+| HuggingFace | `all-MiniLM-L6-v2` (384-dim)        | ✅ SUCCESS |
 
 **Setup notes:**
+
 - HuggingFace embeddings require `langchain-huggingface` + `sentence-transformers` — not in the hackathon `requirements.txt` but trivial to add
 - Vector dimension is determined by the embeddings object at collection creation time — cannot mix dimensions within a collection
 - Ollama not tested (no Ollama on this machine), but any `LangChain Embeddings` subclass should work identically
@@ -142,17 +147,17 @@ Schema observed for a collection with keys `source` (str), `page` (int), `score`
 
 `langchain-iris` was not installed in the spike venv. Comparison based on code inspection + docs.
 
-| Feature | `langchain-intersystems` (Aohan) | `langchain-iris` (Dmitry) |
-|---------|----------------------------------|--------------------------|
-| **PyPI** | Not yet (wheel only) | ✅ Published |
-| **Connection** | DB-API (`iris.dbapi`) | DB-API or SQLAlchemy |
-| **Predicate system** | ✅ Full (21 operators: AND, OR, NOT, BETWEEN, IN, STARTS_WITH, LIKE, MATCHES, PATTERN, etc.) | Basic dict equality only |
-| **Similarity metrics** | `COSINE`, `DOT_PRODUCT` | COSINE only |
-| **MMR support** | ✅ | ✅ (via LangChain base class) |
-| **Async support** | ✅ | ✅ |
-| **HNSW auto-index** | Not observed (manual) | Not observed |
-| **Type-aware schema** | ✅ per-column with native types | JSON blob (metadata as text) |
-| **Maintainer** | InterSystems (official) | Community (Dmitry) |
+| Feature                | `langchain-intersystems` (Aohan)                                                             | `langchain-iris` (Dmitry)     |
+| ---------------------- | -------------------------------------------------------------------------------------------- | ----------------------------- |
+| **PyPI**               | Not yet (wheel only)                                                                         | ✅ Published                  |
+| **Connection**         | DB-API (`iris.dbapi`)                                                                        | DB-API or SQLAlchemy          |
+| **Predicate system**   | ✅ Full (21 operators: AND, OR, NOT, BETWEEN, IN, STARTS_WITH, LIKE, MATCHES, PATTERN, etc.) | Basic dict equality only      |
+| **Similarity metrics** | `COSINE`, `DOT_PRODUCT`                                                                      | COSINE only                   |
+| **MMR support**        | ✅                                                                                           | ✅ (via LangChain base class) |
+| **Async support**      | ✅                                                                                           | ✅                            |
+| **HNSW auto-index**    | Not observed (manual)                                                                        | Not observed                  |
+| **Type-aware schema**  | ✅ per-column with native types                                                              | JSON blob (metadata as text)  |
+| **Maintainer**         | InterSystems (official)                                                                      | Community (Dmitry)            |
 
 **Recommendation**: Once `langchain-intersystems` ships on PyPI, it supersedes `langchain-iris` for any use case involving metadata filtering. The Predicate system is substantially more powerful. For pure vector similarity with no filtering, either works.
 
@@ -162,7 +167,7 @@ Schema observed for a collection with keys `source` (str), `page` (int), `score`
 
 1. **"Same API as Pinecone or Chroma"** — `IRISVectorStore` implements the full LangChain `VectorStore` interface including async, MMR, and similarity-with-score. Zero LangChain code changes to switch from another provider.
 
-2. **"Metadata filtering maps directly to IRIS SQL"** — 21 predicate operators (BETWEEN, IN, STARTS_WITH, LIKE, regex PATTERN, boolean AND/OR/NOT). Each metadata key gets a native-typed SQL column — integer metadata queries use index scans, not JSON extraction. Filtered queries in our benchmark were *faster* than unfiltered.
+2. **"Metadata filtering maps directly to IRIS SQL"** — 21 predicate operators (BETWEEN, IN, STARTS_WITH, LIKE, regex PATTERN, boolean AND/OR/NOT). Each metadata key gets a native-typed SQL column — integer metadata queries use index scans, not JSON extraction. Filtered queries in our benchmark were _faster_ than unfiltered.
 
 3. **"Sub-250ms end-to-end including embedding generation"** — with OpenAI embeddings. Pure IRIS vector search is sub-10ms. Local embeddings (Ollama/HuggingFace) eliminate the API round-trip entirely.
 
@@ -177,6 +182,7 @@ Schema observed for a collection with keys `source` (str), `page` (int), `score`
 **Gabriel's ChatFHIR demo**: Use `IRISVectorStore` directly for the document store. The FHIR metadata pattern (`resource_type`, `subject`, `effective_date`, `category`) maps cleanly. STARTS_WITH on `Patient/` references works. Date range filtering works.
 
 **Recommended setup for demo**:
+
 ```python
 from langchain_intersystems import IRISVectorStore, Predicate
 from langchain_openai import OpenAIEmbeddings  # or OllamaEmbeddings for no-key path
@@ -190,6 +196,7 @@ vs = IRISVectorStore(
 ```
 
 **One caveat**: HNSW index not created automatically — for large datasets (>10k docs) add it manually:
+
 ```sql
 CREATE HNSW INDEX ON chatfhir_docs (embedding) WITH (M=16, efConstruction=200)
 ```

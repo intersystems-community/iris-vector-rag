@@ -8,7 +8,7 @@
 # Clone repository and navigate to evaluation framework
 cd /path/to/rag-templates/evaluation_framework
 
-# Install dependencies 
+# Install dependencies
 uv pip install -r requirements.txt
 
 # Verify installation
@@ -40,6 +40,7 @@ python -m evaluation_orchestrator \
 The framework requires several language models that must be downloaded:
 
 1. **Question Generation Models**:
+
    ```bash
    # These will be downloaded automatically on first use
    - facebook/bart-large-cnn
@@ -47,17 +48,19 @@ The framework requires several language models that must be downloaded:
    ```
 
 2. **Biomedical NLP Models**:
+
    ```bash
    # BioBERT for domain-specific processing
    - dmis-lab/biobert-base-cased-v1.1
    - dmis-lab/biobert-base-cased-v1.1-squad
-   
+
    # ScispaCy models
    python -m spacy download en_core_sci_sm
    python -m spacy download en_ner_bc5cdr_md
    ```
 
 3. **Embedding Models**:
+
    ```bash
    # Sentence transformers for similarity
    - sentence-transformers/all-MiniLM-L6-v2
@@ -131,7 +134,7 @@ data:
 # Pipeline configuration
 pipelines:
   - BasicRAG
-  - CRAG  
+  - CRAG
   - GraphRAG
   - BasicRAGReranking
 
@@ -145,12 +148,12 @@ evaluation:
     - context_utilization
     - answer_correctness
     - answer_similarity
-  
+
   statistical_tests:
     significance_threshold: 0.05
     power_threshold: 0.8
     effect_size_threshold: 0.2
-    
+
   quality_controls:
     enable_validation: true
     enable_checkpointing: true
@@ -162,7 +165,7 @@ output:
   generate_visualizations: true
   generate_dashboard: true
   generate_reports: true
-  
+
   formats:
     - json
     - html
@@ -217,7 +220,7 @@ class CustomRAGPipeline:
             'answer': "Generated answer",
             'metadata': {...}
         }
-        
+
     def get_name(self) -> str:
         return "CustomRAG"
 ```
@@ -227,6 +230,7 @@ class CustomRAGPipeline:
 ### Common Issues
 
 1. **Model Download Failures**
+
    ```bash
    # Clear cache and retry
    rm -rf ~/.cache/huggingface/
@@ -234,6 +238,7 @@ class CustomRAGPipeline:
    ```
 
 2. **Memory Issues**
+
    ```bash
    # Reduce batch size in config
    batch_size: 16  # Instead of 32
@@ -241,6 +246,7 @@ class CustomRAGPipeline:
    ```
 
 3. **IRIS Connection Issues**
+
    ```bash
    # Test connection
    python -c "
@@ -251,6 +257,7 @@ class CustomRAGPipeline:
    ```
 
 4. **Missing Dependencies**
+
    ```bash
    # Reinstall requirements
    pip install -r requirements.txt --force-reinstall
@@ -259,19 +266,22 @@ class CustomRAGPipeline:
 ### Performance Optimization
 
 1. **Use GPU Acceleration** (if available):
+
    ```python
    # Set in environment
    export CUDA_VISIBLE_DEVICES=0
    ```
 
 2. **Optimize Batch Sizes**:
+
    ```yaml
    # Start small and increase
-   batch_size: 16  # For limited memory
-   batch_size: 64  # For high-memory systems
+   batch_size: 16 # For limited memory
+   batch_size: 64 # For high-memory systems
    ```
 
 3. **Enable Caching**:
+
    ```yaml
    enable_caching: true
    cache_dir: "/path/to/fast/storage"
@@ -298,7 +308,7 @@ logging.basicConfig(
 ### Recommended System Requirements
 
 - **CPU**: 8+ cores
-- **RAM**: 32+ GB 
+- **RAM**: 32+ GB
 - **Storage**: 100+ GB SSD
 - **GPU**: Optional (NVIDIA with 8+ GB VRAM)
 - **Python**: 3.9+
@@ -306,28 +316,32 @@ logging.basicConfig(
 ### Deployment Steps
 
 1. **Environment Setup**:
+
    ```bash
    # Create dedicated environment
    python -m venv evaluation_env
    source evaluation_env/bin/activate
-   
+
    # Install framework
    pip install -r requirements.txt
    ```
 
 2. **Model Preparation**:
+
    ```bash
    # Pre-download models
    python scripts/download_models.py
    ```
 
 3. **Configuration**:
+
    ```bash
    # Set production config
    cp evaluation_config.prod.yaml evaluation_config.yaml
    ```
 
 4. **Validation**:
+
    ```bash
    # Run validation tests
    python simple_test.py
@@ -335,6 +349,7 @@ logging.basicConfig(
    ```
 
 5. **Monitoring Setup**:
+
    ```bash
    # Setup monitoring
    python scripts/setup_monitoring.py
@@ -353,18 +368,21 @@ logging.basicConfig(
 ### Regular Maintenance Tasks
 
 1. **Model Updates**:
+
    ```bash
    # Check for model updates monthly
    python scripts/check_model_updates.py
    ```
 
 2. **Performance Monitoring**:
+
    ```bash
    # Generate performance reports
    python scripts/performance_report.py
    ```
 
 3. **Data Cleanup**:
+
    ```bash
    # Clean old evaluation results
    python scripts/cleanup_old_results.py --days 30

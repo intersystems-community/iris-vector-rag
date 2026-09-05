@@ -40,12 +40,14 @@ INSERT INTO documents (id, content) VALUES (1, 'Document text...');
 **DP-442038: Repeated Model Loading**
 
 Each document insert in IRIS EMBEDDING triggered:
+
 1. Python subprocess spawn (via `%SYS.Python`)
 2. SentenceTransformer model load from disk (~400MB)
 3. Embedding generation
 4. Model disposal and subprocess exit
 
 **Impact on 1,746 Document Dataset**:
+
 - **Model loads**: 1,746 (one per document)
 - **Disk I/O**: 698GB (1,746 × 400MB)
 - **Total time**: 20 minutes
@@ -61,7 +63,7 @@ This made IRIS EMBEDDING **720x slower** than keeping the model in memory.
 
 Created a Python embedding cache that intercepts IRIS EMBEDDING calls and reuses in-memory models:
 
-```
+```text
 IRIS Database
     ↓ SQL INSERT with EMBEDDING column
     ↓
@@ -87,6 +89,7 @@ Return to IRIS → Store in VECTOR column
 #### 1. Model Cache (`iris_vector_rag/embeddings/manager.py`)
 
 **Module-Level Singleton Cache**:
+
 ```python
 # Lines 21-25: Module-level cache prevents repeated model loads
 _SENTENCE_TRANSFORMER_CACHE: Dict[str, Any] = {}
@@ -121,6 +124,7 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
 ```
 
 **Key Design Decisions**:
+
 - **Module-level cache**: Persists for entire Python process lifetime (not per-request)
 - **Double-checked locking**: Thread-safe without lock contention on cache hits
 - **Cache key format**: `"{model_name}:{device}"` allows same model on different devices
@@ -129,6 +133,7 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
 #### 2. IRIS EMBEDDING Bridge (`iris_vector_rag/embeddings/iris_embedding.py`)
 
 **Configuration Management**:
+
 ```python
 # Lines 112-120: Configuration simulates IRIS %Embedding.Config table
 _CONFIG_STORE: Dict[str, EmbeddingConfig] = {}
@@ -156,6 +161,7 @@ def configure_embedding(
 ```
 
 **Embedding Generation with Cache**:
+
 ```python
 # Lines 200-250: Core embedding function called by IRIS
 def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
@@ -224,6 +230,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
 #### 3. Cache Statistics Tracking (`iris_vector_rag/embeddings/manager.py`)
 
 **Performance Monitoring**:
+
 ```python
 # Lines 30-67: Statistics tracking for cache performance
 @dataclass
@@ -258,6 +265,7 @@ class CacheStatistics:
 ```
 
 **API for Retrieving Stats**:
+
 ```python
 # Lines 472-543: Public API for cache statistics
 def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
@@ -286,7 +294,7 @@ def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
 
 #### Before (IRIS Native, No Cache)
 
-```
+```text
 Total documents:     1,746
 Model loads:         1,746 (one per document)
 Total time:          20 minutes (1,200 seconds)
@@ -298,7 +306,7 @@ Cache hit rate:      0% (no cache)
 
 #### After (Python Cache Layer)
 
-```
+```text
 Total documents:     1,746
 Model loads:         1 (cached for all subsequent docs)
 Total time:          3.5 seconds
@@ -312,14 +320,16 @@ Cache hit rate:      95%+
 ### Detailed Timing Breakdown
 
 **First Document (Cold Start)**:
-```
+
+```text
 - Model load from disk:  2,300ms (400MB read)
 - Embedding generation:  45ms
 - Total:                2,345ms
 ```
 
 **Subsequent Documents (Cached Model)**:
-```
+
+```text
 - Model load from disk:  0ms (cache hit)
 - Embedding generation:  45-55ms
 - Total:                ~50ms average
@@ -328,11 +338,11 @@ Cache hit rate:      95%+
 
 ### Scaling Characteristics
 
-| Collection Size | Model Loads (Before) | Model Loads (After) | Speedup |
-|----------------|---------------------|---------------------|---------|
-| 100 docs       | 100                 | 1                   | 10-50x  |
-| 1,000 docs     | 1,000               | 1                   | 100-200x |
-| 10,000 docs    | 10,000              | 1                   | 300-500x |
+| Collection Size | Model Loads (Before) | Model Loads (After) | Speedup  |
+| --------------- | -------------------- | ------------------- | -------- |
+| 100 docs        | 100                  | 1                   | 10-50x   |
+| 1,000 docs      | 1,000                | 1                   | 100-200x |
+| 10,000 docs     | 10,000               | 1                   | 300-500x |
 
 **Key Insight**: Speedup increases with collection size because the one-time model loading overhead is amortized across more documents.
 
@@ -345,6 +355,7 @@ Cache hit rate:      95%+
 **Challenge**: Multiple IRIS processes may call embedding functions concurrently.
 
 **Solution**: Double-checked locking pattern
+
 ```python
 # Fast path: No lock needed for cache hits (99%+ of calls)
 if cache_key in _SENTENCE_TRANSFORMER_CACHE:
@@ -369,6 +380,7 @@ with _CACHE_LOCK:
 **Challenge**: Optimal device varies by hardware (CUDA GPU, Apple Silicon MPS, CPU).
 
 **Solution**: Automatic device detection with fallback
+
 ```python
 def _detect_device(config: EmbeddingConfig) -> str:
     """Detect best available device based on preference and availability."""
@@ -400,6 +412,7 @@ def _detect_device(config: EmbeddingConfig) -> str:
 **Challenge**: Embedding models are large (~400MB), but need to persist in memory.
 
 **Solution**: No automatic eviction policy
+
 ```python
 # Models stay in cache until explicitly cleared or process exits
 _SENTENCE_TRANSFORMER_CACHE: Dict[str, Any] = {}
@@ -411,6 +424,7 @@ def clear_cache(config_name: Optional[str] = None):
 ```
 
 **Rationale**:
+
 - Embedding workloads are typically dominated by a few models (1-3)
 - Models are reused frequently (95%+ cache hit rate)
 - Memory overhead is acceptable (400MB-1.2GB for typical deployments)
@@ -421,6 +435,7 @@ def clear_cache(config_name: Optional[str] = None):
 **Challenge**: IRIS `%Embedding.Config` table lives in database, Python cache lives in process memory.
 
 **Solution**: Two-tier configuration
+
 ```python
 # In-memory store for Python development/testing
 _CONFIG_STORE: Dict[str, EmbeddingConfig] = {}
@@ -535,11 +550,13 @@ print(f"Memory usage: {stats.memory_usage_mb:.1f}MB")
 ### 1. Memory Requirements
 
 **Per-Model Memory Usage**:
+
 - Small models (384D): ~400MB (e.g., `all-MiniLM-L6-v2`)
 - Medium models (768D): ~800MB (e.g., `all-mpnet-base-v2`)
 - Large models (1024D+): ~1.2GB
 
 **Typical Deployment**:
+
 - 1-3 models cached simultaneously
 - Total memory: 400MB - 3.6GB
 - Acceptable overhead for embedding workloads
@@ -547,6 +564,7 @@ print(f"Memory usage: {stats.memory_usage_mb:.1f}MB")
 ### 2. Process Lifecycle
 
 **Model Cache Lifetime**: Tied to Python process lifetime
+
 - Models load once when first accessed
 - Persist until process exit
 - Survive across IRIS SQL transactions
@@ -556,6 +574,7 @@ print(f"Memory usage: {stats.memory_usage_mb:.1f}MB")
 ### 3. Multi-Node Deployments
 
 **Cache Scope**: Per-process (not shared across nodes)
+
 - Each IRIS node has independent Python cache
 - First request on each node loads model
 - Subsequent requests on same node use cache
@@ -565,6 +584,7 @@ print(f"Memory usage: {stats.memory_usage_mb:.1f}MB")
 ### 4. Monitoring and Observability
 
 **Key Metrics to Track**:
+
 ```python
 stats = get_cache_stats()
 
@@ -582,32 +602,32 @@ assert stats.memory_usage_mb < 2000  # Limit: 2GB total cache
 
 ### vs. IRIS Native (No Cache)
 
-| Metric | IRIS Native | Python Cache | Advantage |
-|--------|------------|--------------|-----------|
-| Model loads (1,746 docs) | 1,746 | 1 | **1,746x fewer** |
-| Total time | 20 minutes | 3.5 seconds | **346x faster** |
-| Disk I/O | 698GB | 400MB | **1,745x less** |
-| Cache hit rate | 0% | 95%+ | **Infinite improvement** |
-| Code complexity | Simple | Moderate | Native simpler |
+| Metric                   | IRIS Native | Python Cache | Advantage                |
+| ------------------------ | ----------- | ------------ | ------------------------ |
+| Model loads (1,746 docs) | 1,746       | 1            | **1,746x fewer**         |
+| Total time               | 20 minutes  | 3.5 seconds  | **346x faster**          |
+| Disk I/O                 | 698GB       | 400MB        | **1,745x less**          |
+| Cache hit rate           | 0%          | 95%+         | **Infinite improvement** |
+| Code complexity          | Simple      | Moderate     | Native simpler           |
 
 ### vs. OpenAI Embeddings API
 
-| Metric | OpenAI API | Python Cache | Advantage |
-|--------|-----------|--------------|-----------|
-| Cost (1M docs) | $400 | $0 | **Infinite savings** |
-| Latency | 100-200ms | 50ms | **2-4x faster** |
-| Data privacy | Sent to OpenAI | Stays on-premise | **100% private** |
-| Offline capability | No | Yes | **Full offline** |
-| Rate limits | Yes (3K RPM) | No | **No limits** |
+| Metric             | OpenAI API     | Python Cache     | Advantage            |
+| ------------------ | -------------- | ---------------- | -------------------- |
+| Cost (1M docs)     | $400           | $0               | **Infinite savings** |
+| Latency            | 100-200ms      | 50ms             | **2-4x faster**      |
+| Data privacy       | Sent to OpenAI | Stays on-premise | **100% private**     |
+| Offline capability | No             | Yes              | **Full offline**     |
+| Rate limits        | Yes (3K RPM)   | No               | **No limits**        |
 
 ### vs. Manual Embedding Generation
 
-| Metric | Manual | Python Cache | Advantage |
-|--------|--------|--------------|-----------|
-| Code complexity | High | Low | **Simpler API** |
-| Model management | Manual | Automatic | **Zero config** |
-| Performance | Fast (if cached) | Fast (auto-cached) | **Equivalent** |
-| IRIS integration | Manual SQL | Native EMBEDDING | **Native support** |
+| Metric           | Manual           | Python Cache       | Advantage          |
+| ---------------- | ---------------- | ------------------ | ------------------ |
+| Code complexity  | High             | Low                | **Simpler API**    |
+| Model management | Manual           | Automatic          | **Zero config**    |
+| Performance      | Fast (if cached) | Fast (auto-cached) | **Equivalent**     |
+| IRIS integration | Manual SQL       | Native EMBEDDING   | **Native support** |
 
 ---
 
@@ -619,11 +639,13 @@ assert stats.memory_usage_mb < 2000  # Limit: 2GB total cache
 **Future**: Shared cache across IRIS nodes
 
 **Benefits**:
+
 - First-node model load benefits all nodes
 - Reduced memory per node
 - Consistent cache hit rates across cluster
 
 **Implementation**:
+
 ```python
 # Pseudocode for distributed cache
 def _get_cached_sentence_transformer(model_name: str, device: str):
@@ -653,11 +675,13 @@ def _get_cached_sentence_transformer(model_name: str, device: str):
 **Future**: Pre-load frequently used models on process startup
 
 **Benefits**:
+
 - Eliminates cold-start latency
 - Predictable first-request performance
 - Better user experience
 
 **Implementation**:
+
 ```python
 # Pseudocode for cache warming
 def warm_cache(config_names: List[str]):
@@ -675,6 +699,7 @@ def warm_cache(config_names: List[str]):
 **Future**: Quantized models (INT8, ~100MB)
 
 **Benefits**:
+
 - 4x smaller model size
 - 4x faster loading
 - Minimal accuracy loss (<1%)
@@ -686,17 +711,20 @@ def warm_cache(config_names: List[str]):
 ## References
 
 ### Documentation
+
 - [IRIS EMBEDDING Guide](IRIS_EMBEDDING_GUIDE.md) - User guide for IRIS EMBEDDING feature
 - [User Guide](USER_GUIDE.md) - Complete iris-vector-rag usage guide
 - [API Reference](API_REFERENCE.md) - Full API documentation
 
 ### Code Locations
+
 - **Model Cache**: `iris_vector_rag/embeddings/manager.py` (lines 21-103)
 - **IRIS Bridge**: `iris_vector_rag/embeddings/iris_embedding.py` (lines 200-250)
 - **Statistics Tracking**: `iris_vector_rag/embeddings/manager.py` (lines 469-656)
 - **Configuration**: `iris_vector_rag/config/embedding_config.py`
 
 ### Related Issues
+
 - **DP-442038**: IRIS EMBEDDING repeated model loading (720x overhead)
 - **Feature 051**: Add native IRIS EMBEDDING support with caching
 

@@ -79,6 +79,7 @@ uv pip install --force-reinstall /Users/tdyar/ws/iris-vector-rag-private/dist/ir
 ### Step 4: Verify Fix
 
 **Test 1: Import Check**
+
 ```bash
 $ cd /Users/tdyar/ws/hipporag2-pipeline
 $ uv run python -c "from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection; from iris_vector_rag.common.iris_connection_manager import get_iris_connection; print('✅ Both imports work correctly')"
@@ -86,6 +87,7 @@ $ uv run python -c "from iris_vector_rag.common.iris_dbapi_connector import get_
 ```
 
 **Test 2: File Existence**
+
 ```bash
 $ ls -la .venv/lib/python3.12/site-packages/iris_vector_rag/common/ | grep -E "(iris_dbapi_connector|iris_connection_manager)"
 -rw-r--r--  iris_connection_manager.py     (15,038 bytes) ✅
@@ -93,6 +95,7 @@ $ ls -la .venv/lib/python3.12/site-packages/iris_vector_rag/common/ | grep -E "(
 ```
 
 **Test 3: ConnectionManager Instantiation**
+
 ```bash
 $ uv run python -c "
 from iris_vector_rag.core.connection import ConnectionManager
@@ -127,13 +130,13 @@ The hipporag2-pipeline project likely installed iris-vector-rag v0.5.6 from the 
 
 ## Verification Status
 
-| Test | Status | Details |
-|------|--------|---------|
-| Module imports | ✅ PASS | Both `iris_dbapi_connector` and `iris_connection_manager` import successfully |
-| File existence | ✅ PASS | Both files present in installed package |
-| ConnectionManager | ✅ PASS | Creates successfully without errors |
-| Package version | ✅ PASS | Version 0.5.6 confirmed |
-| Wheel contents | ✅ PASS | Both modules present in built wheel |
+| Test              | Status  | Details                                                                       |
+| ----------------- | ------- | ----------------------------------------------------------------------------- |
+| Module imports    | ✅ PASS | Both `iris_dbapi_connector` and `iris_connection_manager` import successfully |
+| File existence    | ✅ PASS | Both files present in installed package                                       |
+| ConnectionManager | ✅ PASS | Creates successfully without errors                                           |
+| Package version   | ✅ PASS | Version 0.5.6 confirmed                                                       |
+| Wheel contents    | ✅ PASS | Both modules present in built wheel                                           |
 
 ---
 
@@ -142,18 +145,22 @@ The hipporag2-pipeline project likely installed iris-vector-rag v0.5.6 from the 
 ### Original Claims vs Reality
 
 **Claim 1**: "v0.5.6 still has regression"
+
 - **Reality**: Source code was fixed, but hipporag2-pipeline had stale installation
 - **Status**: ✅ Resolved by package rebuild
 
 **Claim 2**: "Modules don't exist: `iris_vector_rag.common.iris_dbapi_connector`"
+
 - **Reality**: Modules exist in source and in rebuilt wheel
 - **Status**: ✅ Resolved by reinstallation
 
 **Claim 3**: "ConnectionError: IRIS connection utility returned None"
+
 - **Reality**: Error was due to missing modules in old installation
 - **Status**: ✅ Resolved - ConnectionManager now works
 
 **Claim 4**: "Same bug as v0.5.5"
+
 - **Reality**: Different issue - v0.5.5 had wrong import in source, v0.5.6 had stale package
 - **Status**: ✅ Clarified and resolved
 
@@ -166,12 +173,14 @@ The hipporag2-pipeline project likely installed iris-vector-rag v0.5.6 from the 
 Now that the package is properly installed, the following should work:
 
 **1. HotpotQA Evaluation**
+
 ```bash
 cd /Users/tdyar/ws/hipporag2-pipeline
 timeout 240 uv run python examples/hotpotqa_evaluation.py 2
 ```
 
 **Expected Result**:
+
 - ✅ Container created via iris-devtester
 - ✅ ConnectionManager works
 - ✅ 20 documents indexed
@@ -179,12 +188,14 @@ timeout 240 uv run python examples/hotpotqa_evaluation.py 2
 - ✅ Results saved to JSON
 
 **2. Feature Validation**
+
 ```bash
 # Test with iris-devtester containers (CONSTITUTION.md Principle 2)
 uv run pytest tests/ -v
 ```
 
 **Expected Result**:
+
 - ✅ All tests pass
 - ✅ Container isolation works
 - ✅ No connection failures
@@ -192,6 +203,7 @@ uv run pytest tests/ -v
 ### Preventing Future Stale Installations
 
 **Recommendation 1: Always Rebuild After Source Changes**
+
 ```bash
 # After pulling changes in iris-vector-rag-private:
 cd /Users/tdyar/ws/iris-vector-rag-private
@@ -203,6 +215,7 @@ uv pip install --force-reinstall /Users/tdyar/ws/iris-vector-rag-private/dist/ir
 ```
 
 **Recommendation 2: Use Development Mode (Editable Install)**
+
 ```bash
 cd /Users/tdyar/ws/hipporag2-pipeline
 uv pip install -e /Users/tdyar/ws/iris-vector-rag-private
@@ -211,6 +224,7 @@ uv pip install -e /Users/tdyar/ws/iris-vector-rag-private
 **Note**: Editable installs automatically reflect source code changes without rebuilding.
 
 **Recommendation 3: Check Package Contents When Debugging**
+
 ```bash
 # Verify files exist in installed package:
 ls -la .venv/lib/python3.12/site-packages/iris_vector_rag/common/
@@ -223,13 +237,13 @@ uv run python -c "from iris_vector_rag.common.iris_dbapi_connector import get_ir
 
 ## Comparison: v0.5.5 vs v0.5.6
 
-| Aspect | v0.5.5 | v0.5.6 (Stale) | v0.5.6 (Fixed) |
-|--------|--------|----------------|----------------|
-| Source Code | ❌ Wrong import in `iris_dbapi_connector.py` | ✅ Correct import | ✅ Correct import |
-| Package Contents | ❌ Wrong import in wheel | ❌ Old wheel without fix | ✅ Correct wheel with fix |
-| Module Imports | ❌ Fail | ❌ Fail | ✅ Work |
-| ConnectionManager | ❌ Fails | ❌ Fails | ✅ Works |
-| Status | BROKEN | STALE | **FIXED** |
+| Aspect            | v0.5.5                                       | v0.5.6 (Stale)           | v0.5.6 (Fixed)            |
+| ----------------- | -------------------------------------------- | ------------------------ | ------------------------- |
+| Source Code       | ❌ Wrong import in `iris_dbapi_connector.py` | ✅ Correct import        | ✅ Correct import         |
+| Package Contents  | ❌ Wrong import in wheel                     | ❌ Old wheel without fix | ✅ Correct wheel with fix |
+| Module Imports    | ❌ Fail                                      | ❌ Fail                  | ✅ Work                   |
+| ConnectionManager | ❌ Fails                                     | ❌ Fails                 | ✅ Works                  |
+| Status            | BROKEN                                       | STALE                    | **FIXED**                 |
 
 ---
 
@@ -238,9 +252,11 @@ uv run python -c "from iris_vector_rag.common.iris_dbapi_connector import get_ir
 **None** - This was a packaging/installation issue, not a source code issue.
 
 **Files Rebuilt**:
+
 - `dist/iris_vector_rag-0.5.6-py3-none-any.whl` (rebuilt package)
 
 **Documentation Created**:
+
 - `BUG_FIX_0.5.6_PACKAGE_REBUILD.md` (this file)
 
 ---
@@ -272,6 +288,7 @@ uv run python -c "from iris_vector_rag.common.iris_dbapi_connector import get_ir
 The bug reported in `BUG_REPORT_IRIS_VECTOR_RAG_0.5.6.md` has been **completely resolved** by rebuilding the iris-vector-rag 0.5.6 wheel and reinstalling it in the hipporag2-pipeline project.
 
 **Key Takeaways**:
+
 - ✅ Source code was already correct in v0.5.6
 - ✅ Issue was stale package installation in hipporag2-pipeline
 - ✅ Rebuilt wheel contains all required modules

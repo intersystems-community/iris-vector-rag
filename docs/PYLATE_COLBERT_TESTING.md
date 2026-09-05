@@ -17,7 +17,7 @@ The PyLate ColBERT pipeline has been fully tested with a comprehensive suite cov
 **Execution Time**: ~22 seconds
 **Code Coverage**: 15% (remaining uncovered code requires actual PyLate library installation)
 
-#### Test Categories:
+#### Test Categories
 
 1. **Initialization & Configuration** (11 tests)
    - Default configuration
@@ -68,7 +68,7 @@ The PyLate ColBERT pipeline has been fully tested with a comprehensive suite cov
 **Marker**: `@pytest.mark.e2e`
 **Real Dependencies**: IRIS database, ConfigurationManager, IRISConnectionManager, IRISVectorStore
 
-#### E2E Test Scenarios:
+#### E2E Test Scenarios
 
 1. **Pipeline Creation** - Verify pipeline creates successfully in fallback mode
 2. **Document Loading** - Load 10 biomedical documents into real vector store
@@ -84,11 +84,13 @@ The PyLate ColBERT pipeline has been fully tested with a comprehensive suite cov
 ## Test Execution
 
 ### Run Unit Tests Only
+
 ```bash
 python -m pytest tests/test_pylate_colbert_pipeline.py -p no:randomly -v
 ```
 
 ### Run with Coverage
+
 ```bash
 python -m pytest tests/test_pylate_colbert_pipeline.py \
     --cov=iris_rag.pipelines.colbert_pylate \
@@ -97,11 +99,13 @@ python -m pytest tests/test_pylate_colbert_pipeline.py \
 ```
 
 ### Run E2E Tests Only
+
 ```bash
 python -m pytest tests/e2e/test_pylate_pipeline_e2e.py -m e2e -p no:randomly -v
 ```
 
 ### Run All PyLate Tests
+
 ```bash
 python -m pytest tests/test_pylate_colbert_pipeline.py tests/e2e/test_pylate_pipeline_e2e.py -p no:randomly -v
 ```
@@ -111,6 +115,7 @@ python -m pytest tests/test_pylate_colbert_pipeline.py tests/e2e/test_pylate_pip
 ### Current Coverage: 15%
 
 **Covered Code Paths** (lines tested in fallback mode):
+
 - Pipeline initialization
 - Configuration loading
 - Document store setup
@@ -120,6 +125,7 @@ python -m pytest tests/test_pylate_colbert_pipeline.py tests/e2e/test_pylate_pip
 - Error handling for no documents/no LLM
 
 **Uncovered Code Paths** (require PyLate library):
+
 - `_import_pylate()` - lines 91-100
 - `_setup_index_folder()` - lines 104-105
 - `_initialize_model()` - lines 109-110
@@ -139,6 +145,7 @@ The 15% coverage is expected and acceptable because:
 ### Recommended Coverage Metric
 
 **Effective Coverage** (excluding PyLate-specific code): **~95%**
+
 - 15 testable lines in fallback mode
 - 14 lines covered by tests
 - 1 line uncovered (minor edge case)
@@ -146,6 +153,7 @@ The 15% coverage is expected and acceptable because:
 ## Key Testing Patterns
 
 ### 1. Fixture-Based Testing
+
 ```python
 @pytest.fixture
 def test_pipeline(mock_dependencies):
@@ -159,6 +167,7 @@ def test_pipeline(mock_dependencies):
 ```
 
 ### 2. Parent Class Mocking
+
 ```python
 with patch('iris_rag.pipelines.basic.BasicRAGPipeline.load_documents') as mock_parent_load:
     mock_parent_load.return_value = {"status": "success"}
@@ -166,6 +175,7 @@ with patch('iris_rag.pipelines.basic.BasicRAGPipeline.load_documents') as mock_p
 ```
 
 ### 3. E2E Real Dependencies
+
 ```python
 @pytest.fixture(scope="module")
 def pipeline_dependencies():
@@ -182,6 +192,7 @@ def pipeline_dependencies():
 ### Sample Biomedical Documents (E2E Tests)
 
 The E2E tests use 10 realistic biomedical documents covering:
+
 - Diabetes mellitus
 - Hypertension
 - Alzheimer's disease
@@ -194,22 +205,23 @@ The E2E tests use 10 realistic biomedical documents covering:
 - Antibiotic resistance
 
 Each document includes:
+
 - Realistic medical content (100-150 words)
 - Metadata (source, doc_id)
 - Domain-specific terminology
 
 ## Test Quality Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Total Tests | 55 | ✅ |
-| Passing | 55 | ✅ 100% |
-| Failing | 0 | ✅ |
-| Execution Time | <30s | ✅ |
-| Code Coverage (Fallback) | ~95% | ✅ |
-| Code Coverage (Overall) | 15% | ⚠️  (PyLate-specific code excluded) |
-| Test Documentation | Complete | ✅ |
-| Test Organization | Excellent | ✅ |
+| Metric                   | Value     | Status                             |
+| ------------------------ | --------- | ---------------------------------- |
+| Total Tests              | 55        | ✅                                 |
+| Passing                  | 55        | ✅ 100%                            |
+| Failing                  | 0         | ✅                                 |
+| Execution Time           | <30s      | ✅                                 |
+| Code Coverage (Fallback) | ~95%      | ✅                                 |
+| Code Coverage (Overall)  | 15%       | ⚠️ (PyLate-specific code excluded) |
+| Test Documentation       | Complete  | ✅                                 |
+| Test Organization        | Excellent | ✅                                 |
 
 ## Known Limitations
 
@@ -237,6 +249,7 @@ Each document includes:
 ## Conclusion
 
 The PyLate ColBERT pipeline is **production-ready** with:
+
 - ✅ 100% test pass rate
 - ✅ Comprehensive unit test coverage (44 tests)
 - ✅ Full E2E test coverage (11 tests)

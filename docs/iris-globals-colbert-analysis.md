@@ -1,4 +1,5 @@
 # IRIS Globals-Based Storage for ColBERT/PLAID Candidate Retrieval
+
 ## Comprehensive Analysis & Viability Assessment
 
 **Date**: March 28, 2026
@@ -12,11 +13,13 @@
 **Finding**: IRIS globals provide a **viable and potentially transformative** path for sub-1ms candidate expansion in PLAID Stage 1.5.
 
 ### Current State (Stage 1.5)
+
 - **Implementation**: `SELECT DISTINCT doc_id FROM RAG.ColBERTDocCentroids WHERE centroid_id IN (...)`
 - **Performance**: 4–8ms (warm cache), 116ms (cold cache) at T5K (5000 docs)
 - **Bottleneck**: SQL cursor overhead + IN-list parsing on every query
 
 ### Proposed Optimization (Globals-Based)
+
 - **Structure**: `^ColBERTIdx(centroid_id, doc_id) = ""` — B-tree indexed by centroid_id
 - **Access Method**: IRIS embedded Python `iris.gref()` with `$ORDER` iteration
 - **Projected Performance**: **150–500 microseconds** (vs. 4–8ms current)
@@ -36,7 +39,7 @@ iris-vector-graph (v1.20.1 latest) ships with `Graph.KG.GraphIndex`, a **dual-wr
 
 ### ^NKG Global Structure
 
-```
+```text
 ^NKG(-1, sIdx, -(pIdx+1), oIdx) = weight         // out-edges (integer-encoded)
 ^NKG(-2, oIdx, -(pIdx+1), sIdx) = weight         // in-edges
 ^NKG(-3, sIdx) = degree                           // node degree
@@ -73,9 +76,11 @@ ClassMethod InsertIndex(pID As %String, s As %Binary, p As %Binary, o As %Binary
 ### Performance Achievement
 
 From research.md in iris-vector-graph:
+
 > **Lock is held for microseconds** (two global SETs). At 10K concurrent inserts, contention is negligible because different node IDs lock different subscripts.
 
 **Concurrent contention model**:
+
 - Fine-grained locking per node ID → `Lock +^NKG("$NI", id):0`
 - Lock held for ~2–3 microseconds (one `InternNode()` call + two SETs)
 - 10K concurrent inserts experience negligible lock contention
@@ -85,7 +90,8 @@ From research.md in iris-vector-graph:
 ## 2. IRIS-GLOBAL-GRAPHRAG: PROOF-OF-CONCEPT
 
 ### Repository
-https://github.com/fanji-isc/IRIS-Global-GraphRAG (research demo, 2026)
+
+<https://github.com/fanji-isc/IRIS-Global-GraphRAG> (research demo, 2026)
 
 ### Global Structure for Graph Data
 
@@ -128,11 +134,12 @@ def get_graph_for_doc(doc_id: int, iris_handle, global_name="^GraphRelations"):
 
 ### Option A: Simple Centroid→DocID Postings (Recommended)
 
-```
+```text
 ^ColBERTIdx(centroid_id, doc_id) = ""
 ```
 
 **Structure**:
+
 - Level 1: `centroid_id` (positive integer, 1–M where M = num_centroids)
 - Level 2: `doc_id` (VARCHAR(64), alphanumeric)
 - Value: empty string (just a marker)
@@ -170,7 +177,7 @@ def stage15_globals(centroid_ids, top_k=10, n_probe=4):
 
 Similar to `^NKG`, intern doc_ids as integers for faster traversal:
 
-```
+```text
 ^ColBERTIdx(-1, cIdIdx, dIdIdx) = ""           // centroid_id → doc_id (integers)
 ^ColBERTIdx("$NI", doc_id) = dIdIdx             // string → integer doc_id
 ^ColBERTIdx("$ND", dIdIdx) = doc_id             // integer → string doc_id
@@ -231,12 +238,12 @@ Similar to `^NKG`, intern doc_ids as integers for faster traversal:
 
 ### Benchmark Scenario: T5K (5000 docs, 267K tokens, K=512, n_probe=4)
 
-| Stage | Current (SQL) | Globals (Proposed) | Speedup |
-|---|---|---|---|
-| Stage 1 (centroid scan) | 6ms | 6ms (unchanged) | 1× |
-| **Stage 1.5 (candidate expansion)** | **5–8ms** | **0.3–0.5ms** | **10–25×** |
-| Stage 2 (GROUP BY MAX) | 180–240ms | 180–240ms (unchanged) | 1× |
-| **Total** | **~200ms** | **~186ms** | **1.07×** |
+| Stage                               | Current (SQL) | Globals (Proposed)    | Speedup    |
+| ----------------------------------- | ------------- | --------------------- | ---------- |
+| Stage 1 (centroid scan)             | 6ms           | 6ms (unchanged)       | 1×         |
+| **Stage 1.5 (candidate expansion)** | **5–8ms**     | **0.3–0.5ms**         | **10–25×** |
+| Stage 2 (GROUP BY MAX)              | 180–240ms     | 180–240ms (unchanged) | 1×         |
+| **Total**                           | **~200ms**    | **~186ms**            | **1.07×**  |
 
 ### Projected Impact on PLAID End-to-End
 
@@ -246,6 +253,7 @@ Similar to `^NKG`, intern doc_ids as integers for faster traversal:
 - **PLAID vs HNSW**: **0.92×** (10% faster) ✅
 
 **More importantly**: Stage 1.5 becomes **sub-1ms**, enabling:
+
 - **Ultra-low-latency streaming** (Stage 1.5 negligible in latency budget)
 - **CPU cache friendliness** (integer iteration vs. SQL parsing)
 - **Reduced GC pressure** (no temp result sets, just direct B-tree access)
@@ -254,13 +262,13 @@ Similar to `^NKG`, intern doc_ids as integers for faster traversal:
 
 ## 6. RISK ANALYSIS & MITIGATION
 
-| Risk | Probability | Impact | Mitigation |
-|---|---|---|---|
-| B-tree growth → lookup slowdown | Low | Medium | Pre-allocate globals; monitor ^ColBERTIdx tree depth |
-| Consistency between SQL + globals | Medium | High | Dual-write on insert; batch rebuild on checkpoint; testing |
-| Lock contention on writes | Low | Low | Different doc_ids lock different subscripts; lock held <1µs |
-| IRIS version compatibility | Low | High | Use standard `iris.gref()` (available since v2019.1) |
-| Memory overhead | Low | Low | ~1 page per 64 docs; T5K = ~80 pages = <1MB |
+| Risk                              | Probability | Impact | Mitigation                                                  |
+| --------------------------------- | ----------- | ------ | ----------------------------------------------------------- |
+| B-tree growth → lookup slowdown   | Low         | Medium | Pre-allocate globals; monitor ^ColBERTIdx tree depth        |
+| Consistency between SQL + globals | Medium      | High   | Dual-write on insert; batch rebuild on checkpoint; testing  |
+| Lock contention on writes         | Low         | Low    | Different doc_ids lock different subscripts; lock held <1µs |
+| IRIS version compatibility        | Low         | High   | Use standard `iris.gref()` (available since v2019.1)        |
+| Memory overhead                   | Low         | Low    | ~1 page per 64 docs; T5K = ~80 pages = <1MB                 |
 
 ---
 
@@ -387,6 +395,7 @@ def stage15_candidate_expansion(hit_centroid_ids, n_probe=4, use_globals=True):
 **IRIS globals are a proven, production-ready path for sub-1ms candidate expansion in PLAID Stage 1.5.**
 
 **Evidence**:
+
 1. **iris-vector-graph precedent** — `^NKG` integer index ships in v1.19.0+, dual-writes at scale, <1µs lock contention
 2. **IRIS-Global-GraphRAG POC** — graph iteration via `iris.gref()` + `$ORDER` is well-established pattern
 3. **Proposed structure** — simpler than `^NKG` (no interning), read-only during queries (no concurrency risk)
@@ -399,6 +408,7 @@ def stage15_candidate_expansion(hit_centroid_ids, n_probe=4, use_globals=True):
 ## APPENDIX: REFERENCE COMMITS & FILES
 
 ### iris-vector-graph v1.19.0+
+
 - **NKG Integer Index Commit**: `761d471e9316e78d1e1da99be8cb5463a650d0b3`
 - **ArnoAccel Commit**: `2585fb8` (v1.20.0)
 - **Files**:
@@ -408,12 +418,14 @@ def stage15_candidate_expansion(hit_centroid_ids, n_probe=4, use_globals=True):
   - `specs/028-nkg-integer-index/data-model.md` — full schema & locking analysis
 
 ### iris-vector-rag-private (this repo)
+
 - **ColBERT Spec**: `specs/067-colbert-plaid-sp/data-model.md`
 - **Current Stage 1.5**: 4–8ms (5ms warm, 116ms cold at T5K)
 - **Stored Procedure**: `iris_src/src/RAG/ColBERTSearch.cls` or Python module
 
 ### IRIS-Global-GraphRAG
-- **Repository**: https://github.com/fanji-isc/IRIS-Global-GraphRAG
+
+- **Repository**: <https://github.com/fanji-isc/IRIS-Global-GraphRAG>
 - **Globals Usage**: `app/iris_db.py` lines 209–239 (get_graph_for_doc iterator pattern)
 
 ---

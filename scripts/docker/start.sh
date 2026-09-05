@@ -41,7 +41,8 @@ print_message() {
 # Function to log messages
 log_message() {
     local message=$1
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     echo "[$timestamp] $message" >> "$LOG_FILE"
     print_message "$BLUE" "$message"
 }
@@ -49,45 +50,45 @@ log_message() {
 # Function to check prerequisites
 check_prerequisites() {
     print_message "$BLUE" "Checking prerequisites..."
-    
+
     # Check Docker
     if ! command -v docker &> /dev/null; then
         print_message "$RED" "ERROR: Docker is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check Docker Compose
     if ! command -v docker-compose &> /dev/null; then
         print_message "$RED" "ERROR: Docker Compose is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if Docker daemon is running
     if ! docker info &> /dev/null; then
         print_message "$RED" "ERROR: Docker daemon is not running"
         exit 1
     fi
-    
+
     # Check environment file
     if [[ ! -f "$ENV_FILE" ]]; then
         print_message "$YELLOW" "WARNING: .env file not found, copying from .env.example"
         if [[ -f "${PROJECT_ROOT}/.env.example" ]]; then
             cp "${PROJECT_ROOT}/.env.example" "$ENV_FILE"
             print_message "$YELLOW" "Please edit .env file with your configuration before continuing"
-            read -p "Press Enter to continue after editing .env file..."
+            read -r -p "Press Enter to continue after editing .env file..."
         else
             print_message "$RED" "ERROR: Neither .env nor .env.example found"
             exit 1
         fi
     fi
-    
+
     print_message "$GREEN" "Prerequisites check passed"
 }
 
 # Function to create necessary directories
 create_directories() {
     print_message "$BLUE" "Creating necessary directories..."
-    
+
     local dirs=(
         "${PROJECT_ROOT}/logs"
         "${PROJECT_ROOT}/data/cache"
@@ -95,7 +96,7 @@ create_directories() {
         "${PROJECT_ROOT}/docker/ssl"
         "${PROJECT_ROOT}/monitoring/data"
     )
-    
+
     for dir in "${dirs[@]}"; do
         mkdir -p "$dir"
         log_message "Created directory: $dir"
@@ -106,10 +107,10 @@ create_directories() {
 cleanup_previous() {
     if [[ "$CLEAN" == true ]]; then
         print_message "$YELLOW" "Cleaning up previous deployment..."
-        
+
         # Stop and remove containers
         docker-compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
-        
+
         # Remove volumes if requested
         read -p "Remove data volumes? (y/N): " -n 1 -r
         echo
@@ -117,10 +118,10 @@ cleanup_previous() {
             docker-compose -f "$COMPOSE_FILE" down -v 2>/dev/null || true
             print_message "$YELLOW" "Volumes removed"
         fi
-        
+
         # Clean up unused images
         docker system prune -f
-        
+
         print_message "$GREEN" "Cleanup completed"
     fi
 }
@@ -129,14 +130,14 @@ cleanup_previous() {
 build_images() {
     if [[ "$BUILD" == true ]]; then
         print_message "$BLUE" "Building Docker images..."
-        
+
         local build_args=(
             "--build-arg" "BUILD_ENV=${BUILD_ENV:-production}"
             "--build-arg" "PYTHON_VERSION=${PYTHON_VERSION:-3.11}"
         )
-        
+
         docker-compose -f "$COMPOSE_FILE" build "${build_args[@]}" --parallel
-        
+
         print_message "$GREEN" "Images built successfully"
     fi
 }
@@ -144,20 +145,20 @@ build_images() {
 # Function to start services
 start_services() {
     print_message "$BLUE" "Starting RAG Templates services with profile: $PROFILE"
-    
+
     local compose_args=()
-    
+
     # Add profile
     compose_args+=("--profile" "$PROFILE")
-    
+
     # Add detached mode
     if [[ "$DETACHED" == true ]]; then
         compose_args+=("-d")
     fi
-    
+
     # Start services
     docker-compose -f "$COMPOSE_FILE" "${compose_args[@]}" up
-    
+
     if [[ "$DETACHED" == true ]]; then
         print_message "$GREEN" "Services started in detached mode"
     fi
@@ -166,14 +167,14 @@ start_services() {
 # Function to wait for services to be healthy
 wait_for_services() {
     print_message "$BLUE" "Waiting for services to become healthy..."
-    
+
     local max_wait=300  # 5 minutes
     local wait_time=0
     local check_interval=10
-    
+
     while [[ $wait_time -lt $max_wait ]]; do
         local all_healthy=true
-        
+
         # Check each service
         for service in iris_db redis rag_api; do
             if ! docker-compose -f "$COMPOSE_FILE" ps "$service" | grep -q "Up (healthy)" 2>/dev/null; then
@@ -181,17 +182,17 @@ wait_for_services() {
                 break
             fi
         done
-        
+
         if [[ "$all_healthy" == true ]]; then
             print_message "$GREEN" "All core services are healthy!"
             return 0
         fi
-        
+
         print_message "$YELLOW" "Waiting for services... (${wait_time}s/${max_wait}s)"
         sleep $check_interval
         wait_time=$((wait_time + check_interval))
     done
-    
+
     print_message "$RED" "Timeout waiting for services to become healthy"
     return 1
 }
@@ -200,10 +201,10 @@ wait_for_services() {
 load_sample_data() {
     if [[ "$LOAD_DATA" == true ]]; then
         print_message "$BLUE" "Loading sample data..."
-        
+
         # Start data loader
         docker-compose -f "$COMPOSE_FILE" --profile with-data up data_loader
-        
+
         print_message "$GREEN" "Sample data loaded successfully"
     fi
 }
@@ -295,26 +296,26 @@ done
 # Main execution
 main() {
     log_message "Starting RAG Templates deployment with profile: $PROFILE"
-    
+
     # Change to project root
     cd "$PROJECT_ROOT"
-    
+
     # Create log directory
     mkdir -p "$(dirname "$LOG_FILE")"
-    
+
     # Execute deployment steps
     check_prerequisites
     create_directories
     cleanup_previous
     build_images
     start_services
-    
+
     if [[ "$DETACHED" == true ]]; then
         wait_for_services
         load_sample_data
         display_urls
     fi
-    
+
     log_message "Deployment completed successfully"
 }
 

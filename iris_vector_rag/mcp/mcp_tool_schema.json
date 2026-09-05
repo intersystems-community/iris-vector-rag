@@ -34,9 +34,7 @@
             "default": true
           }
         },
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       }
     },
     {
@@ -81,9 +79,7 @@
             "default": true
           }
         },
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       }
     },
     {
@@ -115,11 +111,7 @@
           "correction_strategy": {
             "type": "string",
             "description": "Strategy to use when correction is needed",
-            "enum": [
-              "rewrite",
-              "web_search",
-              "both"
-            ],
+            "enum": ["rewrite", "web_search", "both"],
             "default": "rewrite"
           },
           "enable_web_search": {
@@ -138,9 +130,7 @@
             "default": true
           }
         },
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       }
     },
     {
@@ -165,13 +155,7 @@
           "search_method": {
             "type": "string",
             "description": "Which search methods to use",
-            "enum": [
-              "hybrid",
-              "vector",
-              "text",
-              "graph",
-              "rrf"
-            ],
+            "enum": ["hybrid", "vector", "text", "graph", "rrf"],
             "default": "hybrid"
           },
           "graph_traversal_depth": {
@@ -199,9 +183,7 @@
             "description": "Include document metadata (page numbers, etc.)"
           }
         },
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       }
     },
     {
@@ -255,9 +237,7 @@
             "description": "Include document metadata (page numbers, etc.)"
           }
         },
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       }
     },
     {
@@ -302,9 +282,7 @@
             "description": "Include document metadata (page numbers, etc.)"
           }
         },
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       }
     },
     {
@@ -335,14 +313,7 @@
           "time_range": {
             "type": "string",
             "description": "Time range for metrics",
-            "enum": [
-              "5m",
-              "15m",
-              "1h",
-              "6h",
-              "24h",
-              "7d"
-            ],
+            "enum": ["5m", "15m", "1h", "6h", "24h", "7d"],
             "default": "1h"
           },
           "technique_filter": {

@@ -19,17 +19,18 @@ This RAGAS evaluation compares the PyLate ColBERT pipeline against other product
 
 ### Automatic Metrics
 
-| Metric | Description | Calculation |
-|--------|-------------|-------------|
-| **Success Rate** | % of queries returning valid answers | (successful_queries / total_queries) × 100 |
-| **Avg Answer Length** | Average character count of generated answers | sum(answer_lengths) / successful_queries |
-| **Avg Contexts Retrieved** | Average number of contexts retrieved per query | sum(context_counts) / successful_queries |
-| **Avg Query Time** | Average time to process a query (seconds) | sum(query_times) / successful_queries |
-| **Queries/Second** | Throughput metric | total_queries / total_time |
+| Metric                     | Description                                    | Calculation                                |
+| -------------------------- | ---------------------------------------------- | ------------------------------------------ |
+| **Success Rate**           | % of queries returning valid answers           | (successful_queries / total_queries) × 100 |
+| **Avg Answer Length**      | Average character count of generated answers   | sum(answer_lengths) / successful_queries   |
+| **Avg Contexts Retrieved** | Average number of contexts retrieved per query | sum(context_counts) / successful_queries   |
+| **Avg Query Time**         | Average time to process a query (seconds)      | sum(query_times) / successful_queries      |
+| **Queries/Second**         | Throughput metric                              | total_queries / total_time                 |
 
 ### RAGAS-Style Metrics (Planned)
 
 Future enhancements will include full RAGAS metrics:
+
 - **Answer Relevancy**: How relevant is the answer to the query?
 - **Faithfulness**: Is the answer grounded in retrieved context?
 - **Context Precision**: How precise are the retrieved contexts?
@@ -51,6 +52,7 @@ Future enhancements will include full RAGAS metrics:
 10. **Parkinson's Disease** - Neurology
 
 Each document contains:
+
 - 100-150 words of realistic medical content
 - Metadata: source, doc_id, topic
 - Domain-specific terminology
@@ -97,7 +99,7 @@ make test-pylate-ragas
 
 ### Expected Output
 
-```
+```text
 ================================================================================
 PyLate ColBERT RAGAS Evaluation - Pipeline Comparison
 ================================================================================
@@ -154,6 +156,7 @@ PyLate ColBERT RAGAS Evaluation - Pipeline Comparison
 **Location**: `outputs/reports/ragas_evaluations/pylate_ragas_comparison_YYYYMMDD_HHMMSS.json`
 
 **Structure**:
+
 ```json
 {
   "results": [
@@ -189,6 +192,7 @@ PyLate ColBERT RAGAS Evaluation - Pipeline Comparison
 **Location**: `outputs/reports/ragas_evaluations/pylate_ragas_comparison_YYYYMMDD_HHMMSS.html`
 
 **Features**:
+
 - Color-coded success rates (green > 80%, yellow > 50%, red < 50%)
 - Sortable tables for each metric
 - Detailed per-query results
@@ -224,14 +228,15 @@ PyLate ColBERT RAGAS Evaluation - Pipeline Comparison
 
 Based on initial testing with 10 documents and 5 queries:
 
-| Pipeline | Success Rate | Avg Query Time | Avg Contexts | Avg Answer Length |
-|----------|--------------|----------------|--------------|-------------------|
-| BasicRAG | 100% | 1.2s | 3.0 | 235 chars |
-| BasicRAGReranking | 100% | 1.5s | 3.0 | 245 chars |
-| **PyLateColBERT** | **100%** | **1.7s** | **3.0** | **250 chars** |
-| CRAG | 100% | 2.3s | 3.2 | 260 chars |
+| Pipeline          | Success Rate | Avg Query Time | Avg Contexts | Avg Answer Length |
+| ----------------- | ------------ | -------------- | ------------ | ----------------- |
+| BasicRAG          | 100%         | 1.2s           | 3.0          | 235 chars         |
+| BasicRAGReranking | 100%         | 1.5s           | 3.0          | 245 chars         |
+| **PyLateColBERT** | **100%**     | **1.7s**       | **3.0**      | **250 chars**     |
+| CRAG              | 100%         | 2.3s           | 3.2          | 260 chars         |
 
 **PyLate ColBERT Observations**:
+
 - ✅ 100% success rate (no failures)
 - ⚡ Competitive speed (1.7s avg, only 0.5s slower than BasicRAG)
 - 📚 Consistent context retrieval (3.0 contexts per query)
@@ -265,15 +270,19 @@ Based on initial testing with 10 documents and 5 queries:
 ### Common Issues
 
 **Issue**: "No module named 'ragas'"
+
 - **Solution**: Install RAGAS: `pip install ragas`
 
 **Issue**: "Connection to IRIS failed"
+
 - **Solution**: Verify IRIS is running: `docker ps | grep iris`
 
 **Issue**: "OpenAI API key not found"
+
 - **Solution**: Set environment variable: `export OPENAI_API_KEY=sk-...`
 
 **Issue**: "All queries failing"
+
 - **Solution**: Check documents are loaded: verify `pipeline.stats["documents_indexed"] > 0`
 
 ## Conclusion

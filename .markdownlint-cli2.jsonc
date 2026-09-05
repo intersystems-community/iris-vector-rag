@@ -1,7 +1,53 @@
 {
+  // Project markdownlint config for the spec-gates markdownlint gate. Mirrors
+  // iris-agentic-dev so the two repos enforce the same prose rules.
+  //
+  // Ignores: vendored/projected enforcement runtime (upgrade overwrites it),
+  // dependency trees, historical spec material, generated reports and
+  // fixtures, and caches.
+  "ignores": [
+    ".specify/**",
+    ".claude/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/.mypy_cache/**",
+    "**/.pytest_cache/**",
+    ".agents/**",
+    ".opencode/**",
+    "data/**",
+    "specs/**",
+    "docs/archived/**",
+    "outputs/**",
+    "htmlcov/**",
+    "tools/nodejs/**",
+    "scripts/validation/reports/**",
+    "evaluation_framework/evaluation_results/**",
+    "**/tests/fixtures/**",
+    "*.egg-info/**",
+    "build/**",
+    "dist/**"
+  ],
   "config": {
+    "default": true,
+    "MD003": { "style": "atx" },
+    "MD007": { "indent": 2 },
+    // prettier owns wrapping (proseWrap: preserve); MD013 would fight it.
     "MD013": false,
+    "MD024": { "siblings_only": true },
+    // kb/ files carry a YAML front-matter title AND an H1; do not count the former.
+    "MD025": { "front_matter_title": "" },
+    // Ordered lists: prettier renumbers, so accept 1/2/3 or 1/1/1.
+    "MD029": { "style": "one_or_ordered" },
+    // Inline HTML is used deliberately in READMEs (badges, collapsible blocks).
+    "MD033": false,
+    // Bold-line pseudo-headings are pervasive in the audit/design docs under
+    // docs/; converting them is an editorial pass, not a formatting one.
+    "MD036": false,
     "MD041": false,
+    // Underscore, not asterisk: prettier always emits `_em_` and has no option
+    // to change it, so any other setting makes the two tools loop.
+    "MD049": { "style": "underscore" },
+    "MD050": { "style": "asterisk" },
     "MD060": false
   }
 }

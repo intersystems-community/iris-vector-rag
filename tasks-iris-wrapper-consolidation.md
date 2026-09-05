@@ -81,7 +81,7 @@ Do this first — it breaks imports on any machine without `iris` installed.
 
 ## Dependencies
 
-```
+```text
 Phase 1 (tests) → all phases gate on their paired tests
 Phase 2 (pool import fix) → independent, do first
 Phase 3 (remove duplicate) → after Phase 2

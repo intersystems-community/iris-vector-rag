@@ -17,6 +17,7 @@ hipporag2-pipeline was failing with F1=0.000 score due to three critical errors:
 ### 1. search_entities Method (iris_vector_rag/services/storage.py:526-631)
 
 **Signature**:
+
 ```python
 def search_entities(
     self,
@@ -30,12 +31,14 @@ def search_entities(
 ```
 
 **Implementation**:
+
 - Uses **SQL LIKE** with `LOWER()` for case-insensitive substring matching
 - Returns **List[Dict[str, Any]]** (not Entity objects) for hipporag2 compatibility
 - Supports entity type filtering and confidence thresholds
 - Orders results by confidence DESC
 
 **SQL Query**:
+
 ```sql
 SELECT entity_id, entity_name, entity_type, source_doc_id, description, confidence
 FROM RAG.Entities
@@ -46,6 +49,7 @@ FETCH FIRST max_results ROWS ONLY
 ```
 
 **Return Format**:
+
 ```python
 {
     "entity_id": "Scott Derrickson director",
@@ -61,6 +65,7 @@ FETCH FIRST max_results ROWS ONLY
 ### 2. Enhanced Logging (iris_vector_rag/services/batch_entity_processor.py)
 
 **Lines 112-117**: Log entity IDs being stored
+
 ```python
 entity_ids_to_store = [str(e.id) for e in entities]
 logger.debug(
@@ -70,6 +75,7 @@ logger.debug(
 ```
 
 **Lines 319-332**: Enhanced foreign key validation error logging
+
 ```python
 missing_ids_list = sorted(list(missing_ids))[:10]
 logger.error(
@@ -139,17 +145,20 @@ None yet - requires test fixtures with RAG.Entities table populated.
 ### Integration Tests
 
 **hipporag2-pipeline HotpotQA evaluation**:
+
 ```bash
 cd /Users/tdyar/ws/hipporag2-pipeline
 SKIP_IRIS_CONTAINER=0 python3 examples/hotpotqa_evaluation.py 1
 ```
 
 **Expected Behavior**:
+
 - ✅ No `AttributeError` for missing `search_entities`
 - ✅ Entity search executes without SQL errors
 - ✅ Returns matches for query entities like "Scott Derrickson", "Ed Wood"
 
 **Known Limitations**:
+
 - ⚠️ Still see "20 missing entity IDs" (root cause TBD - separate investigation)
 - ⚠️ F1 score may still be 0.000 due to missing LLM function
 
@@ -195,12 +204,13 @@ for match in matches:
    - Add hybrid fallback (iFind → LIKE)
 
 2. **Add configuration**:
+
    ```yaml
    entity_extraction:
      storage:
        fuzzy_matching:
          enabled: true
-         method: "ifind"  # or "like"
+         method: "ifind" # or "like"
          edit_distance: 2
    ```
 

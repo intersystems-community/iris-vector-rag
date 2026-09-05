@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD001 -- this file is a section pasted under an h2 in the upstream README -->
+
 # InterSystems IRIS Section for retrieve-dspy README
 
 Add this section to the "Supported Databases" section of retrieve-dspy/README.md:
@@ -71,6 +73,7 @@ results = iris_search_tool(
 #### Advanced Features
 
 **Tag Filtering:**
+
 ```python
 results = iris_search_tool(
     query="diabetes treatment",
@@ -82,6 +85,7 @@ results = iris_search_tool(
 ```
 
 **Return Vectors:**
+
 ```python
 results = iris_search_tool(
     query="search query",
@@ -97,6 +101,7 @@ for obj in results:
 ```
 
 **Async Search:**
+
 ```python
 import asyncio
 from retrieve_dspy.database.iris_database import async_iris_search_tool
@@ -171,20 +176,24 @@ documents = retriever("What are the symptoms of diabetes?")
 #### Troubleshooting
 
 **Connection Error:**
+
 - Verify IRIS is running and accessible
 - Check that IRIS_HOST and IRIS_PORT are correct
 - Verify credentials (IRIS_USERNAME, IRIS_PASSWORD)
 
 **ImportError: No module named 'iris':**
+
 ```bash
 pip install iris-native-api
 ```
 
 **SQLCODE -259 (Vector datatype mismatch):**
+
 - Ensure embedding column is defined as `VECTOR(FLOAT, dimension)`
 - Verify dimension matches your embedding model (e.g., 384 for all-MiniLM-L6-v2)
 
 **No results returned:**
+
 - Verify table has data: `SELECT COUNT(*) FROM RAG.Documents`
 - Check embedding column is populated
 - Try lowering retrieved_k if corpus is small

@@ -7,7 +7,7 @@ A comprehensive, statistically rigorous evaluation system for comparing biomedic
 This framework provides:
 
 1. **Biomedical Question Generation** - Domain-specific question generation from PMC documents
-2. **RAGAS Metrics Framework** - Comprehensive evaluation using adapted RAGAS metrics  
+2. **RAGAS Metrics Framework** - Comprehensive evaluation using adapted RAGAS metrics
 3. **Statistical Analysis** - Rigorous statistical testing with power analysis and effect sizes
 4. **Comparative Analysis** - Multi-pipeline comparison with statistical significance testing
 5. **PMC Data Pipeline** - Scalable processing of 10K+ biomedical documents
@@ -138,7 +138,7 @@ uv run python -m evaluation_framework.evaluation_orchestrator \
 
 ```python
 from evaluation_framework.biomedical_question_generator import (
-    create_biomedical_question_generator, 
+    create_biomedical_question_generator,
     QuestionGenerationConfig
 )
 
@@ -177,15 +177,15 @@ from evaluation_framework.empirical_reporting import create_empirical_reporting_
 
 reporting = create_empirical_reporting_framework()
 reports = reporting.generate_comprehensive_report(
-    evaluation_results, 
-    experiment_config, 
+    evaluation_results,
+    experiment_config,
     "evaluation_name"
 )
 ```
 
 ## Output Structure
 
-```
+```text
 outputs/evaluations/
 ├── biomedical_rag_evaluation_20231201_100000/
 │   ├── config.yaml                    # Experiment configuration
@@ -206,24 +206,28 @@ outputs/evaluations/
 ## Report Types
 
 ### 1. Executive Summary
+
 - Key findings and recommendations
 - Strategic implications
 - 5-minute reading time
 - Decision-maker focused
 
 ### 2. Technical Report
+
 - Comprehensive methodology
 - Statistical analysis details
 - Implementation guidance
 - Developer/researcher focused
 
 ### 3. Academic Paper
+
 - Peer-review ready format
 - Complete methodology section
 - Statistical evidence presentation
 - Publication ready
 
 ### 4. Interactive Dashboard
+
 - Real-time exploration
 - Performance comparisons
 - Statistical evidence visualization
@@ -264,40 +268,47 @@ class CustomRAGPipeline:
 ## Statistical Methodology
 
 ### Power Analysis
+
 - Target power ≥ 0.8
 - Effect size sensitivity analysis
 - Sample size validation
 
 ### Multiple Comparisons
+
 - Benjamini-Hochberg FDR correction
 - Family-wise error rate control
 - Adjusted p-values reported
 
 ### Effect Sizes
+
 - Cohen's d for practical significance
 - Confidence intervals for all estimates
 - Bootstrap resampling for robust estimates
 
 ### Evidence Levels
+
 - **Strong**: p < 0.001, |d| > 0.8, power > 0.8
-- **Moderate**: p < 0.01, |d| > 0.5, power > 0.7  
+- **Moderate**: p < 0.01, |d| > 0.5, power > 0.7
 - **Weak**: p < 0.05, |d| > 0.2
 - **Insufficient**: p ≥ 0.05 or small effect size
 
 ## Validation and Quality Assurance
 
 ### Data Quality
+
 - Document validation with biomedical relevance scoring
 - Question quality assessment with confidence thresholds
 - Statistical assumption checking with diagnostic tests
 
 ### Reproducibility
+
 - Configuration-driven experiments
 - Random seed control across all components
 - Checkpointing for long-running evaluations
 - Complete audit trail with timestamped logs
 
 ### Performance Monitoring
+
 - Execution time tracking per component
 - Memory usage monitoring for large datasets
 - Progress reporting with estimated completion times
@@ -317,24 +328,28 @@ The framework integrates seamlessly with the existing RAG infrastructure:
 ### Common Issues
 
 1. **Memory Issues with Large Documents**
+
    ```bash
    # Reduce batch size
    --batch-size 16
    ```
 
 2. **Long Evaluation Times**
+
    ```bash
    # Use demo mode for testing
    --max-documents 100 --max-questions 50
    ```
 
 3. **Pipeline Import Errors**
+
    ```bash
    # Verify pipeline availability
    uv run python -c "from iris_rag.pipelines import registry; print(registry.list_pipeline_names())"
    ```
 
 4. **Statistical Analysis Failures**
+
    ```bash
    # Check sample sizes
    --max-questions 100  # Minimum for robust statistics

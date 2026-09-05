@@ -4,14 +4,7 @@
     "description": "Curated queries designed to trigger different types of hallucinations for CRAG demonstration",
     "version": "1.0",
     "created": "2025-09-14",
-    "categories": [
-      "medical",
-      "factual",
-      "temporal",
-      "numerical",
-      "causal",
-      "overgeneralization"
-    ]
+    "categories": ["medical", "factual", "temporal", "numerical", "causal", "overgeneralization"]
   },
   "test_cases": [
     {
@@ -282,7 +275,7 @@
     },
     "false_positive_rate": {
       "description": "Rate of incorrect hallucination flags",
-      "target_threshold": 0.10
+      "target_threshold": 0.1
     },
     "correction_quality": {
       "description": "Quality of generated corrections",
@@ -313,7 +306,7 @@
         "description": "Mixing up medications, conditions, or medical entities"
       },
       "numerical_inaccuracy": {
-        "weight": 0.20,
+        "weight": 0.2,
         "description": "Unsupported statistics or incorrect numerical claims"
       },
       "causal_misattribution": {
@@ -321,7 +314,7 @@
         "description": "Incorrect cause-effect relationships"
       },
       "overgeneralization": {
-        "weight": 0.10,
+        "weight": 0.1,
         "description": "Broad claims without appropriate qualification"
       }
     }

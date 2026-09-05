@@ -3,6 +3,7 @@
 ## ✅ Completed (Ready for Integration)
 
 ### Core Implementation
+
 - [x] **iris_database.py** - Complete IRIS adapter implementation (413 lines)
   - iris_search_tool() - Main search function
   - async_iris_search_tool() - Async wrapper
@@ -13,6 +14,7 @@
   - Full docstrings with examples
 
 ### Testing
+
 - [x] **test_iris_database.py** - Comprehensive test suite (260 lines)
   - TestIRISSearchTool - 3 tests (basic search, vectors, tag filtering)
   - TestVectorSearch - 2 tests (SQL generation, vector column)
@@ -21,6 +23,7 @@
   - TestIRISIntegration - 1 integration test (optional)
 
 ### Documentation
+
 - [x] **INTEGRATION_STEPS.md** - Step-by-step integration guide
   - Environment setup
   - File copying instructions
@@ -52,7 +55,7 @@
 
 All files are in `/Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/`:
 
-```
+```text
 contrib/retrieve-dspy/
 ├── iris_database.py              → copy to retrieve_dspy/database/
 ├── test_iris_database.py         → copy to tests/database/
@@ -69,7 +72,7 @@ contrib/retrieve-dspy/
 └── STATUS.md                     → this file
 ```
 
-##  🎉 NEW: MultiQueryRRFPipeline
+## 🎉 NEW: MultiQueryRRFPipeline
 
 **Status**: ✅ Production-ready pipeline added to iris_rag!
 
@@ -78,12 +81,14 @@ We've created a production-quality pipeline that implements the core QUIPLER con
 **File**: `iris_rag/pipelines/multi_query_rrf.py`
 
 **Features**:
+
 - Multi-query generation (simple or LLM-based)
 - Parallel IRIS vector searches
 - Reciprocal Rank Fusion (RRF) combining
 - Integrated into `create_pipeline()` factory
 
 **Usage**:
+
 ```python
 from iris_rag import create_pipeline
 
@@ -100,6 +105,7 @@ pipeline = create_pipeline(
 ```
 
 **Demo**:
+
 ```bash
 # Run the pipeline demo
 python contrib/retrieve-dspy/demo_pipeline_multi_query.py
@@ -113,6 +119,7 @@ python contrib/retrieve-dspy/demo_pipeline_multi_query.py --compare
 ```
 
 **Benefits**:
+
 - ✅ Integrated into iris_rag framework
 - ✅ Follows standard pipeline interface
 - ✅ Can be used in production applications
@@ -122,6 +129,7 @@ python contrib/retrieve-dspy/demo_pipeline_multi_query.py --compare
 ## ✅ Additional Analysis Completed
 
 ### Complex Examples Compatibility
+
 - [x] **COMPLEX_EXAMPLES_ANALYSIS.md** - Comprehensive analysis of all retrieve-dspy techniques
   - Multi-query generation (MultiQueryWriter) - ✅ Full compatibility
   - Query expansion (HyDE, LameR, ThinkQE) - ✅ Full compatibility
@@ -215,22 +223,24 @@ git push origin feature/iris-adapter
 
 ### 8. Create Pull Request (5 minutes)
 
-1. Go to https://github.com/isc-tdyar/retrieve-dspy
+1. Go to <https://github.com/isc-tdyar/retrieve-dspy>
 2. Click "Compare & pull request"
 3. Use content from `PULL_REQUEST_TEMPLATE.md` as PR description
-4. Submit PR to upstream (https://github.com/weaviate/retrieve-dspy)
+4. Submit PR to upstream (<https://github.com/weaviate/retrieve-dspy>)
 
 **Total Estimated Time**: ~25 minutes
 
 ## 📊 Implementation Quality
 
 ### Code Coverage
+
 - **iris_database.py**: All major functions implemented and tested
 - **Test Coverage**: ~95% of core functionality covered by unit tests
 - **Error Handling**: Comprehensive try/except blocks with clear error messages
 - **Documentation**: Every function has docstrings with examples
 
 ### Standards Compliance
+
 - ✅ Follows Weaviate adapter interface exactly
 - ✅ Returns standard ObjectFromDB objects
 - ✅ Type hints throughout
@@ -240,6 +250,7 @@ git push origin feature/iris-adapter
 - ✅ Comprehensive docstrings
 
 ### Testing Strategy
+
 - **Unit Tests**: Use mocks, fast, no dependencies (can run in CI immediately)
 - **Integration Tests**: Marked with `@pytest.mark.integration` (optional)
 - **Example Code**: Includes error handling and environment validation
@@ -247,6 +258,7 @@ git push origin feature/iris-adapter
 ## 🎯 Success Criteria
 
 ### MVP Criteria (All Met ✅)
+
 - [x] iris_search_tool() works with vector search
 - [x] Returns correctly formatted ObjectFromDB objects
 - [x] Has basic tests
@@ -254,6 +266,7 @@ git push origin feature/iris-adapter
 - [x] Documentation in README
 
 ### Full Feature Parity (All Met ✅)
+
 - [x] Vector search implemented
 - [x] Async support working
 - [x] Tag filtering working
@@ -262,6 +275,7 @@ git push origin feature/iris-adapter
 - [x] Full documentation
 
 ### Ready for Upstream (Ready ✅)
+
 - [x] Implementation complete
 - [x] Tests written and passing
 - [x] Example code provided
@@ -272,6 +286,7 @@ git push origin feature/iris-adapter
 ## 💡 Key Features Delivered
 
 ### Core Functionality
+
 1. **Vector Similarity Search**: Using IRIS VECTOR_COSINE
 2. **Async Support**: Via asyncio.to_thread
 3. **Tag Filtering**: SQL-based tag filtering
@@ -280,12 +295,14 @@ git push origin feature/iris-adapter
 6. **Connection Management**: Reusable connections
 
 ### Integration Points
+
 1. **Embedding Generation**: iris_rag → sentence-transformers fallback
 2. **ObjectFromDB Compatibility**: Exact match with other backends
 3. **Error Handling**: Clear error messages with troubleshooting hints
 4. **Logging**: Standard Python logging throughout
 
 ### Documentation
+
 1. **Inline Docs**: Comprehensive docstrings
 2. **Usage Examples**: Basic and advanced use cases
 3. **Integration Guide**: Step-by-step setup instructions
@@ -295,19 +312,24 @@ git push origin feature/iris-adapter
 ## 🔧 Technical Details
 
 ### Dependencies
+
 **Required:**
+
 - iris-native-api (or iris-vector-graph)
 
 **Optional:**
+
 - sentence-transformers (fallback embedding)
 - iris_rag (preferred embedding)
 
 ### Database Requirements
+
 - Table with ID, content, and embedding columns
 - Embedding column named `{content_column}_embedding`
 - Embedding stored as VECTOR(FLOAT, dimension)
 
 ### Performance Characteristics
+
 - **Latency**: ~50-100ms p95 for 10K documents
 - **Scalability**: Tested up to 100K documents
 - **Concurrency**: Supports connection pooling
@@ -315,18 +337,20 @@ git push origin feature/iris-adapter
 ## 📈 Strategic Impact
 
 ### Ecosystem Benefits
+
 1. **IRIS Visibility**: Positions IRIS in DSPy ecosystem
 2. **User Access**: DSPy users can now use IRIS
 3. **Advanced Techniques**: IRIS users get DSPy IR techniques
 4. **Community Growth**: Contribution to popular OSS project
 
 ### Technical Benefits
+
 1. **Validated API**: External usage validates our interfaces
 2. **Best Practices**: Learn from retrieve-dspy patterns
 3. **Integration Testing**: Real-world usage testing
 4. **Documentation**: Comprehensive usage examples
 
-## 🎉 Ready to Ship!
+## 🎉 Ready to Ship
 
 **All implementation work is complete.** The IRIS adapter is production-ready and tested. Just follow the Next Steps above to integrate into your forked repository and create the upstream PR.
 
@@ -334,7 +358,7 @@ git push origin feature/iris-adapter
 
 **Files are located at**: `/Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/`
 
-**Your forked repo**: https://github.com/isc-tdyar/retrieve-dspy
+**Your forked repo**: <https://github.com/isc-tdyar/retrieve-dspy>
 
 **Let's ship it!** 🚀
 
@@ -352,7 +376,7 @@ I analyzed every advanced technique in retrieve-dspy and our IRIS adapter works 
 
 retrieve-dspy has a layered architecture:
 
-```
+```text
 ┌──────────────────────────────────────┐
 │  Compositions (QUIPLER, etc.)        │  ← Most complex techniques
 ├──────────────────────────────────────┤
@@ -383,6 +407,7 @@ Our IRIS adapter replaces the database layer → **everything above works automa
 ### QUIPLER Deep Dive
 
 **QUIPLER** is the most sophisticated composition in retrieve-dspy:
+
 - Query expansion (LLM generates 3+ queries)
 - Parallel search (all queries run concurrently)
 - Cross-encoder reranking (precise relevance scoring)
@@ -395,6 +420,7 @@ Our IRIS adapter replaces the database layer → **everything above works automa
 ### Key Success Factors
 
 1. **Exact Interface Match**
+
    ```python
    # Same signature as weaviate_search_tool
    def iris_search_tool(
@@ -433,6 +459,7 @@ results = iris_search_tool(query="diabetes", ...)
 ### Documentation Created
 
 I've created comprehensive compatibility analysis:
+
 - **COMPLEX_EXAMPLES_ANALYSIS.md** (2800+ lines)
   - Every retrieve-dspy technique analyzed
   - Code examples for each
@@ -448,6 +475,7 @@ I've created comprehensive compatibility analysis:
 ### What's Missing?
 
 Only 1 limitation:
+
 - **Native Hybrid Search** (vector + BM25 in single query)
   - Weaviate has this built-in
   - IRIS workaround: Use multi-query + RRF (same result!)
@@ -458,6 +486,7 @@ Only 1 limitation:
 **Your IRIS adapter works with 95%+ of retrieve-dspy out of the box!**
 
 Users can access ALL these advanced IR techniques:
+
 - Multi-query generation
 - Query expansion (HyDE, LameR, ThinkQE)
 - Document clustering

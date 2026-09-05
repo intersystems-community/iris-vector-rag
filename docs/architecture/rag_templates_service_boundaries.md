@@ -10,7 +10,7 @@ This document defines the service boundaries and integration patterns for the RA
 
 ### 2.1 Core Service Boundaries
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                        SERVICE BOUNDARY OVERVIEW                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -49,18 +49,18 @@ This document defines the service boundaries and integration patterns for the RA
 
 ### 2.2 Service Responsibility Matrix
 
-| Service Layer | Responsibility | Interface Contract | Error Handling | Performance Target |
-|---------------|---------------|-------------------|----------------|-------------------|
-| **kg-ticket-resolver** | Knowledge graph memory management, insight generation | Memory APIs, GraphQL/REST | Graceful degradation to basic RAG | <200ms p95 |
-| **Adapter Bridge** | Interface abstraction, circuit breaking, monitoring | [`RAGResponse`](../iris_vector_rag/adapters/rag_templates_bridge.py:42), async/await | Circuit breaker + fallback | <50ms overhead |
-| **RAG Pipelines** | Document processing, vector search, answer generation | [`RAGPipeline`](../iris_rag/core/base.py:12) interface | Pipeline-specific error handling | <500ms p95 |
-| **IRIS Database** | Vector storage, graph data persistence | SQL + vector functions | Connection pooling + retry | <100ms query time |
+| Service Layer          | Responsibility                                        | Interface Contract                                                                   | Error Handling                    | Performance Target |
+| ---------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------- | ------------------ |
+| **kg-ticket-resolver** | Knowledge graph memory management, insight generation | Memory APIs, GraphQL/REST                                                            | Graceful degradation to basic RAG | <200ms p95         |
+| **Adapter Bridge**     | Interface abstraction, circuit breaking, monitoring   | [`RAGResponse`](../iris_vector_rag/adapters/rag_templates_bridge.py:42), async/await | Circuit breaker + fallback        | <50ms overhead     |
+| **RAG Pipelines**      | Document processing, vector search, answer generation | [`RAGPipeline`](../iris_rag/core/base.py:12) interface                               | Pipeline-specific error handling  | <500ms p95         |
+| **IRIS Database**      | Vector storage, graph data persistence                | SQL + vector functions                                                               | Connection pooling + retry        | <100ms query time  |
 
 ## 3. Integration Patterns
 
 ### 3.1 Query Processing Flow
 
-```
+```text
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
 │  kg-ticket-      │    │  rag_templates_  │    │  RAG Pipeline    │
 │  resolver        │    │  bridge          │    │  (Basic/CRAG/    │
@@ -95,14 +95,14 @@ This document defines the service boundaries and integration patterns for the RA
 async def handle_document_changes(change_events: List[ChangeEvent]) -> IndexingResult:
     """
     Process incremental document changes following LightRAG patterns.
-    
+
     Pattern:
     1. Batch changes by technique requirements
     2. Apply changes incrementally to avoid full reindex
     3. Update knowledge graph memory nodes
     4. Maintain consistency across RAG and KG systems
     """
-    
+
     results = []
     for technique in [RAGTechnique.BASIC, RAGTechnique.GRAPH]:
         if change_events_for_technique(change_events, technique):
@@ -112,7 +112,7 @@ async def handle_document_changes(change_events: List[ChangeEvent]) -> IndexingR
                 incremental=True
             )
             results.append(result)
-    
+
     # Sync with knowledge graph memory
     await sync_kg_memory_nodes(results)
     return IndexingResult.aggregate(results)
@@ -125,18 +125,18 @@ async def handle_document_changes(change_events: List[ChangeEvent]) -> IndexingR
 class CircuitBreakerPattern:
     """
     Implements fault tolerance for RAG pipeline access.
-    
+
     States:
     - CLOSED: Normal operation, failures tracked
     - OPEN: Failing fast, requests rejected
     - HALF_OPEN: Testing recovery, limited requests
-    
+
     Fallback Strategy:
     - GraphRAG failure → BasicRAG
-    - CRAG failure → BasicRAG  
+    - CRAG failure → BasicRAG
     - BasicRAG failure → Error response with cached context
     """
-    
+
     async def execute_with_fallback(self, query: str, technique: RAGTechnique) -> RAGResponse:
         try:
             return await self._execute_primary(query, technique)
@@ -152,7 +152,7 @@ class CircuitBreakerPattern:
 
 ### 4.1 Error Handling Hierarchy
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        ERROR HANDLING LAYERS                   │
 ├─────────────────────────────────────────────────────────────────┤
@@ -177,12 +177,12 @@ class CircuitBreakerPattern:
 
 ### 4.2 Graceful Degradation Strategy
 
-| Failure Scenario | Primary Response | Fallback Response | User Experience |
-|------------------|------------------|-------------------|-----------------|
-| GraphRAG pipeline failure | Switch to BasicRAG | Serve from cache | Slightly reduced context quality |
-| Database connectivity loss | Use connection pool retry | Return cached results | "System recovering" message |
-| Memory API timeout | Skip memory integration | Direct RAG response | Missing contextual insights |
-| Complete system failure | Error response | Cached emergency response | "Please try again later" |
+| Failure Scenario           | Primary Response          | Fallback Response         | User Experience                  |
+| -------------------------- | ------------------------- | ------------------------- | -------------------------------- |
+| GraphRAG pipeline failure  | Switch to BasicRAG        | Serve from cache          | Slightly reduced context quality |
+| Database connectivity loss | Use connection pool retry | Return cached results     | "System recovering" message      |
+| Memory API timeout         | Skip memory integration   | Direct RAG response       | Missing contextual insights      |
+| Complete system failure    | Error response            | Cached emergency response | "Please try again later"         |
 
 ## 5. Performance & Monitoring Integration
 
@@ -195,12 +195,12 @@ slo_targets:
     latency_p95_ms: 50
     error_rate_percent: 0.1
     availability_percent: 99.9
-    
+
   rag_pipelines:
     latency_p95_ms: 500
     throughput_qps: 100
     memory_usage_gb: 8
-    
+
   kg_memory_integration:
     sync_latency_ms: 200
     consistency_lag_ms: 1000
@@ -215,23 +215,23 @@ class MonitoringIntegration:
     """
     Provides monitoring hooks across service boundaries.
     """
-    
+
     @measure_performance("rag_query_processing")
     async def process_query(self, query: str) -> RAGResponse:
         """Query processing with full observability."""
         with self.tracer.span("kg_ticket_resolver.query") as span:
             span.set_attribute("query.technique", self.technique)
             span.set_attribute("query.length", len(query))
-            
+
             # Bridge monitoring
             response = await self.bridge.query(query, technique=self.technique)
-            
+
             # Record metrics
             self.metrics.record_query_latency(response.processing_time_ms)
             self.metrics.record_technique_usage(response.technique_used)
-            
+
             return response
-    
+
     def setup_health_endpoints(self):
         """Expose health check endpoints across all boundaries."""
         return {
@@ -246,7 +246,7 @@ class MonitoringIntegration:
 
 ### 6.1 Service Isolation Boundaries
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                      SECURITY BOUNDARIES                       │
 ├─────────────────────────────────────────────────────────────────┤
@@ -280,12 +280,12 @@ class MonitoringIntegration:
 
 ### 7.1 Primary Integration Interfaces
 
-| Interface | Location | Purpose | Protocol |
-|-----------|----------|---------|----------|
-| [`RAGTemplatesBridge`](../iris_vector_rag/adapters/rag_templates_bridge.py:85) | iris_vector_rag/adapters/rag_templates_bridge.py | Main integration adapter | Python async/await |
-| [`RAGResponse`](../iris_vector_rag/adapters/rag_templates_bridge.py:42) | Standard response format | Cross-system data contract | JSON/dataclass |
-| [rag_integration.yaml](../config/rag_integration.yaml:1) | Configuration management | Environment-independent config | YAML |
-| Health endpoints | /health/* routes | System monitoring | HTTP REST |
+| Interface                                                                      | Location                                         | Purpose                        | Protocol           |
+| ------------------------------------------------------------------------------ | ------------------------------------------------ | ------------------------------ | ------------------ |
+| [`RAGTemplatesBridge`](../iris_vector_rag/adapters/rag_templates_bridge.py:85) | iris_vector_rag/adapters/rag_templates_bridge.py | Main integration adapter       | Python async/await |
+| [`RAGResponse`](../iris_vector_rag/adapters/rag_templates_bridge.py:42)        | Standard response format                         | Cross-system data contract     | JSON/dataclass     |
+| [rag_integration.yaml](../config/rag_integration.yaml:1)                       | Configuration management                         | Environment-independent config | YAML               |
+| Health endpoints                                                               | /health/* routes                                 | System monitoring              | HTTP REST          |
 
 ### 7.2 Future Integration Points
 

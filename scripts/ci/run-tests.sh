@@ -172,14 +172,14 @@ echo "Command: $PYTEST_CMD"
 echo ""
 
 # Run tests
-if eval $PYTEST_CMD; then
+if eval "$PYTEST_CMD"; then
     echo ""
     echo -e "${GREEN}✓ Tests completed successfully${NC}"
-    
+
     if [[ "$COVERAGE" == true ]]; then
         echo -e "${BLUE}Coverage report generated at: ${OUTPUT_DIR}/htmlcov/index.html${NC}"
     fi
-    
+
     echo -e "${BLUE}Test results saved to: ${OUTPUT_DIR}/${NC}"
     exit 0
 else

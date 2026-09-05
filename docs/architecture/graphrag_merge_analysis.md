@@ -7,6 +7,7 @@ This document details the analysis and merger of two GraphRAG implementations to
 ## Background and Motivation
 
 ### Problem Statement
+
 We had two GraphRAG implementations with complementary strengths:
 
 1. **Current Implementation (`/tmp/current_graphrag.py`, 598 lines)**: Production-hardened with fail-hard validation and integrated entity extraction service
@@ -35,13 +36,15 @@ Recent research (2024-2025) demonstrates that GraphRAG represents a fundamental 
 
 **Decision**: Implement optional vector fallback (disabled by default for fail-hard behavior)
 
-**Rationale**: 
+**Rationale**:
+
 - Research shows hybrid approaches achieve superior performance
 - Production systems need reliability mechanisms
 - Configurable approach supports both strict graph-only and hybrid modes
 - Aligns with Neo4j's implementation pattern combining vector and graph traversal
 
 **Implementation**:
+
 ```python
 self.enable_vector_fallback = self.pipeline_config.get("enable_vector_fallback", False)
 
@@ -61,12 +64,14 @@ except GraphRAGException as e:
 **Decision**: Primary service-based extraction with local fallback
 
 **Rationale**:
+
 - Current implementation relies on EntityExtractionService (production-ready)
 - Old implementation has complete local extraction logic
 - Dual approach provides robustness and development flexibility
 - Supports gradual migration and testing scenarios
 
 **Implementation**:
+
 ```python
 try:
     self.entity_extraction_service = EntityExtractionService(...)
@@ -81,12 +86,14 @@ except Exception as e:
 **Decision**: Add query entity extraction from old implementation
 
 **Rationale**:
+
 - Current implementation only used keyword matching for seed entities
 - Old implementation had sophisticated query entity extraction
 - Query entity extraction is critical for accurate graph traversal
 - Enables more precise multi-hop reasoning
 
 **Implementation**:
+
 ```python
 def _extract_query_entities(self, query_text: str) -> List[str]:
     """Extract entities from query text by matching against known entities."""
@@ -100,12 +107,14 @@ def _extract_query_entities(self, query_text: str) -> List[str]:
 **Decision**: Preserve and enhance debug instrumentation from current implementation
 
 **Rationale**:
+
 - Production systems require performance visibility
 - Current implementation has sophisticated timing instrumentation
 - Supports optimization and troubleshooting
 - Aligns with roadmap performance monitoring goals
 
 **Implementation**:
+
 ```python
 # Per-query performance tracking
 self._debug_db_execs = 0
@@ -122,21 +131,24 @@ self._debug_step_times["query_entity_extraction_ms"] = (time.perf_counter() - t0
 **Decision**: Maintain current implementation's exception hierarchy
 
 **Rationale**:
+
 - Clear error classification supports debugging and monitoring
 - Fail-hard approach provides reliability guarantees
 - Custom exceptions enable specific error handling
 - Production-ready error messaging
 
 **Implementation**:
+
 ```python
 class GraphRAGException(RAGException): pass
-class KnowledgeGraphNotPopulatedException(GraphRAGException): pass  
+class KnowledgeGraphNotPopulatedException(GraphRAGException): pass
 class EntityExtractionFailedException(GraphRAGException): pass
 ```
 
 ## Functionality Analysis
 
 ### Preserved from Current Implementation
+
 - ✅ Production-hardened error handling and validation
 - ✅ EntityExtractionService integration
 - ✅ Fail-hard validation with clear error messages
@@ -145,6 +157,7 @@ class EntityExtractionFailedException(GraphRAGException): pass
 - ✅ IRIS data handling for stream objects
 
 ### Restored from Old Implementation
+
 - ✅ Complete local entity extraction pipeline (`_extract_entities`, `_extract_relationships`)
 - ✅ Entity and relationship storage logic (`_store_entities`, `_store_relationships`)
 - ✅ Query entity extraction for precise graph traversal
@@ -153,6 +166,7 @@ class EntityExtractionFailedException(GraphRAGException): pass
 - ✅ Comprehensive entity validation and embedding handling
 
 ### Enhanced in Merged Implementation
+
 - ✅ Hybrid vector-graph approach with configurable fallback
 - ✅ Dual entity extraction strategy (service + local)
 - ✅ Enhanced query processing with entity-aware traversal
@@ -162,13 +176,17 @@ class EntityExtractionFailedException(GraphRAGException): pass
 ## Roadmap Alignment
 
 ### Phase 2: Pipeline Features (Weeks 13-20)
+
 The merged implementation directly supports:
+
 - **GraphRAG Pipeline E2E Tests**: Complete functionality enables true multi-hop traversal testing
 - **Real Graph State Validation**: Both entity extraction approaches support comprehensive graph population
 - **Performance Benchmarking**: Instrumentation enables detailed performance analysis
 
 ### Implementation Completion Program
+
 Addresses key gaps identified in roadmap:
+
 - **Complete pipeline behaviors**: All GraphRAG capabilities now implemented
 - **Integration readiness**: Dual extraction strategy supports various environments
 - **Performance monitoring**: Production-grade instrumentation included
@@ -176,18 +194,21 @@ Addresses key gaps identified in roadmap:
 ## Technical Specifications
 
 ### Code Organization
+
 - **Total Lines**: 597 (under 600-line constraint)
 - **Modular Design**: Clean separation of concerns with single responsibility methods
 - **Configuration-Driven**: Behavior controlled via pipeline configuration
 - **Error Handling**: Comprehensive exception hierarchy with clear messages
 
 ### Performance Characteristics
+
 - **Database Operations**: Optimized queries with minimal round-trips
 - **Memory Usage**: Efficient entity processing with configurable limits
 - **Scalability**: Supports large-scale document collections
 - **Monitoring**: Detailed performance metrics collection
 
 ### Dependencies
+
 - **Core Dependencies**: ConnectionManager, ConfigurationManager, EmbeddingManager
 - **Optional Dependencies**: EntityExtractionService (with local fallback)
 - **Storage**: Compatible with existing RAG database schema
@@ -196,16 +217,19 @@ Addresses key gaps identified in roadmap:
 ## Testing and Validation Strategy
 
 ### Unit Testing
+
 - Component-level testing for all major methods
 - Mock-based testing for database operations
 - Edge case validation for error conditions
 
 ### Integration Testing
+
 - E2E testing with real IRIS database
 - Entity extraction service integration validation
 - Vector fallback mechanism testing
 
 ### Performance Testing
+
 - Latency benchmarking across different query types
 - Throughput testing with realistic document sets
 - Memory usage profiling under load
@@ -213,6 +237,7 @@ Addresses key gaps identified in roadmap:
 ## Future Enhancements
 
 ### Research-Informed Improvements
+
 Based on current GraphRAG research trends:
 
 1. **Graph Neural Networks**: Integration of GNN-based retrieval mechanisms
@@ -221,6 +246,7 @@ Based on current GraphRAG research trends:
 4. **Multi-hop Optimization**: Advanced algorithms for complex reasoning tasks
 
 ### Operational Enhancements
+
 1. **Caching Strategies**: Graph traversal result caching for performance
 2. **Load Balancing**: Distribution strategies for large-scale deployments
 3. **Monitoring Integration**: Enhanced observability and alerting
@@ -238,7 +264,7 @@ The implementation directly supports the project roadmap goals for Phase 2 pipel
 
 [^1]: Lettria AWS Partner case study demonstrating 35% improvement in answer precision with graph-based RAG approaches (2024)
 
-**Merge Completed**: January 16, 2025  
-**Implementation**: [`iris_rag/pipelines/graphrag_merged.py`](../iris_rag/pipelines/graphrag_merged.py)  
-**Lines of Code**: 597  
+**Merge Completed**: January 16, 2025
+**Implementation**: [`iris_rag/pipelines/graphrag_merged.py`](../iris_rag/pipelines/graphrag_merged.py)
+**Lines of Code**: 597
 **Next Phase**: E2E Testing and Production Validation

@@ -7,12 +7,14 @@ The rag-templates project has been enhanced with advanced hybrid search capabili
 ## Key Features Added
 
 ### 🚀 Performance Improvements
+
 - **HNSW Vector Search**: Native IRIS VECTOR functions with HNSW indexing
   - ~50ms query time (vs 5.8s fallback implementation)
   - 1790x performance improvement for vector similarity search
   - Automatic fallback to CSV implementation if HNSW not available
 
 ### 🔍 Advanced Search Capabilities
+
 - **Reciprocal Rank Fusion (RRF)**: Combines multiple search modalities
   - Based on Cormack & Clarke (SIGIR 2009) algorithm
   - Fuses vector similarity + text relevance + graph structure
@@ -31,7 +33,8 @@ The rag-templates project has been enhanced with advanced hybrid search capabili
 ## Architecture
 
 ### Module Structure
-```
+
+```text
 iris_vector_graph/                 # Domain-agnostic graph engine
 ├── engine.py                    # Core graph operations
 ├── fusion.py                    # RRF and hybrid search fusion
@@ -46,6 +49,7 @@ biomedical/                      # Domain-specific layer (in graph-ai)
 ```
 
 ### Integration Pattern
+
 The `iris_vector_graph` module is imported dynamically from the adjacent graph-ai project:
 
 ```python
@@ -105,17 +109,18 @@ results = pipeline.query(
 
 ### Available Methods
 
-| Method | Description | Performance | Use Case |
-|--------|-------------|-------------|----------|
-| `hybrid` | Multi-modal fusion (vector+text+graph) | ~100ms | Complex semantic queries |
-| `rrf` | Reciprocal Rank Fusion | ~80ms | Balanced precision/recall |
-| `vector` | HNSW-optimized vector search | ~50ms | Semantic similarity |
-| `text` | Enhanced iFind text search | ~60ms | Exact term matching |
-| `kg` | Standard GraphRAG (fallback) | ~200ms | Graph traversal focus |
+| Method   | Description                            | Performance | Use Case                  |
+| -------- | -------------------------------------- | ----------- | ------------------------- |
+| `hybrid` | Multi-modal fusion (vector+text+graph) | ~100ms      | Complex semantic queries  |
+| `rrf`    | Reciprocal Rank Fusion                 | ~80ms       | Balanced precision/recall |
+| `vector` | HNSW-optimized vector search           | ~50ms       | Semantic similarity       |
+| `text`   | Enhanced iFind text search             | ~60ms       | Exact term matching       |
+| `kg`     | Standard GraphRAG (fallback)           | ~200ms      | Graph traversal focus     |
 
 ## Performance Benefits
 
 ### Benchmark Results
+
 Based on testing with 10,000+ biomedical entities:
 
 - **Vector Search**: 50ms (HNSW) vs 5,800ms (CSV fallback) = 116x improvement
@@ -124,6 +129,7 @@ Based on testing with 10,000+ biomedical entities:
 - **Graph Expansion**: 80ms with JSON_TABLE confidence filtering
 
 ### Memory Efficiency
+
 - Native VECTOR storage: 768D floats (3KB per vector)
 - CSV storage: String representation (~15KB per vector)
 - 5x memory reduction for large-scale deployments
@@ -131,8 +137,10 @@ Based on testing with 10,000+ biomedical entities:
 ## Configuration
 
 ### Environment Setup
+
 Ensure the graph-ai project is adjacent to rag-templates:
-```
+
+```text
 workspace/
 ├── rag-templates/           # This project
 └── graph-ai/               # iris_vector_graph source
@@ -141,6 +149,7 @@ workspace/
 ```
 
 ### Database Schema Requirements
+
 The hybrid search requires optimized vector tables:
 
 ```sql
@@ -165,6 +174,7 @@ CREATE TABLE rdf_edges(
 ```
 
 ### Migration from CSV Vectors
+
 Use the migration utility to convert existing embeddings:
 
 ```python
@@ -183,6 +193,7 @@ print(f"Migrated {result['migrated']} vectors in {result['elapsed_seconds']:.1f}
 ## Monitoring and Diagnostics
 
 ### Performance Statistics
+
 ```python
 # Get performance metrics
 stats = pipeline.get_performance_statistics()
@@ -192,6 +203,7 @@ print(f"Query time: {stats['hnsw_status']['query_time_ms']}ms")
 ```
 
 ### Search Method Benchmarking
+
 ```python
 # Compare search method performance
 benchmark = pipeline.benchmark_search_methods(
@@ -217,12 +229,14 @@ All fallbacks are logged with appropriate warning messages.
 ## Development Notes
 
 ### Import Strategy
+
 - **Dynamic imports**: iris_vector_graph is imported at runtime
 - **Graceful fallback**: Missing module doesn't break existing functionality
 - **Path resolution**: Automatic detection of graph-ai project location
 - **Dependency isolation**: No hard dependency on iris_vector_graph
 
 ### Testing Strategy
+
 - Unit tests validate both hybrid and fallback behaviors
 - Performance tests ensure optimization benefits
 - Integration tests verify cross-project module loading

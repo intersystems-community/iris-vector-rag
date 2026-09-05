@@ -13,15 +13,15 @@ development of functionalities that operate on PMC XML data.
 
 The following 10 PMC documents are included in this sample set:
 
-1.  PMC524367
-2.  PMC545955
-3.  PMC526216
-4.  PMC539322
-5.  PMC1894889
-6.  PMC1174865
-7.  PMC1904256
-8.  PMC2435152
-9.  PMC2276224
+1. PMC524367
+2. PMC545955
+3. PMC526216
+4. PMC539322
+5. PMC1894889
+6. PMC1174865
+7. PMC1904256
+8. PMC2435152
+9. PMC2276224
 10. PMC2011213
 
 ## Note

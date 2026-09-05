@@ -12,11 +12,13 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 ## Completed Components (T001-T048)
 
 ### Phase 1: Foundation & Planning ✅
+
 - [x] T001-T004: Project structure, dependencies, configuration, connection pooling
 - [x] T005-T010: Contract tests (6 files, TDD approach)
 - [x] T011-T018: Integration tests (8 files, E2E scenarios)
 
 ### Phase 2: Core Models ✅
+
 - [x] T019-T027: Pydantic models (9 files covering 8 entities)
   - `request.py` - QueryRequest, APIRequestLog
   - `pipeline.py` - PipelineInstance, PipelineListResponse
@@ -29,6 +31,7 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
   - `errors.py` - ErrorResponse (Elasticsearch-inspired)
 
 ### Phase 3: Middleware & Services ✅
+
 - [x] T028-T030: Middleware components (3 files)
   - `auth.py` - API key authentication with bcrypt
   - `rate_limit.py` - Redis-based sliding window rate limiting
@@ -40,6 +43,7 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
   - `document_service.py` - Async document upload
 
 ### Phase 4: API Routes ✅
+
 - [x] T034-T037: Route handlers (4 files)
   - `query.py` - POST /{pipeline}/_search
   - `pipeline.py` - GET /pipelines, /pipelines/{name}
@@ -47,12 +51,14 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
   - `health.py` - GET /health (Kubernetes-ready)
 
 ### Phase 5: WebSocket Streaming ✅
+
 - [x] T038-T040: WebSocket handlers (3 files)
   - `connection.py` - ConnectionManager with heartbeat
   - `handlers.py` - Query & upload progress streaming
   - `routes.py` - WS /ws endpoint with JSON events
 
 ### Phase 6: Application & Deployment ✅
+
 - [x] T041: FastAPI application (`main.py`)
   - Complete ASGI server with lifespan management
   - CORS, middleware, exception handling
@@ -97,12 +103,14 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 ## Key Features Implemented
 
 ### Authentication & Authorization ✅
+
 - **API Key Auth**: Base64-encoded `id:secret` format
 - **bcrypt Hashing**: Cost factor 12 for security
 - **Permissions**: Read, Write, Admin roles
 - **Expiration**: Optional key expiration dates
 
 ### Rate Limiting ✅
+
 - **Three Tiers**: Basic (60/min), Premium (100/min), Enterprise (1000/min)
 - **Redis-Based**: Sliding window algorithm
 - **Per-API-Key**: Individual quotas tracked
@@ -110,6 +118,7 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 - **Concurrent Limits**: 5/10/20 concurrent requests per tier
 
 ### Request Logging ✅
+
 - **Complete Audit Trail**: All requests logged to database
 - **Execution Metrics**: Timing breakdown (retrieval + generation)
 - **Request Tracing**: UUID-based request IDs
@@ -117,13 +126,15 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 - **Retention**: 30-day automatic cleanup
 
 ### Query Endpoints ✅
+
 - **5 Pipelines**: basic, basic_rerank, crag, graphrag, pylate_colbert
-- **POST /{pipeline}/_search**: Elasticsearch-style search
+- **POST /{pipeline}/\_search**: Elasticsearch-style search
 - **Validation**: Query length (1-10000 chars), top_k (1-100)
 - **RAGAS Compatible**: Standardized response format
 - **Performance**: <2s p95 latency target
 
 ### Document Upload ✅
+
 - **Async Processing**: Non-blocking background jobs
 - **Progress Tracking**: Percentage-based status updates
 - **Validation**: UTF-8 encoding, file size (100MB max)
@@ -131,6 +142,7 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 - **Pipeline Selection**: Choose indexing pipeline
 
 ### WebSocket Streaming ✅
+
 - **Real-Time Events**: JSON-based event protocol
 - **Query Streaming**: Incremental results during execution
 - **Upload Progress**: Live document processing updates
@@ -138,6 +150,7 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 - **Reconnection**: Token-based session recovery
 
 ### Health Monitoring ✅
+
 - **System-Wide**: Overall health status
 - **Component-Level**: IRIS, Redis, all pipelines
 - **Response Times**: Millisecond-precision metrics
@@ -145,6 +158,7 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 - **Dependencies**: Component dependency tracking
 
 ### Error Handling ✅
+
 - **Elasticsearch-Inspired**: Structured JSON errors
 - **Actionable Guidance**: Specific fix recommendations
 - **Error Types**: 10 categories (auth, validation, rate limit, etc.)
@@ -154,6 +168,7 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 ## Architecture Highlights
 
 ### Design Patterns
+
 - **Factory Pattern**: Service initialization in `main.py`
 - **Repository Pattern**: Service layer abstracts database operations
 - **Middleware Chain**: Auth → Rate Limit → Logging
@@ -161,7 +176,8 @@ Successfully implemented a production-ready REST API for all RAG pipelines with 
 - **Constitutional Compliance**: Framework-First, Production Readiness
 
 ### Database Schema
-```
+
+```text
 api_keys                        # bcrypt-hashed credentials
 api_request_logs                # complete audit trail
 rate_limit_history              # quota tracking
@@ -174,6 +190,7 @@ cleanup_job_status              # maintenance tracking
 ```
 
 ### Performance Targets
+
 - **Query Latency**: <2s p95
 - **Health Check**: <100ms
 - **API Key Validation**: <50ms
@@ -183,12 +200,14 @@ cleanup_job_status              # maintenance tracking
 ## Testing Coverage
 
 ### Contract Tests (TDD) ✅
+
 - 6 test files covering all endpoints
 - OpenAPI specification validation
 - Request/response schema checks
 - **All tests will fail until fully deployed** (by design)
 
 ### Integration Tests (E2E) ✅
+
 - 8 test files for acceptance scenarios
 - Full workflow validation
 - Real database integration
@@ -197,6 +216,7 @@ cleanup_job_status              # maintenance tracking
 ## Usage Examples
 
 ### Quick Start
+
 ```bash
 # 1. Setup database
 make api-setup-db
@@ -212,6 +232,7 @@ make api-docs  # http://localhost:8000/docs
 ```
 
 ### Query Pipeline
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/basic/_search \
   -H "Authorization: ApiKey <base64-key>" \
@@ -220,11 +241,13 @@ curl -X POST http://localhost:8000/api/v1/basic/_search \
 ```
 
 ### Check Health
+
 ```bash
 curl http://localhost:8000/api/v1/health
 ```
 
 ### List Pipelines
+
 ```bash
 curl http://localhost:8000/api/v1/pipelines
 ```
@@ -232,10 +255,12 @@ curl http://localhost:8000/api/v1/pipelines
 ## Remaining Optional Tasks (T049-T058)
 
 ### T049-T050: Docker Deployment (Optional)
+
 - [ ] T049: Create Dockerfile for API server
 - [ ] T050: Create docker-compose.api.yml
 
 ### T051-T058: Unit Tests & Polish (Optional)
+
 - [ ] T051-T054: Unit tests for middleware, services, routes, WebSocket
 - [ ] T055-T056: Performance tests, load testing
 - [ ] T057: Code quality checks (mypy, flake8)
@@ -245,7 +270,7 @@ curl http://localhost:8000/api/v1/pipelines
 
 ## File Inventory
 
-```
+```text
 iris_rag/api/
 ├── __init__.py                   # Package initialization
 ├── main.py                       # FastAPI application (441 lines)
@@ -337,6 +362,7 @@ CLAUDE.md                         # REST API section added
 ## Constitutional Compliance
 
 ### Framework-First (Section II) ✅
+
 - Uses Pydantic V2 for all data validation
 - Uses FastAPI for HTTP server
 - Uses bcrypt for password hashing
@@ -344,6 +370,7 @@ CLAUDE.md                         # REST API section added
 - Uses IRIS SQL for persistence
 
 ### Production Readiness (Section IV) ✅
+
 - Comprehensive error handling
 - Request logging and tracing
 - Health monitoring
@@ -353,6 +380,7 @@ CLAUDE.md                         # REST API section added
 - Automated cleanup jobs
 
 ### Explicit Over Implicit (Section V) ✅
+
 - All configuration in YAML files
 - Explicit error types and messages
 - Clear API contracts (OpenAPI)
@@ -362,6 +390,7 @@ CLAUDE.md                         # REST API section added
 ## Next Steps
 
 ### Immediate Testing
+
 ```bash
 # 1. Setup
 make api-setup-db
@@ -377,6 +406,7 @@ make api-docs
 ```
 
 ### Production Deployment
+
 1. Configure `config/api_config.yaml` for production
 2. Setup Redis for rate limiting
 3. Configure IRIS connection pool
@@ -386,6 +416,7 @@ make api-docs
 7. Enable monitoring/logging
 
 ### Optional Enhancements (T049-T058)
+
 1. Docker deployment files
 2. Unit tests for all components
 3. Performance/load testing
@@ -416,6 +447,7 @@ All original requirements met:
 The REST API implementation is **complete and production-ready**. All core functionality has been implemented following best practices, with comprehensive documentation and testing infrastructure in place.
 
 The API is ready for:
+
 - ✅ Local development and testing
 - ✅ Integration with existing RAG pipelines
 - ✅ Production deployment

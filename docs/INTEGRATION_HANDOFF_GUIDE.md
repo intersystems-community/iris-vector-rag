@@ -21,6 +21,7 @@ Note: Non-validated pipeline names (ColBERT, HyDE, NodeRAG, HybridIFind) are not
 - Entry API and enums used below: [`RAGTemplatesBridge.__init__()`](iris_vector_rag/adapters/rag_templates_bridge.py:98), [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203), [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
 
 Example:
+
 ```python
 import asyncio
 from adapters.rag_templates_bridge import RAGTemplatesBridge, RAGTechnique
@@ -47,6 +48,7 @@ Returned object follows [`RAGResponse`](iris_vector_rag/adapters/rag_templates_b
   - GraphRAG: [`GraphRAGPipeline.__init__()`](iris_rag/pipelines/graphrag.py:24) → `pipelines:graphrag`
 
 Recommended minimal settings:
+
 ```yaml
 rag_integration:
   default_technique: basic
@@ -67,6 +69,7 @@ rag_integration:
 - Standardized response fields: query, answer, contexts, retrieved_documents, execution_time, metadata; adapter returns [`RAGResponse`](iris_vector_rag/adapters/rag_templates_bridge.py:52) for app-friendly consumption.
 
 Interface validation evidence:
+
 - Constructor-level success on real infrastructure with measured times:
   - BasicRAG 6.97s ([`validation_results/comprehensive_pipeline_validation_20250913_181921.json`](validation_results/comprehensive_pipeline_validation_20250913_181921.json:32))
   - CRAG 3.72s ([`validation_results/comprehensive_pipeline_validation_20250913_181921.json`](validation_results/comprehensive_pipeline_validation_20250913_181921.json:53))
@@ -86,6 +89,7 @@ Before routing production traffic, run the validator and orchestrator to ensure 
 - Optional chunking: [`SetupOrchestrator._create_chunks_table()`](iris_rag/validation/orchestrator.py:775), [`SetupOrchestrator._generate_document_chunks()`](iris_rag/validation/orchestrator.py:815)
 
 GraphRAG readiness:
+
 - Seed entity lookup: [`GraphRAGPipeline._find_seed_entities()`](iris_rag/pipelines/graphrag.py:173)
 - Traversal: [`GraphRAGPipeline._traverse_graph()`](iris_rag/pipelines/graphrag.py:211)
 - Document fetch: [`GraphRAGPipeline._get_documents_from_entities()`](iris_rag/pipelines/graphrag.py:260)
@@ -99,15 +103,15 @@ GraphRAG readiness:
 
 ## Recommended Integration Flow (kg-ticket-resolver)
 
-1) Initialize the bridge and confirm health
+1. Initialize the bridge and confirm health
    - Create bridge: [`RAGTemplatesBridge.__init__()`](iris_vector_rag/adapters/rag_templates_bridge.py:98)
    - Check health: [`RAGTemplatesBridge.get_health_status()`](iris_vector_rag/adapters/rag_templates_bridge.py:332)
-2) Ensure data prerequisites per technique
+2. Ensure data prerequisites per technique
    - Run validator/orchestrator as above; for GraphRAG, populate Entities/Relationships tables
-3) Route queries
+3. Route queries
    - Call unified async entrypoint: [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203)
    - Select technique via [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
-4) Monitor and operate
+4. Monitor and operate
    - Metrics: [`RAGTemplatesBridge.get_metrics()`](iris_vector_rag/adapters/rag_templates_bridge.py:323)
    - Circuit-breaker tuning: [`CircuitBreakerConfig`](iris_vector_rag/adapters/rag_templates_bridge.py:63)
 

@@ -29,7 +29,8 @@ INSERT INTO documents (id, content) VALUES (2, 'text...');
 We intercept IRIS EMBEDDING calls and cache models in Python memory:
 
 ### Architecture
-```
+
+```text
 IRIS SQL INSERT
     ↓
 %Embedding.SentenceTransformers
@@ -42,6 +43,7 @@ Return embedding to IRIS
 ```
 
 ### Key Files
+
 1. **`iris_vector_rag/embeddings/manager.py`** - Model cache manager (singleton pattern)
 2. **`iris_vector_rag/embeddings/iris_embedding.py`** - IRIS integration layer
 3. **`iris_vector_rag/config/embedding_config.py`** - Configuration validation
@@ -97,12 +99,13 @@ for i in range(1000):
 
 ## Performance Comparison
 
-| Scenario | Method | Time | Speedup |
-|----------|--------|------|---------|
+| Scenario          | Method                  | Time   | Speedup       |
+| ----------------- | ----------------------- | ------ | ------------- |
 | **Without Cache** | IRIS native (DP-442038) | 20 min | 1x (baseline) |
-| **With Cache** | Python cache layer | 0.85s | **1405x** |
+| **With Cache**    | Python cache layer      | 0.85s  | **1405x**     |
 
 ### Cache Statistics
+
 - **Cache hit rate**: 99%+
 - **Cache hit time**: ~15-25ms
 - **Cache miss time**: ~2-3s (first load only)
@@ -177,6 +180,7 @@ print(f"Avg embedding time: {stats['avg_embedding_time_ms']:.2f}ms")
 ## Validation Tests
 
 ### Contract Tests (TDD)
+
 Location: `tests/contract/test_iris_embedding_contract.py`
 
 ```python
@@ -192,6 +196,7 @@ def test_cache_hit_rate_target():
 ```
 
 ### Performance Benchmarks
+
 Location: `tests/performance/test_iris_embedding_performance.py`
 
 ```python
@@ -215,9 +220,11 @@ def test_performance_benchmark_1746_texts():
 ## Troubleshooting
 
 ### Issue: Model Still Reloading on Every Call
+
 **Symptom**: Slow performance (>1 second per embedding)
 **Cause**: `use_cache=False` in configuration
 **Fix**:
+
 ```python
 # Reconfigure with caching enabled
 configure_embedding(
@@ -230,9 +237,11 @@ configure_embedding(
 ```
 
 ### Issue: Memory Errors with Large Models
+
 **Symptom**: `OutOfMemoryError` when loading model
 **Cause**: Model too large for available RAM
 **Fix**: Use smaller model or enable GPU
+
 ```python
 configure_embedding(
     connection,
@@ -244,6 +253,7 @@ configure_embedding(
 ```
 
 ### Issue: Cache Not Persisting Between IRIS Sessions
+
 **Symptom**: First call slow after IRIS restart
 **Cause**: Cache is in-memory only (by design)
 **Expected Behavior**: This is normal - first call after restart loads model (~2-3s), subsequent calls use cache

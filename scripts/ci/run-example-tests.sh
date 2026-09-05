@@ -198,6 +198,7 @@ check_environment() {
     # Check virtual environment activation
     if [[ -z "$VIRTUAL_ENV" ]] && [[ -f "$PROJECT_ROOT/.venv/bin/activate" ]]; then
         log_info "Activating virtual environment..."
+        # shellcheck source=/dev/null
         source "$PROJECT_ROOT/.venv/bin/activate"
     fi
 
@@ -245,7 +246,7 @@ run_example_tests() {
     log_info "Starting example test execution..."
 
     local cmd_args
-    cmd_args=($(build_test_command))
+    read -r -a cmd_args <<<"$(build_test_command)"
 
     log_info "Test configuration:"
     log_info "  Mode: $DEFAULT_MODE"
@@ -394,7 +395,7 @@ main() {
     if [[ "${DRY_RUN:-false}" == "true" ]]; then
         log_info "DRY RUN - No tests will be executed"
         local cmd_args
-        cmd_args=($(build_test_command))
+        read -r -a cmd_args <<<"$(build_test_command)"
         log_info "Would execute: python run_example_tests.py ${cmd_args[*]}"
         exit 0
     fi

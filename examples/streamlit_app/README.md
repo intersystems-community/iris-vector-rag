@@ -22,12 +22,12 @@ This application provides an interactive interface to explore and compare variou
 
 ### 🤖 Supported RAG Pipelines
 
-| Pipeline | Description | Key Features |
-|----------|-------------|--------------|
-| **BasicRAG** | Standard RAG implementation | Simple retrieval + generation |
-| **BasicRerank** | RAG with reranking | Improved relevance through reranking |
-| **CRAG** | Corrective RAG | Self-correcting retrieval mechanism |
-| **GraphRAG** | Graph-based RAG | Knowledge graph integration |
+| Pipeline        | Description                 | Key Features                         |
+| --------------- | --------------------------- | ------------------------------------ |
+| **BasicRAG**    | Standard RAG implementation | Simple retrieval + generation        |
+| **BasicRerank** | RAG with reranking          | Improved relevance through reranking |
+| **CRAG**        | Corrective RAG              | Self-correcting retrieval mechanism  |
+| **GraphRAG**    | Graph-based RAG             | Knowledge graph integration          |
 
 ## 🚀 Quick Start
 
@@ -96,29 +96,34 @@ The application will be available at `http://localhost:8501`
 ## 📖 Usage Guide
 
 ### 🏠 Home Page
+
 - Overview of available pipelines
 - Quick start tutorial
 - System status and health checks
 
 ### 🔍 Single Pipeline Analysis
+
 1. Select a pipeline from the dropdown
 2. Configure pipeline parameters
 3. Enter your query
 4. Analyze results and performance metrics
 
 ### ⚖️ Pipeline Comparison
+
 1. Select multiple pipelines to compare
 2. Choose execution mode (sequential/parallel)
 3. Run the same query across pipelines
 4. Compare results, performance, and quality metrics
 
 ### 📊 Performance Analytics
+
 - View historical performance data
 - Analyze trends and patterns
 - Export performance reports
 - Monitor system resource usage
 
 ### ⚙️ Configuration Management
+
 - Adjust pipeline parameters
 - Configure API keys and endpoints
 - Set application preferences
@@ -128,7 +133,7 @@ The application will be available at `http://localhost:8501`
 
 The application follows a clean, modular architecture:
 
-```
+```text
 streamlit_app/
 ├── app.py                 # Main application entry point
 ├── pages/                 # Streamlit pages
@@ -194,12 +199,12 @@ flake8 .
 
 ### System Requirements
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| RAM | 4GB | 8GB+ |
-| CPU | 2 cores | 4+ cores |
-| Storage | 2GB | 10GB+ |
-| Network | Stable internet | High-bandwidth |
+| Component | Minimum         | Recommended    |
+| --------- | --------------- | -------------- |
+| RAM       | 4GB             | 8GB+           |
+| CPU       | 2 cores         | 4+ cores       |
+| Storage   | 2GB             | 10GB+          |
+| Network   | Stable internet | High-bandwidth |
 
 ### Optimization Tips
 
@@ -213,6 +218,7 @@ flake8 .
 ### Common Issues
 
 **1. Import Errors**
+
 ```bash
 # Install missing dependencies
 pip install -r requirements.txt
@@ -222,18 +228,21 @@ python --version  # Should be 3.9+
 ```
 
 **2. API Key Issues**
+
 ```bash
 # Verify environment variables
 python -c "import os; print(os.getenv('OPENAI_API_KEY')[:10] + '...')"
 ```
 
 **3. Performance Issues**
+
 - Check available system memory
 - Reduce batch sizes
 - Enable caching
 - Use lighter models for testing
 
 **4. Streamlit Issues**
+
 ```bash
 # Clear Streamlit cache
 streamlit cache clear
@@ -245,12 +254,14 @@ streamlit cache clear
 ### Debug Mode
 
 Enable debug mode in `.env`:
+
 ```env
 DEBUG_MODE=true
 LOG_LEVEL=DEBUG
 ```
 
 This provides:
+
 - Detailed error messages
 - Performance timing
 - API request/response logging
@@ -259,12 +270,14 @@ This provides:
 ## 🔐 Security Considerations
 
 ### API Key Management
+
 - Never commit API keys to version control
 - Use environment variables or secure vaults
 - Rotate keys regularly
 - Monitor API usage for anomalies
 
 ### Data Privacy
+
 - Local processing when possible
 - Secure API communications
 - No persistent storage of sensitive data
@@ -275,6 +288,7 @@ This provides:
 We welcome contributions! Please see our contributing guidelines:
 
 ### Development Workflow
+
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
@@ -282,12 +296,14 @@ We welcome contributions! Please see our contributing guidelines:
 5. Submit a pull request
 
 ### Code Standards
+
 - Follow PEP 8 style guidelines
 - Add type hints where appropriate
 - Include docstrings for functions and classes
 - Write comprehensive tests
 
 ### Reporting Issues
+
 - Use GitHub issues for bug reports
 - Include system information and error logs
 - Provide minimal reproduction examples
@@ -295,6 +311,7 @@ We welcome contributions! Please see our contributing guidelines:
 ## 📋 Roadmap
 
 ### Upcoming Features
+
 - [ ] Multi-modal RAG support (text + images)
 - [ ] Custom embedding model integration
 - [ ] Advanced visualization dashboards
@@ -304,6 +321,7 @@ We welcome contributions! Please see our contributing guidelines:
 - [ ] Cost optimization recommendations
 
 ### Long-term Goals
+
 - Integration with more vector databases
 - Support for custom LLM providers
 - Advanced prompt engineering tools
@@ -313,12 +331,14 @@ We welcome contributions! Please see our contributing guidelines:
 ## 📚 Resources
 
 ### Documentation
+
 - [RAG Pipeline Guide](../../docs/rag-pipelines.md)
 - [Configuration Reference](docs/configuration.md)
 - [API Documentation](docs/api.md)
 - [Troubleshooting Guide](docs/troubleshooting.md)
 
 ### External Resources
+
 - [Streamlit Documentation](https://docs.streamlit.io/)
 - [LangChain Documentation](https://docs.langchain.com/)
 - [OpenAI API Reference](https://platform.openai.com/docs/)
@@ -346,4 +366,4 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 **Built with ❤️ using Streamlit, LangChain, and modern RAG techniques**
 
-*Happy RAG-ing! 🚀*
+_Happy RAG-ing! 🚀_

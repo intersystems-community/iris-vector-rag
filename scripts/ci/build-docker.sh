@@ -171,15 +171,15 @@ echo "Command: $DOCKER_CMD"
 echo ""
 
 # Execute build
-if eval $DOCKER_CMD; then
+if eval "$DOCKER_CMD"; then
     echo ""
     echo -e "${GREEN}✓ Docker image built successfully${NC}"
-    
+
     # Show image info
     echo ""
     echo "Image details:"
     docker images "${IMAGE_NAME}" --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.CreatedAt}}\t{{.Size}}"
-    
+
     # Test the image
     echo ""
     echo -e "${BLUE}Testing Docker image...${NC}"
@@ -195,22 +195,22 @@ except ImportError as e:
 
 try:
     import mem0_integration
-    print('✓ mem0_integration imported successfully')  
+    print('✓ mem0_integration imported successfully')
 except ImportError as e:
     print(f'✗ mem0_integration import failed: {e}')
-    
+
 print('✓ Container test completed')
 "; then
         echo -e "${GREEN}✓ Container test passed${NC}"
     else
         echo -e "${YELLOW}⚠ Container test failed, but image was built${NC}"
     fi
-    
+
     # Push if requested
     if [[ "$PUSH" == true ]]; then
         echo ""
         echo -e "${BLUE}Pushing image to registry...${NC}"
-        
+
         if docker push "${FULL_IMAGE_NAME}"; then
             echo -e "${GREEN}✓ Image pushed successfully${NC}"
         else
@@ -218,11 +218,11 @@ print('✓ Container test completed')
             exit 1
         fi
     fi
-    
+
     echo ""
     echo -e "${GREEN}Build completed successfully!${NC}"
     echo "Image: ${FULL_IMAGE_NAME}"
-    
+
 else
     echo ""
     echo -e "${RED}✗ Docker build failed${NC}"

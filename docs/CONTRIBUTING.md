@@ -194,7 +194,7 @@ radon cc src/ -a -nb
 
 ### File Organization
 
-```
+```text
 src/
 ├── config/          # Configuration management
 ├── data/            # Data models and database

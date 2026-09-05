@@ -25,7 +25,7 @@ Validated completion report for rag-templates based strictly on test artifacts a
 ## 🚫 Debunked Claims (with evidence)
 
 - “7–8 working pipelines” → False
-  - Only 4 pipelines are exported by the pipeline package ([__all__](iris_rag/pipelines/__init__.py)) and implemented in tree (see links above).
+  - Only 4 pipelines are exported by the pipeline package ([**all**](iris_rag/pipelines/__init__.py)) and implemented in tree (see links above).
   - Other names appear only in exploratory tests (e.g., HyDE, ColBERT, NodeRAG, HybridIFind) but lack implementation modules:
     - Import stubs in tests ([scripts/test_all_pipelines_comprehensive.py](scripts/test_all_pipelines_comprehensive.py:24), [scripts/test_all_pipelines_comprehensive.py](scripts/test_all_pipelines_comprehensive.py:27), [scripts/test_all_pipelines_comprehensive.py](scripts/test_all_pipelines_comprehensive.py:29), [scripts/test_all_pipelines_comprehensive.py](scripts/test_all_pipelines_comprehensive.py:30)); the corresponding modules are not present in the codebase.
 - “P95 155ms performance” → False
@@ -103,13 +103,13 @@ Note: These are constructor times under full infrastructure. End-to-end query la
 - 4 production RAG pipelines with unified interface: Yes (see pipeline class links and [RAGPipeline](iris_rag/core/base.py:12))
 - Enterprise-grade IRIS backend integration: Yes (DBAPI vector tests and full infra validation report)
 - Modular design: Mixed — two pipelines are < 500 lines ([GraphRAGPipeline](iris_rag/pipelines/graphrag.py:17), [BasicRAGRerankingPipeline](iris_rag/pipelines/basic_rerank.py:40)), while [BasicRAGPipeline](iris_rag/pipelines/basic.py:20) (~518 lines) and [CRAGPipeline](iris_rag/pipelines/crag.py:24) (~617 lines) exceed 500; refactor opportunities identified
-- Configuration management: Yes (usage across pipelines and bridge; e.g., [RAGTemplatesBridge.__init__](iris_vector_rag/adapters/rag_templates_bridge.py:98))
+- Configuration management: Yes (usage across pipelines and bridge; e.g., [RAGTemplatesBridge.**init**](iris_vector_rag/adapters/rag_templates_bridge.py:98))
 - TDD validation framework for ongoing testing: Yes (factory + validator + orchestrator)
 - Proven infrastructure compatibility: Yes (validation JSON shows database_available=true under full test)
 
 ## 📎 Evidence Index
 
-- Pipelines package manifest: [iris_rag/pipelines/__init__.py](iris_rag/pipelines/__init__.py)
+- Pipelines package manifest: [iris_rag/pipelines/**init**.py](iris_rag/pipelines/__init__.py)
 - Pipeline implementations:
   - [BasicRAGPipeline](iris_rag/pipelines/basic.py:20)
   - [CRAGPipeline](iris_rag/pipelines/crag.py:24)

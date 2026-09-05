@@ -17,19 +17,20 @@ ColBERT (Contextualized Late Interaction over BERT) implements a novel approach 
 
 ### Mathematical Foundation
 
-```
+```text
 MaxSim(q, d) = Σ(i=1 to |q|) max(j=1 to |d|) sim(q_i, d_j)
 
 Where:
 - q_i = embedding of i-th query token
-- d_j = embedding of j-th document token  
+- d_j = embedding of j-th document token
 - sim() = cosine similarity function
 ```
 
 ## Architecture Overview
 
 ### System Context
-```
+
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Production RAG Evaluation System             │
 ├─────────────────────────────────────────────────────────────────┤
@@ -57,17 +58,17 @@ Where:
 
 ### Identified Vulnerabilities from Archive
 
-| Vulnerability | Location | Risk | Mitigation |
-|---------------|----------|------|------------|
-| **SQL Injection** | Dynamic query construction | High | Parameterized queries only |
-| **Memory DoS** | Unbounded token processing | High | Configurable limits + monitoring |
-| **Import Failures** | Hard dependencies | Medium | Optional imports with graceful fallbacks |
-| **Information Leakage** | Verbose error messages | Medium | Sanitized error handling |
-| **Resource Exhaustion** | HNSW index operations | Medium | Timeout controls + circuit breakers |
+| Vulnerability           | Location                   | Risk   | Mitigation                               |
+| ----------------------- | -------------------------- | ------ | ---------------------------------------- |
+| **SQL Injection**       | Dynamic query construction | High   | Parameterized queries only               |
+| **Memory DoS**          | Unbounded token processing | High   | Configurable limits + monitoring         |
+| **Import Failures**     | Hard dependencies          | Medium | Optional imports with graceful fallbacks |
+| **Information Leakage** | Verbose error messages     | Medium | Sanitized error handling                 |
+| **Resource Exhaustion** | HNSW index operations      | Medium | Timeout controls + circuit breakers      |
 
 ### Security Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Security Layer Architecture                  │
 ├─────────────────────────────────────────────────────────────────┤
@@ -91,7 +92,7 @@ Where:
 
 ### Modular Structure (≤500 lines per component)
 
-```
+```text
 iris_rag/pipelines/colbert/
 ├── __init__.py                    # Public API exports (50 lines)
 ├── pipeline.py                    # Main ColBERTPipeline class (450 lines)
@@ -124,16 +125,16 @@ iris_rag/pipelines/colbert/
 class ColBERTPipeline(RAGPipeline):
     """
     ColBERT implementation following RAGPipeline interface.
-    
+
     Key Methods:
     - load_documents(documents_path, **kwargs) -> None
     - query(query_text, top_k=5, **kwargs) -> Dict[str, Any]
     """
-    
-    def __init__(self, connection_manager, config_manager, 
+
+    def __init__(self, connection_manager, config_manager,
                  vector_store=None, llm_func=None):
         """Initialize with dependency injection matching other pipelines."""
-        
+
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Returns standardized response:
@@ -157,19 +158,19 @@ class ColBERTPipeline(RAGPipeline):
 ```python
 class InputValidator:
     """Validates and sanitizes all inputs."""
-    
+
     def validate_query(self, query_text: str) -> str:
         """Sanitize query text, prevent injection."""
-        
+
     def validate_parameters(self, **kwargs) -> Dict[str, Any]:
         """Validate and bound all parameters."""
 
 class ResourceLimiter:
     """Controls resource usage."""
-    
+
     def limit_tokens(self, tokens: List[str]) -> List[str]:
         """Enforce token count limits."""
-        
+
     def monitor_memory(self) -> bool:
         """Check memory usage, return continue/abort."""
 ```
@@ -178,7 +179,7 @@ class ResourceLimiter:
 
 ### ColBERT Query Processing Flow
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    ColBERT Query Processing                     │
 ├─────────────────────────────────────────────────────────────────┤
@@ -233,7 +234,7 @@ class ResourceLimiter:
 
 ### Database Integration
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Database Schema Compatibility                │
 ├─────────────────────────────────────────────────────────────────┤
@@ -281,7 +282,7 @@ class ResourceLimiter:
 
 ### Response Time Optimization
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │              Performance Optimization Strategy                  │
 ├─────────────────────────────────────────────────────────────────┤
@@ -327,7 +328,7 @@ class ResourceLimiter:
 
 ### Memory Management
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Memory Management Strategy                   │
 ├─────────────────────────────────────────────────────────────────┤
@@ -383,13 +384,13 @@ pipelines:
 # iris_rag/pipelines/factory.py automatically discovers ColBERT
 # via module loader - no changes required
 
-# evaluation_framework/real_production_evaluation.py 
+# evaluation_framework/real_production_evaluation.py
 # automatically detects 5th pipeline - no changes required
 ```
 
 ### Zero-Disruption Deployment
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Deployment Strategy                         │
 ├─────────────────────────────────────────────────────────────────┤
@@ -426,22 +427,22 @@ pipelines:
 
 ### Security Risk Matrix
 
-| Risk | Probability | Impact | Mitigation | Validation |
-|------|------------|--------|------------|------------|
-| SQL Injection | Low | Critical | Parameterized queries only | SQL injection test suite |
-| Memory DoS | Medium | High | Resource limits + monitoring | Load testing + memory profiling |
-| Import Vulnerabilities | Low | Medium | Optional imports + validation | Dependency scanning |
-| Config Exposure | Low | Low | Environment isolation | Configuration audit |
-| HNSW Failures | Medium | Medium | Automatic fallback strategy | Fault injection testing |
+| Risk                   | Probability | Impact   | Mitigation                    | Validation                      |
+| ---------------------- | ----------- | -------- | ----------------------------- | ------------------------------- |
+| SQL Injection          | Low         | Critical | Parameterized queries only    | SQL injection test suite        |
+| Memory DoS             | Medium      | High     | Resource limits + monitoring  | Load testing + memory profiling |
+| Import Vulnerabilities | Low         | Medium   | Optional imports + validation | Dependency scanning             |
+| Config Exposure        | Low         | Low      | Environment isolation         | Configuration audit             |
+| HNSW Failures          | Medium      | Medium   | Automatic fallback strategy   | Fault injection testing         |
 
 ### Performance Risk Matrix
 
-| Risk | Probability | Impact | Mitigation | Validation |
-|------|------------|--------|------------|------------|
-| HNSW Index Unavailable | Medium | Medium | Fallback retriever | Index failure simulation |
-| Memory Exhaustion | Low | High | Progressive limits | Memory stress testing |
-| Timeout Issues | Low | Medium | Configurable timeouts | Latency testing |
-| Response Time Regression | Low | High | Performance benchmarking | Continuous monitoring |
+| Risk                     | Probability | Impact | Mitigation               | Validation               |
+| ------------------------ | ----------- | ------ | ------------------------ | ------------------------ |
+| HNSW Index Unavailable   | Medium      | Medium | Fallback retriever       | Index failure simulation |
+| Memory Exhaustion        | Low         | High   | Progressive limits       | Memory stress testing    |
+| Timeout Issues           | Low         | Medium | Configurable timeouts    | Latency testing          |
+| Response Time Regression | Low         | High   | Performance benchmarking | Continuous monitoring    |
 
 ## Success Metrics
 
@@ -473,6 +474,7 @@ pipelines:
 ## Implementation Roadmap
 
 ### Week 1: Security Foundation
+
 1. **Security Layer Implementation**
    - [`input_validator.py`](iris_rag/pipelines/colbert/security/input_validator.py): Query sanitization (≤250 lines)
    - [`resource_limiter.py`](iris_rag/pipelines/colbert/security/resource_limiter.py): Memory controls (≤200 lines)
@@ -483,34 +485,37 @@ pipelines:
    - [`schema.py`](iris_rag/pipelines/colbert/config/schema.py): Configuration schema (≤150 lines)
 
 ### Week 2: Core Components
-3. **Encoder Layer**
+
+1. **Encoder Layer**
    - [`query_encoder.py`](iris_rag/pipelines/colbert/encoders/query_encoder.py): Secure tokenization (≤400 lines)
    - [`doc_encoder.py`](iris_rag/pipelines/colbert/encoders/doc_encoder.py): Document processing (≤420 lines)
    - [`encoder_factory.py`](iris_rag/pipelines/colbert/encoders/encoder_factory.py): Factory pattern (≤280 lines)
 
-4. **Retrieval Engine**
+2. **Retrieval Engine**
    - [`maxsim_scorer.py`](iris_rag/pipelines/colbert/retrieval/maxsim_scorer.py): Vectorized scoring (≤350 lines)
    - [`hnsw_retriever.py`](iris_rag/pipelines/colbert/retrieval/hnsw_retriever.py): Primary strategy (≤480 lines)
    - [`fallback_retriever.py`](iris_rag/pipelines/colbert/retrieval/fallback_retriever.py): Backup strategy (≤380 lines)
 
-### Week 3: Pipeline Integration  
-5. **Main Pipeline**
+### Week 3: Pipeline Integration
+
+1. **Main Pipeline**
    - [`pipeline.py`](iris_rag/pipelines/colbert/pipeline.py): ColBERTPipeline class (≤450 lines)
    - [`__init__.py`](iris_rag/pipelines/colbert/__init__.py): Public API exports (≤50 lines)
 
-6. **System Integration**
+2. **System Integration**
    - Update [`config/pipelines.yaml`](config/pipelines.yaml): Add ColBERT configuration
    - Verify automatic discovery in evaluation framework
    - HNSW index validation and creation
 
 ### Week 4: Testing & Deployment
-7. **Comprehensive Testing**
+
+1. **Comprehensive Testing**
    - Unit tests for all components (100% coverage)
    - Integration tests with existing system
    - Security penetration testing
    - Performance benchmarking vs. archived implementation
 
-8. **Production Deployment**
+2. **Production Deployment**
    - Phase 1: Code deployment (no activation)
    - Phase 2: Configuration activation
    - Phase 3: Performance validation

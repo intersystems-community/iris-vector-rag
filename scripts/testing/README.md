@@ -142,21 +142,25 @@ pytest tests/ && python scripts/testing/run_example_tests.py
 ## Example Categories
 
 ### Basic RAG Examples
+
 - `try_basic_rag_pipeline.py`: Standard vector similarity search
 - Simple query-response validation
 - Performance baseline establishment
 
 ### Advanced RAG Examples
+
 - `try_crag_pipeline.py`: Corrective RAG with relevance evaluation
 - `try_hybrid_graphrag_pipeline.py`: Graph-enhanced retrieval
 - Complex multi-step validation
 
 ### Demonstration Scripts
+
 - `demo_graph_visualization.py`: Interactive graph visualization
 - `demo_ontology_support.py`: Entity extraction and mapping
 - Output file and artifact validation
 
 ### Reranking Examples
+
 - `try_basic_rerank.py`: Result reranking and scoring
 - Quality and relevance metric validation
 
@@ -242,17 +246,20 @@ CI_UPLOAD_ARTIFACTS=false
 ### Common Issues
 
 **Import Errors**: Ensure virtual environment is activated and dependencies installed
+
 ```bash
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 **Timeout Errors**: Increase timeout for slow examples
+
 ```bash
 python scripts/testing/run_example_tests.py --timeout 600
 ```
 
 **Memory Errors**: Run examples individually or increase limits
+
 ```bash
 python scripts/testing/run_example_tests.py --pattern "specific_example"
 ```
@@ -260,6 +267,7 @@ python scripts/testing/run_example_tests.py --pattern "specific_example"
 ### Debug Mode
 
 Enable detailed logging and error tracking:
+
 ```bash
 DEBUG_MODE=true python scripts/testing/run_example_tests.py --verbose
 ```
@@ -267,6 +275,7 @@ DEBUG_MODE=true python scripts/testing/run_example_tests.py --verbose
 ### Mock Provider Issues
 
 Verify mock providers are working correctly:
+
 ```python
 from scripts.testing.mock_providers import MockLLMProvider
 provider = MockLLMProvider(mode="deterministic")

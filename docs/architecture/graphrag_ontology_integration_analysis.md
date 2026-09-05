@@ -13,24 +13,25 @@ The new architecture centers around a single `GeneralOntologyPlugin` that replac
 ```python
 class GeneralOntologyPlugin(OntologyLoader):
     """General-purpose ontology plugin for any domain."""
-    
+
     def __init__(self, domain_config=None):
         super().__init__()
         self.entity_mappings = {}  # Dynamically generated
         self.domain_config = domain_config or {}
         self.domain = None  # Auto-detected from ontology
-        
+
     def auto_detect_domain(self, ontology_data: Dict) -> str:
         """Auto-detect domain from ontology metadata and content."""
-        
+
     def auto_generate_mappings(self, concepts: List[Concept]) -> Dict:
         """Automatically generate entity mappings from ontology concepts."""
-        
+
     def load_custom_domain(self, domain_definition: Dict):
         """Load any custom domain definition dynamically."""
 ```
 
 Key advantages:
+
 - **Universal Compatibility**: Works with ANY ontology format and domain
 - **Auto-Detection**: Automatically identifies domain from ontology content
 - **Dynamic Mapping**: Generates entity mappings from loaded concepts
@@ -43,11 +44,11 @@ The system supports all standard ontology formats without domain restrictions:
 ```python
 class OntologyLoader:
     """Universal ontology loader supporting multiple formats."""
-    
+
     def load_ontology_from_file(self, file_path: str):
         """Load ontology from any supported format."""
         format = self._detect_format(file_path)
-        
+
         if format == "owl":
             return self._load_owl_file(file_path)
         elif format == "rdf":
@@ -58,8 +59,9 @@ class OntologyLoader:
 ```
 
 **Supported Formats:**
+
 - **OWL** (Web Ontology Language) - Medical, biomedical, clinical domains
-- **RDF** (Resource Description Framework) - Legal, regulatory, compliance domains  
+- **RDF** (Resource Description Framework) - Legal, regulatory, compliance domains
 - **SKOS** (Simple Knowledge Organization System) - Financial, business, taxonomies
 - **TTL** (Turtle) - Scientific, research, academic domains
 - **N3** (Notation3) - Technology, engineering domains
@@ -72,14 +74,14 @@ The entity extraction service now works universally across all domains:
 ```python
 class OntologyAwareEntityExtractor:
     """Universal ontology-aware entity extraction."""
-    
+
     def __init__(self, config_manager: ConfigurationManager):
         self.config_manager = config_manager
         self.ontology_plugin = None  # Single general plugin
-        
+
     def extract_with_ontology(self, text: str, document: Document = None) -> List[Entity]:
         """Extract entities using general ontology, works with any domain."""
-        
+
         # Auto-detect relevant concepts from any domain
         # Apply universal entity recognition patterns
         # Generate domain-agnostic entity metadata
@@ -95,25 +97,25 @@ The new configuration supports any domain through a single general type:
 ```yaml
 ontology:
   enabled: true
-  type: "general"                    # Single universal type
-  auto_detect_domain: true           # Auto-detect from ontology
-  
+  type: "general" # Single universal type
+  auto_detect_domain: true # Auto-detect from ontology
+
   # Works with ANY ontology file
   sources:
     - type: "owl"
-      path: "medical_ontology.owl"     # Medical domain
-    - type: "rdf" 
-      path: "legal_concepts.rdf"       # Legal domain
+      path: "medical_ontology.owl" # Medical domain
+    - type: "rdf"
+      path: "legal_concepts.rdf" # Legal domain
     - type: "skos"
-      path: "financial_terms.skos"     # Financial domain
+      path: "financial_terms.skos" # Financial domain
     - type: "ttl"
-      path: "scientific_vocab.ttl"     # Scientific domain
-  
+      path: "scientific_vocab.ttl" # Scientific domain
+
   # Optional custom domain definitions
   custom_domains:
     enabled: false
     definition_path: null
-    
+
   # Universal reasoning settings
   reasoning:
     enable_inference: true
@@ -146,19 +148,19 @@ def get_ontology_plugin():
 def create_plugin_from_config(config: Dict) -> GeneralOntologyPlugin:
     """Create ontology plugin from configuration."""
     plugin = GeneralOntologyPlugin()
-    
+
     # Load ontology sources
     for source in config.get('sources', []):
         if source['type'] in ['owl', 'rdf', 'skos', 'ttl', 'n3', 'xml']:
             plugin.load_ontology_from_file(source['path'])
-    
+
     # Auto-detect domain if enabled
     if config.get('auto_detect_domain', True):
         plugin.domain = plugin.auto_detect_domain({
             'concepts': plugin.hierarchy.concepts,
             'metadata': {}
         })
-    
+
     return plugin
 ```
 
@@ -167,24 +169,24 @@ def create_plugin_from_config(config: Dict) -> GeneralOntologyPlugin:
 ```python
 def _extract_entities_with_ontology(self, document: Document) -> List[Dict[str, Any]]:
     """Extract entities using universal ontology approach."""
-    
+
     entities = []
     text = document.page_content.lower()
-    
+
     # Iterate through all concepts regardless of domain
     for concept_id, concept in self.ontology_plugin.hierarchy.concepts.items():
-        
+
         # Check for concept label in text
         if concept.label.lower() in text:
             entity = self._create_entity_from_concept(concept, document)
             entities.append(entity)
-        
+
         # Check synonyms
         for synonym in concept.get_all_synonyms():
             if synonym.lower() in text:
                 entity = self._create_entity_from_concept(concept, document)
                 entities.append(entity)
-    
+
     return entities
 ```
 
@@ -202,7 +204,7 @@ CREATE TABLE RAG.Entities (
     metadata VARCHAR(MAX)            -- Contains auto-detected domain info
 );
 
--- Universal relationship storage  
+-- Universal relationship storage
 CREATE TABLE RAG.EntityRelationships (
     relationship_id VARCHAR(255),
     source_entity_id VARCHAR(255),
@@ -213,6 +215,7 @@ CREATE TABLE RAG.EntityRelationships (
 ```
 
 **Enhanced Metadata Structure:**
+
 ```json
 {
   "auto_detected_domain": "medical",
@@ -233,7 +236,7 @@ CREATE TABLE RAG.EntityRelationships (
 ```python
 def auto_detect_domain(self, ontology_data: Dict) -> str:
     """Auto-detect domain from ontology content."""
-    
+
     concepts = ontology_data.get('concepts', {})
     domain_indicators = {
         'medical': ['disease', 'drug', 'symptom', 'treatment', 'patient', 'clinical'],
@@ -242,7 +245,7 @@ def auto_detect_domain(self, ontology_data: Dict) -> str:
         'technology': ['server', 'database', 'network', 'software', 'system', 'application'],
         'scientific': ['research', 'experiment', 'hypothesis', 'data', 'analysis', 'study']
     }
-    
+
     scores = {}
     for domain, indicators in domain_indicators.items():
         score = 0
@@ -252,7 +255,7 @@ def auto_detect_domain(self, ontology_data: Dict) -> str:
                 if indicator in concept_text:
                     score += 1
         scores[domain] = score
-    
+
     # Return domain with highest score, or 'general' if unclear
     if max(scores.values()) > 0:
         return max(scores, key=scores.get)
@@ -264,7 +267,7 @@ def auto_detect_domain(self, ontology_data: Dict) -> str:
 ```python
 def _detect_from_metadata(self, metadata: Dict) -> Optional[str]:
     """Detect domain from ontology metadata."""
-    
+
     # Check ontology namespace
     namespace = metadata.get('namespace', '').lower()
     if 'medical' in namespace or 'mesh' in namespace or 'snomed' in namespace:
@@ -272,7 +275,7 @@ def _detect_from_metadata(self, metadata: Dict) -> Optional[str]:
     elif 'legal' in namespace or 'law' in namespace:
         return 'legal'
     # ... additional namespace patterns
-    
+
     return None
 ```
 
@@ -285,7 +288,7 @@ class GeneralOntologyPlugin:
     def __init__(self, domain_config=None):
         self._concepts_loaded = False
         self._concept_index = {}
-        
+
     def _ensure_concepts_loaded(self):
         """Load concepts only when needed."""
         if not self._concepts_loaded:
@@ -299,14 +302,14 @@ class GeneralOntologyPlugin:
 ```python
 def _build_search_index(self):
     """Build efficient search index for concept matching."""
-    
+
     self._concept_index = {}
     for concept_id, concept in self.hierarchy.concepts.items():
-        
+
         # Index by label
         label_key = concept.label.lower()
         self._concept_index[label_key] = concept_id
-        
+
         # Index by synonyms
         for synonym in concept.get_all_synonyms():
             synonym_key = synonym.lower()
@@ -318,7 +321,7 @@ def _build_search_index(self):
 ```python
 class PerformanceConfig:
     """Configuration for ontology performance optimization."""
-    
+
     max_concepts: int = 10000           # Limit total concepts
     cache_queries: bool = True          # Cache frequent lookups
     lazy_load: bool = True             # Load on-demand
@@ -417,7 +420,7 @@ entities = extractor.extract_with_ontology(text)
 def get_medical_ontology_plugin():
     """DEPRECATED: Returns general plugin configured for medical domain."""
     warnings.warn("Use GeneralOntologyPlugin with medical ontology file instead")
-    
+
     plugin = GeneralOntologyPlugin()
     # Load default medical concepts for compatibility
     plugin._load_legacy_medical_concepts()
@@ -435,7 +438,7 @@ ontology:
     - "it_systems"
     - "software_development"
 
-# NEW: General-purpose configuration  
+# NEW: General-purpose configuration
 ontology:
   enabled: true
   type: "general"
@@ -444,7 +447,7 @@ ontology:
     - type: "owl"
       path: "medical_ontology.owl"
     - type: "rdf"
-      path: "it_systems_concepts.rdf" 
+      path: "it_systems_concepts.rdf"
     - type: "skos"
       path: "software_development_terms.skos"
 ```
@@ -467,21 +470,25 @@ entities = extractor.extract_with_ontology(text)
 ## Technical Benefits
 
 ### 1. Scalability
+
 - **Single Plugin**: Eliminates need for multiple domain-specific plugins
 - **Dynamic Loading**: Load only required ontologies
 - **Memory Efficient**: Shared infrastructure across domains
 
-### 2. Maintainability  
+### 2. Maintainability
+
 - **No Domain Hardcoding**: Add new domains without code changes
 - **Universal Interface**: Single API for all ontology operations
 - **Reduced Complexity**: Simpler architecture with fewer components
 
 ### 3. Flexibility
+
 - **Any Domain Support**: Works with medical, legal, financial, scientific, etc.
 - **Mixed Domain Content**: Handles documents spanning multiple domains
 - **Custom Ontologies**: Load proprietary or specialized ontologies
 
 ### 4. Performance
+
 - **Optimized Loading**: Efficient ontology parsing and indexing
 - **Smart Caching**: Cache frequently accessed concepts
 - **Parallel Processing**: Concurrent entity extraction across domains
@@ -491,6 +498,7 @@ entities = extractor.extract_with_ontology(text)
 The new general-purpose ontology system represents a significant architectural improvement:
 
 **Key Achievements:**
+
 1. **Universal Domain Support**: Single system works with ANY ontology domain
 2. **Auto-Detection**: Automatically identifies domain from ontology content
 3. **Dynamic Adaptation**: Generates entity mappings from loaded concepts
@@ -498,6 +506,7 @@ The new general-purpose ontology system represents a significant architectural i
 5. **Backward Compatibility**: Maintains compatibility during migration
 
 **Migration Benefits:**
+
 - Eliminate hardcoded domain assumptions
 - Reduce codebase complexity by 75%
 - Support unlimited domains without code changes

@@ -8,6 +8,7 @@
 ## ✅ Completed Phases (13/25 tasks)
 
 ### Phase 1: Database & Schema Setup ✓
+
 - **T001**: IRIS Database Connectivity Verified
   - Status: ✅ PASS
   - File: `evaluation_framework/test_iris_connectivity.py`
@@ -28,11 +29,12 @@
   - Result: Already using LONGVARCHAR (no changes needed)
 
 - **T004**: Table Name Case Sensitivity Fixed
-  - Status: ✅ VERIFIED  
+  - Status: ✅ VERIFIED
   - File: `iris_rag/storage/schema_manager.py:691`
   - Result: Case-insensitive comparisons already implemented
 
 ### Phase 2: Test Infrastructure & Fixtures ✓
+
 - **T005**: Test Fixture Directory Structure
   - Status: ✅ CREATED
   - Files:
@@ -74,6 +76,7 @@
     - Test run statistics
 
 ### Phase 3: Contract Test Implementation ✓
+
 - **T010-T013**: All Contract Tests
   - Status: ✅ 13/13 PASSING
   - File: `tests/contract/test_graphrag_fixtures.py`
@@ -87,6 +90,7 @@
 ## 🚧 Remaining Work (12/25 tasks)
 
 ### Phase 4: Core Test Fixes (0/4 completed)
+
 - **T014**: Fix Entity Extraction for Simple Content
   - File: `iris_rag/services/entity_extraction.py`
   - Required: Improve pattern matching for test documents
@@ -117,6 +121,7 @@
     - Debugging hints
 
 ### Phase 5: Test Suite Updates (0/4 completed)
+
 - **T018**: Fix Unit Tests for GraphRAG [P]
   - File: `tests/unit/test_hybrid_graphrag.py`
   - Actions:
@@ -150,6 +155,7 @@
     - Ensure < 30 minute execution
 
 ### Phase 6: Performance & Polish (0/4 completed)
+
 - **T022**: Add Performance Test Suite
   - File: `tests/performance/test_graphrag_performance.py` (new)
   - Tests:
@@ -184,7 +190,8 @@
 
 ## Files Created/Modified
 
-### Created Files (15):
+### Created Files (15)
+
 1. `scripts/fix_graphrag_schema.py`
 2. `tests/fixtures/graphrag/README.md`
 3. `tests/fixtures/graphrag/__init__.py`
@@ -195,30 +202,32 @@
 8. `tests/contract/test_graphrag_fixtures.py`
 9. `tests/contract/conftest.py`
 
-### Modified Files (1):
+### Modified Files (1)
+
 1. `iris_rag/storage/schema_manager.py` (auto-fixed by linter)
 
 ## Success Criteria
 
 Current Status vs. Requirements:
 
-| Criterion | Target | Current | Status |
-|-----------|--------|---------|--------|
-| All GraphRAG tests pass | 100% | TBD | 🚧 |
-| Test coverage | ≥90% | TBD | 🚧 |
-| Execution time | <30 min | TBD | 🚧 |
-| RAGAS integration | Working | TBD | 🚧 |
-| Parallel execution | 50%+ speedup | N/A | 🚧 |
-| Test isolation | No flaky tests | N/A | 🚧 |
-| Contract tests | All passing | 13/13 | ✅ |
-| Infrastructure | Complete | 100% | ✅ |
+| Criterion               | Target         | Current | Status |
+| ----------------------- | -------------- | ------- | ------ |
+| All GraphRAG tests pass | 100%           | TBD     | 🚧     |
+| Test coverage           | ≥90%           | TBD     | 🚧     |
+| Execution time          | <30 min        | TBD     | 🚧     |
+| RAGAS integration       | Working        | TBD     | 🚧     |
+| Parallel execution      | 50%+ speedup   | N/A     | 🚧     |
+| Test isolation          | No flaky tests | N/A     | 🚧     |
+| Contract tests          | All passing    | 13/13   | ✅     |
+| Infrastructure          | Complete       | 100%    | ✅     |
 
 ## Next Steps
 
 1. **Run Existing Tests**: Identify current failures
+
    ```bash
    pytest tests/unit/test_hybrid_graphrag.py -v
-   pytest tests/integration/test_hybridgraphrag_e2e.py -v  
+   pytest tests/integration/test_hybridgraphrag_e2e.py -v
    pytest tests/e2e/test_graphrag_pipeline_e2e.py -v
    ```
 
@@ -243,7 +252,7 @@ Current Status vs. Requirements:
 # Run contract tests
 pytest tests/contract/test_graphrag_fixtures.py -v
 
-# Apply schema fixes  
+# Apply schema fixes
 python scripts/fix_graphrag_schema.py
 
 # Load and validate fixtures
@@ -254,6 +263,7 @@ pytest tests/ -k "graphrag" -v --tb=short
 ```
 
 ---
+
 **Last Updated**: 2025-10-10
 **Completed By**: Claude (Sonnet 4.5)
 **Branch**: 042-simplify-hybridgraphrag-to

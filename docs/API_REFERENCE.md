@@ -263,7 +263,7 @@ def query(
 
 **Error Message Format:**
 
-```
+```text
 Error: <what went wrong>
 Context: <where it happened>
 Expected: <what was expected>

@@ -31,6 +31,7 @@ The RAG-Templates project is developed internally at InterSystems with reference
 ### Prerequisites
 
 1. **Configure Public Remote** (first time only):
+
 ```bash
 git remote add public git@github.com:intersystems-community/iris-rag-templates.git
 
@@ -38,7 +39,8 @@ git remote add public git@github.com:intersystems-community/iris-rag-templates.g
 git remote -v
 ```
 
-2. **Install Python Dependencies**:
+1. **Install Python Dependencies**:
+
 ```bash
 # Already included in requirements.txt
 python -m pip install --upgrade pip
@@ -78,16 +80,16 @@ git push public main
 
 The following redaction rules are automatically applied:
 
-| Internal Reference | Public Replacement | Count |
-|-------------------|-------------------|-------|
-| `github.com/intersystems-community` | `github.com/intersystems-community` | ~30 |
-| `https://github.com/intersystems-community/intersystems-community/rag-templates` | `https://github.com/intersystems-community/iris-rag-templates` | ~15 |
-| `git@github.com/intersystems-community:tdyar/rag-templates.git` | `git@github.com:intersystems-community/iris-rag-templates.git` | ~5 |
-| `intersystemsdc/iris-community` | `intersystemsdc/iris-community` | ~10 |
-| `pull request` / `Pull Request` | `pull request` / `Pull Request` | ~20 |
-| `PR #` | `PR #` | ~5 |
-| `maintainer@example.com` | `maintainer@example.com` | ~3 |
-| `/intersystems-community/` | `/intersystems-community/` | ~500 |
+| Internal Reference                                                               | Public Replacement                                             | Count |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------- | ----- |
+| `github.com/intersystems-community`                                              | `github.com/intersystems-community`                            | ~30   |
+| `https://github.com/intersystems-community/intersystems-community/rag-templates` | `https://github.com/intersystems-community/iris-rag-templates` | ~15   |
+| `git@github.com/intersystems-community:tdyar/rag-templates.git`                  | `git@github.com:intersystems-community/iris-rag-templates.git` | ~5    |
+| `intersystemsdc/iris-community`                                                  | `intersystemsdc/iris-community`                                | ~10   |
+| `pull request` / `Pull Request`                                                  | `pull request` / `Pull Request`                                | ~20   |
+| `PR #`                                                                           | `PR #`                                                         | ~5    |
+| `maintainer@example.com`                                                         | `maintainer@example.com`                                       | ~3    |
+| `/intersystems-community/`                                                       | `/intersystems-community/`                                     | ~500  |
 
 **Total**: ~614 replacements across ~92 files
 
@@ -98,12 +100,14 @@ The following redaction rules are automatically applied:
 Automated sync script that handles redaction and pushing to public repository.
 
 **Features**:
+
 - Dry-run mode for preview
 - Automatic remote validation
 - Comprehensive redaction
 - Git integration
 
 **Usage**:
+
 ```bash
 # Show help
 ./scripts/sync_to_public.sh --help
@@ -123,12 +127,14 @@ Automated sync script that handles redaction and pushing to public repository.
 Python script for detailed redaction with logging.
 
 **Features**:
+
 - Pattern-based redaction
 - Detailed change logging (JSON)
 - Backup creation
 - Verbose output
 
 **Usage**:
+
 ```bash
 # Show help
 python scripts/redact_for_public.py --help
@@ -151,6 +157,7 @@ python scripts/redact_for_public.py --log-file redaction-$(date +%Y%m%d).json
 ### Standard Release Workflow
 
 1. **Develop Feature on Internal Repository**:
+
    ```bash
    git checkout -b feature/my-feature
    # ... development work ...
@@ -159,12 +166,14 @@ python scripts/redact_for_public.py --log-file redaction-$(date +%Y%m%d).json
    ```
 
 2. **Merge to Main (Internal)**:
+
    ```bash
    # Create pull request on GitLab
    # Review and merge
    ```
 
 3. **Sync to Public Repository**:
+
    ```bash
    # Checkout main branch
    git checkout main
@@ -178,6 +187,7 @@ python scripts/redact_for_public.py --log-file redaction-$(date +%Y%m%d).json
    ```
 
 4. **Verify Public Repository**:
+
    ```bash
    # Clone public repo to verify
    git clone git@github.com:intersystems-community/iris-rag-templates.git /tmp/public-verify
@@ -297,11 +307,13 @@ chmod +x scripts/verify_public_repo.sh
 ### Problem 1: Public Remote Not Configured
 
 **Error**:
-```
+
+```text
 ❌ Error: Public remote 'public' not configured
 ```
 
 **Solution**:
+
 ```bash
 # Add public remote
 git remote add public git@github.com:intersystems-community/iris-rag-templates.git
@@ -313,11 +325,13 @@ git remote -v
 ### Problem 2: Permission Denied (Public Repository)
 
 **Error**:
-```
+
+```text
 Permission denied (publickey)
 ```
 
 **Solution**:
+
 ```bash
 # 1. Check SSH key is added to GitHub
 ssh -T git@github.com
@@ -336,6 +350,7 @@ cat ~/.ssh/id_ed25519.pub
 **Symptom**: Script reports unexpected internal references
 
 **Solution**:
+
 ```bash
 # 1. Review detailed log
 python scripts/redact_for_public.py --dry-run --verbose
@@ -354,11 +369,13 @@ python scripts/redact_for_public.py --dry-run
 ### Problem 4: Merge Conflicts on Public Repository
 
 **Error**:
-```
+
+```text
 ! [rejected] main -> main (non-fast-forward)
 ```
 
 **Solution**:
+
 ```bash
 # 1. Fetch latest from public
 git fetch public main
@@ -378,6 +395,7 @@ git push public main --force-with-lease
 **Symptom**: Internal references still visible after sync
 
 **Solution**:
+
 ```bash
 # 1. Run verification script
 ./scripts/verify_public_repo.sh
@@ -429,6 +447,7 @@ cat redaction-*.json | python -m json.tool | less
 ### 5. Keep Redaction Rules Updated
 
 Regularly review and update redaction rules:
+
 - New internal references
 - Changed URLs or paths
 - New team members' emails
@@ -439,12 +458,14 @@ Regularly review and update redaction rules:
 ### Secrets and API Keys
 
 **IMPORTANT**: The redaction scripts only handle URL and reference redaction. They do NOT scan for:
+
 - API keys
 - Passwords
 - Tokens
 - Credentials
 
 **Before syncing**:
+
 ```bash
 # Manual secret check
 git diff main | grep -iE "(api_key|password|secret|token|credential)" && echo "⚠️ Check for secrets!"
@@ -456,6 +477,7 @@ git secrets --scan
 ### .env Files
 
 Ensure `.env` files are in `.gitignore`:
+
 ```bash
 # Verify .env is ignored
 cat .gitignore | grep "\.env"
@@ -471,6 +493,7 @@ git ls-files | grep "\.env$" && echo "⚠️ .env file committed!"
 When internal infrastructure changes:
 
 1. **Edit `scripts/redact_for_public.py`**:
+
    ```python
    self.redaction_rules = {
        # Add new rule
@@ -480,11 +503,13 @@ When internal infrastructure changes:
    ```
 
 2. **Test changes**:
+
    ```bash
    python scripts/redact_for_public.py --dry-run --verbose
    ```
 
 3. **Commit updated script**:
+
    ```bash
    git add scripts/redact_for_public.py
    git commit -m "chore: update redaction rules for new infrastructure"

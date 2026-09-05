@@ -9,6 +9,7 @@ IRIS **does support true Levenshtein-based fuzzy matching** through the **iFind 
 ### 1. iFind Fuzzy Matching Syntax
 
 **Current iFind Syntax (IRIS 2024.x)**:
+
 ```sql
 -- Traditional syntax (requires index name)
 SELECT * FROM RAG.Entities
@@ -18,6 +19,7 @@ WHERE %ID %FIND search_index(entity_name_idx, 'scott', 3)
 ```
 
 **Proposed New Syntax (Future IRIS versions)**:
+
 ```sql
 -- Cleaner syntax (uses field name directly)
 SELECT * FROM RAG.Entities
@@ -29,12 +31,14 @@ WHERE entity_name MATCHES fuzzy('scott', 2)  -- max edit distance of 2
 To use iFind fuzzy matching, you need:
 
 1. **Create iFind Index** on the column:
+
    ```sql
    CREATE INDEX entity_name_idx ON RAG.Entities (entity_name)
    FOR %iFind.Index.Basic
    ```
 
 2. **Use %FIND or MATCHES operator** (not LIKE):
+
    ```sql
    -- Current syntax
    WHERE %ID %FIND search_index(entity_name_idx, 'search_term', 3)
@@ -100,6 +104,7 @@ def search_entities(
 ```
 
 **Capabilities**:
+
 - ✅ Case-insensitive matching
 - ✅ Substring matching ("Scott" matches "Scott Derrickson")
 - ❌ NO edit distance tolerance ("Scot" does NOT match "Scott")
@@ -118,16 +123,19 @@ To implement **true fuzzy matching** with Levenshtein edit distance, we need:
 ### Option 1: Require iFind Index (Recommended)
 
 **Pros**:
+
 - True Levenshtein-based fuzzy matching
 - Handles typos, misspellings, variations
 - Optimized performance with index
 
 **Cons**:
+
 - Requires schema change (create iFind index)
 - Requires SchemaManager updates
 - More complex deployment
 
 **Implementation**:
+
 ```python
 def search_entities_ifind(self, query: str, edit_distance: int = 2, ...):
     """Search entities using iFind fuzzy matching."""
@@ -144,15 +152,18 @@ def search_entities_ifind(self, query: str, edit_distance: int = 2, ...):
 ### Option 2: Hybrid Approach (Current + Future)
 
 **Pros**:
+
 - Works today without schema changes (LIKE-based)
 - Upgrade path to iFind when available
 - Graceful degradation
 
 **Cons**:
+
 - Two codepaths to maintain
 - Confusing API (claims "fuzzy" but delivers substring)
 
 **Implementation**:
+
 ```python
 def search_entities(self, query: str, fuzzy: bool = True, ...):
     """
@@ -170,11 +181,13 @@ def search_entities(self, query: str, fuzzy: bool = True, ...):
 ### Option 3: Keep LIKE, Document Limitations (Current)
 
 **Pros**:
+
 - No schema changes required
 - Simple implementation
 - Works today
 
 **Cons**:
+
 - NOT true fuzzy matching
 - Misleading API (parameter names claim "fuzzy")
 - Limited capability (no typo tolerance)
@@ -186,6 +199,7 @@ def search_entities(self, query: str, fuzzy: bool = True, ...):
 ### Short-term (iris-vector-rag 0.5.x)
 
 1. **Update docstring** to be honest about LIKE limitations:
+
    ```python
    """
    Search for entities by name with case-insensitive substring matching.
@@ -208,6 +222,7 @@ def search_entities(self, query: str, fuzzy: bool = True, ...):
 ### Long-term (iris-vector-rag 0.6.x+)
 
 1. **Add iFind index creation** to SchemaManager:
+
    ```python
    class SchemaManager:
        def ensure_ifind_index(self, table_name: str, column_name: str):
@@ -223,12 +238,13 @@ def search_entities(self, query: str, fuzzy: bool = True, ...):
 2. **Implement hybrid search** (Option 2 above)
 
 3. **Add configuration** to enable/disable iFind:
+
    ```yaml
    entity_extraction:
      storage:
        fuzzy_matching:
          enabled: true
-         method: "ifind"  # or "like" for substring
+         method: "ifind" # or "like" for substring
          edit_distance: 2
    ```
 

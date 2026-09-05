@@ -36,11 +36,11 @@ Update your configuration file (`iris_rag/config/default_config.yaml`):
 ```yaml
 ontology:
   enabled: true
-  type: "general"                    # Single general-purpose type
-  auto_detect_domain: true           # Auto-detect domain from ontology
+  type: "general" # Single general-purpose type
+  auto_detect_domain: true # Auto-detect domain from ontology
   sources:
     - type: "owl"
-      path: "path/to/your/ontology.owl"    # Works with ANY ontology
+      path: "path/to/your/ontology.owl" # Works with ANY ontology
   reasoning:
     enable_inference: true
     max_inference_depth: 3
@@ -98,7 +98,7 @@ config_manager._config['ontology']['sources'] = [
 
 # Load legal documents - system auto-detects legal domain
 documents = [Document(
-    id="legal_doc", 
+    id="legal_doc",
     page_content="The contract includes liability clauses and confidentiality agreements.",
     metadata={"source": "contracts"}
 )]
@@ -120,7 +120,7 @@ python scripts/demo_ontology_support.py --ontology /path/to/your/ontology.owl --
 
 ### Core Components
 
-```
+```text
 iris_rag/ontology/
 ├── __init__.py                     # Module exports and plugin registry
 ├── models.py                      # Core data models (Concept, Relationship, etc.)
@@ -149,48 +149,48 @@ iris_rag/ontology/
 # Entity extraction with general ontology support
 entity_extraction:
   enabled: true
-  method: "ontology_hybrid"           # ontology_hybrid, llm_basic, pattern_only
+  method: "ontology_hybrid" # ontology_hybrid, llm_basic, pattern_only
   confidence_threshold: 0.7
-  entity_types: []                    # Auto-populated from ontology
+  entity_types: [] # Auto-populated from ontology
 
 # General ontology configuration
 ontology:
   enabled: true
-  type: "general"                     # Universal type
-  auto_detect_domain: true            # Auto-detect from ontology
-  
+  type: "general" # Universal type
+  auto_detect_domain: true # Auto-detect from ontology
+
   # Ontology data sources - works with ANY domain
   sources:
     - type: "owl"
-      path: "ontologies/medical.owl"           # Medical domain example
-    - type: "rdf"  
-      path: "ontologies/legal.rdf"             # Legal domain example
+      path: "ontologies/medical.owl" # Medical domain example
+    - type: "rdf"
+      path: "ontologies/legal.rdf" # Legal domain example
     - type: "skos"
-      path: "ontologies/financial.skos"       # Financial domain example
+      path: "ontologies/financial.skos" # Financial domain example
     - type: "ttl"
-      path: "ontologies/scientific.ttl"       # Scientific domain example
-  
+      path: "ontologies/scientific.ttl" # Scientific domain example
+
   # Custom domain definitions (optional)
   custom_domains:
     enabled: false
     definition_path: null
-  
+
   # Reasoning configuration
   reasoning:
     enable_inference: true
     max_inference_depth: 3
     confidence_threshold: 0.6
     reasoning_strategies:
-      - "subsumption"                # Hierarchical reasoning
-      - "property_based"             # Property-based inference
-      - "rule_based"                 # Custom rule application
-  
+      - "subsumption" # Hierarchical reasoning
+      - "property_based" # Property-based inference
+      - "rule_based" # Custom rule application
+
   # Entity mapping (auto-generated from ontology)
   entity_mapping:
     auto_generate: true
     auto_domain_detection: true
-    expansion_strategy: "synonyms"    # synonyms, hierarchical, semantic
-  
+    expansion_strategy: "synonyms" # synonyms, hierarchical, semantic
+
   # Performance settings
   performance:
     max_concepts: 10000
@@ -212,6 +212,7 @@ pipelines:
 The general-purpose system supports all standard ontology formats:
 
 ### OWL (Web Ontology Language)
+
 ```yaml
 sources:
   - type: "owl"
@@ -220,6 +221,7 @@ sources:
 ```
 
 ### RDF (Resource Description Framework)
+
 ```yaml
 sources:
   - type: "rdf"
@@ -228,6 +230,7 @@ sources:
 ```
 
 ### SKOS (Simple Knowledge Organization System)
+
 ```yaml
 sources:
   - type: "skos"
@@ -236,6 +239,7 @@ sources:
 ```
 
 ### TTL (Turtle)
+
 ```yaml
 sources:
   - type: "ttl"
@@ -244,6 +248,7 @@ sources:
 ```
 
 ### N3 (Notation3)
+
 ```yaml
 sources:
   - type: "n3"
@@ -252,6 +257,7 @@ sources:
 ```
 
 ### XML (with ontology structure)
+
 ```yaml
 sources:
   - type: "xml"
@@ -275,7 +281,7 @@ extractor = OntologyAwareEntityExtractor(config_manager=config_manager)
 medical_text = "Patient diagnosed with hypertension, prescribed ACE inhibitor medication"
 medical_entities = extractor.extract_with_ontology(medical_text)
 
-# Legal text example  
+# Legal text example
 legal_text = "Contract breach results in liability for damages and penalties"
 legal_entities = extractor.extract_with_ontology(legal_text)
 
@@ -284,8 +290,8 @@ financial_text = "Investment portfolio shows capital gains and dividend income"
 financial_entities = extractor.extract_with_ontology(financial_text)
 
 # System auto-adapts to each domain
-for entities, domain_type in [(medical_entities, "medical"), 
-                             (legal_entities, "legal"), 
+for entities, domain_type in [(medical_entities, "medical"),
+                             (legal_entities, "legal"),
                              (financial_entities, "financial")]:
     print(f"\n{domain_type.upper()} ENTITIES:")
     for entity in entities:
@@ -321,7 +327,7 @@ The GraphRAG pipeline works with any ontology domain:
 # Works with medical ontology
 result = pipeline.query("What are the treatment options for cardiovascular disease?")
 
-# Works with legal ontology  
+# Works with legal ontology
 result = pipeline.query("What are the requirements for contract termination?")
 
 # Works with financial ontology
@@ -341,11 +347,11 @@ print(f"Inferred concepts: {[c['label'] for c in insights.get('inferred_concepts
 ```python
 # Mix documents from different domains
 documents = [
-    Document(id="med_1", page_content="Patient treatment protocol...", 
+    Document(id="med_1", page_content="Patient treatment protocol...",
              metadata={"domain": "medical"}),
-    Document(id="legal_1", page_content="Contract compliance requirements...", 
+    Document(id="legal_1", page_content="Contract compliance requirements...",
              metadata={"domain": "legal"}),
-    Document(id="finance_1", page_content="Investment analysis report...", 
+    Document(id="finance_1", page_content="Investment analysis report...",
              metadata={"domain": "financial"})
 ]
 
@@ -360,10 +366,10 @@ pipeline.load_documents("", documents=documents, generate_embeddings=True)
 ```yaml
 ontology:
   performance:
-    max_concepts: 5000              # Limit total concepts
-    cache_queries: true             # Cache frequent queries
-    lazy_load: true                 # Load concepts on-demand
-    similarity_threshold: 0.8       # Higher threshold = fewer matches
+    max_concepts: 5000 # Limit total concepts
+    cache_queries: true # Cache frequent queries
+    lazy_load: true # Load concepts on-demand
+    similarity_threshold: 0.8 # Higher threshold = fewer matches
 ```
 
 ### Memory Management
@@ -393,6 +399,7 @@ print(f"Memory used: {memory_after - memory_before:.1f} MB")
 **Problem**: Ontology file cannot be parsed
 
 **Solution**:
+
 ```python
 from iris_rag.ontology.plugins import GeneralOntologyPlugin
 
@@ -419,6 +426,7 @@ if os.path.exists("your_ontology.owl"):
 **Problem**: System cannot determine ontology domain
 
 **Solution**:
+
 ```python
 # Manually specify domain if auto-detection fails
 custom_domain = {
@@ -439,6 +447,7 @@ print(f"Manual domain set: {plugin.domain}")
 **Problem**: System is slow with large ontology files
 
 **Solution**:
+
 ```python
 # Optimize for large ontologies
 config_manager._config['ontology'].update({
@@ -500,7 +509,7 @@ aerospace_domain = {
         },
         {
             "id": "avionics",
-            "label": "Avionics System", 
+            "label": "Avionics System",
             "synonyms": ["flight systems", "navigation"],
             "type": "System"
         }
@@ -528,7 +537,7 @@ import watchdog.events
 class OntologyFileHandler(watchdog.events.FileSystemEventHandler):
     def __init__(self, pipeline):
         self.pipeline = pipeline
-    
+
     def on_modified(self, event):
         if event.src_path.endswith('.owl'):
             print(f"Ontology file updated: {event.src_path}")
@@ -551,19 +560,19 @@ observer.start()
 class GeneralOntologyPlugin:
     def __init__(self, domain_config=None):
         """Initialize general-purpose ontology plugin."""
-    
+
     def auto_detect_domain(self, ontology_data: Dict) -> str:
         """Auto-detect domain from ontology metadata."""
-    
+
     def auto_generate_mappings(self, concepts: List[Concept]) -> Dict:
         """Automatically generate entity mappings from concepts."""
-    
+
     def load_ontology_from_file(self, file_path: str):
         """Load ontology from any supported file format."""
-    
+
     def load_custom_domain(self, domain_definition: Dict):
         """Load custom domain definition."""
-    
+
     def get_supported_formats(self) -> List[str]:
         """Get list of supported ontology formats."""
 ```
@@ -574,7 +583,7 @@ class GeneralOntologyPlugin:
 class OntologyAwareEntityExtractor:
     def __init__(self, config_manager: ConfigurationManager):
         """Initialize with general ontology support."""
-    
+
     def extract_with_ontology(self, text: str, document: Document = None) -> List[Entity]:
         """Extract entities using general ontology."""
 ```
@@ -591,24 +600,28 @@ def load_custom_domain_definition(definition_path: str) -> Dict
 ## Best Practices
 
 ### 1. Configuration Management
+
 - Start with basic ontology configuration
 - Enable auto-detection for unknown domains
 - Use performance settings for large ontologies
 - Cache frequently accessed concepts
 
 ### 2. Performance Optimization
+
 - Monitor memory usage with large ontologies
 - Use lazy loading for better startup times
 - Set appropriate similarity thresholds
 - Consider domain-specific optimizations
 
 ### 3. Quality Assurance
+
 - Validate ontology files before deployment
 - Test entity extraction across different text types
 - Monitor auto-detection accuracy
 - Review and tune confidence thresholds
 
 ### 4. Maintenance
+
 - Keep ontology files updated with domain standards
 - Monitor performance metrics
 - Update entity mappings as domains evolve
@@ -645,7 +658,7 @@ config_manager._config['ontology']['sources'] = [
     {'type': 'xml', 'path': 'organizational_structure.xml'}
 ]
 
-# Process business documents  
+# Process business documents
 documents = [Document(
     id="process_1",
     page_content="The procurement workflow requires approval from finance and legal departments...",

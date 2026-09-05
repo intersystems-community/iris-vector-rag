@@ -5,6 +5,7 @@ The coverage warning system helps maintain code quality by alerting developers w
 ## Overview
 
 The system uses a pytest plugin (`tests/plugins/coverage_warnings.py`) that:
+
 - Monitors code coverage during test execution
 - Warns when modules fall below threshold (60% default)
 - Enforces higher standards for critical modules (80%)
@@ -27,6 +28,7 @@ patterns =
 ```
 
 Patterns can be:
+
 - Directory paths (ending with `/`) - matches all files in directory
 - Glob patterns - for specific file matching
 - Module paths - for exact matches
@@ -34,6 +36,7 @@ Patterns can be:
 ### Threshold Configuration
 
 Currently, thresholds are hardcoded in the plugin:
+
 - Standard modules: 60%
 - Critical modules: 80%
 
@@ -59,7 +62,7 @@ pytest --cov=iris_rag --cov=common
 
 ### Example Output
 
-```
+```text
 ========================= Coverage Warnings =========================
 WARNING: Coverage below threshold - iris_rag/utils/helpers.py: 45.2% < 60.0% [WARNING]
 WARNING: Coverage below threshold - iris_rag/pipelines/basic.py: 72.1% < 80.0% [CRITICAL]
@@ -117,6 +120,7 @@ result = subprocess.run(
 ### Performance Issues
 
 For large codebases:
+
 1. Use `--cov-report=` (empty) to skip report generation
 2. Add `omit` patterns in `.coveragerc` for third-party code
 3. Consider running coverage warnings only in CI
@@ -132,11 +136,13 @@ For large codebases:
 ## Example: Adding to Existing Project
 
 1. Copy the plugin:
+
    ```bash
    cp tests/plugins/coverage_warnings.py your_project/tests/plugins/
    ```
 
 2. Update `.coveragerc`:
+
    ```ini
    [coverage:critical_modules]
    patterns =
@@ -145,12 +151,14 @@ For large codebases:
    ```
 
 3. Register in `pytest.ini`:
+
    ```ini
    plugins =
        tests.plugins.coverage_warnings
    ```
 
 4. Run tests and review warnings:
+
    ```bash
    pytest --cov=your_app
    ```

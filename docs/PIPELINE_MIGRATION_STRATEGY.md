@@ -7,9 +7,11 @@ This document provides a comprehensive migration strategy for transitioning exis
 ## Migration Phases
 
 ### Phase 1: Foundation (COMPLETED ✅)
+
 **Objective**: Establish chunking infrastructure without breaking existing functionality
 
 **Completed Actions**:
+
 - ✅ Added chunking configuration to [`config/default.yaml`](config/default.yaml)
 - ✅ Enhanced [`IRISVectorStore`](iris_rag/storage/vector_store_iris.py) with automatic chunking
 - ✅ Integrated [`DocumentChunkingService`](tools/chunking/chunking_service.py)
@@ -18,9 +20,11 @@ This document provides a comprehensive migration strategy for transitioning exis
 **Result**: Infrastructure ready for pipeline migration
 
 ### Phase 2: BasicRAG Migration (COMPLETED ✅)
+
 **Objective**: Migrate BasicRAG pipeline as proof of concept
 
 **Completed Actions**:
+
 - ✅ Removed manual chunking from [`BasicRAGPipeline`](iris_rag/pipelines/basic.py)
 - ✅ Simplified [`load_documents()`](iris_rag/pipelines/basic.py) method
 - ✅ Validated automatic chunking functionality
@@ -29,6 +33,7 @@ This document provides a comprehensive migration strategy for transitioning exis
 **Result**: BasicRAG now uses automatic chunking successfully
 
 ### Phase 3: Remaining Pipelines (READY FOR IMPLEMENTATION)
+
 **Objective**: Migrate all remaining RAG pipelines to automatic chunking
 
 ## Pipeline-by-Pipeline Migration Guide
@@ -39,6 +44,7 @@ This document provides a comprehensive migration strategy for transitioning exis
 **Migration Required**: ✅ NONE - Already working through inheritance
 
 **Validation**:
+
 ```bash
 uv run pytest tests/test_chunking_architecture_simple.py::TestPipelineChunkingInterface::test_hyde_pipeline_should_get_automatic_chunking -v
 ```
@@ -49,11 +55,13 @@ uv run pytest tests/test_chunking_architecture_simple.py::TestPipelineChunkingIn
 **Migration Required**: ✅ NONE - Will automatically benefit from [`IRISVectorStore`](iris_rag/storage/vector_store_iris.py)
 
 **Implementation Steps**:
+
 1. Ensure CRAG uses [`IRISVectorStore`](iris_rag/storage/vector_store_iris.py) for document storage
 2. Verify chunking works with CRAG's document processing
 3. Test with real documents
 
 **Validation**:
+
 ```python
 # Test CRAG with chunking
 crag_pipeline = CRAGPipeline(config_manager=config_manager, llm_func=llm_func)
@@ -67,19 +75,22 @@ crag_pipeline.load_documents(documents=large_documents)
 **Migration Required**: Configuration for semantic chunking (recommended)
 
 **Implementation Steps**:
+
 1. Add GraphRAG-specific chunking configuration:
+
 ```yaml
 pipeline_overrides:
   graphrag:
     chunking:
       strategy: "semantic"
-      threshold: 800  # Smaller chunks for entity extraction
+      threshold: 800 # Smaller chunks for entity extraction
 ```
 
-2. Ensure GraphRAG uses [`IRISVectorStore`](iris_rag/storage/vector_store_iris.py)
-3. Test entity extraction with chunked documents
+1. Ensure GraphRAG uses [`IRISVectorStore`](iris_rag/storage/vector_store_iris.py)
+2. Test entity extraction with chunked documents
 
 **Validation**:
+
 ```python
 # Test GraphRAG with semantic chunking
 graphrag_pipeline = GraphRAGPipeline(config_manager=config_manager, llm_func=llm_func)
@@ -93,6 +104,7 @@ graphrag_pipeline.load_documents(documents=large_documents)
 **Migration Required**: ✅ NONE - Will automatically benefit
 
 **Implementation Steps**:
+
 1. Ensure HybridIFind uses [`IRISVectorStore`](iris_rag/storage/vector_store_iris.py)
 2. Test hybrid search with chunked documents
 3. Validate retrieval quality
@@ -103,6 +115,7 @@ graphrag_pipeline.load_documents(documents=large_documents)
 **Migration Required**: ✅ NONE - Will automatically benefit
 
 **Implementation Steps**:
+
 1. Ensure NodeRAG uses [`IRISVectorStore`](iris_rag/storage/vector_store_iris.py)
 2. Test node-based retrieval with chunks
 3. Validate node relationship preservation
@@ -113,18 +126,21 @@ graphrag_pipeline.load_documents(documents=large_documents)
 **Migration Required**: Disable automatic chunking
 
 **Implementation Steps**:
+
 1. Add ColBERT-specific configuration:
+
 ```yaml
 pipeline_overrides:
   colbert:
     chunking:
-      enabled: false  # ColBERT handles token-level chunking internally
+      enabled: false # ColBERT handles token-level chunking internally
 ```
 
-2. Ensure ColBERT calls [`add_documents()`](iris_rag/storage/vector_store_iris.py) with `auto_chunk=False`
-3. Test ColBERT functionality unchanged
+1. Ensure ColBERT calls [`add_documents()`](iris_rag/storage/vector_store_iris.py) with `auto_chunk=False`
+2. Test ColBERT functionality unchanged
 
 **Implementation**:
+
 ```python
 # In ColBERT pipeline
 def load_documents(self, documents):
@@ -138,15 +154,18 @@ def load_documents(self, documents):
 **Migration Required**: Conditional chunking based on query type
 
 **Implementation Steps**:
+
 1. Add SQL RAG-specific configuration:
+
 ```yaml
 pipeline_overrides:
   sql_rag:
     chunking:
-      enabled: false  # Default disabled for structured queries
+      enabled: false # Default disabled for structured queries
 ```
 
-2. Implement conditional chunking:
+1. Implement conditional chunking:
+
 ```python
 def load_documents(self, documents):
     # Enable chunking only for unstructured documents
@@ -157,6 +176,7 @@ def load_documents(self, documents):
 ## Migration Validation Strategy
 
 ### 1. Automated Testing
+
 ```bash
 # Run comprehensive chunking tests
 uv run pytest tests/test_chunking_architecture_simple.py -v
@@ -169,6 +189,7 @@ uv run pytest tests/test_all_with_1000_docs.py -v
 ```
 
 ### 2. Performance Validation
+
 ```bash
 # Benchmark chunking performance
 uv run python scripts/benchmark_chunking_performance.py
@@ -178,15 +199,16 @@ uv run python scripts/compare_pipeline_performance.py
 ```
 
 ### 3. Functional Validation
+
 ```python
 # Test each pipeline with large documents
 def test_pipeline_chunking(pipeline_class):
     pipeline = pipeline_class(config_manager=config_manager, llm_func=llm_func)
-    
+
     # Load large documents
     large_docs = create_large_documents(sizes=[2000, 3000, 5000])
     pipeline.load_documents(documents=large_docs)
-    
+
     # Query and validate results
     result = pipeline.query("Test question")
     assert "answer" in result
@@ -196,6 +218,7 @@ def test_pipeline_chunking(pipeline_class):
 ## Rollback Strategy
 
 ### 1. Configuration Rollback
+
 ```yaml
 # Disable chunking globally if issues arise
 storage:
@@ -204,6 +227,7 @@ storage:
 ```
 
 ### 2. Pipeline-Specific Rollback
+
 ```yaml
 # Disable chunking for specific pipeline
 pipeline_overrides:
@@ -213,6 +237,7 @@ pipeline_overrides:
 ```
 
 ### 3. Code Rollback
+
 - Keep original pipeline implementations in version control
 - Use feature flags to switch between old/new implementations
 - Maintain backward compatibility in [`IRISVectorStore`](iris_rag/storage/vector_store_iris.py)
@@ -220,22 +245,28 @@ pipeline_overrides:
 ## Risk Mitigation
 
 ### 1. Performance Risks
+
 **Risk**: Chunking adds processing overhead
-**Mitigation**: 
+**Mitigation**:
+
 - Configurable thresholds to avoid chunking small documents
 - Performance monitoring and alerting
 - Ability to disable chunking per pipeline
 
 ### 2. Quality Risks
+
 **Risk**: Chunking may affect retrieval quality
 **Mitigation**:
+
 - A/B testing with chunked vs non-chunked documents
 - Quality metrics monitoring
 - Strategy tuning based on document types
 
 ### 3. Compatibility Risks
+
 **Risk**: Breaking existing pipeline functionality
 **Mitigation**:
+
 - Comprehensive test coverage
 - Gradual rollout with feature flags
 - Backward compatibility guarantees
@@ -243,16 +274,19 @@ pipeline_overrides:
 ## Success Metrics
 
 ### 1. Functional Metrics
+
 - ✅ All pipelines pass existing tests
 - ✅ New chunking tests pass
 - ✅ End-to-end functionality preserved
 
 ### 2. Performance Metrics
+
 - Chunking overhead < 10% of total processing time
 - Memory usage remains within acceptable bounds
 - Retrieval latency not significantly impacted
 
 ### 3. Quality Metrics
+
 - Retrieval quality maintained or improved
 - Answer quality maintained or improved
 - User satisfaction scores unchanged
@@ -260,29 +294,34 @@ pipeline_overrides:
 ## Timeline and Dependencies
 
 ### Immediate (Ready Now)
+
 - ✅ BasicRAG migration (COMPLETED)
 - ✅ HyDE pipeline validation (COMPLETED)
 - CRAG pipeline migration
 - HybridIFind pipeline migration
 
 ### Short Term (1-2 weeks)
+
 - NodeRAG pipeline migration
 - GraphRAG pipeline with semantic chunking
 - ColBERT pipeline with disabled chunking
 
 ### Medium Term (2-4 weeks)
+
 - SQL RAG conditional chunking
 - Performance optimization
 - Quality validation
 
 ### Long Term (1-2 months)
+
 - Advanced chunking strategies
 - Pipeline-specific optimizations
 - Production deployment
 
 ## Implementation Checklist
 
-### For Each Pipeline Migration:
+### For Each Pipeline Migration
+
 - [ ] Analyze current chunking implementation (if any)
 - [ ] Determine appropriate chunking strategy
 - [ ] Update configuration if needed
@@ -292,7 +331,8 @@ pipeline_overrides:
 - [ ] Measure performance impact
 - [ ] Document changes
 
-### Global Validation:
+### Global Validation
+
 - [ ] All tests pass
 - [ ] Performance benchmarks acceptable
 - [ ] Documentation updated
@@ -302,16 +342,19 @@ pipeline_overrides:
 ## Post-Migration Optimization
 
 ### 1. Strategy Tuning
+
 - Monitor chunking effectiveness per pipeline
 - Adjust chunk sizes based on retrieval quality
 - Implement pipeline-specific strategies
 
 ### 2. Performance Optimization
+
 - Cache chunking results for repeated documents
 - Optimize chunking algorithms
 - Implement parallel chunking for large batches
 
 ### 3. Quality Enhancement
+
 - Implement chunk quality scoring
 - Add overlap optimization
 - Develop context-aware chunking

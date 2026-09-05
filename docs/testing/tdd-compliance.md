@@ -91,7 +91,7 @@ python scripts/validate_tdd_compliance.py --json
 
 ### Example Output
 
-```
+```text
 ======================================================================
 TDD Compliance Report
 ======================================================================
@@ -136,6 +136,7 @@ Compliance Rate: 83.3%
 **Problem**: Test was passing when first committed.
 
 **Fix**:
+
 1. Reset to before implementation
 2. Verify test fails without implementation
 3. Re-commit the failing test
@@ -146,6 +147,7 @@ Compliance Rate: 83.3%
 **Problem**: Can't find test in git history.
 
 **Fix**:
+
 1. Ensure test file is tracked by git
 2. Check file path and name
 3. Verify git history is available
@@ -160,7 +162,7 @@ name: TDD Compliance Check
 on:
   pull_request:
     paths:
-      - 'tests/contract/**'
+      - "tests/contract/**"
 
 jobs:
   tdd-compliance:
@@ -168,12 +170,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history needed
+          fetch-depth: 0 # Full history needed
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: pip install GitPython
@@ -257,6 +259,7 @@ class TestUserContractSuite:
 1. **Receive requirement**: "Add email notification on order completion"
 
 2. **Write contract test**:
+
    ```python
    @pytest.mark.contract
    def test_order_completion_sends_email(self):
@@ -269,12 +272,14 @@ class TestUserContractSuite:
    ```
 
 3. **Verify test fails**:
+
    ```bash
    pytest tests/contract/test_order_contract.py::test_order_completion_sends_email
    # ModuleNotFoundError or AttributeError - Good!
    ```
 
 4. **Commit failing test**:
+
    ```bash
    git add tests/contract/test_order_contract.py
    git commit -m "Contract: Orders should send completion emails"
@@ -286,18 +291,21 @@ class TestUserContractSuite:
    - Test manually if needed
 
 6. **Verify contract passes**:
+
    ```bash
    pytest tests/contract/test_order_contract.py::test_order_completion_sends_email
    # Test passes!
    ```
 
 7. **Commit implementation**:
+
    ```bash
    git add order_system.py email_integration.py
    git commit -m "Send email notifications on order completion"
    ```
 
 8. **Validate TDD compliance**:
+
    ```bash
    python scripts/validate_tdd_compliance.py
    # Should show your test as compliant
@@ -320,6 +328,7 @@ A: Mock them in contract tests, but write separate integration contracts for rea
 ## Summary
 
 TDD compliance ensures:
+
 - Requirements are testable and clear
 - Tests actually test something meaningful
 - Implementation matches requirements

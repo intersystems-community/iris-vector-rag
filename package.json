@@ -1,0 +1,9 @@
+{
+  "name": "iris-vector-rag-tooling",
+  "private": true,
+  "description": "Pinned formatter toolchain for the spec-gates quality gates (prettier, markdownlint-cli2). Not published.",
+  "devDependencies": {
+    "markdownlint-cli2": "0.23.2",
+    "prettier": "3.9.6"
+  }
+}

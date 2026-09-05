@@ -69,17 +69,18 @@ git push origin feature/my-feature
 
 ## What Gets Redacted
 
-| Internal Reference | Public Replacement |
-|-------------------|--------------------|
+| Internal Reference                  | Public Replacement                  |
+| ----------------------------------- | ----------------------------------- |
 | `github.com/intersystems-community` | `github.com/intersystems-community` |
-| `intersystemsdc/iris-community` | `intersystemsdc/iris-community` |
-| `maintainer@example.com` | `maintainer@example.com` |
-| `pull request` / `MR` | `pull request` / `PR` |
-| `/intersystems-community/` | `/intersystems-community/` |
+| `intersystemsdc/iris-community`     | `intersystemsdc/iris-community`     |
+| `maintainer@example.com`            | `maintainer@example.com`            |
+| `pull request` / `MR`               | `pull request` / `PR`               |
+| `/intersystems-community/`          | `/intersystems-community/`          |
 
 ## Files Excluded from Sync
 
 The following are automatically excluded:
+
 - `.git/` - Git repository metadata
 - `.venv/` - Virtual environment
 - `__pycache__/`, `*.pyc` - Python cache files
@@ -136,12 +137,14 @@ grep -r "@intersystems.com" . --exclude-dir=.git || echo "✅ No internal emails
 Main sync script that handles copy, redaction, and optional push.
 
 **Options**:
+
 - `--dry-run` - Preview changes without applying
 - `--push` - Automatically push to GitHub after sync
 - `--sanitized-dir DIR` - Use custom sanitized directory
 - `--help` - Show help message
 
 **Examples**:
+
 ```bash
 ./scripts/sync_to_sanitized.sh --dry-run
 ./scripts/sync_to_sanitized.sh --push
@@ -153,6 +156,7 @@ Main sync script that handles copy, redaction, and optional push.
 Python script for detailed redaction with logging.
 
 **Options**:
+
 - `--repo-root DIR` - Repository to redact (default: current directory)
 - `--dry-run` - Preview changes
 - `--backup` - Create backup before redaction
@@ -161,6 +165,7 @@ Python script for detailed redaction with logging.
 - `--verbose` - Enable verbose output
 
 **Examples**:
+
 ```bash
 python scripts/redact_for_public.py --dry-run --verbose
 python scripts/redact_for_public.py --backup --backup-dir /tmp/backup
@@ -244,7 +249,7 @@ name: Sync to Public Repository
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   sync:
@@ -285,11 +290,11 @@ For issues with syncing:
 
 **Quick Reference Card**
 
-| Command | What it does |
-|---------|-------------|
-| `./scripts/sync_to_sanitized.sh --dry-run` | Preview changes |
-| `./scripts/sync_to_sanitized.sh` | Copy + redact |
-| `./scripts/sync_to_sanitized.sh --push` | Copy + redact + push |
+| Command                                         | What it does           |
+| ----------------------------------------------- | ---------------------- |
+| `./scripts/sync_to_sanitized.sh --dry-run`      | Preview changes        |
+| `./scripts/sync_to_sanitized.sh`                | Copy + redact          |
+| `./scripts/sync_to_sanitized.sh --push`         | Copy + redact + push   |
 | `python scripts/redact_for_public.py --dry-run` | Preview redaction only |
 
 **Remember**: Always run `--dry-run` first to preview changes!

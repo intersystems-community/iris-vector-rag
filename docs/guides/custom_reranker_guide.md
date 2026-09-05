@@ -74,7 +74,7 @@ def my_reranker(query: str, docs: List[Document]) -> List[Tuple[Document, float]
 
 ### Pipeline Integration Flow
 
-```
+```text
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Vector Search │───▶│  Initial Results │───▶│  Reranker Func │
 │   (k * factor)  │    │  (candidates)    │    │  (custom logic) │
@@ -632,7 +632,7 @@ Prefer the `rerank=callable` query-time pattern for new code.
 
 Organize your custom reranker modules:
 
-```
+```text
 my_project/
 ├── my_rerankers/
 │   ├── __init__.py
@@ -1344,5 +1344,5 @@ A: Yes, implement intelligent caching based on query and document content hashes
 
 ---
 
-**Last Updated**: November 2024  
+**Last Updated**: November 2024
 **Version**: 1.0

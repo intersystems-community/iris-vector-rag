@@ -9,12 +9,14 @@ This directory contains end-to-end demonstrations of advanced retrieval techniqu
 **Status**: ✅ Ready to run NOW (no retrieve-dspy needed)
 
 **What it demonstrates**:
+
 - Multi-query generation (simple variations)
 - Parallel IRIS vector searches
 - Reciprocal Rank Fusion (RRF) to combine results
 - Comparison with single-query approach
 
 **Prerequisites**:
+
 ```bash
 # Just need iris_rag (already in rag-templates)
 cd /Users/intersystems-community/ws/rag-templates
@@ -29,12 +31,14 @@ export IRIS_PASSWORD="SYS"
 ```
 
 **Run**:
+
 ```bash
 python contrib/retrieve-dspy/demo_simple_multi_query.py
 ```
 
 **What you'll see**:
-```
+
+```text
 🚀 Multi-Query Retrieval with RRF Fusion
 =========================================
 
@@ -73,6 +77,7 @@ Combined 80 results
 ```
 
 **Key Features**:
+
 - Shows how multi-query improves recall
 - Demonstrates RRF fusion algorithm
 - Compares single-query vs multi-query approaches
@@ -85,6 +90,7 @@ Combined 80 results
 **Status**: ⚠️ Requires retrieve-dspy fork
 
 **What it demonstrates**:
+
 - Full QUIPLER composition with IRIS backend
 - LLM-based query expansion (GPT-4)
 - Parallel IRIS searches
@@ -93,6 +99,7 @@ Combined 80 results
 - Token usage tracking
 
 **Prerequisites**:
+
 ```bash
 # Install retrieve-dspy fork
 cd ~/ws
@@ -118,13 +125,15 @@ export OPENAI_API_KEY="sk-..."
 ```
 
 **Run**:
+
 ```bash
 cd /Users/intersystems-community/ws/rag-templates
 python contrib/retrieve-dspy/demo_quipler_iris.py
 ```
 
 **What you'll see**:
-```
+
+```text
 🚀 Running QUIPLER Query
 =========================================
 
@@ -156,6 +165,7 @@ Generated Queries (5):
 ```
 
 **Key Features**:
+
 - Uses actual QUIPLER from retrieve-dspy
 - LLM generates sophisticated query variations
 - Cross-encoder provides precision boost
@@ -166,16 +176,16 @@ Generated Queries (5):
 
 ## Comparison: Simple vs Full QUIPLER
 
-| Feature | Simple Demo | Full QUIPLER |
-|---------|------------|--------------|
-| **Query Generation** | Simple variations | LLM (GPT-4) expansion |
-| **Search** | IRIS vector search | IRIS vector search |
-| **Reranking** | None | Cross-encoder model |
-| **Fusion** | RRF | RRF |
-| **Dependencies** | Just iris_rag | retrieve-dspy + OpenAI |
-| **Cost** | Free | ~$0.01 per query (LLM) |
-| **Accuracy** | Good | Excellent |
-| **Setup Time** | 2 minutes | 15 minutes |
+| Feature              | Simple Demo        | Full QUIPLER           |
+| -------------------- | ------------------ | ---------------------- |
+| **Query Generation** | Simple variations  | LLM (GPT-4) expansion  |
+| **Search**           | IRIS vector search | IRIS vector search     |
+| **Reranking**        | None               | Cross-encoder model    |
+| **Fusion**           | RRF                | RRF                    |
+| **Dependencies**     | Just iris_rag      | retrieve-dspy + OpenAI |
+| **Cost**             | Free               | ~$0.01 per query (LLM) |
+| **Accuracy**         | Good               | Excellent              |
+| **Setup Time**       | 2 minutes          | 15 minutes             |
 
 ---
 
@@ -184,12 +194,14 @@ Generated Queries (5):
 ### Performance
 
 **Simple Multi-Query**:
+
 - 4 queries × 20 results = 80 candidate documents
 - RRF fusion → 20 final results
 - Total time: ~1-2 seconds
 - Cost: $0 (no LLM calls)
 
 **Full QUIPLER**:
+
 - 3-5 queries × 50 results = 150-250 candidates
 - Cross-encoder reranking → 20 results per query
 - RRF fusion → 20 final results
@@ -200,15 +212,16 @@ Generated Queries (5):
 
 Based on IR research and retrieve-dspy benchmarks:
 
-| Metric | Single Query | Multi-Query + RRF | QUIPLER (Full) |
-|--------|-------------|-------------------|----------------|
-| **Recall@20** | 65% | 78% (+13%) | 82% (+17%) |
-| **Precision@10** | 72% | 74% (+2%) | 84% (+12%) |
-| **NDCG** | 0.68 | 0.73 (+7%) | 0.81 (+19%) |
+| Metric           | Single Query | Multi-Query + RRF | QUIPLER (Full) |
+| ---------------- | ------------ | ----------------- | -------------- |
+| **Recall@20**    | 65%          | 78% (+13%)        | 82% (+17%)     |
+| **Precision@10** | 72%          | 74% (+2%)         | 84% (+12%)     |
+| **NDCG**         | 0.68         | 0.73 (+7%)        | 0.81 (+19%)    |
 
-*Note: Actual numbers depend on your corpus and queries*
+_Note: Actual numbers depend on your corpus and queries_
 
 **Why it works**:
+
 1. **Multi-query**: Captures different aspects of the question
 2. **RRF**: Documents appearing in multiple result sets get boosted
 3. **Cross-encoder**: Reranks based on precise query-document matching
@@ -253,6 +266,7 @@ python contrib/retrieve-dspy/demo_quipler_iris.py
 ### Demo 1: Simple Multi-Query
 
 **Error**: `ModuleNotFoundError: No module named 'iris_rag'`
+
 ```bash
 # Solution: Install rag-templates
 cd /Users/intersystems-community/ws/rag-templates
@@ -260,6 +274,7 @@ pip install -e .
 ```
 
 **Error**: `Cannot connect to IRIS`
+
 ```bash
 # Solution: Check IRIS is running
 docker-compose up -d  # or your IRIS startup command
@@ -270,6 +285,7 @@ echo $IRIS_PORT
 ```
 
 **Error**: `Table RAG.Documents does not exist`
+
 ```bash
 # Solution: Load sample data
 cd /Users/intersystems-community/ws/rag-templates
@@ -279,6 +295,7 @@ make load-data  # or your data loading command
 ### Demo 2: Full QUIPLER
 
 **Error**: `No module named 'retrieve_dspy'`
+
 ```bash
 # Solution: Install retrieve-dspy fork
 cd ~/ws
@@ -288,6 +305,7 @@ pip install -e .
 ```
 
 **Error**: `No module named 'retrieve_dspy.database.iris_database'`
+
 ```bash
 # Solution: Copy IRIS adapter files
 cd ~/ws/retrieve-dspy
@@ -296,12 +314,14 @@ cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/iris_dat
 ```
 
 **Error**: `ImportError: No module named 'dspy'`
+
 ```bash
 # Solution: Install dspy
 pip install dspy-ai
 ```
 
 **Error**: `OpenAI API error`
+
 ```bash
 # Solution: Check API key is valid
 echo $OPENAI_API_KEY
@@ -314,7 +334,7 @@ echo $OPENAI_API_KEY
 
 ### Simple Demo Flow
 
-```
+```text
 User Question
     ↓
 Generate Variations (simple)
@@ -328,7 +348,7 @@ Final Results
 
 ### Full QUIPLER Flow
 
-```
+```text
 User Question
     ↓
 LLM Query Expansion (GPT-4)
@@ -408,9 +428,9 @@ rrf_k=30  # more even distribution
 
 ## Resources
 
-- **retrieve-dspy GitHub**: https://github.com/weaviate/retrieve-dspy
-- **IRIS Fork**: https://github.com/isc-tdyar/retrieve-dspy
-- **RRF Paper**: https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
+- **retrieve-dspy GitHub**: <https://github.com/weaviate/retrieve-dspy>
+- **IRIS Fork**: <https://github.com/isc-tdyar/retrieve-dspy>
+- **RRF Paper**: <https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf>
 - **QUIPLER**: retrieve-dspy/retrievers/compositions/quipler.py
 
 ---

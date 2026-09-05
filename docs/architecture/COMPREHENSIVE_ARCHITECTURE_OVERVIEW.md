@@ -11,7 +11,7 @@ This document provides a comprehensive overview of the IRIS RAG MCP (Model Conte
 This comprehensive architecture includes:
 
 1. **[Core System Architecture](./IRIS_RAG_MCP_SERVER_ARCHITECTURE.md)** - Overall system design and service boundaries
-2. **[Tool Interface Architecture](./TOOL_INTERFACE_ARCHITECTURE.md)** - Modular tool system for 8 RAG techniques  
+2. **[Tool Interface Architecture](./TOOL_INTERFACE_ARCHITECTURE.md)** - Modular tool system for 8 RAG techniques
 3. **[Python-Node.js Bridge Architecture](./PYTHON_BRIDGE_ARCHITECTURE.md)** - Seamless integration layer
 4. **[Configuration Management Architecture](./CONFIGURATION_ARCHITECTURE.md)** - Environment-based configuration system
 
@@ -27,7 +27,7 @@ This comprehensive architecture includes:
 
 ### 2.1 Full System Diagram
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                        IRIS RAG MCP SERVER                                 │
 │                     Complete System Architecture                            │
@@ -95,19 +95,19 @@ This comprehensive architecture includes:
 
 ### 2.2 Service Boundary Matrix
 
-| Layer | Responsibility | Interface | Dependencies | File Limit |
-|-------|---------------|-----------|--------------|------------|
-| **MCP Protocol** | MCP compliance, tool routing | Standard MCP over stdio/HTTP | Node.js Service Layer | <500 lines |
-| **Node.js Service** | Configuration, health, bridge coordination | Internal APIs, env config | Python Bridge Interface | <500 lines |
-| **Python Bridge** | Process management, load balancing | Child process, JSON-RPC | Python RAG Core | <500 lines |
-| **Python RAG Core** | Pipeline execution, vector ops | Pipeline registry, vector store | IRIS Database | <500 lines |
-| **IRIS Database** | Data persistence, vector search | SQL, vector functions | None | N/A |
+| Layer               | Responsibility                             | Interface                       | Dependencies            | File Limit |
+| ------------------- | ------------------------------------------ | ------------------------------- | ----------------------- | ---------- |
+| **MCP Protocol**    | MCP compliance, tool routing               | Standard MCP over stdio/HTTP    | Node.js Service Layer   | <500 lines |
+| **Node.js Service** | Configuration, health, bridge coordination | Internal APIs, env config       | Python Bridge Interface | <500 lines |
+| **Python Bridge**   | Process management, load balancing         | Child process, JSON-RPC         | Python RAG Core         | <500 lines |
+| **Python RAG Core** | Pipeline execution, vector ops             | Pipeline registry, vector store | IRIS Database           | <500 lines |
+| **IRIS Database**   | Data persistence, vector search            | SQL, vector functions           | None                    | N/A        |
 
 ## 3. Data Flow Architecture
 
 ### 3.1 Complete Request Processing Flow
 
-```
+```text
 Client Request (MCP Protocol)
          │
          ▼
@@ -165,7 +165,7 @@ Client Response (Standardized Format)
 
 ### 3.2 Performance Monitoring Flow
 
-```
+```text
 Request Start
      │
      ▼ ┌─────────────────┐
@@ -198,7 +198,7 @@ Performance Dashboard & Alerts
 
 ### 4.1 Complete Configuration Hierarchy
 
-```
+```text
 Environment Variables (Highest Priority)
 ├── RAG_DATABASE__IRIS__HOST=localhost
 ├── RAG_DATABASE__IRIS__PORT=1972
@@ -235,7 +235,7 @@ Built-in Defaults (Lowest Priority)
 
 ### 4.2 Secret Management Integration
 
-```
+```text
 Secret References in Configuration
 ├── RAG_DATABASE__IRIS__PASSWORD_SECRET=iris-db-password
 ├── RAG_LLM__OPENAI__API_KEY_SECRET=openai-api-key
@@ -257,7 +257,7 @@ Runtime Secret Injection
 
 ### 5.1 Horizontal Scaling Design
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    LOAD BALANCER                               │
 │  ┌─────────────────────────────────────────────────────────────┐ │
@@ -295,7 +295,7 @@ Runtime Secret Injection
 
 ### 5.2 Performance Optimization Stack
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                   CACHING LAYERS                               │
 │  ┌─────────────────────────────────────────────────────────────┐ │
@@ -334,7 +334,7 @@ Runtime Secret Injection
 
 ### 6.1 Multi-Layer Security Design
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    SECURITY LAYERS                             │
 ├─────────────────────────────────────────────────────────────────┤
@@ -383,7 +383,7 @@ Runtime Secret Injection
 
 ### 7.1 Phase-Based Implementation
 
-```
+```text
 Phase 1: Core Infrastructure (Weeks 1-2)
 ├── MCP Protocol Layer
 │   ├── Basic tool routing
@@ -448,7 +448,7 @@ Phase 3: Advanced Techniques & Production (Weeks 5-6)
 
 ### 8.1 Testing Strategy
 
-```
+```text
 Unit Testing (Per Component)
 ├── MCP Protocol Layer Tests
 ├── Tool Interface Tests

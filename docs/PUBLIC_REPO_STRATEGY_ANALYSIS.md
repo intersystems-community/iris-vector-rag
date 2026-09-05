@@ -6,12 +6,15 @@
 ## Proposed Approaches
 
 ### Current Approach: Separate Working Directory
+
 Internal repo (GitLab) → Copy/Redact → Separate working dir → GitHub
 
 ### Intern's Suggestion #1: Public Branch in Same Repo
+
 Internal repo (GitLab) → `public` branch with redaction → Push to both GitLab + GitHub
 
 ### Intern's Suggestion #2: Move Everything to GitHub
+
 Abandon internal GitLab → Use GitHub for everything → Public by default
 
 ## Detailed Analysis
@@ -40,8 +43,8 @@ Abandon internal GitLab → Use GitHub for everything → Public by default
    - Easy to test redaction without affecting public repo
 
 4. **Different Remotes**
-   - Internal: GitLab (git@github.com/intersystems-community)
-   - Public: GitHub (git@github.com:intersystems-community)
+   - Internal: GitLab (<git@github.com>/intersystems-community)
+   - Public: GitHub (<git@github.com>:intersystems-community)
    - No risk of push confusion
 
 ### ❌ Cons
@@ -65,6 +68,7 @@ Abandon internal GitLab → Use GitHub for everything → Public by default
    - Need to sync changes back to internal
 
 ### 💰 Cost: Medium
+
 - Disk: ~500MB
 - Maintenance: Medium (sync scripts)
 - Risk: Low (very safe)
@@ -100,6 +104,7 @@ Abandon internal GitLab → Use GitHub for everything → Public by default
 ### ❌ Cons
 
 1. **Branch Maintenance Complexity**
+
    ```bash
    # Every commit requires:
    git checkout main              # Internal work
@@ -151,6 +156,7 @@ git push github public:main
 ```
 
 ### 💰 Cost: Medium-High
+
 - Disk: 0MB (single repo)
 - Maintenance: High (complex branching)
 - Risk: Medium-High (easy to make mistakes)
@@ -250,6 +256,7 @@ fi
 If moving to GitHub entirely:
 
 1. **Redact Entire Git History**
+
    ```bash
    # Use git-filter-repo to rewrite history
    git filter-repo --replace-text redaction-patterns.txt
@@ -271,6 +278,7 @@ If moving to GitHub entirely:
    - Management approval
 
 ### 💰 Cost: High (One-Time), Low (Ongoing)
+
 - Migration: High (weeks of work)
 - Maintenance: Zero (no sync)
 - Risk: High (irreversible)
@@ -279,18 +287,18 @@ If moving to GitHub entirely:
 
 ## Comparison Matrix
 
-| Factor | Separate Repos | Public Branch | Full GitHub |
-|--------|---------------|---------------|-------------|
-| **Simplicity** | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Safety** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| **Maintenance** | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Sync Ease** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ (N/A) |
-| **Disk Space** | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Mistake Risk** | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐ |
-| **Flexibility** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| **Community** | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Setup Time** | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| **Compliance** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐ |
+| Factor           | Separate Repos | Public Branch | Full GitHub      |
+| ---------------- | -------------- | ------------- | ---------------- |
+| **Simplicity**   | ⭐⭐⭐         | ⭐⭐          | ⭐⭐⭐⭐⭐       |
+| **Safety**       | ⭐⭐⭐⭐⭐     | ⭐⭐⭐        | ⭐⭐             |
+| **Maintenance**  | ⭐⭐⭐         | ⭐⭐          | ⭐⭐⭐⭐⭐       |
+| **Sync Ease**    | ⭐⭐           | ⭐⭐⭐        | ⭐⭐⭐⭐⭐ (N/A) |
+| **Disk Space**   | ⭐⭐           | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐⭐       |
+| **Mistake Risk** | ⭐⭐⭐⭐⭐     | ⭐⭐          | ⭐               |
+| **Flexibility**  | ⭐⭐⭐⭐⭐     | ⭐⭐⭐        | ⭐⭐             |
+| **Community**    | ⭐⭐⭐         | ⭐⭐⭐        | ⭐⭐⭐⭐⭐       |
+| **Setup Time**   | ⭐⭐⭐⭐       | ⭐⭐⭐        | ⭐⭐             |
+| **Compliance**   | ⭐⭐⭐⭐⭐     | ⭐⭐⭐⭐      | ⭐               |
 
 ---
 
@@ -299,6 +307,7 @@ If moving to GitHub entirely:
 ### Short Term (Current Sprint): **Separate Repos (Current Approach)**
 
 **Why**:
+
 - Already implemented and tested
 - Safest option (zero risk of leaking internal refs)
 - Flexible for different public/internal documentation
@@ -309,6 +318,7 @@ If moving to GitHub entirely:
 ### Medium Term (Next Quarter): **Evaluate Public Branch Approach**
 
 **Why**:
+
 - Once sync workflows are established
 - Can test with feature branches first
 - Assess if branch complexity is manageable
@@ -318,6 +328,7 @@ If moving to GitHub entirely:
 ### Long Term (6-12 months): **Consider Full GitHub Migration**
 
 **Why**:
+
 - If repository is truly open source
 - If company policy allows
 - If internal references are fully removed
@@ -332,17 +343,20 @@ If moving to GitHub entirely:
 Combine benefits of all three:
 
 ### Phase 1: Current (Separate Repos) ✅
+
 - Use separate working directory
 - Automated sync scripts (already built)
 - Safe, predictable
 
 ### Phase 2: Public Branch Experiment (2-3 months)
+
 - Create `public` branch in internal repo
 - Test dual-push workflow
 - Evaluate developer experience
 - Keep separate repos as backup
 
 ### Phase 3: Decision Point (6 months)
+
 - If public branch works well → Deprecate separate repos
 - If too complex → Stay with separate repos
 - If fully open source → Migrate to GitHub entirely
@@ -369,21 +383,24 @@ git push github public:main
 
 ## Decision Criteria
 
-### Choose Separate Repos If:
+### Choose Separate Repos If
+
 - ✅ Need maximum safety
 - ✅ Have different documentation for internal/public
 - ✅ Want flexibility to diverge
 - ✅ Don't mind extra disk space
 - ✅ Want explicit control over what goes public
 
-### Choose Public Branch If:
+### Choose Public Branch If
+
 - ✅ Want git-native solution
 - ✅ Developers comfortable with branching
 - ✅ Have good git hooks/automation
 - ✅ Want to save disk space
 - ✅ Internal and public are mostly the same
 
-### Choose Full GitHub If:
+### Choose Full GitHub If
+
 - ✅ Repository is truly open source
 - ✅ No sensitive internal infrastructure
 - ✅ Company policy allows
@@ -395,21 +412,25 @@ git push github public:main
 ## Action Items
 
 ### Immediate (This Week)
+
 1. ✅ Continue with separate repos (current approach)
 2. Document current sync workflow
 3. Get feedback from team on sync process
 
 ### Short Term (Next Month)
+
 1. Create proof-of-concept public branch
 2. Test dual-push workflow with one feature
 3. Compare developer experience
 
 ### Medium Term (Next Quarter)
+
 1. Evaluate public branch success
 2. Make decision: stay separate or switch to public branch
 3. Update documentation based on decision
 
 ### Long Term (6+ Months)
+
 1. Assess if full GitHub migration is feasible
 2. Conduct security/compliance review
 3. Plan migration if approved
@@ -421,6 +442,7 @@ git push github public:main
 **Current Recommendation**: **Stick with Separate Repos**
 
 **Reasoning**:
+
 1. ✅ Already implemented and working
 2. ✅ Safest approach (zero risk)
 3. ✅ Most flexible for future changes
@@ -432,11 +454,13 @@ git push github public:main
 The intern's suggestions are valid! The public branch approach is cleaner architecturally, but comes with complexity and risk. The full GitHub migration is ideal for true open source, but requires organizational buy-in.
 
 **Best Path Forward**:
+
 1. Use separate repos now (working, safe)
 2. Experiment with public branch next quarter
 3. Evaluate GitHub migration in 6+ months
 
 This gives you:
+
 - Immediate safety ✅
 - Future flexibility ✅
 - Data-driven decision making ✅

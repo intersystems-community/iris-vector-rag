@@ -2,7 +2,7 @@
 
 ## Complete System Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                    IRIS RAG Framework                                              │
 │                                 GraphRAG Integration Architecture                                  │
@@ -173,7 +173,7 @@
 
 ## Data Flow Architecture
 
-```
+```text
                      USER REQUEST: "What treatments are available for diabetes?"
                                                 │
                                                 ▼
@@ -262,17 +262,17 @@
 
 ## Component Interaction Matrix
 
-| Component | SchemaManager | EntityExtraction | KnowledgeGraph | VectorStore | ConfigManager | Validation |
-|-----------|---------------|------------------|----------------|-------------|---------------|------------|
-| **GraphRAGPipeline** | Creates tables | Extracts entities | Queries graph | Fallback search | Gets config | Validates prereqs |
-| **EntityExtractionService** | - | Core function | Stores results | - | Strategy config | Type validation |
-| **SchemaManager** | Core function | - | Manages tables | Vector dims | Table config | Schema validation |
-| **ValidatedFactory** | Uses for setup | Injects service | - | Creates instance | Uses for config | Core validation |
-| **ValidationOrchestrator** | Triggers setup | - | Validates data | Checks embeddings | Uses requirements | Reports status |
+| Component                   | SchemaManager  | EntityExtraction  | KnowledgeGraph | VectorStore       | ConfigManager     | Validation        |
+| --------------------------- | -------------- | ----------------- | -------------- | ----------------- | ----------------- | ----------------- |
+| **GraphRAGPipeline**        | Creates tables | Extracts entities | Queries graph  | Fallback search   | Gets config       | Validates prereqs |
+| **EntityExtractionService** | -              | Core function     | Stores results | -                 | Strategy config   | Type validation   |
+| **SchemaManager**           | Core function  | -                 | Manages tables | Vector dims       | Table config      | Schema validation |
+| **ValidatedFactory**        | Uses for setup | Injects service   | -              | Creates instance  | Uses for config   | Core validation   |
+| **ValidationOrchestrator**  | Triggers setup | -                 | Validates data | Checks embeddings | Uses requirements | Reports status    |
 
 ## Error Handling & Circuit Breaker Flow
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                ERROR HANDLING ARCHITECTURE                                         │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘

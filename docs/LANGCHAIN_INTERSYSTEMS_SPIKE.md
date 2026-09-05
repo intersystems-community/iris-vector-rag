@@ -14,7 +14,7 @@ Aohan Dang's `langchain-intersystems` package (`langchain_intersystems.IRISVecto
 the official InterSystems LangChain integration, currently in Perforce (not yet released to
 PyPI). A demo copy of the wheel ships with the READY 2026 hackathon kit:
 
-```
+```text
 ~/ws/ready2026-hackathon/demos/langchain-vectorstore/
   dist/langchain_intersystems-0.0.1-py3-none-any.whl
   demo.py          ← working demo against State of the Union text
@@ -23,6 +23,7 @@ PyPI). A demo copy of the wheel ships with the READY 2026 hackathon kit:
 ```
 
 **Why this matters for READY 2026**:
+
 - AIML71 (RAG with Nick Petrocelli, Tue Apr 28): your section covers "RAG things users can try at home" — this package is that story for LangChain users
 - Hackathon kit (Mon Apr 27): Gabriel's ChatFHIR demo uses LangChain — should use official ISC package
 - `iris-vector-rag` needs an adapter so it adopts the official package when it ships
@@ -101,6 +102,7 @@ Full predicate table: `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$between`, `$
 ## What `iris-vector-rag` Does Differently
 
 `iris-vector-rag` is NOT a LangChain VectorStore — it's a full RAG pipeline framework:
+
 - Multiple pipeline types: BasicRAG, GraphRAG, CRAG, BasicRAGReranking
 - GraphRAG with entity extraction, KG construction, community detection
 - DSPy retriever adapter (`contrib/retrieve-dspy/`)
@@ -120,6 +122,7 @@ would let LangChain users plug into the full pipeline.
 **Why it matters**: Determines query performance on large collections (MIMIC has 200k+ notes).
 
 **What to do**:
+
 ```python
 vs = IRISVectorStore(embeddings, connect_kwargs=..., collection_name='test_spike')
 vs.add_documents([doc_with_metadata])
@@ -166,6 +169,7 @@ vs.add_documents(docs)
 ```
 
 Then test:
+
 ```python
 # Patient-scoped search
 vs.similarity_search('chest infiltrate', filter={'subject': 'Patient/10406825'})
@@ -240,6 +244,7 @@ Also test what happens with `replace_collection=False` on an existing collection
 `IRISVectorStore` support `max_marginal_relevance_search()`?
 
 **What to do**: Check if the method exists and works:
+
 ```python
 results = vs.max_marginal_relevance_search('chest findings', k=5, fetch_k=20)
 ```
@@ -254,6 +259,7 @@ results = vs.max_marginal_relevance_search('chest findings', k=5, fetch_k=20)
 VectorStore methods (`asimilarity_search`, `aadd_documents`) matter for production use.
 
 **What to do**: Test:
+
 ```python
 import asyncio
 results = asyncio.run(vs.asimilarity_search('chest findings', k=5))
@@ -282,10 +288,13 @@ what `langchain-intersystems` adds and whether community.intersystems.com should
 migrating.
 
 **What to do**:
+
 ```bash
 pip show langchain-iris  # check if installed
 ```
+
 Read Dmitry's implementation, compare:
+
 - Metadata filtering support (Predicate system vs basic dict)
 - Connection method (DB-API vs Native API vs SQLAlchemy)
 - HNSW index creation (automatic vs manual)

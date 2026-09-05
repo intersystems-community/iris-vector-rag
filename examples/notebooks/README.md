@@ -5,11 +5,13 @@ This directory contains Jupyter notebooks demonstrating how to add RAG capabilit
 ## Notebooks
 
 ### `byot_overlay_demo.ipynb`
+
 Comprehensive demonstration of zero-copy overlay functionality on existing business tables.
 
 **Features demonstrated:**
+
 - Minimal configuration overlay setup
-- Schema mapping capabilities  
+- Schema mapping capabilities
 - Zero-copy approach (no data duplication)
 - Performance comparisons
 - Customization options
@@ -23,6 +25,7 @@ pip install jupyter pandas matplotlib seaborn plotly
 ## Running the Notebooks
 
 1. **Setup Environment**:
+
    ```bash
    # From project root
    cd examples/notebooks

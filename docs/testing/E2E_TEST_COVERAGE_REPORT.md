@@ -1,9 +1,11 @@
 # E2E Test Coverage Report
 
 ## Executive Summary
+
 Over the past test cycle, we converted a documentation-heavy repository into a validated, runnable system with measurable end-to-end coverage. We removed obsolete assets, built a true E2E suite aligned to strict criteria, fixed critical blockers in configuration and database connectivity, and established passing pipelines on realistic biomedical data.
 
 Highlights:
+
 - Repository cleanup removed 245+ obsolete files and dead artifacts
 - Built Priority 1 true E2E suites with zero mocks and real IRIS vector search
 - Critical fixes: database health and connection utilities; pipeline constructor corrections; configuration type safety
@@ -16,6 +18,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
 ## Coverage Analysis
 
 ### Before (January 2025)
+
 - Implementation vs Documentation: ~15% vs ~85%
 - True E2E coverage: ~5% (BasicRAG only)
 - Overall coverage (incl. mocked tests): ~45%
@@ -26,6 +29,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
   - Gaps across core framework, vector store, configuration validation
 
 ### After (Current)
+
 - Implementation vs Documentation: ~75% vs ~25% within P1 scope
 - True E2E coverage: ~25% (strict, zero mocks)
 - Overall coverage (incl. unit/integration): ~60%
@@ -36,6 +40,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
   - Structured reporting artifacts under [`outputs/e2e_validation/`](outputs/e2e_validation)
 
 ## Current Coverage Statistics
+
 - True E2E Coverage: ~25%
 - Pipelines Passing (E2E): 4/5 → BasicRAG, CRAG, BasicRAGReranking, Configuration
 - Partial: GraphRAG (requires entity graph population)
@@ -47,6 +52,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
 ## Test Inventory
 
 ### True E2E Suites (zero mocks, real IRIS, real data)
+
 - Core framework E2E: [`tests/e2e/test_core_framework_e2e.py`](tests/e2e/test_core_framework_e2e.py)
   - Validates document ingestion, persistence, retrieval, query relevance, and model integrity using PMC data
 - Vector store IRIS E2E: [`tests/e2e/test_vector_store_iris_e2e.py`](tests/e2e/test_vector_store_iris_e2e.py)
@@ -57,8 +63,9 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
   - Real `ConfigurationManager`, `ConnectionManager`, IRIS vector store, biomedical queries, performance monitor
 
 ### Cross‑Pipeline Validation and Reports
+
 - Comprehensive pipeline validation (legacy): [`tests/test_comprehensive_pipeline_validation_e2e.py`](tests/test_comprehensive_pipeline_validation_e2e.py)
-- Pipeline status snapshots (JSON): 
+- Pipeline status snapshots (JSON):
   - [`outputs/pipeline_status_tests/pipeline_test_summary_20250914_090434.json`](outputs/pipeline_status_tests/pipeline_test_summary_20250914_090434.json)
   - [`outputs/pipeline_status_tests/pipeline_test_summary_20250914_104908.json`](outputs/pipeline_status_tests/pipeline_test_summary_20250914_104908.json)
 - Detailed per‑pipeline traces (JSON):
@@ -67,10 +74,12 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
 - True E2E baseline harness: [`evaluation_framework/true_e2e_evaluation.py`](evaluation_framework/true_e2e_evaluation.py)
 
 ### Feature‑to‑Test Mapping
+
 - Consolidated mapping and gap analysis: [`TEST_MAPPING_ANALYSIS_REPORT.md`](TEST_MAPPING_ANALYSIS_REPORT.md)
 - Strategy and gates for “true E2E”: [`docs/testing/E2E_TEST_STRATEGY.md`](docs/testing/E2E_TEST_STRATEGY.md)
 
 ## Success Metrics Achieved
+
 - Coverage uplift: true E2E 5% → ~25% (overall ~60%)
 - E2E pipeline success rate: 80% (4/5 passing)
 - All core pipelines validated on realistic biomedical data
@@ -79,6 +88,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
 - Repository cleanup: 245+ obsolete files removed; documentation claims reconciled with implementation state
 
 ## Remaining Gaps
+
 - GraphRAG: entity graph population required for full pass
 - Scale coverage: expand beyond sample datasets to 1k+ docs for durability and performance gates
 - CI orchestration: provision IRIS in CI and collect artifacts automatically
@@ -87,6 +97,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
 - Additional pipelines: HyDE, ColBERT, Node, Hybrid IFIND reinstatement and validation
 
 ## Recommendations
+
 - Short term (0–2 weeks):
   - Populate GraphRAG entity graph; finalize GraphRAG E2E
   - Add CI job to run [`tests/e2e/`](tests/e2e) with IRIS container and persist [`outputs/e2e_validation/`](outputs/e2e_validation)
@@ -98,6 +109,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
   - Achieve ≥60% true E2E coverage and ≥95% per roadmap
 
 ## Environment and Data Prerequisites
+
 - IRIS container running and healthy; quick start: [`docker-compose.iris-only.yml`](docker-compose.iris-only.yml)
 - Configured credentials and ports; see [`iris_rag/config/default_config.yaml`](iris_rag/config/default_config.yaml)
 - E2E fixtures expect PMC XMLs under [`data/sample_10_docs/`](data/sample_10_docs/); will fallback to built‑in biomedical texts
@@ -106,6 +118,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
 ---
 
 Appendix A — Pipelines Status Snapshot
+
 - Passing: BasicRAG, CRAG, BasicRAGReranking, Configuration
 - Partial: GraphRAG (entity graph seeding)
 - Source reports: see “Cross‑Pipeline Validation and Reports” above

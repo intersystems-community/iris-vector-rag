@@ -53,7 +53,7 @@ if [ "$MODE" = "standalone" ]; then
     echo "Starting Python MCP Bridge..."
     uvicorn iris_rag.mcp.bridge:app \
         --host 0.0.0.0 \
-        --port ${PYTHON_BRIDGE_PORT} \
+        --port "${PYTHON_BRIDGE_PORT}" \
         --log-level info &
 
     PYTHON_PID=$!

@@ -69,7 +69,7 @@ The validator plugin automatically checks error messages during test failures.
 
 ### Example Validator Output
 
-```
+```text
 ════════════════════════════════════════════════════════════════
 ERROR MESSAGE VALIDATION WARNING
 

@@ -9,6 +9,7 @@ This directory contains example configuration files for deploying iris-vector-ra
 For local development with Docker or native IRIS installation.
 
 **Features:**
+
 - Localhost connection
 - Default credentials (_SYSTEM/SYS)
 - 384-dimensional vectors (SentenceTransformers)
@@ -16,6 +17,7 @@ For local development with Docker or native IRIS installation.
 - Fast HNSW indexing
 
 **Usage:**
+
 ```bash
 # With Docker
 docker-compose up -d
@@ -33,12 +35,14 @@ python -m iris_vector_rag.cli.init_tables
 For AWS-hosted InterSystems IRIS instances.
 
 **Features:**
+
 - %SYS namespace (required for schema creation on AWS)
 - SQLUser schema prefix (AWS requirement)
 - 1024-dimensional vectors (NVIDIA NIM)
 - Environment variable support for secrets
 
 **Usage:**
+
 ```bash
 # Set AWS credentials
 export IRIS_HOST="aws-iris.your-domain.com"
@@ -57,12 +61,14 @@ python -m iris_vector_rag.cli.init_tables --config config/examples/aws.yaml
 For Azure-hosted InterSystems IRIS instances.
 
 **Features:**
+
 - USER namespace (Azure standard)
 - RAG schema prefix
 - 1536-dimensional vectors (OpenAI ada-002)
 - Azure Key Vault integration support
 
 **Usage:**
+
 ```bash
 # Set Azure credentials (use Azure Key Vault)
 export IRIS_HOST="azure-iris.cloudapp.azure.com"
@@ -101,6 +107,7 @@ Choose vector dimensions based on your embedding model:
 ### Never Commit Secrets
 
 ❌ **Bad:**
+
 ```yaml
 database:
   iris:
@@ -108,6 +115,7 @@ database:
 ```
 
 ✅ **Good:**
+
 ```yaml
 database:
   iris:
@@ -117,6 +125,7 @@ database:
 ### Use Cloud Secret Management
 
 **AWS:**
+
 ```bash
 # Store in AWS Secrets Manager
 aws secretsmanager create-secret \
@@ -131,6 +140,7 @@ export IRIS_PASSWORD=$(aws secretsmanager get-secret-value \
 ```
 
 **Azure:**
+
 ```bash
 # Store in Azure Key Vault
 az keyvault secret set \
@@ -147,6 +157,7 @@ export IRIS_PASSWORD=$(az keyvault secret show \
 ```
 
 **Docker:**
+
 ```bash
 # Use Docker secrets
 echo "YourSecurePassword" | docker secret create iris_password -
@@ -163,16 +174,19 @@ services:
 ## Namespace Requirements
 
 ### AWS IRIS
+
 - **Namespace:** `%SYS` (required for CREATE TABLE permissions)
 - **Schema:** `SQLUser` (required for table isolation)
 - **Full table name:** `SQLUser.Entities`
 
 ### Azure IRIS
+
 - **Namespace:** `USER` (standard for Azure)
 - **Schema:** `RAG` (flexible, can be customized)
 - **Full table name:** `RAG.Entities`
 
 ### Local Development
+
 - **Namespace:** `USER` (default)
 - **Schema:** `RAG` (default)
 - **Full table name:** `RAG.Entities`
@@ -192,25 +206,27 @@ docker-compose down
 
 ### Vector Dimension Mismatch
 
-```
+```text
 ConfigValidationError: Vector dimension mismatch detected
 Configured dimension: 1024
 Existing table dimension: 384
 ```
 
 **Solution 1: Match existing tables**
+
 ```bash
 export VECTOR_DIMENSION="384"
 ```
 
 **Solution 2: Recreate tables (⚠️ deletes all data)**
+
 ```bash
 python -m iris_vector_rag.cli.init_tables --drop --config config/examples/aws.yaml
 ```
 
 ### Namespace Permission Denied
 
-```
+```text
 PermissionError: User lacks CREATE TABLE permission in namespace %SYS
 ```
 

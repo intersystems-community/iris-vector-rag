@@ -14,7 +14,15 @@ services:
     volumes:
       - iris_data:/usr/irissys/mgr
     healthcheck:
-      test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U%SYS", "##class(%SYSTEM.Process).CurrentDirectory()"]
+      test:
+        [
+          "CMD",
+          "/usr/irissys/bin/iris",
+          "session",
+          "iris",
+          "-U%SYS",
+          "##class(%SYSTEM.Process).CurrentDirectory()",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10

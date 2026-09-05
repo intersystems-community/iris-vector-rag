@@ -30,5 +30,5 @@ examining entity/relation storage patterns and performance comparisons against B
 - Awaiting analysis completion for specific recommendations...
 
 ---
-*Report generated on 2025-09-14 06:36:49*
-*Analysis artifacts saved to: /Users/intersystems-community/ws/rag-templates/analysis/analysis/outputs*
+_Report generated on 2025-09-14 06:36:49_
+_Analysis artifacts saved to: /Users/intersystems-community/ws/rag-templates/analysis/analysis/outputs_

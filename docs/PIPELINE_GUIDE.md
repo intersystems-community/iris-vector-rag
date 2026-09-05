@@ -355,7 +355,7 @@ result = pipeline.query("What are the side effects of metformin?", top_k=5)
 
 ## Decision Tree
 
-```
+```text
 Need RAG pipeline?
 │
 ├─ Just getting started? → basic

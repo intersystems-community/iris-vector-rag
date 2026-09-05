@@ -168,7 +168,7 @@ result = pipeline.query(query="What is diabetes?", top_k=5)
 
 **When to Use What**:
 
-```
+```text
 Need test data?
 ├─ Unit test (mocked components)?
 │  └─ Use programmatic fixtures (Python code)
@@ -554,6 +554,7 @@ logging:
 **Complete Documentation**: `iris_rag/api/README.md`
 
 ## Active Technologies
+
 - Python 3.10–3.12 (matches existing codebase) + `iris_vector_graph` ≥2.0.0 (for `insert_vector`, `vector_similarity_search`); `sentence-transformers` (384d embeddings); existing `ConfigurationManager`, `ConnectionManager`, `ComposableQueryMixin`, `RetrievalEngine`, `QueryOptions` (081-dual-level-retrieval)
 - InterSystems IRIS — extend `RAG.EntityRelationships` with `relation_embedding VECTOR(FLOAT, 384) NULL` column + HNSW index; no new tables (081-dual-level-retrieval)
 
@@ -567,6 +568,7 @@ logging:
 - 051-enterprise-enhancements: Added Python 3.10+ (existing codebase uses 3.10-3.12)
 
 <!-- codebase-memory-mcp: Code Discovery Protocol -->
+
 ## Code Discovery Protocol (codebase-memory-mcp)
 
 **ALWAYS use `codebase-memory-mcp` tools FIRST for any code exploration:**
@@ -581,3 +583,30 @@ logging:
 Use `Grep`/`Glob`/`Read` freely for text, configs, and non-code files, and always
 `Read` a file before editing it. If the project is not indexed yet, run
 `index_repository` first.
+
+## Quality Gates (spec-gates)
+
+Same enforcement layer as `iris-agentic-dev`: one policy
+(`.specify/gates/policy.json`), one entrypoint, three boundaries.
+
+- **Agent**: `.claude/settings.json` hooks block protected-file edits and
+  dangerous bash, auto-format on edit, and refuse to end a session with failing
+  gates (`.claude/hooks/gates/`).
+- **Git**: `.specify/gates/hooks/pre-commit` (secret scan + `verify.sh
+--boundary git`) runs through the pre-commit framework; `commit-msg` enforces
+  conventional commits. Emergency override: `GATES_SKIP=1`.
+- **CI**: `.github/workflows/gates.yml` runs the identical `verify.sh`, then
+  `scripts/gates/antipatterns.py` and `canary.sh`.
+
+```bash
+bash .specify/gates/verify.sh --boundary agent   # prettier, markdownlint, shellcheck, spec
+bash .specify/gates/doctor.sh                    # hooks wired? tooling present?
+bash .specify/gates/canary.sh                    # prove the gates still block
+python3 scripts/gates/antipatterns.py            # shipped-bug detectors vs baseline
+```
+
+Formatters are pinned in `package.json` (`npm ci`); `prettier --write` and
+`markdownlint-cli2 --fix` must leave the tree clean. New instances of a bug
+class in `scripts/gates/antipatterns.py` fail the gate; a fixed instance must
+also be removed from `antipatterns-baseline.txt`. The `tdd-compliance`
+pre-commit hook rewrites the working tree — commit with `SKIP=tdd-compliance`.

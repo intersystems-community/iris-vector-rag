@@ -22,11 +22,13 @@ The critical regression reported in `BUG_REPORT_IRIS_VECTOR_RAG_0.5.5.md` has be
 ## Fix Details
 
 ### File Modified
+
 **Location**: `iris_vector_rag/common/iris_dbapi_connector.py`
 
 ### Change Applied
 
 **Before (BROKEN in v0.5.5)**:
+
 ```python
 # Line 168-173 (v0.5.5)
 try:
@@ -37,6 +39,7 @@ except ImportError as e:
 ```
 
 **After (FIXED in v0.5.6)**:
+
 ```python
 # Line 168-173 (v0.5.6)
 try:
@@ -47,6 +50,7 @@ except ImportError as e:
 ```
 
 ### Connection Call (Unchanged)
+
 ```python
 # Line 210 - Works now that we have correct module
 conn = iris.connect(host, port, namespace, user, password)
@@ -56,13 +60,13 @@ conn = iris.connect(host, port, namespace, user, password)
 
 ## Regression Timeline
 
-| Version | Import Statement | Status | Notes |
-|---------|-----------------|--------|-------|
-| 0.5.2 | `import iris` | ❌ Broken | Original bug |
-| 0.5.3 | `import intersystems_iris.dbapi._DBAPI as iris` | ✅ Fixed | Initial fix |
-| 0.5.4 | `import intersystems_iris.dbapi._DBAPI as iris` | ✅ Fixed | Fix maintained |
-| 0.5.5 | `import iris` | ❌ **REGRESSION** | Fix accidentally reverted |
-| 0.5.6 | `import intersystems_iris.dbapi._DBAPI as iris` | ✅ **FIXED** | Permanent fix |
+| Version | Import Statement                                | Status            | Notes                     |
+| ------- | ----------------------------------------------- | ----------------- | ------------------------- |
+| 0.5.2   | `import iris`                                   | ❌ Broken         | Original bug              |
+| 0.5.3   | `import intersystems_iris.dbapi._DBAPI as iris` | ✅ Fixed          | Initial fix               |
+| 0.5.4   | `import intersystems_iris.dbapi._DBAPI as iris` | ✅ Fixed          | Fix maintained            |
+| 0.5.5   | `import iris`                                   | ❌ **REGRESSION** | Fix accidentally reverted |
+| 0.5.6   | `import intersystems_iris.dbapi._DBAPI as iris` | ✅ **FIXED**      | Permanent fix             |
 
 ---
 
@@ -188,6 +192,7 @@ SKIP_IRIS_CONTAINER=0 timeout 240 python examples/hotpotqa_evaluation.py 2
 ```
 
 **Expected Result**:
+
 - Container created via iris-devtester ✅
 - 20 documents indexed ✅
 - 2 questions evaluated ✅
@@ -202,7 +207,7 @@ SKIP_IRIS_CONTAINER=0 timeout 240 python examples/hotpotqa_evaluation.py 2
 
 ### v0.5.5 (BROKEN)
 
-```
+```text
 Step 1: Create iris-devtester container
 ✅ Container started on port 60551
 
@@ -217,7 +222,7 @@ IRIS connection utility returned None
 
 ### v0.5.6 (FIXED)
 
-```
+```text
 Step 1: Create iris-devtester container
 ✅ Container started on port 60551
 
@@ -326,6 +331,7 @@ conn = conn_manager.get_connection('iris')
 **Hypothesis**: During merge/rebase operations between v0.5.4 and v0.5.5, the fix from v0.5.3 was accidentally overwritten.
 
 **Evidence**:
+
 - v0.5.3 CHANGELOG mentions the fix
 - v0.5.4 maintained the fix
 - v0.5.5 reverted to broken state (identical to v0.5.2)
@@ -357,6 +363,7 @@ def test_iris_dbapi_connector_imports_correctly():
 ```
 
 **Run Before Each Release**:
+
 ```bash
 pytest tests/integration/test_regression_iris_connection.py -v
 ```
@@ -369,13 +376,13 @@ The regression reported in `BUG_REPORT_IRIS_VECTOR_RAG_0.5.5.md` is **COMPLETELY
 
 ### Summary
 
-| Aspect | v0.5.5 | v0.5.6 |
-|--------|--------|--------|
-| Import Statement | ❌ Wrong module | ✅ Correct module |
-| ConnectionManager | ❌ Fails 100% | ✅ Works |
-| iris-devtester | ❌ Blocked | ✅ Works |
-| HotpotQA Eval | ❌ Blocked | ✅ Works |
-| Status | BROKEN | **FIXED** |
+| Aspect            | v0.5.5          | v0.5.6            |
+| ----------------- | --------------- | ----------------- |
+| Import Statement  | ❌ Wrong module | ✅ Correct module |
+| ConnectionManager | ❌ Fails 100%   | ✅ Works          |
+| iris-devtester    | ❌ Blocked      | ✅ Works          |
+| HotpotQA Eval     | ❌ Blocked      | ✅ Works          |
+| Status            | BROKEN          | **FIXED**         |
 
 ### Recommendation
 
@@ -388,6 +395,7 @@ pip install --upgrade iris-vector-rag==0.5.6
 ### Contact
 
 For questions about this fix:
+
 - See `CHANGELOG.md` for detailed release notes
 - See original bug report: `BUG_REPORT_IRIS_VECTOR_RAG_0.5.5.md`
 - Check git commit: `478d3f1b` (fix: critical regression - restore correct IRIS connection import)

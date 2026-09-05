@@ -8,11 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.8] - 2025-01-23
 
 ### Fixed
+
 - **Entity Storage FK Validation**: Resolved critical foreign key validation failures in batch entity storage. Relationships now correctly use `entity.id` (UUID) instead of `entity.text` (entity names) as foreign keys, eliminating "20 missing entity IDs, 30 orphaned relationships" errors
 - **Batch Entity Processing**: Fixed entity ID mismatch in `GraphRAGPipeline` relationship creation that caused systematic FK validation failures during knowledge graph construction
 - **hipporag2 Compatibility**: Enhanced batch storage reliability for downstream pipelines like hipporag2-pipeline
 
 ### Changed
+
 - **iris-vector-graph Dependency**: Updated minimum version to >=1.6.0 to align with the latest graph engine release
 
 ## [Unreleased] - 2025-06-08
@@ -20,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Major Enhancements
 
 #### GraphRAG Pipeline Overhaul
+
 - **Enhanced Data Ingestion**: Complete overhaul of the GraphRAG pipeline with robust entity extraction and storage
 - **Schema Integration**: Automatic schema validation via [`SchemaManager`](../iris_rag/storage/schema_manager.py) before entity storage
 - **Improved Error Handling**: Comprehensive error recovery for vector embedding storage with fallback mechanisms
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Vector Fallback**: Automatic fallback to vector search when graph traversal yields no results
 
 #### Self-Healing Schema Management System
+
 - **SchemaManager Introduction**: New [`SchemaManager`](../iris_rag/storage/schema_manager.py) class for automatic database schema management
 - **Vector Dimension Auto-Detection**: Automatic detection and handling of vector dimension mismatches
 - **Automated Migration**: Drop/recreate strategy for `RAG.DocumentEntities` table when schema changes are needed
@@ -34,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Configuration-Driven**: Schema validation based on embedding model configuration changes
 
 #### Enhanced Pipeline Integration
+
 - **Automatic Schema Validation**: All pipelines now validate schema before vector operations
 - **Embedding Model Support**: Support for multiple embedding models with automatic dimension detection:
   - `all-MiniLM-L6-v2` (384 dimensions)
@@ -44,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Data Integrity Assurance**: Prevention of data corruption from schema mismatches
 
 #### Project Management Mode
+
 - **🎯 Project Manager Mode**: New specialized mode for project oversight and documentation updates
 - **Milestone Tracking**: Automated tracking of development milestones and feature completions
 - **Status Reporting**: Regular project status updates and backlog management
@@ -51,11 +57,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🔧 Technical Improvements
 
 #### Vector Storage Enhancements
+
 - **Robust Vector Handling**: Enhanced vector formatting and validation using `common.vector_format_fix`
 - **Error Recovery**: Graceful handling of vector storage failures with detailed logging
 - **Performance Metrics**: Detailed success/failure rate tracking for embedding storage operations
 
 #### Database Schema Evolution
+
 - **Schema Versioning**: Comprehensive schema version tracking and management
 - **Migration Safety**: Safe migration strategies with data loss warnings and recovery options
 - **Configuration Synchronization**: Automatic synchronization between application config and database schema
@@ -63,12 +71,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 📚 Documentation Updates
 
 #### Enhanced Documentation
+
 - **GraphRAG Implementation**: Updated [`docs/GRAPHRAG_IMPLEMENTATION.md`](docs/GRAPHRAG_IMPLEMENTATION.md) with new architecture and usage patterns
 - **Self-Healing System**: Comprehensive documentation of [`SchemaManager`](../iris_rag/storage/schema_manager.py) capabilities
 - **Developer Guide**: Added schema management section for developers
 - **User Guide**: Added information about automatic schema validation and user-visible effects
 
 #### Integration Guides
+
 - **Schema Management**: Detailed guides for extending and working with the `SchemaManager`
 - **Migration Strategies**: Documentation of current and future migration approaches
 - **Best Practices**: Developer best practices for schema-aware pipeline development
@@ -76,11 +86,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🛠️ Developer Experience
 
 #### Enhanced Development Workflow
+
 - **Automatic Schema Setup**: No manual schema management required for developers
 - **Clear Error Messages**: Improved error reporting for schema-related issues
 - **Development Safety**: Schema validation prevents common development errors
 
 #### Testing Improvements
+
 - **Schema Testing**: Comprehensive test coverage for schema management functionality
 - **Migration Testing**: Automated testing of schema migration scenarios
 - **Integration Testing**: Enhanced pipeline integration tests with schema validation
@@ -94,6 +106,7 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### ✨ New Features
 
 #### Core Framework
+
 - **Modular Architecture**: Clean separation of concerns with dependency injection
 - **Abstract Base Classes**: [`RAGPipeline`](../rag_templates/core/base.py:3) interface for consistent pipeline implementations
 - **Configuration Management**: YAML/JSON configuration with environment variable overrides
@@ -101,6 +114,7 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 - **Type Safety**: Full type hints throughout the codebase
 
 #### RAG Technique Implementations
+
 - **BasicRAG**: Standard vector similarity search with document chunking
 - **ColBERT**: Token-level retrieval with late interaction scoring
 - **CRAG**: Corrective RAG with retrieval quality assessment
@@ -110,6 +124,7 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 - **HybridIFindRAG**: Native IRIS iFind integration for text search
 
 #### Database Integration
+
 - **IRIS Native Support**: Full InterSystems IRIS integration with vector search
 - **Multiple Drivers**: Support for DBAPI, JDBC, and ODBC connections
 - **V2 Pipeline Architecture**: Optimized implementations using native VECTOR columns
@@ -117,12 +132,14 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 - **Schema Management**: Automatic database schema initialization and migration
 
 #### Embedding Backends
+
 - **Sentence Transformers**: Local embedding generation with GPU support
 - **OpenAI Embeddings**: Cloud-based embedding service integration
 - **Hugging Face Transformers**: Support for custom transformer models
 - **Fallback Strategy**: Automatic fallback between embedding backends
 
 #### Advanced Features
+
 - **Document Chunking**: Multiple chunking strategies (recursive, semantic, adaptive)
 - **Performance Optimization**: Caching, batch processing, and memory management
 - **Real Data Testing**: Comprehensive testing with 1000+ PMC documents
@@ -132,6 +149,7 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 🔧 Technical Improvements
 
 #### Performance Enhancements
+
 - **V2 Pipeline Performance**: 2-6x faster execution compared to original implementations
   - BasicRAG: 20-30ms response time (100 docs)
   - CRAG: 13.51s → 2.33s (5.80x improvement)
@@ -142,6 +160,7 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 - **Connection Pooling**: Efficient database connection reuse
 
 #### Code Quality
+
 - **Test Coverage**: >90% code coverage with comprehensive test suite
 - **TDD Implementation**: Test-driven development following Red-Green-Refactor cycle
 - **Real Data Validation**: All techniques tested with real PMC documents
@@ -149,6 +168,7 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 - **Documentation**: Complete API documentation and user guides
 
 #### Security Features
+
 - **Parameter Binding**: Secure SQL parameter binding to prevent injection attacks
 - **Configuration Validation**: Schema-based configuration validation
 - **Environment Variable Support**: Secure handling of sensitive configuration data
@@ -157,17 +177,19 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 📊 Benchmarking Results
 
 #### Performance Metrics (1000+ Documents)
-| Technique | Avg Response Time | Retrieval Quality | Answer Quality | Scalability |
-|-----------|------------------|-------------------|----------------|-------------|
-| BasicRAG | 20-30ms | Good | Good | Excellent |
-| ColBERT | Variable | Excellent | Excellent | Good |
-| CRAG | 2.33s | Excellent | Excellent | Good |
-| GraphRAG | 1.63s | Very Good | Very Good | Excellent |
-| HyDE | 5.56s | Very Good | Good | Good |
-| NodeRAG | Variable | Good | Very Good | Good |
-| HybridIFindRAG | Fast | Good | Good | Excellent |
+
+| Technique      | Avg Response Time | Retrieval Quality | Answer Quality | Scalability |
+| -------------- | ----------------- | ----------------- | -------------- | ----------- |
+| BasicRAG       | 20-30ms           | Good              | Good           | Excellent   |
+| ColBERT        | Variable          | Excellent         | Excellent      | Good        |
+| CRAG           | 2.33s             | Excellent         | Excellent      | Good        |
+| GraphRAG       | 1.63s             | Very Good         | Very Good      | Excellent   |
+| HyDE           | 5.56s             | Very Good         | Good           | Good        |
+| NodeRAG        | Variable          | Good              | Very Good      | Good        |
+| HybridIFindRAG | Fast              | Good              | Good           | Excellent   |
 
 #### Scalability Testing
+
 - **Document Scale**: Successfully tested with 50,000+ documents
 - **Concurrent Users**: Supports multiple concurrent pipeline executions
 - **Memory Efficiency**: Optimized for production deployments
@@ -176,18 +198,21 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 🛠️ Infrastructure
 
 #### Development Environment
+
 - **Python 3.11+**: Modern Python features and performance improvements
 - **Docker Support**: Containerized development and deployment
 - **CI/CD Pipeline**: Automated testing and quality checks
 - **Pre-commit Hooks**: Code quality enforcement
 
 #### Database Requirements
+
 - **InterSystems IRIS 2025.1+**: Latest vector search capabilities
 - **Community Edition**: Full functionality with community features
 - **Enterprise Edition**: Enhanced performance with HNSW indexing
 - **Memory Requirements**: 2GB+ for optimal performance
 
 #### Deployment Options
+
 - **Local Development**: Docker-based local setup
 - **Cloud Deployment**: Support for major cloud providers
 - **Enterprise Integration**: Production-ready configuration options
@@ -196,18 +221,21 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 📚 Documentation
 
 #### User Documentation
+
 - **[User Guide](USER_GUIDE.md)**: Complete installation and usage guide
 - **[API Reference](API_REFERENCE.md)**: Comprehensive API documentation
 - **[Performance Guide](PERFORMANCE_GUIDE.md)**: Optimization recommendations
 - **[Security Guide](SECURITY_GUIDE.md)**: Production security best practices
 
 #### Developer Documentation
+
 - **[Developer Guide](DEVELOPER_GUIDE.md)**: Architecture and development guide
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)**: Common issues and solutions
 - **[Migration Guide](MIGRATION_GUIDE.md)**: Migration from existing implementations
 - **Implementation Guides**: Detailed guides for each RAG technique
 
 #### Technical Specifications
+
 - **Architecture Specifications**: Detailed system architecture documentation
 - **TDD Test Specifications**: Comprehensive testing strategy documentation
 - **Performance Benchmarks**: Detailed performance analysis and comparisons
@@ -215,12 +243,14 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 🔄 Migration Support
 
 #### Legacy System Integration
+
 - **Personal Assistant Adapter**: Seamless migration from existing PA implementations
 - **Configuration Translation**: Automatic conversion of legacy configuration formats
 - **API Compatibility**: Backward-compatible interfaces where possible
 - **Migration Utilities**: Tools for data and configuration migration
 
 #### Breaking Changes from Beta Versions
+
 - **Pipeline Interface**: Standardized return format for all pipelines
 - **Configuration Schema**: Updated configuration structure for better organization
 - **Database Schema**: V2 table structure for improved performance
@@ -229,18 +259,21 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 🐛 Bug Fixes
 
 #### Database Connection Issues
+
 - **DBAPI Compatibility**: Fixed import and class name mismatches across all RAG techniques
 - **Parameter Binding**: Resolved IRIS SQL parameter binding limitations
 - **Connection Pooling**: Fixed connection leaks and pool exhaustion issues
 - **Schema Initialization**: Improved database schema creation and migration
 
 #### Pipeline Implementation Fixes
+
 - **ColBERT**: Fixed `ColBERTPipeline` → `ColbertRAGPipeline` naming inconsistency
 - **HybridIFindRAG**: Fixed `HybridIFindRAGPipeline` → `HybridiFindRAGPipeline` class name
 - **CRAG**: Added missing document chunking step for proper operation
 - **NodeRAG**: Simplified connection handling for better DBAPI compatibility
 
 #### Performance Issues
+
 - **Memory Leaks**: Fixed memory leaks in embedding generation and document processing
 - **Vector Search**: Optimized vector similarity calculations for better performance
 - **Batch Processing**: Improved batch size optimization for different system configurations
@@ -249,12 +282,14 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 🔒 Security Updates
 
 #### Input Validation
+
 - **SQL Injection Prevention**: Comprehensive parameter binding and input sanitization
 - **Configuration Validation**: Schema-based validation to prevent configuration attacks
 - **File Path Validation**: Secure handling of file paths and document loading
 - **Error Message Sanitization**: Prevented information leakage through error messages
 
 #### Authentication and Authorization
+
 - **Database Credentials**: Secure handling of database credentials and connection strings
 - **API Key Management**: Secure storage and usage of external API keys
 - **Environment Variables**: Proper handling of sensitive environment variables
@@ -263,12 +298,14 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 📈 Performance Improvements
 
 #### V2 Architecture Benefits
+
 - **Native Vector Columns**: Eliminated IRIS SQL parser limitations
 - **Optimized Queries**: Improved SQL query structure for better performance
 - **Reduced Memory Usage**: More efficient memory management in document processing
 - **Faster Embeddings**: Optimized embedding generation and caching
 
 #### Scalability Enhancements
+
 - **Concurrent Processing**: Improved support for concurrent pipeline executions
 - **Resource Management**: Better CPU and memory resource utilization
 - **Database Optimization**: Optimized database queries and indexing strategies
@@ -277,12 +314,14 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 🧪 Testing Improvements
 
 #### Real Data Testing
+
 - **PMC Document Integration**: Comprehensive testing with real biomedical literature
 - **1000+ Document Tests**: Scalability testing with large document collections
 - **End-to-End Validation**: Complete pipeline testing from ingestion to answer generation
 - **Performance Benchmarking**: Systematic performance measurement and comparison
 
 #### Test Infrastructure
+
 - **Automated Testing**: Comprehensive CI/CD pipeline with automated test execution
 - **Coverage Reporting**: Detailed code coverage analysis and reporting
 - **Integration Tests**: Real database integration testing with IRIS
@@ -291,24 +330,28 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 🔮 Future Roadmap
 
 #### Q1 2025 - Advanced RAG Techniques
+
 - **RAG-Fusion**: Multi-query retrieval with result fusion
 - **Self-RAG**: Self-reflective RAG with answer quality assessment
 - **Adaptive RAG**: Dynamic technique selection based on query characteristics
 - **Multi-Modal RAG**: Support for images, audio, and video content
 
 #### Q2 2025 - Enhanced Integration
+
 - **Multi-Database Support**: PostgreSQL, MongoDB, and other database backends
 - **Cloud Provider Integration**: Native AWS, Azure, and GCP integrations
 - **Kubernetes Deployment**: Production-ready Kubernetes manifests and operators
 - **Monitoring Dashboard**: Real-time performance monitoring and alerting
 
 #### Q3 2025 - Enterprise Features
+
 - **Distributed Processing**: Multi-node processing for large-scale deployments
 - **Advanced Security**: Role-based access control and audit logging
 - **Compliance Features**: GDPR, HIPAA, and other regulatory compliance tools
 - **Enterprise Support**: Professional support and consulting services
 
 #### Q4 2025 - AI/ML Enhancements
+
 - **AutoML Integration**: Automatic model selection and hyperparameter tuning
 - **Federated Learning**: Distributed model training across multiple sites
 - **Explainable AI**: Enhanced interpretability and explanation features
@@ -317,11 +360,13 @@ The first stable release of RAG Templates for InterSystems IRIS, providing a com
 ### 📦 Installation
 
 #### PyPI Installation
+
 ```bash
 pip install intersystems-iris-rag
 ```
 
 #### Development Installation
+
 ```bash
 git clone https://github.com/your-org/intersystems-iris-rag.git
 cd intersystems-iris-rag
@@ -329,6 +374,7 @@ pip install -e ".[dev]"
 ```
 
 #### Docker Installation
+
 ```bash
 docker pull your-org/intersystems-iris-rag:1.0.0
 ```
@@ -351,7 +397,7 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 - **Documentation**: [docs/](../docs/)
 - **GitHub Issues**: [Report bugs and request features](https://github.com/your-org/intersystems-iris-rag/issues)
 - **GitHub Discussions**: [Community support and discussions](https://github.com/your-org/intersystems-iris-rag/discussions)
-- **Email Support**: support@your-org.com
+- **Email Support**: <support@your-org.com>
 
 ---
 
@@ -360,16 +406,19 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 ### 🚧 In Development
 
 #### Advanced RAG Techniques
+
 - **RAG-Fusion**: Multi-query retrieval with intelligent result fusion
 - **Self-RAG**: Self-reflective RAG with automatic answer quality assessment
 - **Adaptive RAG**: Dynamic technique selection based on query complexity
 
 #### Performance Enhancements
+
 - **GPU Acceleration**: Enhanced GPU support for embedding generation
 - **Distributed Processing**: Multi-node processing capabilities
 - **Advanced Caching**: Intelligent caching strategies for improved performance
 
 #### Integration Improvements
+
 - **Multi-Database Support**: PostgreSQL, MongoDB, and Elasticsearch backends
 - **Cloud Provider Integration**: Native AWS, Azure, and GCP support
 - **Kubernetes Operators**: Production-ready Kubernetes deployment tools
@@ -377,6 +426,7 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 ### 🔄 Planned Breaking Changes
 
 #### Version 2.0.0 (Planned Q2 2025)
+
 - **Configuration Schema**: Updated configuration structure for multi-database support
 - **Pipeline Interface**: Enhanced pipeline interface with streaming support
 - **Database Schema**: Updated schema for multi-modal content support
@@ -385,12 +435,14 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 ### 📋 Migration Notes
 
 #### From Beta to 1.0.0
+
 1. **Update Configuration**: Convert legacy configuration to new schema format
 2. **Update Imports**: Use new package structure imports
 3. **Database Migration**: Run schema migration for V2 table structure
 4. **Test Integration**: Verify all pipeline integrations work correctly
 
 #### Configuration Migration Example
+
 ```yaml
 # Old configuration (Beta)
 iris:
@@ -406,6 +458,7 @@ database:
 ```
 
 #### Code Migration Example
+
 ```python
 # Old import (Beta)
 from iris_rag.basic_rag import BasicRAG
@@ -417,12 +470,14 @@ from iris_rag.pipelines.basic import BasicRAGPipeline
 ### 🔍 Known Issues
 
 #### Current Limitations
+
 - **IRIS Community Edition**: Vector search performance limitations without HNSW indexing
 - **Large Documents**: Memory usage can be high with very large documents (>10MB)
 - **Concurrent Access**: Some performance degradation with high concurrent usage
 - **Windows Support**: Limited testing on Windows platforms
 
 #### Workarounds
+
 - **Performance**: Use V2 pipelines for better performance
 - **Memory**: Implement document chunking for large documents
 - **Concurrency**: Use connection pooling for better concurrent performance

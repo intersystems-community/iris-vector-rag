@@ -39,7 +39,8 @@ print_message() {
 # Function to log messages
 log_message() {
     local message=$1
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     echo "[$timestamp] $message" >> "$LOG_FILE"
     print_message "$BLUE" "$message"
 }
@@ -47,10 +48,10 @@ log_message() {
 # Function to check if services are running
 check_services() {
     print_message "$BLUE" "Checking if required services are running..."
-    
+
     local required_services=("iris_db" "redis" "rag_api")
     local all_running=true
-    
+
     for service in "${required_services[@]}"; do
         if ! docker-compose -f "$COMPOSE_FILE" ps "$service" | grep -q "Up" 2>/dev/null; then
             print_message "$RED" "Service $service is not running"
@@ -59,13 +60,13 @@ check_services() {
             print_message "$GREEN" "Service $service is running"
         fi
     done
-    
+
     if [[ "$all_running" != true ]]; then
         print_message "$RED" "Not all required services are running. Please start them first:"
         print_message "$BLUE" "  ./scripts/docker/start.sh --profile core"
         exit 1
     fi
-    
+
     # Wait for services to be fully healthy
     print_message "$BLUE" "Waiting for services to be healthy..."
     sleep 10
@@ -74,12 +75,12 @@ check_services() {
 # Function to create database schema
 create_database_schema() {
     print_message "$BLUE" "Creating database schema..."
-    
+
     if [[ "$DRY_RUN" == true ]]; then
         print_message "$YELLOW" "[DRY RUN] Would create database schema"
         return 0
     fi
-    
+
     # Run schema creation script in IRIS container
     docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF'
 do ##class(%SQL.Statement).%ExecDirect(,"CREATE TABLE IF NOT EXISTS rag_documents (
@@ -122,8 +123,9 @@ do ##class(%SQL.Statement).%ExecDirect(,"CREATE INDEX IF NOT EXISTS idx_queries_
 write "Database schema created successfully",!
 halt
 EOF
-    
-    if [[ $? -eq 0 ]]; then
+    local rc=$?
+
+    if [[ $rc -eq 0 ]]; then
         print_message "$GREEN" "Database schema created successfully"
     else
         print_message "$RED" "Failed to create database schema"
@@ -134,8 +136,10 @@ EOF
 # Function to check if data already exists
 check_existing_data() {
     print_message "$BLUE" "Checking for existing data..."
-    
-    local doc_count=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' | tail -n 1
+
+    local doc_count
+
+    doc_count=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' | tail -n 1
 set stmt = ##class(%SQL.Statement).%New()
 set result = stmt.%ExecDirect("SELECT COUNT(*) FROM rag_documents")
 if result.%Next() {
@@ -146,12 +150,12 @@ if result.%Next() {
 halt
 EOF
 )
-    
+
     doc_count=$(echo "$doc_count" | tr -d '\r\n' | sed 's/[^0-9]//g')
-    
+
     if [[ -n "$doc_count" && "$doc_count" -gt 0 ]]; then
         print_message "$YELLOW" "Found $doc_count existing documents in database"
-        
+
         if [[ "$FORCE_RELOAD" != true ]]; then
             read -p "Data already exists. Continue anyway? (y/N): " -n 1 -r
             echo
@@ -170,12 +174,12 @@ EOF
 # Function to load sample documents
 load_sample_documents() {
     print_message "$BLUE" "Loading sample documents (size: $SAMPLE_SIZE)..."
-    
+
     if [[ "$DRY_RUN" == true ]]; then
         print_message "$YELLOW" "[DRY RUN] Would load sample documents"
         return 0
     fi
-    
+
     # Determine sample data based on size
     local data_path=""
     case "$SAMPLE_SIZE" in
@@ -193,17 +197,17 @@ load_sample_documents() {
             exit 1
             ;;
     esac
-    
+
     if [[ ! -d "$data_path" ]]; then
         print_message "$RED" "Sample data directory not found: $data_path"
         print_message "$BLUE" "Available data directories:"
         ls -la "$DATA_DIR/"
         exit 1
     fi
-    
+
     # Run data loader using API service
     print_message "$BLUE" "Executing data loading via API service..."
-    
+
     docker-compose -f "$COMPOSE_FILE" exec -T rag_api python -c "
 import sys
 import os
@@ -225,7 +229,7 @@ if os.path.exists(data_path):
     print(f'Loading documents from {data_path}')
     documents = processor.load_directory(data_path)
     print(f'Loaded {len(documents)} documents')
-    
+
     # Process and store
     for doc in documents:
         try:
@@ -234,14 +238,15 @@ if os.path.exists(data_path):
             print(f'Processed document: {doc.metadata.get(\"source\", \"unknown\")}')
         except Exception as e:
             print(f'Error processing document: {e}')
-    
+
     print('Sample data loading completed')
 else:
     print(f'Data path not found: {data_path}')
     sys.exit(1)
 "
-    
-    if [[ $? -eq 0 ]]; then
+    local rc=$?
+
+    if [[ $rc -eq 0 ]]; then
         print_message "$GREEN" "Sample documents loaded successfully"
     else
         print_message "$RED" "Failed to load sample documents"
@@ -252,9 +257,10 @@ else:
 # Function to verify data loading
 verify_data_loading() {
     print_message "$BLUE" "Verifying data loading..."
-    
+
     # Check document count
-    local doc_count=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' | tail -n 1
+    local doc_count
+    doc_count=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' | tail -n 1
 set stmt = ##class(%SQL.Statement).%New()
 set result = stmt.%ExecDirect("SELECT COUNT(*) FROM rag_documents")
 if result.%Next() {
@@ -265,11 +271,12 @@ if result.%Next() {
 halt
 EOF
 )
-    
+
     doc_count=$(echo "$doc_count" | tr -d '\r\n' | sed 's/[^0-9]//g')
-    
+
     # Check chunk count
-    local chunk_count=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' | tail -n 1
+    local chunk_count
+    chunk_count=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' | tail -n 1
 set stmt = ##class(%SQL.Statement).%New()
 set result = stmt.%ExecDirect("SELECT COUNT(*) FROM rag_chunks")
 if result.%Next() {
@@ -280,13 +287,13 @@ if result.%Next() {
 halt
 EOF
 )
-    
+
     chunk_count=$(echo "$chunk_count" | tr -d '\r\n' | sed 's/[^0-9]//g')
-    
+
     print_message "$GREEN" "Data verification results:"
     echo -e "  ${GREEN}Documents:${NC} $doc_count"
     echo -e "  ${GREEN}Chunks:${NC}    $chunk_count"
-    
+
     if [[ "$doc_count" -gt 0 && "$chunk_count" -gt 0 ]]; then
         print_message "$GREEN" "Data loading verification passed!"
         return 0
@@ -299,23 +306,25 @@ EOF
 # Function to test RAG pipeline
 test_rag_pipeline() {
     print_message "$BLUE" "Testing RAG pipeline with sample query..."
-    
+
     if [[ "$DRY_RUN" == true ]]; then
         print_message "$YELLOW" "[DRY RUN] Would test RAG pipeline"
         return 0
     fi
-    
+
     # Test query via API
     local test_query="What are the symptoms of diabetes?"
     local api_url="http://localhost:8000"
-    
+
     print_message "$BLUE" "Sending test query: '$test_query'"
-    
-    local response=$(curl -s -X POST "$api_url/api/v1/query" \
+
+    local response
+
+    response=$(curl -s -X POST "$api_url/api/v1/query" \
         -H "Content-Type: application/json" \
         -d "{\"query\": \"$test_query\", \"pipeline\": \"basic\"}" \
         2>/dev/null || echo "ERROR")
-    
+
     if [[ "$response" == "ERROR" ]]; then
         print_message "$RED" "Failed to test RAG pipeline - API not accessible"
         return 1
@@ -386,13 +395,13 @@ done
 # Main execution
 main() {
     log_message "Starting data initialization with size: $SAMPLE_SIZE"
-    
+
     # Change to project root
     cd "$PROJECT_ROOT"
-    
+
     # Create log directory
     mkdir -p "$(dirname "$LOG_FILE")"
-    
+
     # Execute initialization steps
     check_services
     create_database_schema
@@ -400,10 +409,10 @@ main() {
     load_sample_documents
     verify_data_loading
     test_rag_pipeline
-    
+
     print_message "$GREEN" "Data initialization completed successfully!"
     print_message "$BLUE" "You can now use the RAG system with sample data"
-    
+
     log_message "Data initialization completed successfully"
 }
 

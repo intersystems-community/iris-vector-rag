@@ -55,7 +55,7 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 
 In a Claude conversation:
 
-```
+```text
 You: What does my medical documentation say about diabetes treatment?
 
 Claude: Let me search your documents...
@@ -275,7 +275,7 @@ graphrag:
 
 **Claude Desktop Conversation**:
 
-```
+```text
 User: What does my documentation say about diabetes?
 
 Claude: Let me search your documents...
@@ -289,7 +289,7 @@ Response: Based on your medical documentation, diabetes is a metabolic disorder.
 
 **Claude Desktop Conversation**:
 
-```
+```text
 User: What medications interact with metformin?
 
 Claude: Let me use the knowledge graph to find medication interactions...
@@ -306,7 +306,7 @@ Response: According to your knowledge base, metformin has the following interact
 
 **Claude Desktop Conversation**:
 
-```
+```text
 User: What's the latest guidance on diabetes treatment?
 
 Claude: Let me check your docs and search for recent updates...
@@ -331,7 +331,7 @@ Claude automatically selects the appropriate pipeline based on query characteris
 
 You can also explicitly request a specific pipeline:
 
-```
+```text
 User: Use graphrag to find drug interactions for metformin
 
 Claude: [Explicitly calls rag_graphrag]
@@ -341,7 +341,7 @@ Claude: [Explicitly calls rag_graphrag]
 
 MCP supports multi-turn RAG conversations:
 
-```
+```text
 User: What is diabetes?
 Claude: [Calls rag_basic] Diabetes is a metabolic disorder...
 
@@ -469,7 +469,7 @@ print(json.dumps(result, indent=2))
 
 ### MCP Server Architecture
 
-```
+```text
 Claude Desktop
     ↓ (MCP protocol)
 MCP Server (Python)

@@ -15,7 +15,7 @@ The IRIS Global GraphRAG pipeline integrates the core functionality from the ext
 
 ### Integration Strategy
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                RAG-Templates Framework                      │
 │  ┌─────────────────────────────────────────────────────┐    │
@@ -60,25 +60,28 @@ The IRIS Global GraphRAG pipeline integrates the core functionality from the ext
 ### Installation
 
 1. **Clone IRIS-Global-GraphRAG** (if not already available):
+
    ```bash
    cd /Users/intersystems-community/ws/
    git clone https://github.com/your-colleague/IRIS-Global-GraphRAG.git
    ```
 
 2. **Configure Pipeline** in `config/pipelines.yaml`:
+
    ```yaml
    - name: "IRISGlobalGraphRAG"
      module: "iris_rag.pipelines.iris_global_graphrag"
      class: "IRISGlobalGraphRAGPipeline"
      enabled: true
      params:
-       project_path: "/Users/intersystems-community/ws/IRIS-Global-GraphRAG"  # Optional: auto-discovery
+       project_path: "/Users/intersystems-community/ws/IRIS-Global-GraphRAG" # Optional: auto-discovery
        embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
        enable_visualization: true
        enable_comparison_ui: true
    ```
 
 3. **Environment Variables** (optional):
+
    ```bash
    export IRIS_GLOBAL_GRAPHRAG_PATH="/path/to/IRIS-Global-GraphRAG"
    ```
@@ -129,6 +132,7 @@ interface.run_standalone(host="0.0.0.0", port=8000)
 ```
 
 **Available Endpoints**:
+
 - `/` or `/graphrag` - Main GraphRAG interface with 3D visualization
 - `/rag` - RAG-only interface
 - `/llm` - LLM-only interface
@@ -136,6 +140,7 @@ interface.run_standalone(host="0.0.0.0", port=8000)
 - `/rag-vs-graphrag` - Side-by-side RAG vs GraphRAG comparison
 
 **API Endpoints**:
+
 - `POST /api/ask` - RAG queries
 - `POST /api/graphrag` - GraphRAG queries with visualization data
 - `POST /api/compare` - Multi-mode comparison
@@ -205,7 +210,7 @@ AS HNSW(Distance='DotProduct');
 
 ### IRIS Globals Schema
 
-```
+```text
 ^GraphContent(docid, "title") = "Paper Title"
 ^GraphContent(docid, "abstract") = "Paper Abstract"
 ^GraphContent(docid, "authors") = "Author Names"
@@ -223,7 +228,7 @@ AS HNSW(Distance='DotProduct');
 ```yaml
 iris_global_graphrag:
   enabled: true
-  project_path: null  # Auto-discovery or explicit path
+  project_path: null # Auto-discovery or explicit path
   graph_content_global: "GraphContent"
   graph_relations_global: "GraphRelations"
   embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
@@ -258,41 +263,49 @@ iris_global_graphrag:
 
 ## Comparison with Other Pipelines
 
-| Feature | IRIS Global GraphRAG | HybridGraphRAG | Standard GraphRAG |
-|---------|---------------------|----------------|-------------------|
-| **Graph Storage** | IRIS Globals | SQL Tables + NodePK | SQL Tables |
-| **Visualization** | 3D Interactive | Performance Dashboard | Basic |
-| **Use Case** | Academic Papers | Enterprise Scale | General Purpose |
-| **Performance** | Demo-optimized | Production-optimized | Balanced |
-| **Comparison UI** | Side-by-side | Single pipeline | Single pipeline |
-| **Entity Extraction** | Academic entities | General entities | General entities |
+| Feature               | IRIS Global GraphRAG | HybridGraphRAG        | Standard GraphRAG |
+| --------------------- | -------------------- | --------------------- | ----------------- |
+| **Graph Storage**     | IRIS Globals         | SQL Tables + NodePK   | SQL Tables        |
+| **Visualization**     | 3D Interactive       | Performance Dashboard | Basic             |
+| **Use Case**          | Academic Papers      | Enterprise Scale      | General Purpose   |
+| **Performance**       | Demo-optimized       | Production-optimized  | Balanced          |
+| **Comparison UI**     | Side-by-side         | Single pipeline       | Single pipeline   |
+| **Entity Extraction** | Academic entities    | General entities      | General entities  |
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Project Not Found**:
-   ```
+
+   ```text
    IRISGlobalGraphRAGException: IRIS-Global-GraphRAG project not found
    ```
+
    **Solution**: Set `project_path` in config or `IRIS_GLOBAL_GRAPHRAG_PATH` environment variable
 
 2. **Import Errors**:
-   ```
+
+   ```text
    ImportError: Failed to import IRIS-Global-GraphRAG modules
    ```
+
    **Solution**: Ensure the project has `app/iris_db.py` and dependencies are installed
 
 3. **Template Not Found**:
-   ```
+
+   ```text
    Template directory not found
    ```
+
    **Solution**: Run setup script to copy visualization assets
 
 4. **IRIS Connection Failed**:
-   ```
+
+   ```text
    Failed to establish IRIS connections
    ```
+
    **Solution**: Check IRIS database configuration and credentials
 
 ### Debug Mode
@@ -344,4 +357,4 @@ print(f"Pipeline status: {info['status']}")
 
 ---
 
-*This integration demonstrates the power of combining specialized projects with enterprise frameworks, creating solutions that leverage the best of both approaches.*
+_This integration demonstrates the power of combining specialized projects with enterprise frameworks, creating solutions that leverage the best of both approaches._

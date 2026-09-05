@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # RAGAS Evaluation Runner Script
-# 
+#
 # This script sets up the environment and runs comprehensive RAGAS evaluation
 # on all 4 pipelines using the PMC dataset to demonstrate >80% accuracy.
 #
@@ -159,24 +159,24 @@ parse_args() {
 # Set environment variables with defaults
 setup_environment() {
     log_info "Setting up environment variables..."
-    
+
     # Use command line args, then environment variables, then defaults
     export RAGAS_NUM_QUERIES="${RAGAS_NUM_QUERIES:-$DEFAULT_NUM_QUERIES}"
     export RAGAS_PIPELINES="${RAGAS_PIPELINES:-$DEFAULT_PIPELINES}"
     export RAGAS_OUTPUT_DIR="${RAGAS_OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
     export RAGAS_USE_CACHE="${RAGAS_USE_CACHE:-$DEFAULT_USE_CACHE}"
     export RAGAS_LOG_LEVEL="${RAGAS_LOG_LEVEL:-$DEFAULT_LOG_LEVEL}"
-    
+
     # Convert 'all' to full pipeline list
     if [[ "$RAGAS_PIPELINES" == "all" ]]; then
         export RAGAS_PIPELINES="$DEFAULT_PIPELINES"
     fi
-    
+
     # Convert relative output path to absolute
     if [[ ! "$RAGAS_OUTPUT_DIR" = /* ]]; then
         export RAGAS_OUTPUT_DIR="$PROJECT_ROOT/$RAGAS_OUTPUT_DIR"
     fi
-    
+
     log_info "Configuration:"
     log_info "  Queries: $RAGAS_NUM_QUERIES"
     log_info "  Pipelines: $RAGAS_PIPELINES"
@@ -188,43 +188,46 @@ setup_environment() {
 # Check dependencies
 check_dependencies() {
     log_info "Checking dependencies..."
-    
+
     # Check if we're in the right directory
     if [[ ! -f "$PROJECT_ROOT/scripts/generate_ragas_evaluation.py" ]]; then
         log_error "RAGAS evaluation script not found at $PROJECT_ROOT/scripts/generate_ragas_evaluation.py"
         log_error "Please run this script from the project root directory"
         exit 1
     fi
-    
+
     # Check Python
     if ! command -v python3 &> /dev/null; then
         log_error "Python 3 is required but not installed"
         exit 1
     fi
-    
+
     # Check if virtual environment is activated or available
     if [[ -z "$VIRTUAL_ENV" ]] && [[ -z "$CONDA_DEFAULT_ENV" ]]; then
         if [[ -f "$PROJECT_ROOT/venv/bin/activate" ]]; then
             log_info "Activating virtual environment..."
+            # shellcheck source=/dev/null
             source "$PROJECT_ROOT/venv/bin/activate"
         elif [[ -f "$PROJECT_ROOT/.venv/bin/activate" ]]; then
             log_info "Activating virtual environment..."
+            # shellcheck source=/dev/null
             source "$PROJECT_ROOT/.venv/bin/activate"
         elif [[ -f "$PROJECT_ROOT/activate_env.sh" ]]; then
             log_info "Using project activation script..."
+            # shellcheck source=/dev/null
             source "$PROJECT_ROOT/activate_env.sh"
         else
             log_warning "No virtual environment detected. Ensure dependencies are installed globally."
         fi
     fi
-    
+
     # Try to import key dependencies
     python3 -c "import numpy, pandas, scipy, sentence_transformers, transformers, torch" 2>/dev/null || {
         log_error "Required Python dependencies not found"
         log_error "Please install dependencies: pip install -r requirements.txt"
         exit 1
     }
-    
+
     log_success "Dependencies check passed"
 }
 
@@ -232,33 +235,33 @@ check_dependencies() {
 setup_output_directory() {
     log_info "Setting up output directory: $RAGAS_OUTPUT_DIR"
     mkdir -p "$RAGAS_OUTPUT_DIR"
-    
+
     if [[ ! -w "$RAGAS_OUTPUT_DIR" ]]; then
         log_error "Output directory is not writable: $RAGAS_OUTPUT_DIR"
         exit 1
     fi
-    
+
     log_success "Output directory ready"
 }
 
 # Validate pipeline configuration
 validate_pipelines() {
     log_info "Validating pipeline configuration..."
-    
+
     # Define available pipelines
     local available_pipelines=("BasicRAG" "BasicRerank" "CRAG" "GraphRAG")
     local requested_pipelines
     IFS=',' read -ra requested_pipelines <<< "$RAGAS_PIPELINES"
-    
+
     for pipeline in "${requested_pipelines[@]}"; do
         pipeline=$(echo "$pipeline" | xargs)  # Trim whitespace
-        if [[ ! " ${available_pipelines[@]} " =~ " ${pipeline} " ]]; then
+        if [[ " ${available_pipelines[*]} " != *" ${pipeline} "* ]]; then
             log_error "Unknown pipeline: $pipeline"
             log_error "Available pipelines: ${available_pipelines[*]}"
             exit 1
         fi
     done
-    
+
     log_success "Pipeline configuration validated"
 }
 
@@ -266,18 +269,21 @@ validate_pipelines() {
 run_evaluation() {
     log_info "Starting RAGAS evaluation..."
     log_info "This may take several minutes depending on the number of queries and pipelines..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Set Python path
     export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
-    
+
     # Run the evaluation script
-    local start_time=$(date +%s)
-    
+    local start_time
+    start_time=$(date +%s)
+
     if python3 scripts/generate_ragas_evaluation.py; then
-        local end_time=$(date +%s)
-        local duration=$((end_time - start_time))
+        local end_time
+        end_time=$(date +%s)
+        local duration
+        duration=$((end_time - start_time))
         log_success "RAGAS evaluation completed successfully in ${duration}s"
         return 0
     else
@@ -290,31 +296,35 @@ run_evaluation() {
 # Display results summary
 show_results_summary() {
     log_info "Looking for generated reports..."
-    
+
     # Find the most recent report files
-    local json_report=$(find "$RAGAS_OUTPUT_DIR" -name "ragas_report_*.json" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-)
-    local html_report=$(find "$RAGAS_OUTPUT_DIR" -name "ragas_report_*.html" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-)
-    
+    local json_report
+    json_report=$(find "$RAGAS_OUTPUT_DIR" -name "ragas_report_*.json" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-)
+    local html_report
+    html_report=$(find "$RAGAS_OUTPUT_DIR" -name "ragas_report_*.html" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-)
+
     if [[ -f "$json_report" ]]; then
         log_success "JSON Report: $json_report"
-        
+
         # Try to extract summary from JSON
         if command -v jq &> /dev/null; then
             echo ""
             log_info "Quick Summary:"
-            
+
             # Extract best pipeline
-            local best_pipeline=$(jq -r '.comparative_analysis.best_overall // "Unknown"' "$json_report" 2>/dev/null)
+            local best_pipeline
+            best_pipeline=$(jq -r '.comparative_analysis.best_overall // "Unknown"' "$json_report" 2>/dev/null)
             log_info "  Best Overall Pipeline: $best_pipeline"
-            
+
             # Extract target achievement
-            local target_achieved=$(jq -r '
-                .pipeline_metrics | 
-                to_entries | 
-                map(.value.answer_correctness.mean >= 0.8) | 
+            local target_achieved
+            target_achieved=$(jq -r '
+                .pipeline_metrics |
+                to_entries |
+                map(.value.answer_correctness.mean >= 0.8) |
                 any
             ' "$json_report" 2>/dev/null)
-            
+
             if [[ "$target_achieved" == "true" ]]; then
                 log_success "  Target Accuracy (>80%): ✅ ACHIEVED"
             else
@@ -324,7 +334,7 @@ show_results_summary() {
     else
         log_warning "No JSON report found in $RAGAS_OUTPUT_DIR"
     fi
-    
+
     if [[ -f "$html_report" ]]; then
         log_success "HTML Report: $html_report"
         log_info "Open the HTML report in a web browser for detailed results"
@@ -333,7 +343,8 @@ show_results_summary() {
     fi
 }
 
-# Cleanup function
+# Cleanup function (registered with `trap cleanup EXIT` inside main)
+# shellcheck disable=SC2329
 cleanup() {
     if [[ $? -ne 0 ]]; then
         log_error "Evaluation failed. Check the logs for details."
@@ -345,33 +356,33 @@ cleanup() {
 main() {
     # Set up trap for cleanup
     trap cleanup EXIT
-    
+
     log_info "🚀 RAGAS Evaluation Runner Starting"
     log_info "========================================"
-    
+
     # Parse command line arguments
     parse_args "$@"
-    
+
     # Setup environment
     setup_environment
-    
+
     # Run pre-flight checks
     check_dependencies
     setup_output_directory
     validate_pipelines
-    
+
     # Run the evaluation
     if run_evaluation; then
         echo ""
         log_success "🎉 RAGAS Evaluation completed successfully!"
         show_results_summary
-        
+
         echo ""
         log_info "Next steps:"
         log_info "1. Review the generated reports"
         log_info "2. Analyze pipeline performance metrics"
         log_info "3. Use results for Phase 1 deliverables"
-        
+
         exit 0
     else
         exit_code=$?

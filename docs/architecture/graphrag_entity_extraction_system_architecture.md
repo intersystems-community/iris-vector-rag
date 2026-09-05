@@ -7,12 +7,14 @@ This document defines the comprehensive architecture for fixing and extending th
 ## Current State Analysis
 
 ### Root Causes Identified
+
 1. **Connection API Misuse**: Uses `self.connection_manager.connection` (doesn't exist) instead of `get_connection()`
 2. **Schema Gap**: No management for `RAG.Entities`, `RAG.EntityRelationships` tables
-3. **Validation Gap**: GraphRAG not in requirements registry, so validation never runs  
+3. **Validation Gap**: GraphRAG not in requirements registry, so validation never runs
 4. **Missing Core Component**: No entity extraction pipeline exists anywhere
 
 ### Critical Issues
+
 - GraphRAG pipeline reads from empty knowledge graph tables
 - Always falls back to vector search (defeating the purpose)
 - No entity extraction service to populate the knowledge graph
@@ -23,7 +25,7 @@ This document defines the comprehensive architecture for fixing and extending th
 
 ### 1. Entity Extraction Service
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                   Entity Extraction Service                 │
 ├─────────────────────────────────────────────────────────────┤
@@ -51,7 +53,7 @@ This document defines the comprehensive architecture for fixing and extending th
 
 ### 2. Knowledge Graph Storage Layer
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                Knowledge Graph Storage                       │
 ├─────────────────────────────────────────────────────────────┤
@@ -71,7 +73,7 @@ This document defines the comprehensive architecture for fixing and extending th
 
 ### 3. Extended Schema Management
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                  Extended Schema Manager                     │
 ├─────────────────────────────────────────────────────────────┤
@@ -95,7 +97,7 @@ This document defines the comprehensive architecture for fixing and extending th
 
 ### 4. Enhanced Validation Framework
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                Enhanced Validation Framework                │
 ├─────────────────────────────────────────────────────────────┤
@@ -118,7 +120,7 @@ This document defines the comprehensive architecture for fixing and extending th
 
 ### 5. Complete System Integration
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    GraphRAG Pipeline                        │
 ├─────────────────────────────────────────────────────────────┤
@@ -150,23 +152,23 @@ This document defines the comprehensive architecture for fixing and extending th
 ```python
 class IEntityExtractor(ABC):
     """Interface for entity extraction services."""
-    
+
     @abstractmethod
     def extract_entities(self, document: Document) -> List[Entity]:
         """Extract entities from a document."""
         pass
-    
+
     @abstractmethod
-    def extract_relationships(self, document: Document, 
+    def extract_relationships(self, document: Document,
                             entities: List[Entity]) -> List[Relationship]:
         """Extract relationships between entities."""
         pass
-    
+
     @abstractmethod
     def set_domain_config(self, domain_config: DomainConfig) -> None:
         """Configure for specific domain (medical, legal, etc.)."""
         pass
-    
+
     @abstractmethod
     def get_supported_entity_types(self) -> List[str]:
         """Get supported entity types."""
@@ -189,7 +191,7 @@ CREATE TABLE RAG.Entities (
     FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(doc_id)
 );
 
--- RAG.EntityRelationships table  
+-- RAG.EntityRelationships table
 CREATE TABLE RAG.EntityRelationships (
     relationship_id VARCHAR(255) PRIMARY KEY,
     source_entity_id VARCHAR(255) NOT NULL,
@@ -218,47 +220,47 @@ CREATE INDEX idx_relationships_type ON RAG.EntityRelationships(relationship_type
 ```python
 class GraphRAGRequirements(PipelineRequirements):
     """Requirements for GraphRAG pipeline."""
-    
+
     @property
     def pipeline_name(self) -> str:
         return "graphrag"
-    
+
     @property
     def required_tables(self) -> List[TableRequirement]:
         return [
             TableRequirement(
-                name="SourceDocuments", 
-                schema="RAG", 
+                name="SourceDocuments",
+                schema="RAG",
                 description="Document storage",
                 min_rows=1
             ),
             TableRequirement(
-                name="Entities", 
-                schema="RAG", 
+                name="Entities",
+                schema="RAG",
                 description="Extracted entities",
                 min_rows=5  # Require minimum entities
             ),
             TableRequirement(
-                name="EntityRelationships", 
-                schema="RAG", 
+                name="EntityRelationships",
+                schema="RAG",
                 description="Entity relationships",
-                min_rows=2  # Require minimum relationships  
+                min_rows=2  # Require minimum relationships
             )
         ]
-    
+
     @property
     def required_embeddings(self) -> List[EmbeddingRequirement]:
         return [
             EmbeddingRequirement(
                 name="document_embeddings",
-                table="RAG.SourceDocuments", 
+                table="RAG.SourceDocuments",
                 column="embedding",
                 description="Document-level embeddings"
             ),
             EmbeddingRequirement(
                 name="entity_embeddings",
                 table="RAG.Entities",
-                column="embedding", 
+                column="embedding",
                 description="Entity embeddings for similarity"
             )
         ]
@@ -271,21 +273,21 @@ class GraphRAGRequirements(PipelineRequirements):
 ```python
 def load_documents(self, documents_path: str, **kwargs) -> None:
     """Enhanced document loading with entity extraction."""
-    
+
     # Step 1: Store documents (existing functionality)
     documents = self._load_documents_from_path(documents_path)
     self.vector_store.add_documents(documents, auto_chunk=True)
-    
+
     # Step 2: Extract entities (NEW)
     entity_service = self._get_entity_extraction_service()
-    
+
     for document in documents:
         # Extract entities
         entities = entity_service.extract_entities(document)
-        
+
         # Extract relationships
         relationships = entity_service.extract_relationships(document, entities)
-        
+
         # Store in knowledge graph
         self._store_entities(entities, document.id)
         self._store_relationships(relationships, document.id)
@@ -296,20 +298,20 @@ def load_documents(self, documents_path: str, **kwargs) -> None:
 ```python
 def _retrieve_via_kg(self, query_text: str, top_k: int) -> Tuple[List[Document], str]:
     """Fixed knowledge graph retrieval."""
-    
+
     # Step 1: Find seed entities (FIXED CONNECTION)
     connection = self.connection_manager.get_connection()  # FIX: Use get_connection()
     seed_entities = self._find_seed_entities(query_text, connection)
-    
+
     if not seed_entities:
         return self._fallback_vector_search(query_text, top_k), "fallback_vector_search"
-    
+
     # Step 2: Traverse graph
     relevant_entities = self._traverse_graph(seed_entities, connection)
-    
+
     # Step 3: Get documents
     docs = self._get_documents_from_entities(relevant_entities, top_k, connection)
-    
+
     return docs, "knowledge_graph_traversal"
 ```
 
@@ -342,22 +344,22 @@ def _retrieve_via_kg(self, query_text: str, top_k: int) -> Tuple[List[Document],
 ```python
 def validate_graphrag_prerequisites(self) -> ValidationResult:
     """Validate GraphRAG can run successfully."""
-    
+
     errors = []
-    
+
     # Check table existence
     if not self._table_exists("RAG.Entities"):
         errors.append("RAG.Entities table does not exist")
-    
+
     # Check minimum data requirements
     entity_count = self._count_entities()
     if entity_count < 5:
         errors.append(f"Insufficient entities: {entity_count} < 5")
-    
+
     # Check graph connectivity
     if not self._has_relationships():
         errors.append("No relationships found - graph is disconnected")
-    
+
     return ValidationResult(errors=errors)
 ```
 
@@ -376,13 +378,13 @@ def validate_graphrag_prerequisites(self) -> ValidationResult:
 
 ## File Organization
 
-```
+```text
 iris_rag/
 ├── storage/
 │   ├── knowledge_graph/
 │   │   ├── __init__.py
 │   │   ├── interfaces.py           # Service interfaces
-│   │   ├── models.py               # Entity/Relationship models  
+│   │   ├── models.py               # Entity/Relationship models
 │   │   ├── entity_extractor.py     # Entity extraction service
 │   │   ├── graph_storage.py        # Knowledge graph storage
 │   │   └── graph_traversal.py      # Graph traversal engine
@@ -397,24 +399,28 @@ iris_rag/
 ## Implementation Phases
 
 ### Phase 1: Foundation (1-2 weeks)
+
 - [ ] Create knowledge graph interfaces and models
-- [ ] Extend schema manager for graph tables  
+- [ ] Extend schema manager for graph tables
 - [ ] Add GraphRAG to validation requirements registry
 - [ ] Fix connection manager usage in GraphRAG pipeline
 
-### Phase 2: Entity Extraction (2-3 weeks)  
+### Phase 2: Entity Extraction (2-3 weeks)
+
 - [ ] Implement entity extraction service
 - [ ] Add relationship extraction capabilities
 - [ ] Create domain configuration system
 - [ ] Add batch processing and error handling
 
 ### Phase 3: Integration (1-2 weeks)
+
 - [ ] Integrate entity extraction into document loading
 - [ ] Fix graph traversal implementation
 - [ ] Add performance monitoring
 - [ ] Implement circuit breaker pattern
 
 ### Phase 4: Testing & Optimization (1-2 weeks)
+
 - [ ] Comprehensive test suite
 - [ ] Performance benchmarking
 - [ ] Memory optimization
@@ -423,18 +429,21 @@ iris_rag/
 ## Success Metrics
 
 ### Functional Metrics
+
 - [ ] Entity extraction accuracy > 80%
-- [ ] Relationship extraction accuracy > 70% 
+- [ ] Relationship extraction accuracy > 70%
 - [ ] Graph connectivity (entities connected by relationships)
 - [ ] Query success rate > 95%
 
 ### Performance Metrics
+
 - [ ] Entity extraction: < 5 seconds per document
 - [ ] Graph traversal: < 500ms per query
 - [ ] Memory usage: < 2GB for 1000 documents
 - [ ] Fallback rate: < 10% of queries
 
 ### Quality Metrics
+
 - [ ] Code coverage > 80%
 - [ ] All validation tests pass
 - [ ] Documentation complete

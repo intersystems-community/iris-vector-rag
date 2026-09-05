@@ -21,6 +21,7 @@ Production readiness assessment for rag-templates based strictly on validated te
   - [`outputs/test_results/dbapi_vector_search_validation_20250605_063757.md`](outputs/test_results/dbapi_vector_search_validation_20250605_063757.md)
 
 Limitations to be addressed before full production sign-off:
+
 - Real-data ingestion and query execution not yet validated due to missing embeddings/graph data (status “INFRASTRUCTURE_MISSING” in the validation report despite database availability; see [`validation_results/comprehensive_pipeline_validation_20250913_181921.json`](validation_results/comprehensive_pipeline_validation_20250913_181921.json:47))
 - RAGAS end-to-end quality metrics blocked by data quality issues (see summary in [`CRITICAL_VALIDATION_BREAKTHROUGH_REPORT.md`](CRITICAL_VALIDATION_BREAKTHROUGH_REPORT.md))
 
@@ -60,6 +61,7 @@ Limitations to be addressed before full production sign-off:
   - 0.06–0.11s for common vector operations on live IRIS (see [`outputs/test_results/dbapi_vector_search_validation_20250605_063757.md`](outputs/test_results/dbapi_vector_search_validation_20250605_063757.md))
 
 Not validated yet (defer claims):
+
 - End-to-end query latency (blocked by missing embeddings on real data)
 - P95 end-to-end performance and throughput under load
 - RAGAS context-based quality scoring at scale
@@ -85,6 +87,7 @@ Not validated yet (defer claims):
 Scope validated by tests focuses on functionality and performance. Formal security validation (authz/authn robustness, secret management, tenant isolation, data governance) is not covered by current artifacts and should be assessed separately during deployment hardening.
 
 Artifacts to review further:
+
 - Deployment composition: [`docker-compose.yml`](docker-compose.yml)
 - Licensed variant (if applicable): [`docker-compose.licensed.yml`](docker-compose.licensed.yml)
 
@@ -92,20 +95,20 @@ Artifacts to review further:
 
 ## Deployment Recommendations (for the 4 validated pipelines)
 
-1) Provision IRIS and credentials (align with your environment/secrets manager)
-2) Preflight data setup
+1. Provision IRIS and credentials (align with your environment/secrets manager)
+2. Preflight data setup
    - Run validation and orchestrated setup for required embeddings:
      - Validate: [`PreConditionValidator.validate_pipeline_requirements()`](iris_rag/validation/validator.py:59)
      - Auto-setup: [`SetupOrchestrator.setup_pipeline()`](iris_rag/validation/orchestrator.py:72) for "basic", "basic_rerank", "crag"
    - For GraphRAG: populate RAG.Entities and RAG.EntityRelationships tables, then validate traversal with targeted queries (see methods linked above)
-3) Application integration
+3. Application integration
    - Integrate through unified adapter: [`RAGTemplatesBridge`](iris_vector_rag/adapters/rag_templates_bridge.py:86)
    - Select technique via enum: [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
    - Use async entrypoint: [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203)
-4) Operationalization
+4. Operationalization
    - Health checks: [`RAGTemplatesBridge.get_health_status()`](iris_vector_rag/adapters/rag_templates_bridge.py:332)
    - Metrics export/ingestion from [`RAGTemplatesBridge.get_metrics()`](iris_vector_rag/adapters/rag_templates_bridge.py:323)
-5) Performance baselining
+5. Performance baselining
    - After embeddings and KG data are populated, measure end-to-end latency and throughput under expected concurrency, and capture P95/99
 
 ---
@@ -122,6 +125,7 @@ Artifacts to review further:
   - Evidence: [`ValidatedPipelineFactory`](iris_rag/validation/factory.py:30), [`PreConditionValidator`](iris_rag/validation/validator.py:39), [`SetupOrchestrator`](iris_rag/validation/orchestrator.py:48)
 
 Pending to declare production-grade:
+
 - Real-data ingestion and query paths validated (blocked by missing embeddings/graph content)
 - E2E latency, load, and quality evaluations
 

@@ -1,0 +1,10 @@
+# antipatterns baseline: findings that existed when each detector was written.
+# A line here silences ONE known instance. Remove lines as instances are fixed;
+# the gate fails on stale entries so this list only shrinks. Format: <check>\t<path:line>
+inert-pytest-ini	pytest.ini:1
+inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:1302
+inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:313
+inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:326
+inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:351
+inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:363
+unguarded-dbapi-connect	iris_vector_rag/common/connection_pool.py:109

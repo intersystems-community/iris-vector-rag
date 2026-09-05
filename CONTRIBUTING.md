@@ -3,6 +3,7 @@
 Thank you for your interest in contributing to iris-vector-rag! This document provides guidelines and workflows for contributing to the project.
 
 ## Table of Contents
+
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
 - [Git Workflow](#git-workflow)
@@ -18,12 +19,14 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 ## Getting Started
 
 ### Prerequisites
+
 - Python 3.11+
 - Docker Desktop (for IRIS database)
 - Git
 - uv (Python package manager)
 
 ### Setup Development Environment
+
 ```bash
 # Clone the repository
 git clone https://github.com/intersystems-community/iris-vector-rag.git
@@ -43,6 +46,7 @@ make load-data
 ```
 
 ### Verify Installation
+
 ```bash
 # Run all tests
 pytest tests/
@@ -59,7 +63,7 @@ pytest tests/contract/       # Contract tests (TDD)
 
 This project uses a **three-tier repository strategy** to balance private development with public collaboration:
 
-```
+```text
 origin (private)    → isc-tdyar/iris-vector-rag-private
 fork (public)       → isc-tdyar/iris-vector-rag
 upstream (community)→ intersystems-community/iris-vector-rag
@@ -143,7 +147,7 @@ git push origin main && git push fork main && git push upstream main
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
@@ -152,6 +156,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -161,6 +166,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `perf`: Performance improvements
 
 **Examples:**
+
 ```bash
 feat(pipelines): add ColBERT late interaction retrieval
 
@@ -186,6 +192,7 @@ Performance: 1405x speedup (20 min → 0.85s for 1746 documents)
 **Required**: All new features must follow TDD approach per `.specify/memory/constitution.md` Principle III.
 
 1. **Write Contract Tests First**
+
    ```bash
    # Create contract tests (8-12 tests)
    touch tests/contract/test_your_feature_contract.py
@@ -195,6 +202,7 @@ Performance: 1405x speedup (20 min → 0.85s for 1746 documents)
    ```
 
 2. **Implement Feature**
+
    ```bash
    # Write implementation
    touch iris_vector_rag/your_module.py
@@ -204,6 +212,7 @@ Performance: 1405x speedup (20 min → 0.85s for 1746 documents)
    ```
 
 3. **Add Integration Tests**
+
    ```bash
    # Create integration tests (10-15 tests)
    touch tests/integration/test_your_feature_integration.py
@@ -213,6 +222,7 @@ Performance: 1405x speedup (20 min → 0.85s for 1746 documents)
    ```
 
 4. **Refactor**
+
    ```bash
    # Clean up implementation
    # All tests must still pass
@@ -236,6 +246,7 @@ def test_with_fixture():
 ```
 
 **Fixture Commands:**
+
 ```bash
 make fixture-list                     # List available fixtures
 make fixture-info FIXTURE=name        # Get fixture details
@@ -264,6 +275,7 @@ pytest --cov=iris_vector_rag --cov-report=html
 ### Performance Requirements
 
 Per Constitution Principle VI:
+
 - **Query operations**: <5ms overhead when features disabled
 - **Bulk operations**: 10x+ speedup vs one-by-one (10K docs <10s)
 - **Monitoring**: <5% overhead when enabled, 0% when disabled
@@ -273,7 +285,7 @@ Per Constitution Principle VI:
 
 ### Test Suite Structure
 
-```
+```text
 tests/
 ├── unit/           # Component-level tests (15-20 per module)
 ├── contract/       # TDD contract tests (8-12 per feature)
@@ -326,11 +338,13 @@ IRIS_BACKEND_MODE=enterprise pytest tests/
 ### Before Submitting
 
 1. **Verify all tests pass**
+
    ```bash
    pytest tests/
    ```
 
 2. **Check code formatting**
+
    ```bash
    black --check .
    isort --check .
@@ -338,6 +352,7 @@ IRIS_BACKEND_MODE=enterprise pytest tests/
    ```
 
 3. **Verify backward compatibility**
+
    ```bash
    # All existing tests must still pass
    pytest tests/integration/ tests/e2e/
@@ -359,15 +374,18 @@ IRIS_BACKEND_MODE=enterprise pytest tests/
 
 ```markdown
 ## Summary
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Contract tests added (TDD)
 - [ ] Integration tests added
 - [ ] .DAT fixtures used where required
@@ -375,6 +393,7 @@ Brief description of changes
 - [ ] Performance benchmarks passing
 
 ## Checklist
+
 - [ ] Code follows project style guidelines
 - [ ] Tests written before implementation (TDD)
 - [ ] .DAT fixtures used for ≥10 entities
@@ -383,6 +402,7 @@ Brief description of changes
 - [ ] Constitution principles followed
 
 ## Related Issues
+
 Closes #<issue_number>
 ```
 
@@ -398,6 +418,7 @@ Closes #<issue_number>
 ### Version Bumping
 
 Follow [Semantic Versioning](https://semver.org/):
+
 - **MAJOR**: Breaking changes
 - **MINOR**: New features (backward compatible)
 - **PATCH**: Bug fixes (backward compatible)
@@ -449,8 +470,8 @@ twine upload dist/iris_vector_rag-*.whl dist/iris_vector_rag-*.tar.gz
 
 ## Questions or Problems?
 
-- **Issues**: https://github.com/intersystems-community/iris-vector-rag/issues
-- **Discussions**: https://github.com/intersystems-community/iris-vector-rag/discussions
+- **Issues**: <https://github.com/intersystems-community/iris-vector-rag/issues>
+- **Discussions**: <https://github.com/intersystems-community/iris-vector-rag/discussions>
 - **Documentation**: See `CLAUDE.md` for development guidance
 - **Constitution**: See `.specify/memory/constitution.md` for core principles
 

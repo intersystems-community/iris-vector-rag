@@ -14,7 +14,7 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 ### How to Report
 
 1. **Do NOT** create a public GitHub issue for security vulnerabilities
-2. Email security concerns to: **thomas.dyar@intersystems.com**
+2. Email security concerns to: **<thomas.dyar@intersystems.com>**
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
@@ -34,6 +34,7 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 ### Scope
 
 This security policy applies to:
+
 - The `iris-vector-rag` Python package
 - Associated Docker images
 - API endpoints when deployed
@@ -58,6 +59,7 @@ When using iris-vector-rag:
 ## Security Features
 
 iris-vector-rag includes:
+
 - Parameterized SQL queries (SQL injection prevention)
 - Input validation on all API endpoints
 - Rate limiting support

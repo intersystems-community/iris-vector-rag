@@ -28,7 +28,7 @@ echo "==========================================================================
 echo "Running Black (Code Formatter)"
 echo "================================================================================"
 
-if black --check "$API_DIR" $TESTS_DIR; then
+if black --check "$API_DIR" "$TESTS_DIR"; then
     echo -e "${GREEN}✓ Black: All files are properly formatted${NC}"
 else
     echo -e "${YELLOW}⚠ Black: Some files need formatting${NC}"
@@ -44,7 +44,7 @@ echo "==========================================================================
 echo "Running isort (Import Sorter)"
 echo "================================================================================"
 
-if isort --check-only "$API_DIR" $TESTS_DIR; then
+if isort --check-only "$API_DIR" "$TESTS_DIR"; then
     echo -e "${GREEN}✓ isort: All imports are properly sorted${NC}"
 else
     echo -e "${YELLOW}⚠ isort: Some imports need sorting${NC}"

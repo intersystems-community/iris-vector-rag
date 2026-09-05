@@ -7,31 +7,36 @@ This document defines how GraphRAG integrates into the existing IRIS RAG framewo
 ## Current Framework Architecture Analysis
 
 ### 1. Pipeline Factory System
+
 - **`PipelineConfigService`**: Loads pipeline definitions from YAML files
-- **`ModuleLoader`**: Dynamically loads pipeline classes  
+- **`ModuleLoader`**: Dynamically loads pipeline classes
 - **`PipelineFactory`**: Creates pipeline instances with dependency injection
 - **Framework Dependencies**: `connection_manager`, `config_manager`, `llm_func`, `vector_store`
 
 ### 2. Validation & Setup System
+
 - **`ValidatedPipelineFactory`**: Validates requirements before pipeline creation
 - **`PreConditionValidator`**: Checks table/embedding prerequisites
 - **`SetupOrchestrator`**: Auto-setup missing requirements
 - **`PipelineRequirements`**: Define what each pipeline needs
 
 ### 3. Configuration System
+
 - **YAML Configuration**: Pipeline definitions in `config/pipelines.yaml`
 - **ConfigurationManager**: Structured access to configuration
 - **Pipeline-specific Parameters**: Via `params` section in pipeline definitions
 
 ### 4. Requirements Registry
+
 - **`PIPELINE_REQUIREMENTS_REGISTRY`**: Maps pipeline types to requirement classes
 - **Schema Integration**: Schema manager uses requirements to create tables
 
 ## GraphRAG Integration Issues
 
 ### Current Problems
+
 1. **Missing from Factory**: GraphRAG not in `ValidatedPipelineFactory._create_pipeline_instance()`
-2. **Missing from Registry**: No `GraphRAGRequirements` in `PIPELINE_REQUIREMENTS_REGISTRY`  
+2. **Missing from Registry**: No `GraphRAGRequirements` in `PIPELINE_REQUIREMENTS_REGISTRY`
 3. **No Configuration**: No GraphRAG pipeline definition in configuration system
 4. **Missing Dependencies**: No entity extraction service in framework dependencies
 5. **Schema Disconnect**: Schema manager unaware of GraphRAG table requirements
@@ -44,7 +49,7 @@ This document defines how GraphRAG integrates into the existing IRIS RAG framewo
 # Enhanced framework dependencies with entity extraction service
 framework_dependencies = {
     "connection_manager": connection_manager,
-    "config_manager": config_manager, 
+    "config_manager": config_manager,
     "llm_func": llm_func,
     "vector_store": vector_store,
     "entity_extraction_service": EntityExtractionService(config_manager)  # NEW
@@ -56,34 +61,34 @@ framework_dependencies = {
 ```python
 class EntityExtractionService:
     """Framework-level entity extraction service."""
-    
+
     def __init__(self, config_manager: ConfigurationManager):
         """Initialize with configuration-driven extractors."""
         self.config_manager = config_manager
         self.extractors = self._load_extractors()
         self.default_strategy = config_manager.get('entity_extraction.default_strategy', 'nlp')
-    
+
     def _load_extractors(self) -> Dict[str, IEntityExtractor]:
         """Load extractors based on configuration."""
         extractors = {}
-        
+
         # Load enabled extractors from config
         extractor_configs = self.config_manager.get('entity_extraction.extractors', {})
-        
+
         for extractor_type, config in extractor_configs.items():
             if config.get('enabled', False):
                 extractors[extractor_type] = self._create_extractor(extractor_type, config)
-        
+
         return extractors
-    
+
     def extract_entities(self, document: Document, strategy: Optional[str] = None) -> List[Entity]:
         """Extract entities using specified or default strategy."""
         strategy = strategy or self.default_strategy
         extractor = self.extractors.get(strategy)
-        
+
         if not extractor:
             raise ValueError(f"Extractor strategy '{strategy}' not available")
-        
+
         return extractor.extract_entities(document)
 ```
 
@@ -92,50 +97,50 @@ class EntityExtractionService:
 ```python
 class GraphRAGRequirements(PipelineRequirements):
     """Requirements for GraphRAG pipeline."""
-    
+
     @property
     def pipeline_name(self) -> str:
         return "graphrag"
-    
+
     @property
     def required_tables(self) -> List[TableRequirement]:
         return [
             TableRequirement(
-                name="SourceDocuments", 
-                schema="RAG", 
+                name="SourceDocuments",
+                schema="RAG",
                 description="Document storage with embeddings",
                 min_rows=1,
                 supports_vector_search=True
             ),
             TableRequirement(
-                name="Entities", 
-                schema="RAG", 
+                name="Entities",
+                schema="RAG",
                 description="Extracted entities with embeddings",
                 min_rows=5,  # Require minimum entities for graph queries
                 supports_vector_search=True
             ),
             TableRequirement(
-                name="EntityRelationships", 
-                schema="RAG", 
+                name="EntityRelationships",
+                schema="RAG",
                 description="Entity relationships for graph traversal",
                 min_rows=2,  # Require minimum relationships for connectivity
                 supports_vector_search=False
             )
         ]
-    
+
     @property
     def required_embeddings(self) -> List[EmbeddingRequirement]:
         return [
             EmbeddingRequirement(
                 name="document_embeddings",
-                table="RAG.SourceDocuments", 
+                table="RAG.SourceDocuments",
                 column="embedding",
                 description="Document-level embeddings for fallback search"
             ),
             EmbeddingRequirement(
                 name="entity_embeddings",
                 table="RAG.Entities",
-                column="embedding", 
+                column="embedding",
                 description="Entity embeddings for similarity-based linking"
             )
         ]
@@ -154,7 +159,7 @@ PIPELINE_REQUIREMENTS_REGISTRY = {
 ```python
 class ValidatedPipelineFactory:
     """Enhanced factory with GraphRAG support."""
-    
+
     def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager):
         self.connection_manager = connection_manager
         self.config_manager = config_manager
@@ -162,19 +167,19 @@ class ValidatedPipelineFactory:
         self.entity_extraction_service = EntityExtractionService(config_manager)  # NEW
         self.validator = PreConditionValidator(connection_manager)
         self.orchestrator = SetupOrchestrator(connection_manager, config_manager)
-    
+
     def _create_pipeline_instance(
         self, pipeline_type: str, llm_func: Optional[Callable[[str], str]], **kwargs
     ) -> RAGPipeline:
         """Create pipeline instance with GraphRAG support."""
-        
+
         # Common dependencies for all pipelines
         common_args = {
             "connection_manager": self.connection_manager,
             "config_manager": self.config_manager,
             "llm_func": llm_func
         }
-        
+
         if pipeline_type == "basic":
             return BasicRAGPipeline(**common_args)
         elif pipeline_type == "crag":
@@ -197,7 +202,7 @@ class ValidatedPipelineFactory:
 ```python
 class GraphRAGPipeline(RAGPipeline):
     """GraphRAG pipeline with proper framework integration."""
-    
+
     def __init__(
         self,
         connection_manager: Optional[ConnectionManager] = None,
@@ -208,13 +213,13 @@ class GraphRAGPipeline(RAGPipeline):
     ):
         super().__init__(connection_manager, config_manager, vector_store)
         self.llm_func = llm_func
-        
+
         # Get entity extraction service from framework or create default
         if entity_extraction_service:
             self.entity_extraction_service = entity_extraction_service
         else:
             self.entity_extraction_service = EntityExtractionService(config_manager)
-        
+
         # Load GraphRAG-specific configuration
         self.pipeline_config = self.config_manager.get("pipelines:graphrag", {})
         self.traversal_config = self.pipeline_config.get("traversal", {})
@@ -231,7 +236,7 @@ pipelines:
     chunk_overlap: 200
     default_top_k: 5
     embedding_batch_size: 32
-  
+
   # NEW: GraphRAG Configuration
   graphrag:
     default_top_k: 10
@@ -250,8 +255,8 @@ pipelines:
 
 # NEW: Entity Extraction Configuration
 entity_extraction:
-  default_strategy: "nlp"  # nlp, llm, pattern, hybrid
-  
+  default_strategy: "nlp" # nlp, llm, pattern, hybrid
+
   extractors:
     nlp:
       enabled: true
@@ -260,20 +265,20 @@ entity_extraction:
       custom_patterns:
         DRUG: ["aspirin", "ibuprofen", "acetaminophen"]
         DISEASE: ["diabetes", "hypertension", "covid-19"]
-    
+
     llm:
-      enabled: false  # Enable if LLM is available
+      enabled: false # Enable if LLM is available
       model: "gpt-4"
       max_retries: 3
       rate_limit_delay: 1.0
       batch_size: 3
-    
+
     pattern:
       enabled: true
       regex_patterns:
         GENE: "\\b[A-Z]{2,}[0-9]*\\b"
         PROTEIN: "\\bp[0-9]+\\b"
-  
+
   domain:
     name: "biomedical"
     entity_types: ["PERSON", "ORG", "DISEASE", "DRUG", "TREATMENT", "SYMPTOM"]
@@ -294,14 +299,14 @@ pipelines:
     enabled: true
     params:
       description: "Basic RAG with vector search"
-  
+
   - name: "crag"
     module: "iris_rag.pipelines.crag"
     class: "CRAGPipeline"
     enabled: true
     params:
       description: "Corrective RAG with retrieval evaluation"
-  
+
   # NEW: GraphRAG Pipeline Definition
   - name: "graphrag"
     module: "iris_rag.pipelines.graphrag"
@@ -317,14 +322,14 @@ pipelines:
 ```python
 class SchemaManager:
     """Extended with GraphRAG table support."""
-    
+
     def _build_table_configurations(self):
         """Build table configurations including GraphRAG tables."""
         self._table_configs = {
             # Existing configurations
             "SourceDocuments": {...},
             "DocumentChunks": {...},
-            
+
             # NEW: GraphRAG table configurations
             "Entities": {
                 "embedding_column": "embedding",
@@ -337,16 +342,16 @@ class SchemaManager:
             },
             "EntityRelationships": {
                 "embedding_column": None,
-                "table_type": "knowledge_graph", 
+                "table_type": "knowledge_graph",
                 "supports_graph_traversal": True,
                 "pipeline_type": "graphrag"
             }
         }
-    
+
     def _get_expected_schema_config(self, table_name: str, pipeline_type: str = None) -> Dict[str, Any]:
         """Enhanced to handle GraphRAG table requirements."""
         config = super()._get_expected_schema_config(table_name, pipeline_type)
-        
+
         # Get requirements from pipeline type if specified
         if pipeline_type:
             try:
@@ -362,7 +367,7 @@ class SchemaManager:
                         break
             except Exception as e:
                 logger.warning(f"Could not get requirements for {pipeline_type}: {e}")
-        
+
         return config
 ```
 
@@ -371,53 +376,53 @@ class SchemaManager:
 ```python
 class GraphRAGPipeline(RAGPipeline):
     """Enhanced with framework-integrated entity extraction."""
-    
+
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """Load documents with entity extraction."""
         start_time = time.time()
-        
+
         # Step 1: Load and store documents (existing)
         if "documents" in kwargs:
             documents = kwargs["documents"]
         else:
             documents = self._load_documents_from_path(documents_path)
-        
+
         # Store documents with embeddings
         generate_embeddings = kwargs.get("generate_embeddings", True)
         if generate_embeddings:
             self.vector_store.add_documents(documents, auto_chunk=True)
         else:
             self._store_documents(documents)
-        
+
         # Step 2: Extract entities using framework service (NEW)
         extract_entities = kwargs.get("extract_entities", True)
         if extract_entities and self.entity_extraction_service:
             self._extract_and_store_entities(documents)
-        
+
         processing_time = time.time() - start_time
         logger.info(f"GraphRAG: Loaded {len(documents)} documents with entities in {processing_time:.2f}s")
-    
+
     def _extract_and_store_entities(self, documents: List[Document]) -> None:
         """Extract and store entities using framework service."""
         batch_size = self.extraction_config.get("batch_size", 5)
-        
+
         for i in range(0, len(documents), batch_size):
             batch = documents[i:i + batch_size]
-            
+
             for document in batch:
                 try:
                     # Extract entities
                     entities = self.entity_extraction_service.extract_entities(document)
-                    
+
                     # Extract relationships
                     relationships = self.entity_extraction_service.extract_relationships(
                         document, entities
                     )
-                    
+
                     # Store in knowledge graph
                     self._store_entities(entities, document.id)
                     self._store_relationships(relationships, document.id)
-                    
+
                 except Exception as e:
                     logger.warning(f"Entity extraction failed for document {document.id}: {e}")
 ```
@@ -425,26 +430,31 @@ class GraphRAGPipeline(RAGPipeline):
 ## Framework Integration Benefits
 
 ### 1. Configuration-Driven
+
 - **Entity Extraction Strategy**: Configurable via YAML
 - **Pipeline Parameters**: Standard configuration system
 - **Domain-Specific Settings**: Centralized in configuration
 
 ### 2. Validation & Setup
+
 - **Prerequisites Checked**: Before pipeline creation
 - **Auto-Setup**: Missing tables/embeddings created automatically
 - **Error Reporting**: Clear validation messages with setup suggestions
 
 ### 3. Dependency Injection
+
 - **Entity Extraction Service**: Injected as framework dependency
 - **Configuration Access**: Via standard ConfigurationManager
 - **Database Connection**: Via ConnectionManager
 
 ### 4. Modular Architecture
+
 - **Pluggable Extractors**: Add new extraction strategies
 - **Framework Consistency**: Same patterns as other pipelines
 - **Service Boundaries**: Clean separation of concerns
 
 ### 5. Production Ready
+
 - **Error Handling**: Comprehensive exception handling
 - **Performance Monitoring**: Built-in metrics and logging
 - **Scalability**: Batch processing and resource management

@@ -11,7 +11,7 @@ The project already includes a complete, production-ready PMC processing system:
 ### Core Components
 
 1. **[`data/pmc_processor.py`](../../data/pmc_processor.py)** - Complete PMC XML processing
-2. **[`data/loader_fixed.py`](../../data/loader_fixed.py)** - Database loading with vector support  
+2. **[`data/loader_fixed.py`](../../data/loader_fixed.py)** - Database loading with vector support
 3. **[`scripts/utilities/download_real_pmc_docs.py`](../utilities/download_real_pmc_docs.py)** - PMC document downloader
 4. **[`Makefile`](../../Makefile)** - Simple orchestration via `make load-data`
 
@@ -28,17 +28,20 @@ The project already includes a complete, production-ready PMC processing system:
 ## 🚀 Quick Start (Using Existing System)
 
 ### Process and Load Sample PMC Documents
+
 ```bash
 # Process 10 sample PMC documents and load into database
 make load-data
 ```
 
-**Expected Result**: 
+**Expected Result**:
+
 - Processes 10 documents → 79 database entries (with chunks) in ~0.13 seconds
 - 596 documents/second processing speed
 - Success: `{'success': True, 'loaded_doc_count': 79, 'error_count': 0}`
 
 ### Direct Python Usage
+
 ```python
 from data.pmc_processor import process_pmc_files
 from data.loader_fixed import process_and_load_documents
@@ -60,7 +63,7 @@ The existing system provides a comprehensive format:
   "doc_id": "PMC1894889",
   "title": "New Samarium(III), Gadolinium(III), and Dysprosium(III) Complexes...",
   "content": "Complete document text...",
-  "abstract": "New complexes of samarium(III), gadolinium(III)...", 
+  "abstract": "New complexes of samarium(III), gadolinium(III)...",
   "authors": ["Irena Kostova", "Georgi Momekov", "Peya Stancheva"],
   "keywords": [],
   "metadata": {
@@ -91,17 +94,21 @@ The existing system provides a comprehensive format:
 ## ⚙️ Configuration (Existing System)
 
 ### Chunking Configuration
+
 Located in [`data/pmc_processor.py`](../../data/pmc_processor.py):
+
 ```python
-def _chunk_pmc_content(content: str, pmc_id: str, 
-                      chunk_size: int = 8000, 
+def _chunk_pmc_content(content: str, pmc_id: str,
+                      chunk_size: int = 8000,
                       overlap: int = 400):
 ```
 
 ### Database Configuration
+
 Located in [`data/loader_fixed.py`](../../data/loader_fixed.py):
+
 ```python
-def load_documents_to_iris(connection, documents, 
+def load_documents_to_iris(connection, documents,
                           embedding_func=None,
                           batch_size: int = 250,
                           handle_chunks: bool = True):
@@ -116,12 +123,14 @@ def load_documents_to_iris(connection, documents,
 ## 🛠️ Advanced Usage
 
 ### Download Additional PMC Documents
+
 ```python
 from scripts.utilities.download_real_pmc_docs import download_and_load_1000_pmc_docs
 result = download_and_load_1000_pmc_docs()
 ```
 
 ### Custom Processing Parameters
+
 ```python
 from data.loader_fixed import process_and_load_documents
 
@@ -134,6 +143,7 @@ result = process_and_load_documents(
 ```
 
 ### Process Only (No Database Loading)
+
 ```python
 from data.pmc_processor import process_pmc_files
 
@@ -145,15 +155,19 @@ for doc in process_pmc_files('data/sample_10_docs', limit=5):
 ## 🔧 Troubleshooting
 
 ### Database Messages
+
 You may see normal operational messages during loading:
+
 - Table creation messages indicate existing schema (normal)
 - Final success status: `'success': True, 'error_count': 0`
 
-### UV Lock File Issues  
+### UV Lock File Issues
+
 - Fixed in this project - should work out of the box
 - If issues persist, check `uv.lock` around line 3185
 
 ### Database Connection Issues
+
 - Ensure IRIS database is running
 - Check connection configuration in environment variables
 - Use `make check-data` to verify database state
@@ -161,8 +175,9 @@ You may see normal operational messages during loading:
 ## 📈 Performance Metrics
 
 Recent test results with existing system:
+
 - **Processing Speed**: 596 documents/second
-- **Memory Efficiency**: Processes 10 docs → 79 database entries  
+- **Memory Efficiency**: Processes 10 docs → 79 database entries
 - **Chunk Expansion**: ~7-8x expansion (1 doc → 7-8 chunks average)
 - **Success Rate**: 100% with sample data
 - **Error Rate**: 0 errors
@@ -170,7 +185,7 @@ Recent test results with existing system:
 ## 🎯 Recommendations
 
 1. **Use the existing system** - It's comprehensive, tested, and performant
-2. **Start with `make load-data`** - Simple entry point for testing  
+2. **Start with `make load-data`** - Simple entry point for testing
 3. **Focus on result success flag** - `'success': True` means everything worked
 4. **Leverage chunking system** - Already optimized for RAG workflows
 5. **Use sample data** - `data/sample_10_docs/` for development/testing
@@ -178,7 +193,7 @@ Recent test results with existing system:
 ## 📚 Related Documentation
 
 - [`data/pmc_processor.py`](../../data/pmc_processor.py) - Core processing logic
-- [`data/loader_fixed.py`](../../data/loader_fixed.py) - Database integration  
+- [`data/loader_fixed.py`](../../data/loader_fixed.py) - Database integration
 - [`Makefile`](../../Makefile) - Available make targets
 - [`scripts/utilities/download_real_pmc_docs.py`](../utilities/download_real_pmc_docs.py) - Document downloader
 
@@ -203,6 +218,7 @@ The new **`pmc_loader.py`** provides a unified, configurable interface that inte
 ### Quick Start
 
 #### Test Mode (100 documents)
+
 ```bash
 # Set test mode and run
 export PMC_TEST_MODE=true
@@ -210,6 +226,7 @@ python scripts/data_loaders/pmc_loader.py
 ```
 
 #### Full Mode (10,000 documents)
+
 ```bash
 # Full production dataset
 export PMC_TEST_MODE=false
@@ -242,7 +259,7 @@ python scripts/data_loaders/pmc_loader.py
 
 The unified loader creates a complete dataset in the specified directory:
 
-```
+```text
 data/pmc_dataset/
 ├── metadata.json           # Dataset statistics and configuration
 ├── documents.jsonl         # Standardized document format (one JSON per line)
@@ -255,6 +272,7 @@ data/pmc_dataset/
 ### Standardized Output Format
 
 #### metadata.json
+
 ```json
 {
   "dataset_name": "PMC Biomedical Dataset",
@@ -277,13 +295,14 @@ data/pmc_dataset/
   },
   "sample_queries": [
     "What are the current treatment options for type 2 diabetes mellitus?",
-    "How does COVID-19 affect respiratory function and lung capacity?",
+    "How does COVID-19 affect respiratory function and lung capacity?"
     // ... 15 sample medical queries for evaluation
   ]
 }
 ```
 
 #### documents.jsonl (one JSON object per line)
+
 ```json
 {"id": "PMC123456", "title": "Document Title", "content": "Full content...", "abstract": "Abstract...", "authors": ["Author 1"], "keywords": ["keyword1"], "metadata": {...}, "chunks": [...]}
 ```
@@ -320,6 +339,7 @@ python scripts/data_loaders/pmc_loader.py  # Automatically resumes
 ```
 
 Progress is tracked in `progress.json`:
+
 ```json
 {
   "phase": "processing",
@@ -340,7 +360,7 @@ The loader includes 15 medical domain queries for RAG evaluation:
 3. "What are the most effective interventions for managing hypertension?"
 4. "What are the risk factors and prevention strategies for cardiovascular disease?"
 5. "How do immunotherapy treatments work in cancer patients?"
-... (see metadata.json for complete list)
+   ... (see metadata.json for complete list)
 
 ### Integration with Existing Infrastructure
 

@@ -5,6 +5,7 @@
 **QUIPLER** = **QU**ery **I**terative **P**arallel **L**everage-**E**xpanded **R**etrieval
 
 A sophisticated retrieve-dspy composition that:
+
 1. **Generates multiple queries** from user question (query expansion)
 2. **Searches in parallel** with each query
 3. **Reranks** each result set using cross-encoder
@@ -65,6 +66,7 @@ class QUIPLER(BaseRAG):
 ```
 
 And passes to CrossEncoderReranker:
+
 ```python
 self.searcher = CrossEncoderReranker(
     collection_name=collection_name,
@@ -252,21 +254,25 @@ final_results = reciprocal_rank_fusion(
 ## Benefits of QUIPLER with IRIS
 
 ### 1. Query Coverage
+
 - Multiple query formulations capture different aspects
 - IRIS vector search finds semantically similar docs for each query
 - Better recall than single query
 
 ### 2. Parallel Execution
+
 - 3 queries × 50 results = 150 candidate documents
 - All searches happen in parallel (async)
 - IRIS handles concurrent queries efficiently
 
 ### 3. Reranking Precision
+
 - Cross-encoder gives precise relevance for each result set
 - Better precision than vector search alone
 - Independent of database (works same with IRIS or Weaviate)
 
 ### 4. RRF Fusion Quality
+
 - Documents appearing in multiple result sets get boosted
 - Diversified results (not dominated by single query)
 - Works on ObjectFromDB objects (database-agnostic)
@@ -291,6 +297,7 @@ Total:                     ~1-2 seconds
 **Key Optimization**: Parallel search means 3 queries take ~same time as 1 query!
 
 **IRIS Advantages**:
+
 - HNSW indexing: Sub-100ms search even with 100K documents
 - Connection pooling: Efficient concurrent queries
 - Native SQL: Could add metadata filtering to each query
@@ -377,24 +384,30 @@ quipler = IRIS_QUIPLER(
 ## Proposed PR to retrieve-dspy
 
 ### Title
+
 "Add database tool injection to support multiple vector databases"
 
 ### Description
-```markdown
+
+````markdown
 ## Summary
+
 Add `database_tool` and `async_database_tool` parameters to `BaseRAG` and all retrievers, enabling use of any vector database that implements the standard search interface.
 
 ## Changes
+
 - BaseRAG: Add database_tool parameters with Weaviate as default
 - All retrievers: Pass database_tool to parent class
 - Backward compatible: Existing code works unchanged (defaults to Weaviate)
 
 ## Benefits
+
 - Users can use IRIS, Pinecone, Qdrant, etc. with all retrieve-dspy techniques
 - Modular design: database layer separated from retrieval logic
 - No duplication: Advanced techniques (QUIPLER, etc.) work with any database
 
 ## Example
+
 ```python
 from retrieve_dspy.retrievers import QUIPLER
 from retrieve_dspy.database.iris_database import iris_search_tool
@@ -406,12 +419,15 @@ quipler = QUIPLER(
     database_tool=iris_search_tool  # ← NEW!
 )
 ```
+````
 
 ## Testing
+
 - All existing tests pass (backward compatibility)
 - New tests with mock database tool
 - Example using IRIS adapter
-```
+
+```text
 
 ---
 
@@ -438,3 +454,4 @@ quipler = QUIPLER(
 - **Workaround available now**: Monkey patch or fork
 - **Clean solution**: After retrieve-dspy accepts database_tool PR (~1-2 weeks?)
 - **Long-term**: retrieve-dspy becomes database-agnostic framework
+```

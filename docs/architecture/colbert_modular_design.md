@@ -15,7 +15,7 @@ This document defines the modular system design for the ColBERT pipeline resurre
 
 ## Module Architecture Overview
 
-```
+```text
 iris_rag/pipelines/colbert/
 ├── __init__.py (50 lines)
 ├── pipeline.py (450 lines) - Main orchestrator
@@ -79,6 +79,7 @@ Dependencies:
 ```
 
 **Key Methods**:
+
 - `__init__(connection_manager, config_manager, vector_store, llm_func)` (40 lines)
 - `load_documents(documents_path, **kwargs)` (100 lines)
 - `query(query_text, top_k, **kwargs)` (150 lines)
@@ -120,11 +121,12 @@ Security Features:
 ```
 
 **Key Components**:
+
 - `ValidationResult` dataclass (20 lines)
 - `InputValidator` class (200 lines)
 - Security pattern constants (30 lines)
 
-#### Resource Limiter Module  
+#### Resource Limiter Module
 
 **File**: [`iris_rag/pipelines/colbert/security/resource_limiter.py`](iris_rag/pipelines/colbert/security/resource_limiter.py) (200 lines)
 
@@ -221,6 +223,7 @@ Features:
 ```
 
 **Key Features**:
+
 - Real ColBERT model support with fallback
 - Token-level embedding generation
 - Memory usage monitoring
@@ -460,7 +463,7 @@ Features:
 
 ### Dependency Graph
 
-```
+```text
 pipeline.py
 ├── encoders/encoder_factory.py
 │   ├── encoders/query_encoder.py
@@ -484,17 +487,17 @@ class ColBERTPipeline:
     def __init__(self, connection_manager, config_manager, vector_store, llm_func):
         # Load configuration
         self.config = ColBERTConfig.from_config_manager(config_manager)
-        
+
         # Initialize security layer
         self.input_validator = InputValidator(self.config.security_settings)
         self.resource_limiter = ResourceLimiter(self.config.resource_limits)
         self.error_handler = ErrorHandler(self.config.debug_mode)
-        
+
         # Initialize encoders
         self.encoder_factory = EncoderFactory(self.config.encoder_settings)
         self.query_encoder = self.encoder_factory.create_query_encoder()
         self.doc_encoder = self.encoder_factory.create_doc_encoder()
-        
+
         # Initialize retrieval
         self.maxsim_scorer = MaxSimScorer(self.config.use_gpu)
         self.hnsw_retriever = HNSWRetriever(connection_manager, self.config.hnsw_settings)
@@ -535,7 +538,7 @@ except Exception as e:
 
 Each module includes comprehensive unit tests:
 
-```
+```text
 tests/pipelines/colbert/
 ├── test_pipeline.py (200 lines)
 ├── encoders/
@@ -575,22 +578,22 @@ tests/pipelines/colbert/
 ### Module Development Order
 
 1. **Phase 1**: Configuration and security modules (foundation)
-2. **Phase 2**: Encoder modules (core functionality)  
+2. **Phase 2**: Encoder modules (core functionality)
 3. **Phase 3**: Retrieval modules (search engine)
 4. **Phase 4**: Main pipeline (orchestration)
 5. **Phase 5**: Integration and testing
 
 ### Performance Targets
 
-| Module | Target Response Time | Memory Limit |
-|--------|---------------------|--------------|
-| InputValidator | <1ms | <1MB |
-| QueryEncoder | <100ms | <50MB |
-| DocEncoder | <500ms | <100MB |
-| MaxSimScorer | <50ms | <25MB |
-| HNSWRetriever | <200ms | <75MB |
-| FallbackRetriever | <5s | <200MB |
-| Overall Pipeline | 0.70s-34.36s | <1GB |
+| Module            | Target Response Time | Memory Limit |
+| ----------------- | -------------------- | ------------ |
+| InputValidator    | <1ms                 | <1MB         |
+| QueryEncoder      | <100ms               | <50MB        |
+| DocEncoder        | <500ms               | <100MB       |
+| MaxSimScorer      | <50ms                | <25MB        |
+| HNSWRetriever     | <200ms               | <75MB        |
+| FallbackRetriever | <5s                  | <200MB       |
+| Overall Pipeline  | 0.70s-34.36s         | <1GB         |
 
 ## Security Considerations
 
@@ -606,11 +609,11 @@ class QueryEncoder:
         validation_result = self.input_validator.validate_query(query_text)
         if not validation_result.is_valid:
             raise SecurityError("Invalid query input")
-            
+
         # 2. Resource checking
         if not self.resource_limiter.check_memory_usage():
             raise ResourceError("Memory limit exceeded")
-            
+
         # 3. Safe processing
         try:
             embeddings = self._encode_tokens(validation_result.sanitized_input)

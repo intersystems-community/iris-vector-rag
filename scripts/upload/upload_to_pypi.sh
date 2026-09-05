@@ -3,7 +3,7 @@
 # Usage: ./upload_to_pypi.sh
 
 echo "Enter your PyPI token (it will be hidden):"
-read -s PYPI_TOKEN
+read -r -s PYPI_TOKEN
 
 export TWINE_USERNAME=__token__
 export TWINE_PASSWORD="$PYPI_TOKEN"

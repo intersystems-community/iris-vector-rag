@@ -1,0 +1,38 @@
+# spec-gates: projected/vendored enforcement runtime — upgrade overwrites
+# these, so formatting them locally is lost work.
+.specify/
+.claude/
+
+# Dependency and cache trees.
+node_modules/
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+tools/nodejs/
+
+# Historical feature material and generated artifacts, not source.
+specs/
+outputs/
+htmlcov/
+scripts/validation/reports/
+evaluation_framework/evaluation_results/
+*.egg-info/
+build/
+dist/
+
+# Test fixtures are data under test, not source. Some hold deliberately
+# malformed content that a formatter would "repair" and thereby void the test.
+tests/fixtures/
+tests/**/fixtures/
+
+# NEVER format ObjectScript. Leading-dot block syntax, label columns and
+# significant leading whitespace are load-bearing — a generic formatter
+# corrupts routines silently. Out of prettier's default globs today; listed
+# explicitly so widening those globs can never reach these files.
+*.cls
+*.mac
+*.int
+*.inc
+*.csp
+*.dfi

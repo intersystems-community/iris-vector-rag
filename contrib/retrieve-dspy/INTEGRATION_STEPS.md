@@ -1,6 +1,7 @@
 # IRIS Adapter Integration Steps
 
 ## Files Ready
+
 - `iris_database.py` - Core IRIS adapter implementation
 - `test_iris_database.py` - Test suite
 
@@ -84,7 +85,7 @@ See `basic_example.py` in this directory for a working example.
 
 Add IRIS section to `retrieve-dspy/README.md`:
 
-```markdown
+````markdown
 ### InterSystems IRIS
 
 ```python
@@ -97,8 +98,10 @@ results = iris_search_tool(
     retrieved_k=5
 )
 ```
+````
 
 **Environment Variables:**
+
 ```bash
 export IRIS_HOST="localhost"
 export IRIS_PORT="1972"
@@ -108,20 +111,19 @@ export IRIS_PASSWORD="SYS"
 ```
 
 **Features:**
+
 - Enterprise-grade vector search with HNSW optimization
 - Native SQL integration for complex queries
 - Hybrid search combining vector + text + graph
 - Tag filtering and metadata enrichment
 - Async support via asyncio
-```
 
 ## Step 9: Format and Lint Code
 
-```bash
+````bash
 # Format code (if retrieve-dspy uses black/ruff)
 black retrieve_dspy/database/iris_database.py tests/database/test_iris_database.py
 ruff check retrieve_dspy/database/iris_database.py --fix
-```
 
 ## Step 10: Commit and Push
 
@@ -147,11 +149,11 @@ native SQL integration."
 
 # Push to your fork
 git push origin feature/iris-adapter
-```
+````
 
 ## Step 11: Create Pull Request
 
-1. Go to https://github.com/isc-tdyar/retrieve-dspy
+1. Go to <https://github.com/isc-tdyar/retrieve-dspy>
 2. Click "Compare & pull request"
 3. Fill in PR template (see PULL_REQUEST_TEMPLATE.md)
 4. Submit PR
@@ -159,6 +161,7 @@ git push origin feature/iris-adapter
 ## Troubleshooting
 
 ### ImportError: No module named 'iris'
+
 ```bash
 pip install iris-native-api
 # or
@@ -166,14 +169,17 @@ pip install iris-vector-graph
 ```
 
 ### Connection Error
+
 - Verify IRIS is running: Check Docker or native installation
 - Verify port: `echo $IRIS_PORT` should match IRIS SuperServer port
 - Verify credentials: Try connecting with IRIS System Management Portal
 
 ### Tests Fail with Mock Errors
+
 - Ensure you're using `unittest.mock` from Python 3.3+
 - Check that test file has proper imports
 
 ### Embedding Generation Fails
+
 - Install sentence-transformers: `pip install sentence-transformers`
 - Or ensure iris_rag is available in same environment

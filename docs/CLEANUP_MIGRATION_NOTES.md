@@ -18,17 +18,20 @@ The RAG templates bridge adapter has been moved into the main `iris_vector_rag` 
 The following directories were removed as they contained temporary/output files that are not part of the core repository:
 
 #### outputs/
+
 - **Status**: Removed (gitignored)
 - **Purpose**: Runtime output files, test results, pipeline validation reports
 - **Note**: Generated dynamically by tests and evaluation scripts
 - **References**: Some historical documentation may reference files in this directory
 
 #### validation_results/
+
 - **Status**: Removed (already gitignored)
 - **Purpose**: Historical validation and test reports
 - **Note**: These were temporary outputs from validation runs
 
 #### mem0_integration/, mem0-mcp-server/, supabase-mcp-memory-server/
+
 - **Status**: Removed (orphaned experimental code)
 - **Purpose**: Old memory integration experiments
 - **Note**: Replaced by current memory management system

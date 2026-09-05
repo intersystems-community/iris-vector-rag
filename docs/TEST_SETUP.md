@@ -38,6 +38,7 @@ docker-compose -f docker-compose.test.yml ps
 ```
 
 **Test Database Ports:**
+
 - SuperServer: 31972 (vs 11972 for production)
 - Management Portal: 35273 (vs 15273 for production)
 
@@ -84,6 +85,7 @@ pytest tests/ -v
 The test suite is organized into categories using pytest markers:
 
 ### Unit Tests
+
 ```bash
 pytest tests/unit/ -v
 # or
@@ -91,12 +93,14 @@ pytest -m unit
 ```
 
 **Characteristics:**
+
 - Fast execution (< 1s per test)
 - No external dependencies
 - Use mocks for database/API calls
 - Test individual components in isolation
 
 ### Integration Tests
+
 ```bash
 pytest tests/integration/ -v
 # or
@@ -104,12 +108,14 @@ pytest -m integration
 ```
 
 **Characteristics:**
+
 - Medium execution time (1-5s per test)
 - Require IRIS database
 - Test component interactions
 - May use real database queries
 
 ### E2E Tests
+
 ```bash
 pytest tests/e2e/ -v
 # or
@@ -117,17 +123,20 @@ pytest -m e2e
 ```
 
 **Characteristics:**
+
 - Slower execution (5-30s per test)
 - Require full stack (database + external services)
 - Test complete workflows
 - Validate end-to-end functionality
 
 ### Contract Tests
+
 ```bash
 pytest tests/contract/ -v
 ```
 
 **Characteristics:**
+
 - API contract validation
 - Ensure backward compatibility
 - Test request/response schemas
@@ -192,6 +201,7 @@ markers =
 ```
 
 **Key Configuration:**
+
 - `pytest-randomly` is disabled to avoid seed conflicts
 - Coverage is configured for `iris_rag/` and `common/` modules
 - Test timeout is set to 300 seconds (5 minutes)
@@ -246,6 +256,7 @@ TEST_DATABASE_VOLUME=$(mktemp -d) docker-compose -f docker-compose.test.yml up -
 **Symptom:** Tests fail with "Connection refused" or "Unable to connect to IRIS"
 
 **Solution:**
+
 ```bash
 # Check if IRIS is running
 docker ps | grep rag_iris_test
@@ -265,6 +276,7 @@ docker-compose -f docker-compose.test.yml logs iris-test
 **Symptom:** Docker fails to start with "port already in use"
 
 **Solution:**
+
 ```bash
 # Check what's using the ports
 lsof -i :31972  # Test SuperServer port
@@ -278,6 +290,7 @@ lsof -i :35273  # Test Management Portal port
 **Symptom:** pytest can't find tests or modules
 
 **Solution:**
+
 ```bash
 # Ensure you're in the project root
 cd /path/to/rag-templates
@@ -297,6 +310,7 @@ python -c "import iris_vector_rag; print(iris_rag.__file__)"
 **Symptom:** Tests fail with "AttributeError: Mock object has no attribute..."
 
 **Solution:**
+
 - Check that mock fixtures in `tests/conftest.py` are properly configured
 - Ensure test is using the correct fixture (e.g., `mock_vector_store` vs `iris_test_session`)
 - Review test markers - unit tests should use mocks, integration tests use real connections
@@ -306,6 +320,7 @@ python -c "import iris_vector_rag; print(iris_rag.__file__)"
 **Symptom:** Coverage report shows 0% or missing modules
 
 **Solution:**
+
 ```bash
 # Ensure coverage is tracking the right modules
 pytest --cov=iris_rag --cov=common --cov-report=term-missing
@@ -339,6 +354,7 @@ pytest tests/ -n auto --cov=iris_rag --cov=common
 ### Baseline Performance
 
 Expected test execution times:
+
 - Unit tests: ~10-30 seconds (full suite)
 - Integration tests: ~1-2 minutes (full suite)
 - E2E tests: ~2-5 minutes (full suite)
@@ -367,6 +383,7 @@ The test suite integrates with GitHub Actions via `.github/workflows/ci.yml`:
 ```
 
 **Quality Gates:**
+
 - All tests must pass (0 failures)
 - Overall coverage ≥60%
 - Critical modules ≥80% coverage
@@ -382,6 +399,7 @@ The test suite integrates with GitHub Actions via `.github/workflows/ci.yml`:
 ## Support
 
 For test setup issues:
+
 1. Check this document's troubleshooting section
 2. Review test logs in `test-results/logs/`
 3. Check GitHub Actions workflow runs

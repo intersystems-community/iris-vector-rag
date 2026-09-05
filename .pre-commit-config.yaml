@@ -10,7 +10,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ["--maxkb=1000"]
       - id: check-merge-conflict
 
   # Python formatting
@@ -29,6 +29,19 @@ repos:
   # Custom local hooks for compliance
   - repo: local
     hooks:
+      # spec-gates git boundary: the same verify.sh the Stop hook and CI run, so
+      # local green == CI green. The machine-wide core.hooksPath hook delegates to
+      # this framework; commit-msg (conventional commits) is delegated by that
+      # global hook directly. The upstream gates pre-commit wrapper is not used
+      # here: its credential heuristic flags placeholder examples in docs and it
+      # refuses to commit its own policy.json with no override. Secret scanning is
+      # covered by the global hook (forbidden files) and gitleaks in security.yml.
+      - id: spec-gates
+        name: Quality gates (spec-gates verify.sh)
+        entry: bash .specify/gates/verify.sh --boundary git
+        language: system
+        pass_filenames: false
+        always_run: true
       # TDD compliance check for contract tests
       - id: tdd-compliance
         name: TDD Compliance Check

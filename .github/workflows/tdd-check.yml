@@ -3,9 +3,9 @@ name: TDD Compliance Check
 on:
   pull_request:
     paths:
-      - 'tests/contract/**'
-      - 'tests/**/*_contract.py'
-      - 'scripts/validate_tdd_compliance.py'
+      - "tests/contract/**"
+      - "tests/**/*_contract.py"
+      - "scripts/validate_tdd_compliance.py"
 
 permissions:
   contents: read
@@ -20,12 +20,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # Need full history for git analysis
+          fetch-depth: 0 # Need full history for git analysis
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install GitPython
         run: |
@@ -39,7 +39,7 @@ jobs:
 
       - name: Post results as PR comment
         if: always()
-        continue-on-error: true  # Don't fail if commenting is not allowed (fork PRs)
+        continue-on-error: true # Don't fail if commenting is not allowed (fork PRs)
         uses: actions/github-script@v9
         with:
           script: |

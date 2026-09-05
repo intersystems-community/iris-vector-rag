@@ -12,8 +12,8 @@ services:
     restart: unless-stopped
 
     ports:
-      - "31972:1972"    # SuperServer port for test database
-      - "35273:52773"   # Management Portal port for test database
+      - "31972:1972" # SuperServer port for test database
+      - "35273:52773" # Management Portal port for test database
 
     environment:
       - IRIS_USERNAME=_SYSTEM
@@ -21,7 +21,16 @@ services:
       - IRIS_NAMESPACE=USER
 
     healthcheck:
-      test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U", "USER", "##class(SYS.System).WriteToConsoleLog(\"Health check\")"]
+      test:
+        [
+          "CMD",
+          "/usr/irissys/bin/iris",
+          "session",
+          "iris",
+          "-U",
+          "USER",
+          '##class(SYS.System).WriteToConsoleLog("Health check")',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

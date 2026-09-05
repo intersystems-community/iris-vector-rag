@@ -20,7 +20,7 @@ Validated architecture summary for rag-templates based solely on implemented cod
 ## Proven IRIS Integration Patterns
 
 - Vector store wiring occurs in the base constructor; when no store is provided, IRIS-backed store is created automatically:
-  - [RAGPipeline.__init__](iris_rag/core/base.py:21) instantiates IRISVectorStore when vector_store is None.
+  - [RAGPipeline.**init**](iris_rag/core/base.py:21) instantiates IRISVectorStore when vector_store is None.
 - Direct DBAPI usage patterns exercised in pipelines:
   - Cursor creation and SQL execution in CRAG:
     - [CRAGPipeline._enhance_retrieval](iris_rag/pipelines/crag.py:320)
@@ -35,7 +35,7 @@ Validated architecture summary for rag-templates based solely on implemented cod
 ## Extension Mechanisms Confirmed by Tests
 
 - Pipeline inheritance and override points:
-  - [BasicRAGRerankingPipeline.__init__](iris_rag/pipelines/basic_rerank.py:59) accepts a custom reranker_func; default [hf_reranker](iris_rag/pipelines/basic_rerank.py:16)
+  - [BasicRAGRerankingPipeline.**init**](iris_rag/pipelines/basic_rerank.py:59) accepts a custom reranker_func; default [hf_reranker](iris_rag/pipelines/basic_rerank.py:16)
   - [BasicRAGRerankingPipeline.query](iris_rag/pipelines/basic_rerank.py:93) adds reranking while preserving parent response format
 - Validated factory with precondition checks and auto-setup:
   - [ValidatedPipelineFactory.create_pipeline](iris_rag/validation/factory.py:56) (types: basic, basic_rerank, crag)
@@ -75,20 +75,20 @@ Validated architecture summary for rag-templates based solely on implemented cod
 
 ## Migration Path for Consuming Applications (kg-ticket-resolver)
 
-1) Instantiate the bridge and select a technique (defaults via config):
-   - Bridge init and config keys [RAGTemplatesBridge.__init__](iris_vector_rag/adapters/rag_templates_bridge.py:98)
-   - Default and fallback technique resolution [RAGTemplatesBridge.__init__](iris_vector_rag/adapters/rag_templates_bridge.py:110)
-2) Call the unified async entrypoint and consume standardized response:
+1. Instantiate the bridge and select a technique (defaults via config):
+   - Bridge init and config keys [RAGTemplatesBridge.**init**](iris_vector_rag/adapters/rag_templates_bridge.py:98)
+   - Default and fallback technique resolution [RAGTemplatesBridge.**init**](iris_vector_rag/adapters/rag_templates_bridge.py:110)
+2. Call the unified async entrypoint and consume standardized response:
    - [RAGTemplatesBridge.query](iris_vector_rag/adapters/rag_templates_bridge.py:203) returns [RAGResponse](iris_vector_rag/adapters/rag_templates_bridge.py:52)
-3) Monitor health and performance:
+3. Monitor health and performance:
    - [RAGTemplatesBridge.get_health_status](iris_vector_rag/adapters/rag_templates_bridge.py:332)
    - [RAGTemplatesBridge.get_metrics](iris_vector_rag/adapters/rag_templates_bridge.py:323)
-4) Pre-deployment data readiness:
+4. Pre-deployment data readiness:
    - Run [SetupOrchestrator.setup_pipeline](iris_rag/validation/orchestrator.py:72) for 'basic', 'basic_rerank', 'crag'; for GraphRAG, populate KG tables then use the class directly or via bridge.
 
 ## Confirmed/Excluded Scope
 
-- Confirmed implemented pipelines: Basic, CRAG, BasicReranking, GraphRAG (package [__all__](iris_rag/pipelines/__init__.py))
+- Confirmed implemented pipelines: Basic, CRAG, BasicReranking, GraphRAG (package [**all**](iris_rag/pipelines/__init__.py))
 - Not implemented in the codebase: ColBERT, HyDE, NodeRAG, HybridIFind (imports appear in exploratory tests; [iris_rag/pipelines/colbert](iris_rag/pipelines/colbert) contains no files)
 
 ## Summary

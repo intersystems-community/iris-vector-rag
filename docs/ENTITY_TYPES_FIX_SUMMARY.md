@@ -20,11 +20,13 @@ Fixed critical architectural limitation in iris-vector-rag that prevented domain
 ### The Bug
 
 `BatchEntityExtractionModule` had **hardcoded entity types** designed for IT support tickets:
+
 ```python
 entity_types="PRODUCT, USER, MODULE, ERROR, ACTION, ORGANIZATION, VERSION"
 ```
 
 This prevented domain-specific entity extraction in:
+
 - **Wikipedia QA** (HippoRAG): Couldn't extract "Chief of Protocol", governmental positions
 - **Biomedical**: Couldn't extract genes, proteins, diseases
 - **Legal**: Couldn't extract parties, judges, courts
@@ -46,6 +48,7 @@ This prevented domain-specific entity extraction in:
 #### 1. BatchEntityExtractionModule (`iris_vector_rag/dspy_modules/batch_entity_extraction.py`)
 
 **Added Domain Presets** (Lines 17-24):
+
 ```python
 DOMAIN_PRESETS = {
     "it_support": ["PRODUCT", "USER", "MODULE", "ERROR", "ACTION", "ORGANIZATION", "VERSION"],
@@ -57,6 +60,7 @@ DOMAIN_PRESETS = {
 ```
 
 **Updated DSPy Signature** (Line 24):
+
 ```python
 # BEFORE (HARDCODED):
 entity_types = dspy.InputField(
@@ -70,6 +74,7 @@ entity_types = dspy.InputField(
 ```
 
 **Updated forward() Method** (Lines 141-175):
+
 ```python
 # BEFORE:
 def forward(self, tickets: List[Dict[str, str]]) -> List[Dict[str, Any]]:
@@ -100,6 +105,7 @@ def forward(
 #### 2. EntityExtractionService (`iris_vector_rag/services/entity_extraction.py`)
 
 **Updated Batch Extraction Call** (Line 1022):
+
 ```python
 # BEFORE:
 batch_results = self._batch_dspy_module.forward(tickets)
@@ -121,6 +127,7 @@ batch_results = self._batch_dspy_module.forward(tickets, entity_types=entity_typ
 #### 5. Contract Tests
 
 **New File**: `tests/contract/test_entity_types_batch_extraction.py`
+
 - 9 comprehensive tests
 - Test Results: **9/9 passing (100%)**
 
@@ -182,7 +189,8 @@ python -m pytest tests/contract/test_entity_types_batch_extraction.py -v
 ```
 
 **Results**: 9/9 passing
-```
+
+```text
 test_forward_accepts_entity_types_parameter PASSED
 test_forward_uses_custom_entity_types PASSED
 test_forward_defaults_to_it_support_types PASSED
@@ -219,11 +227,13 @@ python -c "from iris_vector_rag.dspy_modules.batch_entity_extraction import DOMA
 **Question 2**: "What government position was held by the woman who portrayed Corliss Archer in the film Kiss and Tell?"
 
 **Before (v0.5.6)**:
+
 - Entity Types Used: `USER, MODULE, VERSION` (TrakCare healthcare domain)
 - "Chief of Protocol" extraction: ❌ FAILED
 - F1 Score: 0.000
 
 **After (v0.5.7)**:
+
 - Entity Types Used: `PERSON, ORGANIZATION, LOCATION, TITLE, ROLE, POSITION` (wikipedia preset)
 - "Chief of Protocol" extraction: ✅ EXPECTED
 - F1 Score: 0.45+ (estimated based on entity extraction improvement)
@@ -231,19 +241,21 @@ python -c "from iris_vector_rag.dspy_modules.batch_entity_extraction import DOMA
 ### Configuration Update
 
 **HippoRAG Config** (`config/hipporag2.yaml`):
+
 ```yaml
 entity_extraction:
   entity_types:
     - "PERSON"
     - "ORGANIZATION"
     - "LOCATION"
-    - "TITLE"        # Enables "Chief of Protocol" extraction
+    - "TITLE" # Enables "Chief of Protocol" extraction
     - "ROLE"
     - "POSITION"
     - "PRODUCT"
 ```
 
 **HippoRAG Pipeline** (`src/hipporag2/pipeline/hipporag2_pipeline.py`):
+
 ```python
 # Get entity_types from config
 entity_types = self.config.entity_extraction.get("entity_types")
@@ -263,6 +275,7 @@ batch_results = self.entity_extractor.extract_batch_with_dspy(
 ### Existing Code Works Without Changes
 
 **Test Case**: IT Support Application
+
 ```python
 # NO CODE CHANGES NEEDED
 service = EntityExtractionService(config_manager)
@@ -270,6 +283,7 @@ results = service.extract_batch_with_dspy(documents)  # Works as before
 ```
 
 **Behavior**:
+
 - When `entity_types=None`, defaults to IT support types
 - Existing applications continue to extract: PRODUCT, USER, MODULE, ERROR, ACTION, ORGANIZATION, VERSION
 - No migration required
@@ -277,6 +291,7 @@ results = service.extract_batch_with_dspy(documents)  # Works as before
 ### Validation
 
 Contract test `test_extract_batch_with_dspy_works_without_entity_types` verifies backward compatibility:
+
 ```python
 def test_extract_batch_with_dspy_works_without_entity_types(self):
     """Test that extract_batch_with_dspy() works when entity_types is not provided."""
@@ -304,7 +319,7 @@ def test_extract_batch_with_dspy_works_without_entity_types(self):
 2. **iris_vector_rag/services/entity_extraction.py**
    - Line 1022: Updated batch extraction call to pass entity_types
 
-3. **iris_vector_rag/__init__.py**
+3. **iris_vector_rag/**init**.py**
    - Line 21: Version 0.5.6 → 0.5.7
 
 4. **pyproject.toml**
@@ -312,15 +327,15 @@ def test_extract_batch_with_dspy_works_without_entity_types(self):
 
 ### Documentation
 
-5. **CHANGELOG.md**
+1. **CHANGELOG.md**
    - Lines 3-129: Added comprehensive v0.5.7 entry
 
-6. **ENTITY_TYPES_FIX_SUMMARY.md** (new)
+2. **ENTITY_TYPES_FIX_SUMMARY.md** (new)
    - This document
 
 ### Tests
 
-7. **tests/contract/test_entity_types_batch_extraction.py** (new)
+1. **tests/contract/test_entity_types_batch_extraction.py** (new)
    - 9 contract tests validating the fix
    - All tests passing
 
@@ -331,7 +346,8 @@ def test_extract_batch_with_dspy_works_without_entity_types(self):
 ### Git Commits
 
 **Main Commit**: `feat: add configurable entity types for domain-specific extraction (v0.5.7)`
-```
+
+```text
 Commit: 0c9e4813
 Files changed: 6
 Insertions: 399
@@ -385,13 +401,14 @@ uv pip install --upgrade iris-vector-rag==0.5.7
 ### 2. Verify Entity Types Configuration
 
 Check `config/hipporag2.yaml`:
+
 ```yaml
 entity_extraction:
   entity_types:
     - "PERSON"
     - "ORGANIZATION"
     - "LOCATION"
-    - "TITLE"      # Critical for "Chief of Protocol"
+    - "TITLE" # Critical for "Chief of Protocol"
     - "ROLE"
     - "POSITION"
     - "EVENT"
@@ -404,6 +421,7 @@ timeout 240 python examples/hotpotqa_evaluation.py 2
 ```
 
 **Expected Improvements**:
+
 - Question 2 entities: "Chief of Protocol" should be extracted
 - Question 2 F1: 0.000 → 0.45+
 - Overall F1: Improvement due to better entity extraction
@@ -411,6 +429,7 @@ timeout 240 python examples/hotpotqa_evaluation.py 2
 ### 4. Validate Entity Extraction
 
 Check database after indexing:
+
 ```sql
 SELECT DISTINCT entity_type, COUNT(*)
 FROM iris_graph.entity
@@ -419,6 +438,7 @@ ORDER BY COUNT(*) DESC;
 ```
 
 **Expected Types** (wikipedia preset):
+
 - PERSON: 20-30 entities
 - ORGANIZATION: 15-25 entities
 - LOCATION: 10-20 entities
@@ -439,11 +459,11 @@ ORDER BY COUNT(*) DESC;
 
 ### Previous Fixes
 
-2. **BUG_REPORT_IRIS_VECTOR_RAG_0.5.6.md** (hipporag2-pipeline):
+1. **BUG_REPORT_IRIS_VECTOR_RAG_0.5.6.md** (hipporag2-pipeline):
    - Status: ✅ **RESOLVED** in v0.5.6
    - Issue: Package rebuild needed after connection import fix
 
-3. **BUG_REPORT_IRIS_VECTOR_RAG_0.5.5.md**:
+2. **BUG_REPORT_IRIS_VECTOR_RAG_0.5.5.md**:
    - Status: ✅ **RESOLVED** in v0.5.6
    - Issue: IRIS connection import regression
 
@@ -481,14 +501,14 @@ Version 0.5.7 successfully removes the hardcoded entity type limitation in iris-
 
 ### Summary
 
-| Aspect | Status | Impact |
-|--------|--------|--------|
-| Bug Fixed | ✅ Complete | Hardcoded entity types removed |
-| Backward Compatibility | ✅ Verified | Existing code works without changes |
-| Contract Tests | ✅ 9/9 passing | Implementation validated |
-| HippoRAG Integration | ✅ Ready | F1 improvement expected |
-| Package Released | ✅ v0.5.7 | Available in both repositories |
-| Documentation | ✅ Complete | CHANGELOG, tests, summary |
+| Aspect                 | Status         | Impact                              |
+| ---------------------- | -------------- | ----------------------------------- |
+| Bug Fixed              | ✅ Complete    | Hardcoded entity types removed      |
+| Backward Compatibility | ✅ Verified    | Existing code works without changes |
+| Contract Tests         | ✅ 9/9 passing | Implementation validated            |
+| HippoRAG Integration   | ✅ Ready       | F1 improvement expected             |
+| Package Released       | ✅ v0.5.7      | Available in both repositories      |
+| Documentation          | ✅ Complete    | CHANGELOG, tests, summary           |
 
 ### Recommendation
 

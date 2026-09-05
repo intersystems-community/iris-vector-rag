@@ -33,7 +33,8 @@ make api-create-key NAME="My First Key" EMAIL=user@example.com
 **Save the key secret** - it won't be shown again!
 
 Output:
-```
+
+```text
 ================================================================================
 API Key Created Successfully!
 ================================================================================
@@ -55,11 +56,13 @@ Authorization: ApiKey N2M5ZTY2NzktNzQyNS00MGRlLTk0NGItZTA3ZmMxZjkwYWU3OmExYjJjM2
 ### 3. Start API Server
 
 Development mode (auto-reload):
+
 ```bash
 make api-run
 ```
 
 Production mode (4 workers):
+
 ```bash
 make api-run-prod
 ```
@@ -67,17 +70,20 @@ make api-run-prod
 ### 4. Test the API
 
 Check health:
+
 ```bash
 make api-health
 ```
 
 Open documentation:
+
 ```bash
 make api-docs
 # Opens http://localhost:8000/docs in browser
 ```
 
 Query a pipeline:
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/basic/_search \
   -H "Authorization: ApiKey <your-base64-encoded-key>" \
@@ -94,15 +100,16 @@ curl -X POST http://localhost:8000/api/v1/basic/_search \
 
 All endpoints (except `/health` and `/pipelines`) require API key authentication:
 
-```
+```text
 Authorization: ApiKey <base64(key_id:key_secret)>
 ```
 
 ### Query Endpoints
 
-**POST /{pipeline}/_search** - Execute semantic search query
+**POST /{pipeline}/\_search** - Execute semantic search query
 
 Supported pipelines:
+
 - `basic` - Standard vector similarity search
 - `basic_rerank` - Vector search with cross-encoder reranking
 - `crag` - Corrective RAG with self-evaluation
@@ -110,6 +117,7 @@ Supported pipelines:
 - `pylate_colbert` - Late interaction retrieval
 
 Request:
+
 ```json
 {
   "query": "What is diabetes?",
@@ -121,6 +129,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "response_id": "9a8b7c6d-5e4f-3210-9876-543210fedcba",
@@ -160,7 +169,8 @@ Response:
 Requires `write` permission.
 
 Request (multipart/form-data):
-```
+
+```text
 file: <document-file>
 pipeline_type: graphrag
 chunk_size: 1000
@@ -168,6 +178,7 @@ chunk_overlap: 200
 ```
 
 Response:
+
 ```json
 {
   "operation_id": "b1c2d3e4-5678-90ab-cdef-fedcba987654",
@@ -179,6 +190,7 @@ Response:
 **GET /api/v1/documents/operations/{operation_id}** - Track upload progress
 
 Response:
+
 ```json
 {
   "operation_id": "b1c2d3e4-5678-90ab-cdef-fedcba987654",
@@ -197,6 +209,7 @@ Response:
 No authentication required.
 
 Response:
+
 ```json
 {
   "status": "healthy",
@@ -224,6 +237,7 @@ Response:
 **WS /ws** - Real-time event streaming
 
 Connect and authenticate:
+
 ```python
 import websockets
 import json
@@ -253,6 +267,7 @@ async with websockets.connect("ws://localhost:8000/ws") as ws:
 ```
 
 Event types:
+
 - `query_start` - Query execution started
 - `retrieval_progress` - Documents being retrieved
 - `generation_chunk` - Partial answer text
@@ -299,20 +314,22 @@ make api-revoke-key KEY_ID=7c9e6679-7425-40de-944b-e07fc1f90ae7
 
 Three tiers with different limits:
 
-| Tier | Requests/Minute | Requests/Hour | Max Concurrent |
-|------|----------------|---------------|----------------|
-| Basic | 60 | 1,000 | 5 |
-| Premium | 100 | 5,000 | 10 |
-| Enterprise | 1,000 | 50,000 | 20 |
+| Tier       | Requests/Minute | Requests/Hour | Max Concurrent |
+| ---------- | --------------- | ------------- | -------------- |
+| Basic      | 60              | 1,000         | 5              |
+| Premium    | 100             | 5,000         | 10             |
+| Enterprise | 1,000           | 50,000        | 20             |
 
 Rate limit headers in every response:
-```
+
+```text
 X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 45
 X-RateLimit-Reset: 1705411200
 ```
 
 When exceeded (HTTP 429):
+
 ```json
 {
   "error": {
@@ -348,6 +365,7 @@ All errors follow Elasticsearch-inspired structure:
 ```
 
 Error types:
+
 - `authentication_error` - Missing or invalid credentials (401)
 - `authorization_error` - Insufficient permissions (403)
 - `validation_exception` - Invalid request parameters (422)
@@ -414,11 +432,13 @@ python -m iris_rag.api.cleanup_job
 ```
 
 Schedule with cron (runs daily at 2 AM):
+
 ```cron
 0 2 * * * cd /path/to/rag-templates && .venv/bin/python -m iris_rag.api.cleanup_job >> logs/cleanup.log 2>&1
 ```
 
 Cleanup policies:
+
 - Request logs: 30 days retention
 - Rate limit history: 7 days retention
 - WebSocket sessions: 24 hours inactive
@@ -500,6 +520,7 @@ LOG_RETENTION_DAYS=30
 Access metrics at `/api/v1/health` for Prometheus/Grafana integration.
 
 Key metrics:
+
 - Request rate (requests/second)
 - Response time (p50, p95, p99)
 - Error rate (% of failed requests)
@@ -535,12 +556,14 @@ Structured JSON logs for easy parsing:
 ## Performance
 
 Target latencies:
+
 - Query execution: <2s (p95)
 - Health check: <100ms
 - API key validation: <50ms
 - Document upload: Async, non-blocking
 
 Capacity:
+
 - 100+ concurrent query requests
 - 1000+ requests/minute (Enterprise tier)
 - 100 MB max document size
@@ -597,8 +620,9 @@ python -m iris_rag.api.cli health [--host HOST] [--port PORT]
 ## Support
 
 For issues, feature requests, or questions:
-- GitHub Issues: https://github.com/your-org/rag-templates/issues
-- Documentation: http://localhost:8000/docs (when server is running)
+
+- GitHub Issues: <https://github.com/your-org/rag-templates/issues>
+- Documentation: <http://localhost:8000/docs> (when server is running)
 
 ## License
 
