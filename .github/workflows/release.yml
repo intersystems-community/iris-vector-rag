@@ -47,7 +47,7 @@ jobs:
           pip install -e . "intersystems-irispython>=5.1.2" "iris-vector-graph>=2.1.0" "bcrypt>=4.0.0" "email-validator>=2.0.0"
 
       - name: Install test dependencies
-        run: pip install pytest pytest-mock pytest-timeout pytest-asyncio coverage pytest-cov python-dotenv sqlalchemy
+        run: pip install pytest pytest-mock pytest-timeout pytest-asyncio coverage pytest-cov python-dotenv sqlalchemy sqlalchemy-iris "iris-devtester>=1.11.1"
 
       - name: Run unit tests
         env:
@@ -83,6 +83,10 @@ jobs:
           IRIS_USERNAME: _SYSTEM
           IRIS_PASSWORD: SYS
           IRIS_NAMESPACE: USER
+          # Pipeline fixtures need a key present to construct an LLM func; a
+          # placeholder keeps contract tests free of real LLM calls (no cost, no
+          # network hangs). LLM-dependent suites (CRAG) are ignored below.
+          OPENAI_API_KEY: sk-ci-placeholder
         run: |
           # tests/contract/ci_known_failures.txt lists pre-existing failures that
           # need a pre-populated corpus or are stale against current pipeline

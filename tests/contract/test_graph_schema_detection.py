@@ -9,9 +9,10 @@ BEFORE implementation. Following TDD principles (Constitution III), all tests
 should fail with AttributeError or ImportError when first run.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 import importlib.util
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestGraphPackageDetection:
@@ -151,8 +152,8 @@ def schema_manager():
     NOTE: This fixture will fail initially because SchemaManager
     does not yet have the _detect_iris_vector_graph() method.
     """
+    from iris_vector_rag.config.manager import ConfigurationManager
     from iris_vector_rag.storage.schema_manager import SchemaManager
-    from iris_vector_rag.config.config_manager import ConfigurationManager
 
     config = ConfigurationManager()
     manager = SchemaManager(

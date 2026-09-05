@@ -366,8 +366,8 @@ def schema_manager():
     NOTE: This fixture will fail initially because SchemaManager
     does not yet have the validate_graph_prerequisites() method.
     """
+    from iris_vector_rag.config.manager import ConfigurationManager
     from iris_vector_rag.storage.schema_manager import SchemaManager
-    from iris_vector_rag.config.config_manager import ConfigurationManager
 
     config = ConfigurationManager()
     manager = SchemaManager(
