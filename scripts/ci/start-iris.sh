@@ -21,6 +21,20 @@ echo "Waiting for IRIS on port ${PORT}..."
 timeout 120 bash -c "until nc -z localhost ${PORT}; do sleep 2; done"
 sleep 5
 
-printf 'do ##class(Security.Users).UnExpireUserPasswords("*")\nwrite "PASSWORDS_UNEXPIRED",!\nhalt\n' \
-  | docker exec -i "$NAME" iris session IRIS -U%SYS | grep -q PASSWORDS_UNEXPIRED
-echo "IRIS ready: container=${NAME} port=${PORT}"
+# The port opens before IRIS accepts terminal sessions; retry until the
+# ObjectScript call actually runs (up to ~2 minutes).
+unexpire() {
+  printf 'do ##class(Security.Users).UnExpireUserPasswords("*")\nwrite "PASSWORDS_UNEXPIRED",!\nhalt\n' \
+    | docker exec -i "$NAME" iris session IRIS -U%SYS 2>&1 | grep -q PASSWORDS_UNEXPIRED
+}
+for attempt in $(seq 1 24); do
+  if unexpire; then
+    echo "IRIS ready: container=${NAME} port=${PORT} (attempt ${attempt})"
+    exit 0
+  fi
+  sleep 5
+done
+
+echo "IRIS did not become ready; container logs:" >&2
+docker logs "$NAME" 2>&1 | tail -40 >&2
+exit 1
