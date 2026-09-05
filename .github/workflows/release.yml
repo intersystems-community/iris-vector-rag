@@ -135,6 +135,9 @@ jobs:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: build
+    # Only the public repo has (or should have) a PyPI trusted publisher; the private
+    # mirror runs the same workflow for validation and must not attempt to publish.
+    if: github.repository == 'intersystems-community/iris-vector-rag'
     environment: pypi
     permissions:
       id-token: write  # required for OIDC trusted publishing
@@ -153,6 +156,7 @@ jobs:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: publish
+    if: github.repository == 'intersystems-community/iris-vector-rag'
     permissions:
       contents: write
 
