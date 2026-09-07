@@ -8,18 +8,20 @@ for InterSystems IRIS, including CLOB handling and vector search capabilities.
 import json
 import logging
 import os
-from iris_vector_rag.common.db_vector_utils import insert_vector
-from typing import List, Dict, Any, Optional, Tuple
+import re
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..core.vector_store import VectorStore
-from ..core.models import Document
-from ..core.connection import ConnectionManager
+from iris_vector_rag.common.db_vector_utils import insert_vector
+
 from ..config.manager import ConfigurationManager
+from ..core.connection import ConnectionManager
+from ..core.models import Document
+from ..core.vector_store import VectorStore
 from ..exceptions import (
     EmbeddingError,
+    VectorStoreCLOBError,
     VectorStoreConfigurationError,
     VectorStoreConnectionError,
-    VectorStoreCLOBError,
     VectorStoreDataError,
 )
 from .clob_handler import ensure_string_content
@@ -971,6 +973,84 @@ class IRISVectorStore(VectorStore):
         finally:
             cursor.close()
 
+    # Stream (LONGVARCHAR) metadata columns cannot be used with LIKE directly:
+    # IRIS silently matches nothing. SUBSTRING projects the stream to a string.
+    _STREAM_METADATA_TYPES = ("longvarchar", "longvarbinary", "clob")
+    _STREAM_METADATA_PROJECTION = 32000
+
+    def _metadata_filter_column_expr(
+        self, cursor, table_short_name: str, metadata_column: str
+    ) -> str:
+        """SQL expression for the metadata column that LIKE can evaluate."""
+        cache = getattr(self, "_metadata_column_exprs", None)
+        if cache is None:
+            cache = self._metadata_column_exprs = {}
+        key = (self.table_name, metadata_column)
+        if key in cache:
+            return cache[key]
+        schema = self.table_name.split(".")[0] if "." in self.table_name else "RAG"
+        expr = metadata_column
+        try:
+            cursor.execute(
+                """
+                SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = ? AND UPPER(TABLE_NAME) = UPPER(?)
+                  AND UPPER(COLUMN_NAME) = UPPER(?)
+                """,
+                [schema, table_short_name, metadata_column],
+            )
+            row = cursor.fetchone()
+            data_type = str(row[0]).lower() if row and row[0] else ""
+            if data_type in self._STREAM_METADATA_TYPES:
+                expr = (
+                    f"SUBSTRING({metadata_column},1,{self._STREAM_METADATA_PROJECTION})"
+                )
+        except (
+            Exception
+        ) as exc:  # pragma: no cover - defensive; fall back to the bare column
+            logger.debug(
+                "metadata column type lookup failed for %s: %s", metadata_column, exc
+            )
+        cache[key] = expr
+        return expr
+
+    @staticmethod
+    def _metadata_filter_predicate(filter: Dict[str, Any], metadata_expr: str) -> str:
+        """
+        Build the SQL predicate for a metadata filter over serialized JSON.
+
+        Matches the JSON member `"key": <literal>` with or without a space after
+        the colon (json.dumps emits the space; hand-written JSON often does not).
+        The literal is the JSON encoding of the value, so strings are quoted and
+        numbers/booleans are not. The closing quote of a string literal rules out
+        prefix collisions; the remaining approximation (the same member at a
+        nested depth, or the pattern inside a longer string) is removed by the
+        exact-match backstop in similarity_search_by_embedding.
+        """
+        conditions = []
+        for key, value in filter.items():
+            if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", str(key)):
+                raise VectorStoreDataError(f"Invalid metadata filter key: {key!r}")
+            literal = json.dumps(value).replace("'", "''")
+            conditions.append(
+                f"({metadata_expr} LIKE '%\"{key}\":{literal}%' "
+                f"OR {metadata_expr} LIKE '%\"{key}\": {literal}%')"
+            )
+        return " AND ".join(conditions)
+
+    @staticmethod
+    def _apply_exact_metadata_filter(rows, metadata_map, filter):
+        """Drop rows whose parsed metadata does not match exactly; return (kept, dropped)."""
+        kept = []
+        dropped = 0
+        for row in rows:
+            meta = metadata_map.get(row[0], {}) or {}
+            if all(meta.get(k) == v for k, v in filter.items()):
+                kept.append(row)
+            else:
+                dropped += 1
+        return kept, dropped
+
     def similarity_search_by_embedding(
         self,
         query_embedding: List[float],
@@ -1056,18 +1136,15 @@ class IRISVectorStore(VectorStore):
             metadata_column = schema_config.get("metadata_column", "metadata")
 
             if filter:
-                for key, value in filter.items():
-                    # Key is already validated, safe to use in f-string
-                    # IRIS SQL has no standard JSON functions; use LIKE on metadata JSON text
-                    # Pattern matches: "key": "value" in JSON string (with optional space after colon)
-                    # This is best-effort filtering on serialized JSON
-                    escaped_value = str(value).replace("'", "''")
-                    filter_conditions.append(
-                        f'({metadata_column} LIKE \'%"{key}":"{escaped_value}"%\' OR {metadata_column} LIKE \'%"{key}": "{escaped_value}"%\')'
-                    )
-
-                if filter_conditions:
-                    additional_where = " AND ".join(filter_conditions)
+                # Push the filter into SQL so recall is scoped to the filtered
+                # subset instead of to a global page (opsreview upstream report:
+                # docs/upstream/ivr-metadata-filter-pushdown.md).
+                metadata_expr = self._metadata_filter_column_expr(
+                    cursor, table_short_name, metadata_column
+                )
+                additional_where = self._metadata_filter_predicate(
+                    filter, metadata_expr
+                )
 
             try:
                 expected_dimension = self.schema_manager.get_vector_dimension(
@@ -1108,124 +1185,116 @@ class IRISVectorStore(VectorStore):
                 f"Vector search: query={len(query_embedding)}D, expected={expected_dimension}D, table={table_short_name}"
             )
 
-            apply_filter_in_python = bool(filter)
-            search_top_k = max(top_k * 5, top_k) if apply_filter_in_python else top_k
-            if apply_filter_in_python:
-                additional_where = None
+            # The filter is applied in SQL; the page is top_k. The exact-match
+            # check below is only a backstop for LIKE approximations and widens
+            # the page once if it actually drops rows.
+            search_top_k = top_k
 
             # Convert query embedding to bracketed string format for TO_VECTOR
             # IMPORTANT: TO_VECTOR() does NOT accept parameter markers
             embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
 
-            # Build SQL with embedded vector string (no parameters)
-            # Use new schema columns: doc_id and text_content
-            sql = build_safe_vector_dot_sql(
-                table=self.table_name,
-                vector_column="embedding",
-                vector_string=embedding_str,
-                vector_dimension=expected_dimension,
-                id_column=id_column,
-                extra_columns=[text_column],
-                top_k=search_top_k,
-                additional_where=additional_where,
-                vector_data_type=vector_data_type,
-            )
-
-            # DEBUG: Check if SQL contains DOUBLE or FLOAT
-            if "DOUBLE" in sql:
-                logger.error(
-                    f"FOUND DOUBLE IN SQL! SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}"
+            def _build_sql(page_size: int, data_type: str) -> str:
+                return build_safe_vector_dot_sql(
+                    table=self.table_name,
+                    vector_column="embedding",
+                    vector_string=embedding_str,
+                    vector_dimension=expected_dimension,
+                    id_column=id_column,
+                    extra_columns=[text_column],
+                    top_k=page_size,
+                    additional_where=additional_where,
+                    vector_data_type=data_type,
                 )
-            elif "FLOAT" in sql:
-                logger.info(
-                    f"SQL correctly uses FLOAT. SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}"
-                )
-            else:
-                logger.warning("No FLOAT or DOUBLE found in SQL!")
 
-            # Execute using the safe helper (vector already embedded in SQL)
+            def _fetch_page(page_size: int):
+                """Run the ranked query for one page and load its metadata."""
+                sql = _build_sql(page_size, vector_data_type)
+                logger.debug(f"SQL query executed: {sql}")
+                try:
+                    page_rows = execute_safe_vector_search(cursor, sql)
+                except Exception as e:
+                    error_text = str(e)
+                    if "Table" in error_text and "not found" in error_text:
+                        logger.info(
+                            f"Table {self.table_name} not found, attempting to create it automatically"
+                        )
+                        self._create_table_automatically()
+                        page_rows = execute_safe_vector_search(cursor, sql)
+                    elif "different datatypes" in error_text.lower():
+                        # Retry with alternate vector data type (FLOAT <-> DOUBLE)
+                        fallback_type = (
+                            "DOUBLE" if vector_data_type.upper() == "FLOAT" else "FLOAT"
+                        )
+                        logger.warning(
+                            "Vector datatype mismatch detected; retrying with %s",
+                            fallback_type,
+                        )
+                        page_rows = execute_safe_vector_search(
+                            cursor, _build_sql(page_size, fallback_type)
+                        )
+                    else:
+                        logger.error(f"Vector search SQL that failed: {sql[:500]}...")
+                        logger.error(f"Error details: {type(e).__name__}: {e}")
+                        raise
+
+                page_metadata = {}
+                if page_rows:
+                    # Handle Mock objects that aren't iterable
+                    try:
+                        doc_ids = [row[0] for row in page_rows]
+                        placeholders = ",".join(["?" for _ in doc_ids])
+                        metadata_sql = (
+                            f"SELECT {id_column}, {metadata_column} FROM {self.table_name} "
+                            f"WHERE {id_column} IN ({placeholders})"
+                        )
+                        cursor.execute(metadata_sql, doc_ids)
+                        for doc_id, metadata_json in cursor.fetchall():
+                            if isinstance(metadata_json, dict):
+                                page_metadata[doc_id] = metadata_json
+                                continue
+                            if not metadata_json:
+                                page_metadata[doc_id] = {}
+                                continue
+                            try:
+                                page_metadata[doc_id] = json.loads(metadata_json)
+                            except Exception:
+                                page_metadata[doc_id] = {}
+                    except (TypeError, AttributeError):
+                        logger.debug(
+                            "Rows is not iterable (likely a Mock object), skipping metadata fetch"
+                        )
+                        page_metadata = {}
+                return page_rows, page_metadata
+
             logger.debug(
                 f"Executing safe vector search with {len(query_embedding)}D vector"
             )
-            logger.debug(f"SQL query executed: {sql}")
-            try:
-                rows = execute_safe_vector_search(cursor, sql)
-            except Exception as e:
-                error_text = str(e)
-                # Check if this is a table not found error
-                if "Table" in error_text and "not found" in error_text:
-                    logger.info(
-                        f"Table {self.table_name} not found, attempting to create it automatically"
-                    )
-                    self._create_table_automatically()
-                    # Retry the search after table creation
-                    rows = execute_safe_vector_search(cursor, sql)
-                elif "different datatypes" in error_text.lower():
-                    # Retry with alternate vector data type (FLOAT <-> DOUBLE)
-                    fallback_type = (
-                        "DOUBLE" if vector_data_type.upper() == "FLOAT" else "FLOAT"
-                    )
-                    logger.warning(
-                        "Vector datatype mismatch detected; retrying with %s",
-                        fallback_type,
-                    )
-                    sql = build_safe_vector_dot_sql(
-                        table=self.table_name,
-                        vector_column="embedding",
-                        vector_string=embedding_str,
-                        vector_dimension=expected_dimension,
-                        id_column=id_column,
-                        extra_columns=[text_column],
-                        top_k=search_top_k,
-                        additional_where=additional_where,
-                        vector_data_type=fallback_type,
-                    )
-                    rows = execute_safe_vector_search(cursor, sql)
-                else:
-                    # Log the SQL that failed for debugging
-                    logger.error(f"Vector search SQL that failed: {sql[:500]}...")
-                    logger.error(f"Error details: {type(e).__name__}: {e}")
-                    # Re-raise other errors
-                    raise
+            rows, metadata_map = _fetch_page(search_top_k)
 
-            # Now fetch metadata for the returned documents
-            metadata_map = {}
-            if rows:
-                # Handle Mock objects that aren't iterable
+            if filter:
                 try:
-                    doc_ids = [row[0] for row in rows]
-                    placeholders = ",".join(["?" for _ in doc_ids])
-                    metadata_sql = (
-                        f"SELECT {id_column}, {metadata_column} FROM {self.table_name} "
-                        f"WHERE {id_column} IN ({placeholders})"
-                    )
-                    cursor.execute(metadata_sql, doc_ids)
-                    metadata_map = {}
-                    for doc_id, metadata_json in cursor.fetchall():
-                        if isinstance(metadata_json, dict):
-                            metadata_map[doc_id] = metadata_json
-                            continue
-                        if not metadata_json:
-                            metadata_map[doc_id] = {}
-                            continue
-                        try:
-                            metadata_map[doc_id] = json.loads(metadata_json)
-                        except Exception:
-                            metadata_map[doc_id] = {}
+                    page_was_full = len(rows) >= search_top_k
                 except (TypeError, AttributeError):
-                    # Handle Mock objects by skipping metadata fetch
+                    page_was_full = False
+                rows, dropped = self._apply_exact_metadata_filter(
+                    rows, metadata_map, filter
+                )
+                if dropped and page_was_full and len(rows) < top_k:
+                    # The LIKE predicate admitted rows the exact check rejected and
+                    # the page was full, so matching rows may sit just past it:
+                    # fetch one wider page rather than paying an over-fetch always.
+                    wider = max(top_k * 5, top_k + dropped)
                     logger.debug(
-                        "Rows is not iterable (likely a Mock object), skipping metadata fetch"
+                        "metadata filter backstop dropped %d row(s); re-fetching top %d",
+                        dropped,
+                        wider,
                     )
-                    metadata_map = {}
-
-            if apply_filter_in_python and filter:
-
-                def _matches(meta: Dict[str, Any]) -> bool:
-                    return all(meta.get(k) == v for k, v in filter.items())
-
-                rows = [row for row in rows if _matches(metadata_map.get(row[0], {}))]
-                rows = rows[:top_k]
+                    rows, metadata_map = _fetch_page(wider)
+                    rows, _ = self._apply_exact_metadata_filter(
+                        rows, metadata_map, filter
+                    )
+                    rows = rows[:top_k]
 
             results = []
             # Handle Mock objects that aren't iterable

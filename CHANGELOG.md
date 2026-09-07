@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Fix: metadata `filter` is applied in SQL, not as a post-ranking Python pass
+
+- `IRISVectorStore.similarity_search_by_embedding(..., filter=...)` built a LIKE
+  predicate for the filter and then discarded it, ranking the whole corpus,
+  fetching `top_k * 5` and filtering in Python. On a shared table a small
+  tenant's documents fell outside the global page and were silently lost
+  (reported by opsreview: `docs/upstream/ivr-metadata-filter-pushdown.md`).
+- The predicate now narrows the query (`WHERE ... LIKE '%"key":<json literal>%'`,
+  with and without the space `json.dumps` emits), the page is exactly `top_k`,
+  and the exact-match check remains only as a backstop for LIKE approximations,
+  fetching one wider page if it actually drops rows.
+- Stream (`LONGVARCHAR`) metadata columns are wrapped in `SUBSTRING`: IRIS
+  `LIKE` on a stream column silently matches nothing.
+- Non-string values match their JSON literal (`"page_number": 3`, `"flag": true`).
+- `JSON_VALUE` was evaluated and rejected: a single non-JSON row anywhere in the
+  table fails the whole query (SQLCODE -400) and it cannot run on stream columns.
+- Tests: `tests/unit/test_metadata_filter_pushdown.py` (SQL shape, page size,
+  backstop, stream column) and `tests/e2e/test_metadata_filter_pushdown_e2e.py`
+  (60 noisy-tenant documents; the small tenant's two documents are returned).
+
 ## v0.14.0 — delete_node + delete_documents fix
 
 ### New: `HybridGraphRAGPipeline.delete_node`
