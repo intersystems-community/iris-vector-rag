@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.14.2 — iris-vector-graph 2.18 pin
 
 ### Dependencies: iris-vector-graph >= 2.18.2, unified `iris` module pinned
 
