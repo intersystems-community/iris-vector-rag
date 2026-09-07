@@ -44,7 +44,7 @@ jobs:
         run: |
           # CPU-only torch first: avoids ~5 GB of nvidia CUDA wheels on a 14 GB runner
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -e . "intersystems-irispython>=5.1.2" "iris-vector-graph>=2.1.0" "bcrypt>=4.0.0" "email-validator>=2.0.0"
+          pip install -e . "intersystems-irispython>=5.1.2" "iris-vector-graph>=2.18.2" "bcrypt>=4.0.0" "email-validator>=2.0.0"
 
       - name: Install test dependencies
         run: pip install pytest pytest-mock pytest-timeout pytest-asyncio coverage pytest-cov python-dotenv sqlalchemy sqlalchemy-iris "iris-devtester>=1.11.1"
@@ -104,7 +104,8 @@ jobs:
             --ignore=tests/contract/test_crag_contract.py \
             --ignore=tests/contract/test_crag_error_handling.py \
             --ignore=tests/contract/test_crag_fallback_mechanism.py \
-            --ignore=tests/contract/test_crag_dimension_validation.py
+            --ignore=tests/contract/test_crag_dimension_validation.py \
+            --ignore=tests/contract/test_ragas_validation_contract.py
 
   build:
     name: Build distribution

@@ -52,6 +52,12 @@ dependencies = [
     "typing-extensions>=4.0.0",
     "psutil>=7.0.0",
     "intersystems-irispython>=5.1.2",
+    # Unified top-level `iris` module (external dbapi + embedded); pinned explicitly so
+    # install order cannot leave the bare driver's `iris` package in place.
+    "iris-embedded-python-wrapper>=0.5.20",
+    # Graph engine for HybridGraphRAG; 2.18.2 fixes kg_TXT (SQLCODE -51) and makes a
+    # failing text leg raise instead of silently degrading hybrid search to vector-only.
+    "iris-vector-graph>=2.18.2",
     "langchain-openai>=0.3.24",
     "langchain>=0.3.25",
     "python-dotenv>=1.1.0",
@@ -70,10 +76,10 @@ embedding = [
     "torch>=2.0.0",
     "sentence-transformers>=5.2.0,<5.3.0",
     "transformers>=4.41.0,<4.42.0",
-    "iris-vector-graph>=1.6.0"
+    "iris-vector-graph>=2.18.2"
 ]
 hybrid-graphrag = [
-    "iris-vector-graph>=1.6.0"
+    "iris-vector-graph>=2.18.2"
 ]
 monitoring = [
     "opentelemetry-api>=1.20.0",

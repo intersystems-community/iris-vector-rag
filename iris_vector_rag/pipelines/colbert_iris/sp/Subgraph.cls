@@ -5,15 +5,16 @@ Class Graph.KG.Subgraph Extends %RegisteredObject
 
 ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypesJson As %String = "", maxNodes As %Integer = 10000) As %String
 {
+	Set pGraph = 0
 	If seedJson = "" Return "{""nodes"":[],""edges"":[],""properties"":{},""labels"":{}}"
-	
+
 	Try {
 		Set seedArr = ##class(%DynamicArray).%FromJSON(seedJson)
 	} Catch {
 		Return "{""nodes"":[],""edges"":[],""properties"":{},""labels"":{}}"
 	}
 	If seedArr.%Size() = 0 Return "{""nodes"":[],""edges"":[],""properties"":{},""labels"":{}}"
-	
+
 	// Parse edge type filter
 	Set hasFilter = 0
 	If edgeTypesJson '= "" {
@@ -28,13 +29,13 @@ ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypes
 		} Catch {
 		}
 	}
-	
+
 	// Initialize BFS: frontier = seeds, seen = {}
 	Set nodeCount = 0
 	For i = 0:1:(seedArr.%Size()-1) {
 		Set s = seedArr.%Get(i)
 		// Accept seed if it has outgoing OR incoming edges in ^KG
-		If $Data(^KG("deg", s)) || ($Order(^KG("in", 0, s, "")) '= "") {
+		If $Data(^KG("deg", pGraph, s)) || ($Order(^KG("in", pGraph, s, "")) '= "") {
 			Set frontier(s) = ""
 			If '$Data(seen(s)) {
 				Set seen(s) = ""
@@ -42,7 +43,7 @@ ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypes
 			}
 		}
 	}
-	
+
 	// BFS: expand frontier hop by hop
 	For hop = 1:1:maxHops {
 		Kill nextFrontier
@@ -50,28 +51,28 @@ ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypes
 		For {
 			Set node = $Order(frontier(node))
 			Quit:node=""
-			
-			// Walk outgoing edges: ^KG("out", 0, node, predicate, object)
+
+			// Walk outgoing edges: ^KG("out", pGraph, node, predicate, object)
 			Set p = ""
 			For {
-				Set p = $Order(^KG("out", 0, node, p))
+				Set p = $Order(^KG("out", pGraph, node, p))
 				Quit:p=""
-				
+
 				// Edge type filter
 				If hasFilter && '$Data(allowedPred(p)) Continue
-				
+
 				Set o = ""
 				For {
-					Set o = $Order(^KG("out", 0, node, p, o))
+					Set o = $Order(^KG("out", pGraph, node, p, o))
 					Quit:o=""
-					
+
 					// Record edge
 					Set edgeKey = node_$Char(1)_p_$Char(1)_o
 					If '$Data(edgeSeen(edgeKey)) {
 						Set edgeSeen(edgeKey) = ""
 						Set edges($Increment(edgeCount)) = $ListBuild(node, p, o)
 					}
-					
+
 					// Add neighbor to next frontier if not seen
 					If '$Data(seen(o)) {
 						If nodeCount >= maxNodes Quit
@@ -84,30 +85,30 @@ ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypes
 			}
 			If nodeCount >= maxNodes Quit
 		}
-		
+
 		// Swap frontiers
 		Kill frontier
 		Merge frontier = nextFrontier
-		
+
 		// Stop if no new nodes discovered or at limit
 		Set check = $Order(frontier(""))
 		If check = "" Quit
 		If nodeCount >= maxNodes Quit
 	}
-	
+
 	// Build result JSON
 	Set nodesArr = ##class(%DynamicArray).%New()
 	Set edgesArr = ##class(%DynamicArray).%New()
 	Set propsObj = ##class(%DynamicObject).%New()
 	Set labelsObj = ##class(%DynamicObject).%New()
-	
+
 	// Collect nodes + properties + labels
 	Set n = ""
 	For {
 		Set n = $Order(seen(n))
 		Quit:n=""
 		Do nodesArr.%Push(n)
-		
+
 		// Properties: ^KG("prop", node, key) = val
 		Set propObj = ##class(%DynamicObject).%New()
 		Set hasProp = 0
@@ -119,7 +120,7 @@ ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypes
 			Set hasProp = 1
 		}
 		If hasProp Do propsObj.%Set(n, propObj)
-		
+
 		// Labels: scan all known labels for this node
 		// ^KG("label", labelName, nodeId) = ""
 		Set labelArr = ##class(%DynamicArray).%New()
@@ -135,7 +136,7 @@ ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypes
 		&sql(CLOSE lblCursor)
 		If hasLabel Do labelsObj.%Set(n, labelArr)
 	}
-	
+
 	// Collect edges
 	Set ei = ""
 	For {
@@ -147,13 +148,13 @@ ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypes
 		Do edgeObj.%Set("o", $ListGet(edgeList, 3))
 		Do edgesArr.%Push(edgeObj)
 	}
-	
+
 	Set result = ##class(%DynamicObject).%New()
 	Do result.%Set("nodes", nodesArr)
 	Do result.%Set("edges", edgesArr)
 	Do result.%Set("properties", propsObj)
 	Do result.%Set("labels", labelsObj)
-	
+
 	Return result.%ToJSON()
 }
 
@@ -162,15 +163,16 @@ ClassMethod SubgraphJson(seedJson As %String, maxHops As %Integer = 2, edgeTypes
 /// alpha = teleport probability (NOT damping); damping = 1 - alpha.
 ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %Double = 0.00001, topK As %Integer = 50, maxHops As %Integer = 5, edgeTypesJson As %String = "") As %String
 {
+	Set pGraph = 0
 	If seedJson = "" Return "{""nodes"":[],""edges"":[],""ppr_scores"":[],""seed_ids"":[],""nodes_before_pruning"":0,""nodes_after_pruning"":0}"
-	
+
 	Try {
 		Set seedArr = ##class(%DynamicArray).%FromJSON(seedJson)
 	} Catch {
 		Return "{""nodes"":[],""edges"":[],""ppr_scores"":[],""seed_ids"":[],""nodes_before_pruning"":0,""nodes_after_pruning"":0}"
 	}
 	If seedArr.%Size() = 0 Return "{""nodes"":[],""edges"":[],""ppr_scores"":[],""seed_ids"":[],""nodes_before_pruning"":0,""nodes_after_pruning"":0}"
-	
+
 	// ── Step 1: Personalized PageRank ──
 	Set damping = 1.0 - alpha
 	Set nSeeds = seedArr.%Size()
@@ -180,26 +182,26 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 		Set seeds(s) = ""
 		Set ranks(s) = teleport
 	}
-	
+
 	For iter = 1:1:50 {
 		Kill newRanks
 		Set node = ""
 		For {
 			Set node = $Order(ranks(node), 1, rank)
 			Quit:node=""
-			Set deg = +$Get(^KG("deg", node))
+			Set deg = +$Get(^KG("deg", pGraph, node))
 			If deg = 0 {
 				Set newRanks(node) = $Get(newRanks(node), 0) + (rank * (1 - damping))
 				Continue
 			}
 			Set p = ""
 			For {
-				Set p = $Order(^KG("out", 0, node, p))
+				Set p = $Order(^KG("out", pGraph, node, p))
 				Quit:p=""
 				Set share = (damping * rank) / deg
 				Set o = ""
 				For {
-					Set o = $Order(^KG("out", 0, node, p, o))
+					Set o = $Order(^KG("out", pGraph, node, p, o))
 					Quit:o=""
 					Set newRanks(o) = $Get(newRanks(o), 0) + share
 				}
@@ -231,7 +233,7 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 		Kill ranks
 		Merge ranks = newRanks
 	}
-	
+
 	// ── Step 2: Sort scores descending, apply eps threshold + topK cap ──
 	Kill ^||PPRG
 	Set nodesBefore = 0
@@ -244,7 +246,7 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 		If score > maxScore Set maxScore = score
 		Set ^||PPRG(-score, node) = ""
 	}
-	
+
 	Set threshold = eps * maxScore
 	Set nodesAfter = 0
 	Kill pruned
@@ -265,7 +267,7 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 		If nodesAfter >= topK Quit
 	}
 	Kill ^||PPRG
-	
+
 	// ── Step 3: BFS from pruned set ──
 	Set hasFilter = 0
 	If edgeTypesJson '= "" {
@@ -280,7 +282,7 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 		} Catch {
 		}
 	}
-	
+
 	Set bfsMax = topK * 2
 	Set nodeCount = 0
 	Set n = ""
@@ -293,7 +295,7 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 			Set frontier(n) = ""
 		}
 	}
-	
+
 	For hop = 1:1:maxHops {
 		Kill nextFrontier
 		Set node = ""
@@ -302,12 +304,12 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 			Quit:node=""
 			Set p = ""
 			For {
-				Set p = $Order(^KG("out", 0, node, p))
+				Set p = $Order(^KG("out", pGraph, node, p))
 				Quit:p=""
 				If hasFilter && '$Data(allowedPred(p)) Continue
 				Set o = ""
 				For {
-					Set o = $Order(^KG("out", 0, node, p, o))
+					Set o = $Order(^KG("out", pGraph, node, p, o))
 					Quit:o=""
 					Set edgeKey = node_$Char(1)_p_$Char(1)_o
 					If '$Data(edgeSeen(edgeKey)) {
@@ -331,20 +333,20 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 		If check = "" Quit
 		If nodeCount >= bfsMax Quit
 	}
-	
+
 	// ── Step 4: Build JSON result ──
 	Set nodesArr = ##class(%DynamicArray).%New()
 	Set edgesArr = ##class(%DynamicArray).%New()
 	Set scoresArr = ##class(%DynamicArray).%New()
 	Set seedIdsArr = ##class(%DynamicArray).%FromJSON(seedJson)
-	
+
 	Set n = ""
 	For {
 		Set n = $Order(seen(n))
 		Quit:n=""
 		Do nodesArr.%Push(n)
 	}
-	
+
 	Set ei = ""
 	For {
 		Set ei = $Order(edges(ei), 1, edgeList)
@@ -355,7 +357,7 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 		Do eObj.%Set("dst", $ListGet(edgeList, 3))
 		Do edgesArr.%Push(eObj)
 	}
-	
+
 	// PPR scores -- re-sort descending by score
 	Kill ^||PPRG
 	Set n = ""
@@ -379,7 +381,7 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 		}
 	}
 	Kill ^||PPRG
-	
+
 	Set result = ##class(%DynamicObject).%New()
 	Do result.%Set("nodes", nodesArr)
 	Do result.%Set("edges", edgesArr)
@@ -387,7 +389,7 @@ ClassMethod PPRGuidedJson(seedJson As %String, alpha As %Double = 0.15, eps As %
 	Do result.%Set("seed_ids", seedIdsArr)
 	Do result.%Set("nodes_before_pruning", nodesBefore)
 	Do result.%Set("nodes_after_pruning", nodesAfter)
-	
+
 	Return result.%ToJSON()
 }
 

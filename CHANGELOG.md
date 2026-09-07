@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+### Dependencies: iris-vector-graph >= 2.18.2, unified `iris` module pinned
+
+- `iris-vector-graph` is now a declared base dependency at `>=2.18.2` (was only in
+  extras at `>=1.6.0`; CI installed `>=2.1.0`). 2.18.2 fixes `kg_TXT` failing with
+  `SQLCODE -51` on every call (the text leg of hybrid search was silently
+  vector-only) and makes a failing text leg raise instead of degrading. Lockfile
+  moved from 2.3.1 to 2.18.5.
+- `iris-embedded-python-wrapper>=0.5.20` declared explicitly: both it and the bare
+  driver ship a top-level `iris` package, so install order decided which one won.
+- Vendored ObjectScript snapshots under `iris_vector_rag/pipelines/colbert_iris/sp/`
+  re-synced to IVG 2.18.5 (`ColBERTSearch.cls` and `UserExec.cls` are IVR-owned and
+  unchanged). Only `ColBERTSearch.cls` is deployed by the scripts; the rest are
+  reference copies of classes IVG installs itself.
+- `test_graphrag_handler_execute_hybrid_search` passes again with the kg_TXT fix and
+  leaves `tests/contract/ci_known_failures.txt` (40 entries remain).
+- CI: `tests/contract/test_ragas_validation_contract.py` is ignored in the release
+  gate like the CRAG suites. It runs real `ragas.evaluate` (needs an LLM) and only
+  ever skipped before because earlier tests failed to load documents under IVG 2.3.1.
+- `HybridGraphRAGPipeline.delete_node`: BM25 note corrected. IVG 2.18 has
+  `bm25_delete(name, doc_id)`; the pipeline owns no BM25 index, so nothing changes.
+
 ## v0.14.1 — metadata filter pushdown
 
 ### Fix: metadata `filter` is applied in SQL, not as a post-ranking Python pass

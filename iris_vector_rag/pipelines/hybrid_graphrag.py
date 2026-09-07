@@ -884,8 +884,10 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         Symmetric counterpart to index_node(). Removes the node from:
         - Knowledge graph tables (via iris_engine.delete_node)
         - Vector document store (via vector_store.delete_documents)
-        - BM25 index: no per-doc delete API exists in iris_vector_graph; the node's
-          text properties are removed by the KG deletion, making BM25 results inert.
+        - BM25 index: this pipeline does not own a BM25 index (text search goes
+          through iris_vector_graph's kg_TXT over the KG tables), so there is nothing
+          to delete here. Callers that build their own index can call
+          iris_engine.bm25_delete(name, node_id) (iris_vector_graph >= 2.18).
 
         Raises:
             ValueError: If node_id is empty string or None.

@@ -1,7 +1,16 @@
 Class Graph.KG.PLAIDSearch Extends %RegisteredObject
 {
 
-ClassMethod JsonToVector(jsonArray As %String) As %Binary
+ClassMethod Build(name As %String, centroidsJSON As %String, docsJSON As %String, assignmentsJSON As %String) As %String
+{
+	Kill ^PLAID(name)
+	Do ..StoreCentroids(name, centroidsJSON)
+	Do ..StoreDocTokensBatch(name, docsJSON)
+	Do ..BuildInvertedIndex(name, assignmentsJSON)
+	Return ..Info(name)
+}
+
+ClassMethod JsonToVector(jsonArray As %String) As %Binary [ Private ]
 {
 	Set arr = ##class(%DynamicArray).%FromJSON(jsonArray)
 	Set dim = arr.%Size()
@@ -12,7 +21,7 @@ ClassMethod JsonToVector(jsonArray As %String) As %Binary
 	Return vec
 }
 
-ClassMethod StoreCentroids(name As %String, centroidsJSON As %String)
+ClassMethod StoreCentroids(name As %String, centroidsJSON As %String) [ Private ]
 {
 	Set arr = ##class(%DynamicArray).%FromJSON(centroidsJSON)
 	Set K = arr.%Size()
@@ -29,7 +38,7 @@ ClassMethod StoreCentroids(name As %String, centroidsJSON As %String)
 	If K > 0 Set ^PLAID(name, "meta", "dim") = dim
 }
 
-ClassMethod StoreDocTokensBatch(name As %String, batchJSON As %String)
+ClassMethod StoreDocTokensBatch(name As %String, batchJSON As %String) [ Private ]
 {
 	Set batch = ##class(%DynamicArray).%FromJSON(batchJSON)
 	Set nDocs = batch.%Size()
@@ -55,7 +64,7 @@ ClassMethod StoreDocTokensBatch(name As %String, batchJSON As %String)
 	}
 }
 
-ClassMethod StoreDocTokens(name As %String, docId As %String, tokensJSON As %String)
+ClassMethod StoreDocTokens(name As %String, docId As %String, tokensJSON As %String) [ Private ]
 {
 	Set arr = ##class(%DynamicArray).%FromJSON(tokensJSON)
 	Set nTok = arr.%Size()
@@ -75,7 +84,7 @@ ClassMethod StoreDocTokens(name As %String, docId As %String, tokensJSON As %Str
 	Set ^PLAID(name, "meta", "totalTokens") = $Get(^PLAID(name, "meta", "totalTokens"), 0) + nTok
 }
 
-ClassMethod BuildInvertedIndex(name As %String, assignmentsJSON As %String)
+ClassMethod BuildInvertedIndex(name As %String, assignmentsJSON As %String) [ Private ]
 {
 	Set arr = ##class(%DynamicArray).%FromJSON(assignmentsJSON)
 	Set n = arr.%Size()
@@ -93,7 +102,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 	Set nQ = tokens.%Size()
 	Set nC = +$Get(^PLAID(name, "meta", "nCentroids"), 0)
 	If nC = 0 Return "[]"
-	
+
 	For q = 0:1:(nQ-1) {
 		Set qArr = tokens.%Get(q)
 		Set dim = qArr.%Size()
@@ -103,8 +112,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 		}
 		Set queryVecs(q) = qVec
 	}
-	
-	// Stage 1: centroid scoring
+
 	Kill ^||centroidScore
 	For q = 0:1:(nQ-1) {
 		Set qVec = queryVecs(q)
@@ -114,8 +122,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 			Set ^||centroidScore(c) = $Get(^||centroidScore(c), 0) + dot
 		}
 	}
-	
-	// Pick top nprobe centroids
+
 	Kill ^||topCentroids
 	For c = 0:1:(nC-1) {
 		Set sc = +$Get(^||centroidScore(c), 0)
@@ -136,8 +143,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 		}
 	}
 StageTwo
-	
-	// Stage 1.5: candidate docs from top centroids
+
 	Kill ^||candidates
 	Set sc = ""
 	For {
@@ -150,8 +156,7 @@ StageTwo
 			Set ^||candidates(docId) = ""
 		}
 	}
-	
-	// Stage 2: MaxSim with packed token storage (1 $Get per doc)
+
 	Kill ^||ranked
 	Set docId = ""
 	For {
@@ -173,8 +178,7 @@ StageTwo
 		}
 		Set ^||ranked(-maxsim, docId) = ""
 	}
-	
-	// TopK
+
 	Set result = "[", first = 1, cnt = 0
 	Set negSc = ""
 	For {
@@ -202,7 +206,7 @@ ClassMethod Insert(name As %String, docId As %String, tokensJSON As %String)
 	Set nTok = arr.%Size()
 	Set nC = +$Get(^PLAID(name, "meta", "nCentroids"), 0)
 	Set packed = ""
-	
+
 	For t = 0:1:(nTok-1) {
 		Set tArr = arr.%Get(t)
 		Set dim = tArr.%Size()
@@ -211,7 +215,7 @@ ClassMethod Insert(name As %String, docId As %String, tokensJSON As %String)
 			Set $vector(vec, i+1, "double") = +tArr.%Get(i)
 		}
 		Set packed = packed _ $ListBuild(vec)
-		
+
 		Set bestC = 0, bestDot = -999999
 		For c = 0:1:(nC-1) {
 			Set cVec = ^PLAID(name, "centroid", c)
@@ -228,16 +232,24 @@ ClassMethod Insert(name As %String, docId As %String, tokensJSON As %String)
 
 ClassMethod Info(name As %String) As %String
 {
+	If '$Data(^PLAID(name)) Return "{}"
 	Set nC = +$Get(^PLAID(name, "meta", "nCentroids"), 0)
 	Set nD = +$Get(^PLAID(name, "meta", "nDocs"), 0)
 	Set dim = +$Get(^PLAID(name, "meta", "dim"), 0)
 	Set nT = +$Get(^PLAID(name, "meta", "totalTokens"), 0)
-	Return "{""name"":"""_name_""",""nCentroids"":"_nC_",""nDocs"":"_nD_",""dim"":"_dim_",""totalTokens"":"_nT_"}"
+	Return "{""type"":""plaid"",""indexed"":"_nD_",""nlist"":"_nC_",""dim"":"_dim_",""totalTokens"":"_nT_"}"
 }
 
 ClassMethod Drop(name As %String)
 {
 	Kill ^PLAID(name)
+}
+
+ClassMethod List() As %String
+{
+	Set result = "", name = ""
+	For { Set name = $Order(^PLAID(name)) Quit:name=""  Set result = result _ $Select(result="":"", 1:",") _ name }
+	Return result
 }
 
 }

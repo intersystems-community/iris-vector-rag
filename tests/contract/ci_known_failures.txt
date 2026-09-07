@@ -32,7 +32,6 @@ tests/contract/test_relation_embedding_store_contract.py::test_search_calls_vect
 tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_executes_successfully
 tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_fallback_on_exception
 tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_fallback_on_zero_results
-tests/contract/test_technique_handlers_contract.py::TestGraphRAGHandler::test_graphrag_handler_execute_hybrid_search
 tests/contract/test_text_search_contract.py::TestTextSearchContract::test_text_search_executes_successfully
 tests/contract/test_text_search_contract.py::TestTextSearchContract::test_text_search_fallback_on_exception
 tests/contract/test_text_search_contract.py::TestTextSearchContract::test_text_search_fallback_on_zero_results
