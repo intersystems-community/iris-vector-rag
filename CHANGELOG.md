@@ -15,8 +15,10 @@
   re-synced to IVG 2.18.5 (`ColBERTSearch.cls` and `UserExec.cls` are IVR-owned and
   unchanged). Only `ColBERTSearch.cls` is deployed by the scripts; the rest are
   reference copies of classes IVG installs itself.
-- `test_graphrag_handler_execute_hybrid_search` passes again with the kg_TXT fix and
-  leaves `tests/contract/ci_known_failures.txt` (40 entries remain).
+- `test_graphrag_handler_execute_hybrid_search` passes again on a pristine database
+  with the kg_TXT fix, but inside the full suite it inherits a legacy-shaped
+  `RAG.SourceDocuments` from earlier tests (no `embedding` column), so it stays in
+  `tests/contract/ci_known_failures.txt` until that order dependence is fixed.
 - CI: `tests/contract/test_ragas_validation_contract.py` is ignored in the release
   gate like the CRAG suites. It runs real `ragas.evaluate` (needs an LLM) and only
   ever skipped before because earlier tests failed to load documents under IVG 2.3.1.
