@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.14.1 — metadata filter pushdown
 
 ### Fix: metadata `filter` is applied in SQL, not as a post-ranking Python pass
 
