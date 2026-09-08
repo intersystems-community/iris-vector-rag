@@ -2,16 +2,16 @@
 
 ## Unreleased
 
-### Dependencies / CI (Dependabot PRs #81, #82, #83, #84, #85, #86, #88, #89, #90, #91, #95, #96, #97)
+### Dependencies / CI (Dependabot PRs #81–#91, #95–#98, #100, #101)
 
 - GitHub Actions: `actions/checkout` v7 everywhere, `codecov/codecov-action` v7
   (`file` input renamed `files`), `gitleaks/gitleaks-action` v3,
   `softprops/action-gh-release` v3, `docker/setup-buildx-action` v4.
 - `evaluation_framework/requirements.txt` floors: datasets 5.0.1, markdown 3.10.3,
-  nltk 3.10.0, spacy 3.8.14, scikit-learn 1.9.0, jinja2 3.1.6, pingouin 0.6.1.
-- dev group: gitpython 3.1.57.
-- Held for a model-compatibility check: `transformers` (<5.15, PR #92) and
-  `sentence-transformers` (<5.7, PR #94) upper bounds.
+  nltk 3.10.3, spacy 3.8.16, scikit-learn 1.9.0, jinja2 3.1.6, pingouin 0.6.1.
+- dev group: gitpython 3.1.61.
+- Held for a model-compatibility check: `transformers` (<5.17, PR #102) and
+  `sentence-transformers` (<6.1, PR #99) upper bounds.
 - Public default branch `main` fast-forwarded to `master` (it had been 50 commits
   behind since 2026-07-25); Dependabot, CI and OpenExchange all target `main`.
 
