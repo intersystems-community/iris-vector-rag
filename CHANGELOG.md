@@ -10,8 +10,12 @@
 - `evaluation_framework/requirements.txt` floors: datasets 5.0.1, markdown 3.10.3,
   nltk 3.10.3, spacy 3.8.16, scikit-learn 1.9.0, jinja2 3.1.6, pingouin 0.6.1.
 - dev group: gitpython 3.1.61.
-- Held for a model-compatibility check: `transformers` (<5.17, PR #102) and
-  `sentence-transformers` (<6.1, PR #99) upper bounds.
+- `transformers` upper bound widened to <5.17 (PR #102) and `sentence-transformers`
+  to <6.1 (PR #99) after a compatibility check under transformers 5.16.1 /
+  sentence-transformers 6.0.1: all-MiniLM-L6-v2 embeddings identical (384-d, same
+  cosines), ms-marco cross-encoder scores correct, unit suite green.
+- Tooling: black pinned to 26.5.1 in pre-commit to match the CI Format Check
+  (three different black versions had been in play).
 - Public default branch `main` fast-forwarded to `master` (it had been 50 commits
   behind since 2026-07-25); Dependabot, CI and OpenExchange all target `main`.
 

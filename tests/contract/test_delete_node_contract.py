@@ -57,9 +57,7 @@ class TestDeleteNodeContract:
         p.iris_engine.delete_node.side_effect = RuntimeError("KG store down")
         p.vector_store = MagicMock()
 
-        with patch(
-            "iris_vector_rag.pipelines.hybrid_graphrag.logger"
-        ) as mock_logger:
+        with patch("iris_vector_rag.pipelines.hybrid_graphrag.logger") as mock_logger:
             with pytest.raises(RuntimeError, match="KG store down"):
                 p.delete_node("node-456")
             mock_logger.warning.assert_called_once()

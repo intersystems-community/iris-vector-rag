@@ -5,6 +5,7 @@ import pytest
 
 def parse(raw):
     from iris_vector_rag.retrieval.keyword_extractor import parse_keywords
+
     return parse_keywords(raw)
 
 
@@ -43,7 +44,7 @@ def test_missing_keys_returns_empty_for_missing():
 
 
 def test_markdown_fence_stripped():
-    raw = "```json\n{\"high_level_keywords\":[\"t\"],\"low_level_keywords\":[]}\n```"
+    raw = '```json\n{"high_level_keywords":["t"],"low_level_keywords":[]}\n```'
     high, low = parse(raw)
     assert high == ["t"]
     assert low == []

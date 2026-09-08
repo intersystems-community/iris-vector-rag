@@ -102,14 +102,18 @@ class RetrievalEngine:
         return docs
 
     def _retrieve_text(self, opts: Any) -> List[Any]:
-        from iris_vector_graph.text_search import TextSearchEngine  # type: ignore[import]
+        from iris_vector_graph.text_search import (
+            TextSearchEngine,  # type: ignore[import]
+        )
 
         engine = TextSearchEngine(connection=self.connection)
         raw = engine.search_documents(opts.query, k=opts.top_k)
         return self._text_search_to_docs(raw)
 
     def _retrieve_fusion(self, opts: Any, mode_name: str) -> List[Any]:
-        from iris_vector_graph.text_search import TextSearchEngine  # type: ignore[import]
+        from iris_vector_graph.text_search import (
+            TextSearchEngine,  # type: ignore[import]
+        )
 
         vector_docs = self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
         text_engine = TextSearchEngine(connection=self.connection)
@@ -126,7 +130,6 @@ class RetrievalEngine:
             [weights.get("vector", 0.7), weights.get("text", 0.3)],
             top_k=opts.top_k,
         )
-
 
     # ------------------------------------------------------------------
     # Global / Mix helpers
@@ -190,7 +193,9 @@ class RetrievalEngine:
             degradation_reason = "high_level_keywords empty — no theme-level signal"
         elif count == 0:
             degraded = True
-            degradation_reason = "relation embedding index is empty; populate with embed_and_store()"
+            degradation_reason = (
+                "relation embedding index is empty; populate with embed_and_store()"
+            )
         else:
             query_text = " ".join(high_kws)
             query_emb = self._embed_text_for_search(query_text)
@@ -255,7 +260,7 @@ class RetrievalEngine:
         naive_docs: List[Any] = []
         try:
             naive_raw = self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
-            for doc in (naive_raw or []):
+            for doc in naive_raw or []:
                 doc.metadata["retrieval_source"] = "naive"
                 naive_docs.append(doc)
         except Exception:
@@ -287,11 +292,13 @@ class RetrievalEngine:
             try:
                 low_query = " ".join(low_kws)
                 low_raw = self.vector_store.search_by_text(low_query, top_k=opts.top_k)
-                for doc in (low_raw or []):
+                for doc in low_raw or []:
                     doc.metadata["retrieval_source"] = "low_level"
                     low_docs.append(doc)
             except Exception:
-                logger.warning("Mix mode: low-level vector search failed", exc_info=True)
+                logger.warning(
+                    "Mix mode: low-level vector search failed", exc_info=True
+                )
 
         # Fusion
         weights = getattr(opts, "weights", None)

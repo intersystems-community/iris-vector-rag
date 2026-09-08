@@ -33,7 +33,9 @@ def test_query_options_keywords_default_none():
 
 def test_normalize_mix_with_weights_no_error():
     # mix is a valid fusion mode — weights should not raise
-    opts = normalize_query_params(query="q", retrieval="mix", weights={"relation": 0.6, "vector": 0.4})
+    opts = normalize_query_params(
+        query="q", retrieval="mix", weights={"relation": 0.6, "vector": 0.4}
+    )
     assert opts.weights == {"relation": 0.6, "vector": 0.4}
 
 

@@ -72,5 +72,7 @@ class KeywordExtractor:
                 return [], []
             return parse_keywords(str(raw))
         except Exception:
-            logger.warning("KeywordExtractor.extract failed for query=%r", query, exc_info=True)
+            logger.warning(
+                "KeywordExtractor.extract failed for query=%r", query, exc_info=True
+            )
             return [], []

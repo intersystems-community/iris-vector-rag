@@ -1,6 +1,6 @@
 """Contract tests for RelationEmbeddingStore — Feature 081."""
 
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, call, patch
 
 
 def _make_store():
@@ -52,10 +52,14 @@ def test_search_calls_vector_similarity_search_with_cosine():
     mock_conn.cursor.return_value = mock_cursor
     store._conn_mgr.get_connection.return_value = mock_conn
 
-    with patch("iris_vector_rag.storage.relation_embedding_store.RelationEmbeddingStore.search") as _:
+    with patch(
+        "iris_vector_rag.storage.relation_embedding_store.RelationEmbeddingStore.search"
+    ) as _:
         pass  # just verifying the patch path exists
 
-    with patch("iris_vector_graph.dbapi_utils.vector_similarity_search", return_value=[]) as mock_vss:
+    with patch(
+        "iris_vector_graph.dbapi_utils.vector_similarity_search", return_value=[]
+    ) as mock_vss:
         results = store.search(query_vec, top_k=5)
 
     mock_vss.assert_called_once()

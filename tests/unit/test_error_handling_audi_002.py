@@ -7,16 +7,17 @@ Tests verify that:
 3. Generation failures are captured in response.error (not placeholder strings)
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from typing import List
+from unittest.mock import MagicMock, Mock, patch
 
-from iris_vector_rag.core.models import Document
-from iris_vector_rag.exceptions import EmbeddingError, RetrievalError, GenerationError
-from iris_vector_rag.pipelines.basic import BasicRAGPipeline
-from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
+import pytest
+
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.exceptions import EmbeddingError, GenerationError, RetrievalError
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 
 class TestEmbeddingErrorHandling:
@@ -271,6 +272,7 @@ class TestComprehensiveErrorScenarios:
         # Execute query — provide a dummy API key so the env-check doesn't
         # short-circuit before retrieval is attempted
         import os
+
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-ci"}):
             result = pipeline.query("Query", generate_answer=True)
 

@@ -17,9 +17,27 @@ _ENTITIES = [
 ]
 
 _RELS = [
-    ("rel_e2e_1", "e_e2e_a", "e_e2e_c", "THREATENS", "Systemic risk threatens financial stability"),
-    ("rel_e2e_2", "e_e2e_b", "e_e2e_a", "MITIGATES", "Capital requirements mitigate systemic risk"),
-    ("rel_e2e_3", "e_e2e_b", "e_e2e_c", "SUPPORTS", "Capital requirements support financial stability"),
+    (
+        "rel_e2e_1",
+        "e_e2e_a",
+        "e_e2e_c",
+        "THREATENS",
+        "Systemic risk threatens financial stability",
+    ),
+    (
+        "rel_e2e_2",
+        "e_e2e_b",
+        "e_e2e_a",
+        "MITIGATES",
+        "Capital requirements mitigate systemic risk",
+    ),
+    (
+        "rel_e2e_3",
+        "e_e2e_b",
+        "e_e2e_c",
+        "SUPPORTS",
+        "Capital requirements support financial stability",
+    ),
 ]
 
 
@@ -37,8 +55,8 @@ def e2e_conn():
 
 @pytest.fixture(scope="module")
 def e2e_managers(e2e_conn):
-    from iris_vector_rag.core.connection import ConnectionManager
     from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
 
     return ConnectionManager(), ConfigurationManager()
 
@@ -92,7 +110,9 @@ def kg_with_embeddings(e2e_conn, e2e_managers):
     cur2 = conn.cursor()
     for rid, _, _, _, _ in _RELS:
         try:
-            cur2.execute("DELETE FROM RAG.EntityRelationships WHERE relationship_id = ?", [rid])
+            cur2.execute(
+                "DELETE FROM RAG.EntityRelationships WHERE relationship_id = ?", [rid]
+            )
             conn.commit()
         except Exception:
             conn.rollback()
@@ -108,8 +128,9 @@ def kg_with_embeddings(e2e_conn, e2e_managers):
 
 @pytest.fixture(scope="module")
 def e2e_engine(e2e_managers, kg_with_embeddings):
-    from iris_vector_rag.retrieval.engine import RetrievalEngine
     from unittest.mock import MagicMock
+
+    from iris_vector_rag.retrieval.engine import RetrievalEngine
 
     conn_mgr, cfg_mgr = e2e_managers
     mock_vs = MagicMock()
@@ -196,7 +217,6 @@ class TestGlobalMode:
         assert len(result["retrieved_documents"]) >= 1
 
 
-
 # ─── TestMixMode ─────────────────────────────────────────────────────────────
 
 
@@ -236,9 +256,9 @@ class TestMixMode:
         assert isinstance(meta["low_level_count"], int)
         assert isinstance(meta["high_level_count"], int)
         assert isinstance(meta["naive_count"], int)
-        assert meta["low_level_count"] + meta["high_level_count"] + meta["naive_count"] >= len(
-            result["retrieved_documents"]
-        )
+        assert meta["low_level_count"] + meta["high_level_count"] + meta[
+            "naive_count"
+        ] >= len(result["retrieved_documents"])
 
     def test_mix_with_weights_uses_weighted_fusion(self, e2e_engine):
         """Mix with explicit weights produces fusion_method='weighted_score'."""
@@ -267,7 +287,9 @@ class TestMixMode:
             low_level_keywords=[],
         )
         result = e2e_engine._retrieve_mix(opts)
-        sources = {d.metadata.get("retrieval_source") for d in result["retrieved_documents"]}
+        sources = {
+            d.metadata.get("retrieval_source") for d in result["retrieved_documents"]
+        }
         assert "high_level" in sources
 
     def test_default_query_uses_vector_not_mix(self):
