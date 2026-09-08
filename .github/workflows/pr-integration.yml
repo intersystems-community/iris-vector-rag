@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Not a `services:` container: the 2026.1 image's post-start init crashes on
       # amd64 and the services health check then kills the job. The script starts
