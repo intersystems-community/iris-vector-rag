@@ -22,9 +22,9 @@ are shared prerequisites; the final phase is cross-cutting cleanup.
 **Purpose**: the six shapes need one definition that both the fixture capture and
 the integration suite read, so neither can drift from the other.
 
-- [ ] T001 Create `tests/fixtures/shapes/ddl.py` defining `SIX_SHAPES: dict[str, str]` — one `CREATE TABLE` statement per `ShapeKind` (canonical, legacy_serial, legacy_id, fixture, mixed, double_vector) parameterised by table name, matching the shapes described in `spec.md` US1
-- [ ] T002 Add the `shape_fixtures` pytest fixture (returns `Path` to `tests/fixtures/shapes/`) and a `recorded_catalog` fixture in `tests/conftest.py`
-- [ ] T003 [P] Create `scripts/dev/capture_shape_fixtures.py`: creates each `SIX_SHAPES` table in a scratch schema against `iris-vector-rag-iris`, dumps the three catalog result sets per table to `tests/fixtures/shapes/<kind>.json`, drops the tables in a `finally`
+- [X] T001 Create `tests/fixtures/shapes/ddl.py` defining `SIX_SHAPES: dict[str, str]` — one `CREATE TABLE` statement per `ShapeKind` (canonical, legacy_serial, legacy_id, fixture, mixed, double_vector) parameterised by table name, matching the shapes described in `spec.md` US1
+- [X] T002 Add the `shape_fixtures` pytest fixture (returns `Path` to `tests/fixtures/shapes/`) and a `recorded_catalog` fixture in `tests/conftest.py`
+- [X] T003 [P] Create `scripts/dev/capture_shape_fixtures.py`: creates each `SIX_SHAPES` table in a scratch schema against `iris-vector-rag-iris`, dumps the three catalog result sets per table to `tests/fixtures/shapes/<kind>.json`, drops the tables in a `finally`
 
 ---
 
@@ -37,26 +37,26 @@ nothing here can break an existing caller.
 
 ### Tests first
 
-- [ ] T004 [P] Unit tests for `ColumnFact` derived properties in `tests/unit/test_table_shape.py`: `is_stream` true only for `%Stream.*` class types, `is_long_text` for `longvarchar`, `filterable_with_like` false for both — including the case that distinguishes `content` (longvarchar, `%Library.String`) from `chunk_text` (longvarchar, `%Stream.GlobalCharacter`)
-- [ ] T005 [P] Unit tests for `VectorSpec` parsing in `tests/unit/test_table_shape.py`: the real `Parameters` string `CALCSELECTIVITY,1,CAPTION,,DATATYPE,FLOAT,EXTERNALSQLNAME,,EXTERNALSQLTYPE,,INDEXNULLMARKER,,JAVATYPE,,LEN,384,STORAGEDEFAULT,GLOBALNODE,STORAGEDEFAULTTARGET,` yields `("FLOAT", 384)`; empty values are preserved; a missing `DATATYPE` or `LEN` raises `ShapeUnresolvable`
-- [ ] T006 [P] Unit tests for role resolution in `tests/unit/test_table_shape.py`: canonical wins for `TEXT` on the mixed shape, declared single-column key outranks name precedence for `IDENTIFIER`, name precedence applies only without a key, lookup is case-insensitive while `ColumnFact.name` keeps catalog spelling, `legacy_column_for(TEXT)` returns `content` on the mixed shape and `None` on the canonical one
-- [ ] T007 [P] Unit tests for `TableShape` errors in `tests/unit/test_table_shape.py`: `NotVectorSearchable` names the type found for a `%Library.Binary` embedding and for an absent embedding, `IdentifierNotWritable` names schema/table/column for an identity identifier, `RoleNotPresent` names the role, and every message contains schema and table
-- [ ] T008 [P] Unit tests for `from_snapshot` purity and `ShapeKind` classification in `tests/unit/test_table_shape.py`: two calls on the same snapshot return equal shapes; each of the six recorded snapshots classifies to its expected kind; an unclassifiable but resolvable shape is `UNKNOWN`, not an error
-- [ ] T009 [P] Unit tests for `TableShapeResolver` in `tests/unit/test_shape_resolver.py`: N resolves of one table take one snapshot (`reads == 1`), `invalidate` forces exactly one more, `invalidate_all` clears every table, two resolvers share no state, a reader returning `None` raises `TableNotFound`, and a reader raising a driver error surfaces `CatalogUnavailable` with `__cause__` set
+- [X] T004 [P] Unit tests for `ColumnFact` derived properties in `tests/unit/test_table_shape.py`: `is_stream` true only for `%Stream.*` class types, `is_long_text` for `longvarchar`, `filterable_with_like` false for both — including the case that distinguishes `content` (longvarchar, `%Library.String`) from `chunk_text` (longvarchar, `%Stream.GlobalCharacter`)
+- [X] T005 [P] Unit tests for `VectorSpec` parsing in `tests/unit/test_table_shape.py`: the real `Parameters` string `CALCSELECTIVITY,1,CAPTION,,DATATYPE,FLOAT,EXTERNALSQLNAME,,EXTERNALSQLTYPE,,INDEXNULLMARKER,,JAVATYPE,,LEN,384,STORAGEDEFAULT,GLOBALNODE,STORAGEDEFAULTTARGET,` yields `("FLOAT", 384)`; empty values are preserved; a missing `DATATYPE` or `LEN` raises `ShapeUnresolvable`
+- [X] T006 [P] Unit tests for role resolution in `tests/unit/test_table_shape.py`: canonical wins for `TEXT` on the mixed shape, declared single-column key outranks name precedence for `IDENTIFIER`, name precedence applies only without a key, lookup is case-insensitive while `ColumnFact.name` keeps catalog spelling, `legacy_column_for(TEXT)` returns `content` on the mixed shape and `None` on the canonical one (FR-003)
+- [X] T007 [P] Unit tests for `TableShape` errors in `tests/unit/test_table_shape.py`: `NotVectorSearchable` names the type found for a `%Library.Binary` embedding and for an absent embedding, `IdentifierNotWritable` names schema/table/column for an identity identifier, `RoleNotPresent` names the role, and every message contains schema and table (FR-011)
+- [X] T008 [P] Unit tests for `from_snapshot` purity and `ShapeKind` classification in `tests/unit/test_table_shape.py`: two calls on the same snapshot return equal shapes; each of the six recorded snapshots classifies to its expected kind; an unclassifiable but resolvable shape is `UNKNOWN`, not an error
+- [X] T009 [P] Unit tests for `TableShapeResolver` in `tests/unit/test_shape_resolver.py`: N resolves of one table take one snapshot (`reads == 1`), `invalidate` forces exactly one more, `invalidate_all` clears every table, two resolvers share no state, a reader returning `None` raises `TableNotFound`, and a reader raising a driver error surfaces `CatalogUnavailable` with `__cause__` set
 
 ### Implementation
 
-- [ ] T010 Implement `iris_vector_rag/storage/table_shape.py`: `ColumnRole`, `ShapeKind`, `VectorSpec`, `ColumnFact`, `TableShape` (frozen, `from_snapshot`, `column_for`, `optional_column_for`, `has`, `legacy_column_for`, `vector_spec`, `writable_identifier`, `is_canonical`), the error hierarchy, and `CANONICAL_DOCUMENT_SHAPE` / `CANONICAL_CHUNK_SHAPE`
-- [ ] T011 Implement `iris_vector_rag/storage/catalog.py`: `CatalogSnapshot`, the `CatalogReader` protocol, `IRISCatalogReader` (class-name lookup via `%Dictionary.CompiledClass`, columns via `INFORMATION_SCHEMA.COLUMNS` incl. `IS_IDENTITY`/`AUTO_INCREMENT`, properties via `%Dictionary.CompiledProperty` joined on `SqlFieldName`, key columns via `KEY_COLUMN_USAGE`), and `RecordedCatalog` with `from_fixture_dir`
-- [ ] T012 Implement `iris_vector_rag/storage/shape_resolver.py`: `TableShapeResolver` with per-instance cache, `resolve`, `invalidate`, `invalidate_all`, `reads`
-- [ ] T013 Move the canonical column-name constants into `table_shape.py` and re-export them from `iris_vector_rag/storage/constants.py` for one release
-- [ ] T014 Run `scripts/dev/capture_shape_fixtures.py` against `iris-vector-rag-iris` and commit the six `tests/fixtures/shapes/<kind>.json` files
-- [ ] T015 Integration test in `tests/integration/test_table_shape_six_shapes.py::test_recorded_fixtures_match_live_catalog`: for each shape, create the real table, take an `IRISCatalogReader` snapshot, and assert the resulting `TableShape` equals the one built from the committed fixture — the check that keeps recorded shapes honest
+- [X] T010 Implement `iris_vector_rag/storage/table_shape.py`: `ColumnRole`, `ShapeKind`, `VectorSpec`, `ColumnFact`, `TableShape` (frozen, `from_snapshot`, `column_for`, `optional_column_for`, `has`, `legacy_column_for`, `vector_spec`, `writable_identifier`, `is_canonical`), the error hierarchy, and `CANONICAL_DOCUMENT_SHAPE` / `CANONICAL_CHUNK_SHAPE`
+- [X] T011 Implement `iris_vector_rag/storage/catalog.py`: `CatalogSnapshot`, the `CatalogReader` protocol, `IRISCatalogReader` (class-name lookup via `%Dictionary.CompiledClass`, columns via `INFORMATION_SCHEMA.COLUMNS` incl. `IS_IDENTITY`/`AUTO_INCREMENT`, properties via `%Dictionary.CompiledProperty` joined on `SqlFieldName`, key columns via `KEY_COLUMN_USAGE`), and `RecordedCatalog` with `from_fixture_dir` (FR-001)
+- [X] T012 Implement `iris_vector_rag/storage/shape_resolver.py`: `TableShapeResolver` with per-instance cache, `resolve`, `invalidate`, `invalidate_all`, `reads`
+- [X] T013 Move the canonical column-name constants into `table_shape.py` and re-export them from `iris_vector_rag/storage/constants.py` for one release
+- [X] T014 Run `scripts/dev/capture_shape_fixtures.py` against `iris-vector-rag-iris` and commit the six `tests/fixtures/shapes/<kind>.json` files
+- [X] T015 Integration test in `tests/integration/test_table_shape_six_shapes.py::test_recorded_fixtures_match_live_catalog`: for each shape, create the real table, take an `IRISCatalogReader` snapshot, and assert the resulting `TableShape` equals the one built from the committed fixture — the check that keeps recorded shapes honest
 
 **Checkpoint**: the shape can be resolved and asserted on with and without a
 database; no call site uses it yet.
 
-- [ ] T016 Verify the Phase 2 gate
+- [X] T016 Verify the Phase 2 gate
 
 ```accept
 # verifies: Phase 2 gate -- shape modules and their unit tests are green with no database
@@ -76,22 +76,22 @@ and compare results.
 
 ### Tests first
 
-- [ ] T017 [P] [US1] Unit tests in `tests/unit/test_vector_store_shape.py` driven by `RecordedCatalog`: on the mixed shape the write path and the read path emit the same text column; on a stream metadata column the filter uses `SUBSTRING` and not `LIKE`; `TO_VECTOR` carries the shape's element type on the double-precision shape; a caller-supplied identifier against the legacy-serial shape raises `IdentifierNotWritable` before any SQL is sent
+- [ ] T017 [P] [US1] Unit tests in `tests/unit/test_vector_store_shape.py` driven by `RecordedCatalog`: on the mixed shape the write path and the read path emit the same text column; on a stream metadata column the filter uses `SUBSTRING` and not `LIKE`; `TO_VECTOR` carries the shape's element type on the double-precision shape; a caller-supplied identifier against the legacy-serial shape raises `IdentifierNotWritable` before any SQL is sent (FR-008)
 - [ ] T018 [P] [US1] Unit test in `tests/unit/test_vector_store_shape.py`: a query embedding whose length differs from `vector_spec().dimension` is rejected naming both lengths, and no query is sent
 - [ ] T019 [P] [US1] Unit test in `tests/unit/test_vector_store_shape.py`: on a shape with no embedding column, a vector search raises `NotVectorSearchable` naming the table — replacing today's silent `FLOAT` fallback
-- [ ] T020 [US1] Integration test `tests/integration/test_table_shape_six_shapes.py::test_search_filter_write_delete_parity`: parameterised over the six shapes, load identical documents, assert identical identifiers, text, ordering and scores against the canonical shape's results, then assert delete removes exactly the named documents
+- [ ] T020 [US1] Integration test `tests/integration/test_table_shape_six_shapes.py::test_search_filter_write_delete_parity`: parameterised over the six shapes, load identical documents, assert identical identifiers, text, ordering and scores against the canonical shape's results, then assert delete removes exactly the named documents (FR-002)
 - [ ] T021 [US1] Integration test `tests/integration/test_table_shape_six_shapes.py::test_mixed_table_round_trip`: write a document to the mixed shape, read it back, assert the text read is the text written; then insert a row with only the legacy column populated and assert the per-row fallback returns its text
 - [ ] T022 [US1] E2E test `tests/e2e/test_table_shape_e2e.py::test_us1`: full pipeline query against a legacy-shaped table end to end, asserting answer and retrieved documents, with no column named by the caller
 
 ### Implementation
 
-- [ ] T023 [US1] Add an optional `shapes: TableShapeResolver | None` parameter to `IRISVectorStore.__init__` in `iris_vector_rag/storage/vector_store_iris.py`, defaulting to one built from its own connection; resolve the document table's shape once on first use
+- [ ] T023 [US1] Add an optional `shapes: TableShapeResolver | None` parameter to `IRISVectorStore.__init__` in `iris_vector_rag/storage/vector_store_iris.py`, defaulting to one built from its own connection; resolve the document table's shape once on first use (FR-014)
 - [ ] T024 [US1] Migrate the write path (`_store_documents` at `vector_store_iris.py:671`, `add_documents` at `:849`) to `shape.column_for(...)` and `shape.writable_identifier()`, deleting the inline precedence at `:701-715`
-- [ ] T025 [US1] Migrate the read path (`similarity_search_by_embedding` at `:1054`, `search_with_embedding` at `:308`) to the shape, deleting the contradictory precedence at `:1110-1120` and implementing the documented per-row mixed-table text fallback
+- [ ] T025 [US1] Migrate the read path (`similarity_search_by_embedding` at `:1054`, `search_with_embedding` at `:308`) to the shape, deleting the contradictory precedence at `:1110-1120` and implementing the documented per-row mixed-table text fallback (FR-004)
 - [ ] T026 [US1] Migrate `fetch_documents_by_ids` (`:1433`), `get_document_count` (`:1517`) and `get_all_documents` (`:1540`) to the shape and delete the try-canonical-catch-legacy retries at `:1452-1500` and `:1551-1590`
 - [ ] T027 [US1] Migrate the delete path: replace `_get_id_column` (`:925`) with `shape.column_for(IDENTIFIER)` in `delete_documents` (`:936`) and `clear_documents` (`:1608`), and remove the method
-- [ ] T028 [US1] Migrate `_metadata_filter_column_expr` (`:981`), `_metadata_filter_predicate` (`:1018`) and `_apply_exact_metadata_filter` (`:1042`) to decide `SUBSTRING` versus direct comparison from `ColumnFact.filterable_with_like`, deleting their own catalog read
-- [ ] T029 [US1] Replace `_get_vector_data_type` (`:151`) and `get_embedding_column_metadata` (`:247`) with `shape.vector_spec()`, deleting the `IRIS_VECTOR_DATA_TYPE` fallback and the fixed dimension defaults
+- [ ] T028 [US1] Migrate `_metadata_filter_column_expr` (`:981`), `_metadata_filter_predicate` (`:1018`) and `_apply_exact_metadata_filter` (`:1042`) to decide `SUBSTRING` versus direct comparison from `ColumnFact.filterable_with_like`, deleting their own catalog read (FR-009)
+- [ ] T029 [US1] Replace `_get_vector_data_type` (`:151`) and `get_embedding_column_metadata` (`:247`) with `shape.vector_spec()`, deleting the `IRIS_VECTOR_DATA_TYPE` fallback and the fixed dimension defaults (FR-001, FR-010)
 - [ ] T030 [US1] Verify the US1 phase gate
 
 ```accept
@@ -113,7 +113,7 @@ query and one metadata fetch and no catalog query.
 ### Tests first
 
 - [ ] T031 [P] [US2] Unit test in `tests/unit/test_shape_resolver.py`: a store built on a counting `RecordedCatalog` performs 100 searches with `reads` unchanged after the first resolution
-- [ ] T032 [US2] Integration test `tests/integration/test_table_shape_six_shapes.py::test_catalog_round_trips` (SC-002): wrap the live connection in a statement-counting proxy, run 100 searches, assert exactly one shape resolution and zero catalog statements inside the loop
+- [ ] T032 [US2] Integration test `tests/integration/test_table_shape_six_shapes.py::test_catalog_round_trips` (SC-002): wrap the live connection in a statement-counting proxy, run 100 searches, assert exactly one shape resolution and zero catalog statements inside the loop (FR-005)
 - [ ] T033 [US2] Integration test in the same file: after the library itself creates or alters the table, the next operation sees the new shape with no caller action; after an out-of-band change plus an explicit refresh, the next operation uses the new shape
 - [ ] T034 [US2] E2E test `tests/e2e/test_table_shape_e2e.py::test_us2`: a pipeline run issuing many queries resolves each table's shape once
 
@@ -148,8 +148,8 @@ fresh IRIS and compare the resulting shapes.
 
 ### Implementation
 
-- [ ] T043 [US3] Emit the canonical DDL in `iris_vector_rag/storage/schema_manager.py` from `CANONICAL_DOCUMENT_SHAPE` (replacing the literal at `:1157-1167`) and `CANONICAL_CHUNK_SHAPE` (replacing `:1324-1335`)
-- [ ] T044 [US3] Route `schema_manager.py`'s own catalog reads (`:209`, `:1109`, `:1260-1264`, `:1302`, `:1760`, `:1887-1890`, `:2245`, `:2255-2258`) through `IRISCatalogReader` / the resolver
+- [ ] T043 [US3] Emit the canonical DDL in `iris_vector_rag/storage/schema_manager.py` from `CANONICAL_DOCUMENT_SHAPE` (replacing the literal at `:1157-1167`) and `CANONICAL_CHUNK_SHAPE` (replacing `:1324-1335`) (FR-006)
+- [ ] T044 [US3] Route `schema_manager.py`'s own catalog reads (`:209`, `:1109`, `:1260-1264`, `:1302`, `:1760`, `:1887-1890`, `:2245`, `:2255-2258`) through `IRISCatalogReader` / the resolver (FR-013)
 - [ ] T045 [US3] Make the alter paths explicit: refuse non-canonical creation, and require an explicit destructive-migration call rather than altering on the strength of a reported type (FR-007)
 - [ ] T046 [US3] Verify the US3 phase gate
 
@@ -170,7 +170,7 @@ with no scripted cursor responses.
 
 ### Tests first
 
-- [ ] T047 [P] [US4] Port the existing shape-dependent unit tests to `RecordedCatalog`, deleting the scripted cursor/mock responses they use today
+- [ ] T047 [P] [US4] Port the existing shape-dependent unit tests to `RecordedCatalog`, deleting the scripted cursor/mock responses they use today (FR-015)
 - [ ] T048 [US4] Test for the new detector in `tests/unit/test_antipatterns_detectors.py`: a file that reads `INFORMATION_SCHEMA` or `%Dictionary` outside `iris_vector_rag/storage/catalog.py` is reported, and the same code inside it is not
 - [ ] T049 [US4] E2E test `tests/e2e/test_table_shape_e2e.py::test_us4`: the recorded-shape suite and the live suite reach the same verdict on the same shape
 

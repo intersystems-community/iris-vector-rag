@@ -106,3 +106,49 @@ MAX_BATCH_SIZE = 10000
 DEFAULT_SAMPLE_SIZE = 100
 MIN_SAMPLE_SIZE = 10
 MAX_SAMPLE_SIZE = 200
+
+# Canonical column names (feature 082)
+#
+# These live in iris_vector_rag.storage.table_shape, next to the role precedence
+# that gives them meaning, and are re-exported here for one release so an import
+# from this module keeps working. Prefer asking a TableShape which column fills a
+# role over comparing against a name: the name is only correct for the canonical
+# shape, while the role is correct for all of them.
+from iris_vector_rag.storage.table_shape import (  # noqa: E402  (re-export)
+    CANONICAL_COLUMNS,
+    ROLE_ALIASES,
+    ROLE_PRECEDENCE,
+    ColumnRole,
+)
+
+CANONICAL_IDENTIFIER_COLUMN = CANONICAL_COLUMNS[ColumnRole.IDENTIFIER]
+CANONICAL_TEXT_COLUMN = CANONICAL_COLUMNS[ColumnRole.TEXT]
+CANONICAL_TITLE_COLUMN = CANONICAL_COLUMNS[ColumnRole.TITLE]
+CANONICAL_METADATA_COLUMN = CANONICAL_COLUMNS[ColumnRole.METADATA]
+CANONICAL_EMBEDDING_COLUMN = CANONICAL_COLUMNS[ColumnRole.EMBEDDING]
+CANONICAL_CREATED_AT_COLUMN = CANONICAL_COLUMNS[ColumnRole.CREATED_AT]
+
+__all__ = [
+    "CANONICAL_COLUMNS",
+    "CANONICAL_CREATED_AT_COLUMN",
+    "CANONICAL_EMBEDDING_COLUMN",
+    "CANONICAL_IDENTIFIER_COLUMN",
+    "CANONICAL_METADATA_COLUMN",
+    "CANONICAL_TEXT_COLUMN",
+    "CANONICAL_TITLE_COLUMN",
+    "ColumnRole",
+    "DEFAULT_BATCH_SIZE",
+    "DEFAULT_FILTER_KEYS",
+    "DEFAULT_SAMPLE_SIZE",
+    "INVALID_FIELD_NAME_PATTERNS",
+    "MAX_BATCH_SIZE",
+    "MAX_COLLECTION_ID_LENGTH",
+    "MAX_FIELD_NAME_LENGTH",
+    "MAX_SAMPLE_SIZE",
+    "MIN_BATCH_SIZE",
+    "MIN_SAMPLE_SIZE",
+    "ROLE_ALIASES",
+    "ROLE_PRECEDENCE",
+    "VALID_COLLECTION_ID_PATTERN",
+    "VALID_FIELD_NAME_PATTERN",
+]
