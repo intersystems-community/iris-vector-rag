@@ -170,14 +170,14 @@ with no scripted cursor responses.
 
 ### Tests first
 
-- [ ] T047 [P] [US4] Port the existing shape-dependent unit tests to `RecordedCatalog`, deleting the scripted cursor/mock responses they use today (FR-015)
-- [ ] T048 [US4] Test for the new detector in `tests/unit/test_antipatterns_detectors.py`: a file that reads `INFORMATION_SCHEMA` or `%Dictionary` outside `iris_vector_rag/storage/catalog.py` is reported, and the same code inside it is not
-- [ ] T049 [US4] E2E test `tests/e2e/test_table_shape_e2e.py::test_us4`: the recorded-shape suite and the live suite reach the same verdict on the same shape
+- [X] T047 [P] [US4] Port the existing shape-dependent unit tests to `RecordedCatalog`, deleting the scripted cursor/mock responses they use today (FR-015)
+- [X] T048 [US4] Test for the new detector in `tests/unit/test_antipatterns_detectors.py`: a file that reads `INFORMATION_SCHEMA` or `%Dictionary` outside `iris_vector_rag/storage/catalog.py` is reported, and the same code inside it is not
+- [X] T049 [US4] E2E test `tests/e2e/test_table_shape_e2e.py::test_us4`: the recorded-shape suite and the live suite reach the same verdict on the same shape
 
 ### Implementation
 
-- [ ] T050 [US4] Add the `catalog-read-outside-shape` detector to `scripts/gates/antipatterns.py` (SC-003) and record any remaining known instances in `antipatterns-baseline.txt`
-- [ ] T051 [US4] Verify the US4 phase gate
+- [X] T050 [US4] Add the `catalog-read-outside-shape` detector to `scripts/gates/antipatterns.py` (SC-003) and record any remaining known instances in `antipatterns-baseline.txt`
+- [X] T051 [US4] Verify the US4 phase gate
 
 ```accept
 # verifies: US4 gate -- no catalog read outside the shape owner

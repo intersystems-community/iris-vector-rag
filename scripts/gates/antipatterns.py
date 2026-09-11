@@ -322,6 +322,55 @@ def stale_deselect_entry() -> list[Finding]:
     return out
 
 
+CATALOG_OWNER = "iris_vector_rag/storage/catalog.py"
+
+#: A query, not a mention. The package explains the varchar-vs-VECTOR reporting
+#: quirk in several docstrings, so the table name alone is not evidence; a `FROM`
+#: or `JOIN` in front of it is.
+CATALOG_READ = re.compile(
+    r"\b(?:FROM|JOIN)\s+(INFORMATION_SCHEMA\.\w+|%Dictionary\.\w+)", re.I
+)
+
+
+def catalog_reads(path: str, source: str) -> list[Finding]:
+    """The pure half of `catalog-read-outside-shape`: one file's source, its findings.
+
+    Split out so the detector can be tested against source it is handed
+    (tests/unit/test_antipatterns_detectors.py) rather than against whatever
+    happens to be checked in.
+    """
+    if path == CATALOG_OWNER:
+        return []
+    out = []
+    for match in CATALOG_READ.finditer(source):
+        line = source.count("\n", 0, match.start(1)) + 1
+        out.append(
+            Finding(
+                "catalog-read-outside-shape",
+                f"{path}:{line}",
+                f"reads {match.group(1)} outside {CATALOG_OWNER}; "
+                "resolve a TableShape instead",
+            )
+        )
+    return out
+
+
+def catalog_read_outside_shape() -> list[Finding]:
+    """Shipped: eleven modules each asked INFORMATION_SCHEMA their own question
+    about RAG.SourceDocuments, and disagreed. The store wrote `text_content` while
+    the reader selected `content` on a 0.13 table, vector search retried a second
+    TO_VECTOR type after the first failed, and a `LIKE` filter on a LONGVARCHAR
+    column matched nothing (feature 082, FR-013, SC-003).
+
+    One module owns the catalog SQL now, and a shape resolved from it answers the
+    questions the scattered queries used to. A new query here means a second
+    account of the same table."""
+    out = []
+    for p in files(PKG, ".py"):
+        out.extend(catalog_reads(rel(p), read(p)))
+    return out
+
+
 CHECKS: dict[str, Callable[[], list[Finding]]] = {
     "legacy-fk-target": legacy_fk_target,
     "inline-standard-ddl": inline_standard_ddl,
@@ -332,6 +381,7 @@ CHECKS: dict[str, Callable[[], list[Finding]]] = {
     "positional-load-documents": positional_load_documents,
     "services-iris-container": services_iris_container,
     "stale-deselect-entry": stale_deselect_entry,
+    "catalog-read-outside-shape": catalog_read_outside_shape,
 }
 
 # Checks that carry no baseline and must stay at zero: each fails open when

@@ -1,293 +1,233 @@
-"""
-Tests for HNSW vector index ensure functionality.
+"""HNSW vector index ensure, with the catalog answering as a catalog (feature 082).
 
-Tests the automatic creation and management of HNSW indexes
-with ACORN-1 optimization fallback.
+What these tests used to do: hand `ensure_vector_hnsw_index` a `Mock` cursor whose
+`fetchone()` returned `[1]`, then assert the SQL text of the existence check --
+`SELECT COUNT(*)`, `INFORMATION_SCHEMA.INDEXES`. That pinned a query that now
+lives in `catalog.py`, and it described the answer in the shape of a row rather
+than as the thing the caller wants to know: which indexes exist.
+
+So the catalog is replaced at the seam the index path actually uses
+(`IRISCatalogReader.index_names`) and the answer is a set of names (FR-015). The
+cursor is still real work here -- it is the DDL channel, and the exact
+`CREATE INDEX` text is the behaviour under test.
 """
 
 from unittest.mock import Mock, patch
 
 import pytest
 
+from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
+class RecordedIndexes:
+    """The catalog's answer about a table's indexes, as `IRISCatalogReader` gives it.
+
+    An instance is both the reader and its factory: the index path constructs
+    `IRISCatalogReader(connection)`, so calling the instance returns itself and
+    records the connection it was handed.
+    """
+
+    def __init__(self, *names: str) -> None:
+        self.names = {name.upper() for name in names}
+        self.asked: list[tuple[str, object]] = []
+
+    def __call__(self, connection):
+        self.connection = connection
+        return self
+
+    def index_names(self, table: str, cursor=None) -> set[str]:
+        self.asked.append((table, cursor))
+        return set(self.names)
+
+
+class RecordingCursor:
+    """Records the statements it is given, and can fail one of them."""
+
+    def __init__(self, fail_on: str | None = None) -> None:
+        self.statements: list[str] = []
+        self.closed = False
+        self._fail_on = fail_on
+
+    def execute(self, sql, params=None):
+        self.statements.append(sql)
+        if self._fail_on and self._fail_on in sql:
+            raise RuntimeError(f"{self._fail_on} not supported by this instance")
+
+    def close(self):
+        self.closed = True
+
+    @property
+    def created(self) -> list[str]:
+        return [sql for sql in self.statements if "CREATE INDEX" in sql]
+
+
+class RecordingConnection:
+    def __init__(self, cursor: RecordingCursor) -> None:
+        self._cursor = cursor
+        self.commits = 0
+        self.rollbacks = 0
+
+    def cursor(self):
+        return self._cursor
+
+    def commit(self):
+        self.commits += 1
+
+    def rollback(self):
+        self.rollbacks += 1
+
+
+@pytest.fixture
+def manager():
+    """A schema manager whose configuration is real and whose database is not.
+
+    The dimension is passed explicitly rather than mocked: a `Mock` config manager
+    yields a `Mock` dimension, which the constructor now rejects outright.
+    """
+    with patch.object(SchemaManager, "ensure_schema_metadata_table"):
+        return SchemaManager(
+            Mock(), ConfigurationManager(), base_embedding_dimension=384
+        )
+
+
 class TestEnsureHNSWIndex:
-    """Tests for ensure_vector_hnsw_index method."""
+    def test_existing_index_is_left_alone(self, manager):
+        """Idempotent: an index the catalog already reports is not re-created."""
+        catalog = RecordedIndexes("IDX_SOURCEDOCUMENTS_EMBEDDING")
+        cursor = RecordingCursor()
 
-    @pytest.fixture
-    def schema_manager(self):
-        """Create a schema manager with mocked dependencies."""
-        mock_connection_manager = Mock()
-        mock_config_manager = Mock()
+        with patch("iris_vector_rag.storage.schema_manager.IRISCatalogReader", catalog):
+            manager.ensure_vector_hnsw_index(
+                cursor,
+                "RAG.SourceDocuments",
+                "embedding",
+                "idx_SourceDocuments_embedding",
+            )
 
-        # Mock config manager to return default values
-        mock_config_manager.get.side_effect = lambda key, default=None: {
-            "embedding_model.name": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_model.dimension": 384,
-            "storage:iris:vector_data_type": "FLOAT",
-        }.get(key, default)
+        assert cursor.statements == []
+        # The unqualified name, and the caller's own cursor: the answer has to come
+        # from inside the transaction the DDL will run in.
+        assert catalog.asked == [("SourceDocuments", cursor)]
 
-        with patch.object(SchemaManager, "ensure_schema_metadata_table"):
-            manager = SchemaManager(mock_connection_manager, mock_config_manager)
+    def test_acorn_is_tried_first(self, manager):
+        """A missing index is created with the ACORN=1 optimisation."""
+        cursor = RecordingCursor()
 
-        return manager
+        with patch(
+            "iris_vector_rag.storage.schema_manager.IRISCatalogReader",
+            RecordedIndexes(),
+        ):
+            manager.ensure_vector_hnsw_index(
+                cursor, "RAG.Entities", "embedding", "idx_Entities_embedding"
+            )
 
-    def test_ensure_hnsw_index_idempotent(self, schema_manager):
-        """Test that ensure_vector_hnsw_index is idempotent (no-op if already exists)."""
-        # Setup mock cursor
-        mock_cursor = Mock()
-
-        # Mock index already exists
-        mock_cursor.fetchone.return_value = [1]  # index count > 0
-
-        # Call ensure_vector_hnsw_index
-        schema_manager.ensure_vector_hnsw_index(
-            mock_cursor,
-            "RAG.SourceDocuments",
-            "embedding",
-            "idx_SourceDocuments_embedding",
-        )
-
-        # Verify check query was executed
-        mock_cursor.execute.assert_called_once()
-        args = mock_cursor.execute.call_args[0]
-        assert "SELECT COUNT(*)" in args[0]
-        assert "INFORMATION_SCHEMA.INDEXES" in args[0]
-
-        # Verify no CREATE INDEX was executed (since index already exists)
-        create_calls = [
-            call
-            for call in mock_cursor.execute.call_args_list
-            if "CREATE INDEX" in str(call)
+        assert cursor.statements == [
+            "CREATE INDEX idx_Entities_embedding ON RAG.Entities(embedding) "
+            "AS HNSW WITH (ACORN=1)"
         ]
-        assert len(create_calls) == 0
 
-    def test_ensure_hnsw_index_fallback_without_acorn(self, schema_manager):
-        """Test fallback to standard HNSW when ACORN syntax fails."""
-        # Setup mock cursor
-        mock_cursor = Mock()
+    def test_acorn_failure_falls_back_to_standard_hnsw(self, manager):
+        """An instance without ACORN still gets an index, on the second statement."""
+        cursor = RecordingCursor(fail_on="ACORN=1")
 
-        # Mock index doesn't exist
-        mock_cursor.fetchone.return_value = [0]  # index count = 0
+        with patch(
+            "iris_vector_rag.storage.schema_manager.IRISCatalogReader",
+            RecordedIndexes(),
+        ):
+            manager.ensure_vector_hnsw_index(
+                cursor,
+                "RAG.SourceDocuments",
+                "embedding",
+                "idx_SourceDocuments_embedding",
+            )
 
-        # Mock ACORN syntax failure, then success on standard HNSW
-        def execute_side_effect(sql, *args):
-            if "ACORN=1" in sql:
-                raise Exception("ACORN syntax not supported")
-            # Standard HNSW succeeds
-            return None
+        assert cursor.statements == [
+            "CREATE INDEX idx_SourceDocuments_embedding ON RAG.SourceDocuments(embedding) "
+            "AS HNSW WITH (ACORN=1)",
+            "CREATE INDEX idx_SourceDocuments_embedding ON RAG.SourceDocuments(embedding) "
+            "AS HNSW",
+        ]
 
-        mock_cursor.execute.side_effect = execute_side_effect
+    def test_try_acorn_false_skips_the_optimisation(self, manager):
+        cursor = RecordingCursor()
 
-        # Call ensure_vector_hnsw_index
-        schema_manager.ensure_vector_hnsw_index(
-            mock_cursor,
-            "RAG.SourceDocuments",
-            "embedding",
-            "idx_SourceDocuments_embedding",
-        )
+        with patch(
+            "iris_vector_rag.storage.schema_manager.IRISCatalogReader",
+            RecordedIndexes(),
+        ):
+            manager.ensure_vector_hnsw_index(
+                cursor,
+                "RAG.Entities",
+                "embedding",
+                "idx_Entities_embedding",
+                try_acorn=False,
+            )
 
-        # Verify both ACORN and standard HNSW were attempted
-        execute_calls = [str(call) for call in mock_cursor.execute.call_args_list]
+        assert cursor.statements == [
+            "CREATE INDEX idx_Entities_embedding ON RAG.Entities(embedding) AS HNSW"
+        ]
 
-        # Should have check, ACORN attempt, and standard HNSW
-        assert len(mock_cursor.execute.call_args_list) == 3
+    def test_a_catalog_failure_reaches_the_caller(self, manager):
+        """The index check is not allowed to fail quietly into "create it anyway"."""
+        broken = Mock(side_effect=RuntimeError("catalog unavailable"))
+        cursor = RecordingCursor()
 
-        # Find the CREATE INDEX calls
-        create_calls = [call for call in execute_calls if "CREATE INDEX" in call]
-        assert len(create_calls) == 2
+        with patch("iris_vector_rag.storage.schema_manager.IRISCatalogReader", broken):
+            with pytest.raises(RuntimeError, match="catalog unavailable"):
+                manager.ensure_vector_hnsw_index(
+                    cursor, "RAG.Entities", "embedding", "idx_Entities_embedding"
+                )
 
-        # First should be ACORN attempt
-        assert "ACORN=1" in create_calls[0]
-
-        # Second should be standard HNSW
-        assert "AS HNSW" in create_calls[1]
-        assert "ACORN=1" not in create_calls[1]
-
-    def test_ensure_hnsw_index_acorn_success(self, schema_manager):
-        """Test successful creation with ACORN=1."""
-        # Setup mock cursor
-        mock_cursor = Mock()
-
-        # Mock index doesn't exist
-        mock_cursor.fetchone.return_value = [0]  # index count = 0
-
-        # Call ensure_vector_hnsw_index
-        schema_manager.ensure_vector_hnsw_index(
-            mock_cursor, "RAG.Entities", "embedding", "idx_Entities_embedding"
-        )
-
-        # Verify check and ACORN creation
-        assert mock_cursor.execute.call_count == 2
-
-        # Check the CREATE INDEX call
-        create_call = None
-        for call_args in mock_cursor.execute.call_args_list:
-            if "CREATE INDEX" in str(call_args):
-                create_call = call_args[0][0]
-                break
-
-        assert create_call is not None
-        assert (
-            "CREATE INDEX idx_Entities_embedding ON RAG.Entities(embedding) AS HNSW WITH (ACORN=1)"
-            == create_call
-        )
-
-    def test_ensure_hnsw_index_entities_table(self, schema_manager):
-        """Test ensure_vector_hnsw_index with Entities table."""
-        mock_cursor = Mock()
-        mock_cursor.fetchone.return_value = [0]  # index doesn't exist
-
-        schema_manager.ensure_vector_hnsw_index(
-            mock_cursor,
-            "RAG.Entities",
-            "embedding",
-            "idx_Entities_embedding",
-            try_acorn=False,  # Skip ACORN for this test
-        )
-
-        # Should have check query and standard HNSW creation
-        assert mock_cursor.execute.call_count == 2
-
-        # Find CREATE INDEX call
-        create_sql = None
-        for call_args in mock_cursor.execute.call_args_list:
-            sql = call_args[0][0]
-            if "CREATE INDEX" in sql:
-                create_sql = sql
-                break
-
-        assert (
-            create_sql
-            == "CREATE INDEX idx_Entities_embedding ON RAG.Entities(embedding) AS HNSW"
-        )
-
-    def test_ensure_hnsw_index_with_try_acorn_false(self, schema_manager):
-        """Test ensure_vector_hnsw_index with try_acorn=False."""
-        mock_cursor = Mock()
-        mock_cursor.fetchone.return_value = [0]  # index doesn't exist
-
-        schema_manager.ensure_vector_hnsw_index(
-            mock_cursor,
-            "RAG.SourceDocuments",
-            "embedding",
-            "idx_SourceDocuments_embedding",
-            try_acorn=False,
-        )
-
-        # Should only attempt standard HNSW
-        execute_calls = [str(call) for call in mock_cursor.execute.call_args_list]
-        create_calls = [call for call in execute_calls if "CREATE INDEX" in call]
-
-        assert len(create_calls) == 1
-        assert "ACORN=1" not in create_calls[0]
-        assert "AS HNSW" in create_calls[0]
+        assert cursor.statements == []
 
 
 class TestEnsureAllVectorIndexes:
-    """Tests for ensure_all_vector_indexes method."""
+    def test_both_vector_tables_get_an_index(self, manager):
+        cursor = RecordingCursor()
+        connection = RecordingConnection(cursor)
+        manager.connection_manager.get_connection.return_value = connection
 
-    @pytest.fixture
-    def schema_manager(self):
-        """Create a schema manager with mocked dependencies."""
-        mock_connection_manager = Mock()
-        mock_config_manager = Mock()
+        with patch(
+            "iris_vector_rag.storage.schema_manager.IRISCatalogReader",
+            RecordedIndexes(),
+        ):
+            manager.ensure_all_vector_indexes()
 
-        # Mock config manager to return default values
-        mock_config_manager.get.side_effect = lambda key, default=None: {
-            "embedding_model.name": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_model.dimension": 384,
-            "storage:iris:vector_data_type": "FLOAT",
-        }.get(key, default)
-
-        with patch.object(SchemaManager, "ensure_schema_metadata_table"):
-            manager = SchemaManager(mock_connection_manager, mock_config_manager)
-
-        return manager
-
-    def test_ensure_all_vector_indexes_success(self, schema_manager):
-        """Test ensure_all_vector_indexes creates indexes for all tables."""
-        # Setup mock connection and cursor
-        mock_connection = Mock()
-        mock_cursor = Mock()
-        mock_connection.cursor.return_value = mock_cursor
-
-        schema_manager.connection_manager.get_connection.return_value = mock_connection
-
-        # Mock no indexes exist
-        mock_cursor.fetchone.return_value = [0]
-
-        # Call ensure_all_vector_indexes
-        schema_manager.ensure_all_vector_indexes()
-
-        # Verify connection management
-        schema_manager.connection_manager.get_connection.assert_called_once()
-        mock_connection.cursor.assert_called_once()
-        mock_connection.commit.assert_called_once()
-        mock_cursor.close.assert_called_once()
-
-        # Should create indexes for both SourceDocuments and Entities
-        execute_calls = mock_cursor.execute.call_args_list
-
-        # Find CREATE INDEX calls
-        create_calls = []
-        for call_args in execute_calls:
-            sql = call_args[0][0]
-            if "CREATE INDEX" in sql:
-                create_calls.append(sql)
-
-        assert len(create_calls) == 2
-
-        # Check SourceDocuments index
-        source_docs_create = [
-            call for call in create_calls if "SourceDocuments" in call
+        assert cursor.created == [
+            "CREATE INDEX idx_SourceDocuments_embedding ON RAG.SourceDocuments(embedding) "
+            "AS HNSW WITH (ACORN=1)",
+            "CREATE INDEX idx_Entities_embedding ON RAG.Entities(embedding) "
+            "AS HNSW WITH (ACORN=1)",
         ]
-        assert len(source_docs_create) == 1
-        assert "idx_SourceDocuments_embedding" in source_docs_create[0]
+        assert connection.commits == 1
+        assert cursor.closed
 
-        # Check Entities index
-        entities_create = [call for call in create_calls if "Entities" in call]
-        assert len(entities_create) == 1
-        assert "idx_Entities_embedding" in entities_create[0]
+    def test_existing_indexes_produce_no_ddl(self, manager):
+        cursor = RecordingCursor()
+        connection = RecordingConnection(cursor)
+        manager.connection_manager.get_connection.return_value = connection
+        catalog = RecordedIndexes(
+            "IDX_SOURCEDOCUMENTS_EMBEDDING", "IDX_ENTITIES_EMBEDDING"
+        )
 
-    def test_ensure_all_vector_indexes_handles_errors(self, schema_manager):
-        """Test ensure_all_vector_indexes handles errors gracefully."""
-        # Setup mock connection and cursor
-        mock_connection = Mock()
-        mock_cursor = Mock()
-        mock_connection.cursor.return_value = mock_cursor
+        with patch("iris_vector_rag.storage.schema_manager.IRISCatalogReader", catalog):
+            manager.ensure_all_vector_indexes()
 
-        schema_manager.connection_manager.get_connection.return_value = mock_connection
+        assert cursor.statements == []
+        assert connection.commits == 1
 
-        # Mock an error during execution
-        mock_cursor.execute.side_effect = Exception("Database error")
+    def test_a_failure_rolls_back_and_closes(self, manager):
+        cursor = RecordingCursor(fail_on="CREATE INDEX")
+        connection = RecordingConnection(cursor)
+        manager.connection_manager.get_connection.return_value = connection
 
-        # Call ensure_all_vector_indexes - should not raise
-        schema_manager.ensure_all_vector_indexes()
+        with patch(
+            "iris_vector_rag.storage.schema_manager.IRISCatalogReader",
+            RecordedIndexes(),
+        ):
+            manager.ensure_all_vector_indexes()
 
-        # Verify rollback was called
-        mock_connection.rollback.assert_called_once()
-        mock_cursor.close.assert_called_once()
-
-    def test_ensure_all_vector_indexes_with_existing_indexes(self, schema_manager):
-        """Test ensure_all_vector_indexes when indexes already exist."""
-        # Setup mock connection and cursor
-        mock_connection = Mock()
-        mock_cursor = Mock()
-        mock_connection.cursor.return_value = mock_cursor
-
-        schema_manager.connection_manager.get_connection.return_value = mock_connection
-
-        # Mock indexes already exist
-        mock_cursor.fetchone.return_value = [1]  # index count > 0
-
-        # Call ensure_all_vector_indexes
-        schema_manager.ensure_all_vector_indexes()
-
-        # Should still have check queries but no CREATE INDEX calls
-        execute_calls = [str(call) for call in mock_cursor.execute.call_args_list]
-        create_calls = [call for call in execute_calls if "CREATE INDEX" in call]
-
-        assert len(create_calls) == 0  # No indexes created since they exist
-        mock_connection.commit.assert_called_once()
+        assert connection.rollbacks == 1
+        assert connection.commits == 0
+        assert cursor.closed

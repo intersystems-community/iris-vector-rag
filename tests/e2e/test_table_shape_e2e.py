@@ -12,6 +12,7 @@ documents would come back empty and the answer would say so.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
@@ -21,6 +22,8 @@ from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.storage.catalog import RecordedCatalog
+from iris_vector_rag.storage.shape_resolver import TableShapeResolver
 from iris_vector_rag.storage.table_shape import ShapeKind
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from tests.fixtures.shapes.ddl import (
@@ -35,6 +38,9 @@ pytestmark = [pytest.mark.e2e, pytest.mark.true_e2e]
 #: `doc_id` / `content` / `embedding` -- the spelling shipped before 0.15, and the
 #: shape the store used to write one column of and read the other.
 LEGACY_SHAPE = "fixture"
+
+#: The recordings the unit suite describes shapes from.
+FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "shapes"
 
 DOCUMENTS = [
     Document(
@@ -213,3 +219,41 @@ def test_us3(fresh_instance):
     assert result["error"] is None, result["error"]
     assert result["retrieved_documents"][0].id == "shape-e2e-warfarin"
     assert "four weeks" in result["answer"].lower(), result["answer"]
+
+
+def test_us4(legacy_table):
+    """A recorded shape and the live catalog reach the same verdict (US4 gate).
+
+    Two stores over one real table: one resolves the shape from IRIS, the other only
+    ever reads `tests/fixtures/shapes/` -- the recordings every shape-dependent unit
+    test describes its table with. Both are asked the same question against real
+    data, so a recording that has drifted from the DDL it claims to describe fails
+    here instead of quietly making the unit suite agree with nothing.
+
+    No LLM: what is under test is which columns each store decides to read.
+    """
+    config = ConfigurationManager()
+    connections = ConnectionManager(config)
+
+    live = IRISVectorStore(connections, config)
+    live.add_documents(DOCUMENTS)
+
+    recorded = IRISVectorStore(
+        connections,
+        config,
+        shapes=TableShapeResolver(RecordedCatalog.from_fixture_dir(FIXTURE_DIR)),
+    )
+
+    assert recorded.shape() == live.shape()
+    assert recorded.shape().qualified_name == legacy_table
+
+    live_docs = live.search_by_text(QUESTION, top_k=3)
+    recorded_docs = recorded.search_by_text(QUESTION, top_k=3)
+
+    assert [doc.id for doc in live_docs][0] == "shape-e2e-warfarin"
+    assert [doc.id for doc in recorded_docs] == [doc.id for doc in live_docs]
+    # Same rows and the same text out of the same column: the recording decides the
+    # SQL the second store sends, and it reads the table the first one wrote.
+    assert [doc.page_content for doc in recorded_docs] == [
+        doc.page_content for doc in live_docs
+    ]

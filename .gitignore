@@ -165,6 +165,8 @@ outputs/temp/
 test_results/temp/
 reports/temp/
 comprehensive_ragas_results/temp/
+# Written by the validation orchestrator on every run it is exercised in.
+validation_results/
 benchmarks/temp/
 coverage_html/temp/
 
