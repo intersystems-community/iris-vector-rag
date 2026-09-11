@@ -1,122 +1,161 @@
 #!/usr/bin/env python3
-"""Validate that all requirements have corresponding tasks.
+"""Check that every requirement in a feature's spec is claimed by a task.
 
-This script ensures that:
-1. All functional requirements (FR-*) have implementation tasks
-2. All non-functional requirements (NFR-*) have tasks
-3. Edge cases defined in spec have test tasks
-4. No requirements are left unimplemented
+Reads `specs/<feature>/spec.md` and `specs/<feature>/tasks.md`, collects the
+`FR-nnn` / `NFR-nnn` identifiers each declares, and reports the requirements no
+task cites.
+
+Two things this got wrong for a long time, both fixed here and pinned by
+`tests/unit/test_validate_task_mapping.py`:
+
+* It read tasks only as markdown headings (`## T001 ...`). Every spec in this
+  repo writes them as checkboxes (`- [ ] T001 ...`), the format
+  `.specify/templates/tasks-template.md` mandates, so the check reported 0.0%
+  coverage and every requirement "Missing" for features that were fully mapped.
+  Both formats are read now.
+* It graded whatever `sorted(specs/*)[-1]` happened to be -- work on 082 was
+  checked against 083's spec. The feature comes from the branch name now, and a
+  branch that names no feature (master, a housekeeping branch) is skipped rather
+  than compared against an unrelated spec.
+
+`--fail-on-gaps` acts on requirement gaps only. Edge-case matching is keyword
+guesswork and stays advisory: it prints, it never sets the exit code.
 
 Usage:
-    python scripts/validate_task_mapping.py [--spec SPEC_FILE] [--tasks TASKS_FILE]
+    python scripts/validate_task_mapping.py [--spec SPEC] [--tasks TASKS]
+    python scripts/validate_task_mapping.py --fail-on-gaps
+    python scripts/validate_task_mapping.py --branch 082-table-shape --json
 """
 
-import sys
-import re
+from __future__ import annotations
+
 import argparse
-from pathlib import Path
-from typing import List, Dict, Tuple
 import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+REQUIREMENT = re.compile(r"\b((?:FR|NFR)-\d{3})\b")
+
+# `- [ ] T001 ...`, `- [x] T001 ...`, `* [X] T1004 ...`
+CHECKBOX_TASK = re.compile(r"^\s*[-*]\s*\[[ xX]\]\s*(T\d+)\b")
+# `## T001: ...`, `### T001 ...`
+HEADING_TASK = re.compile(r"^#{2,6}\s+(T\d+)\b")
+# Any markdown heading, which ends a checkbox task's run of continuation lines.
+HEADING = re.compile(r"^#{1,6}\s")
+
+# A branch that owns a feature starts with the feature number: `082-table-shape`,
+# and also `082-table-shape-fixup` for follow-up work on the same feature.
+FEATURE_BRANCH = re.compile(r"^(\d{3})-")
 
 
 def extract_requirements(spec_content: str) -> List[str]:
-    """Extract requirement IDs from spec.md content."""
-    requirements = []
+    """Every requirement identifier the spec declares, deduplicated and sorted."""
+    return sorted(set(REQUIREMENT.findall(spec_content)))
 
-    # Find FR-XXX and NFR-XXX patterns
-    # Look for patterns like **FR-001**, FR-001:, or just FR-001
-    pattern = r'\b((?:FR|NFR)-\d{3})\b'
 
-    matches = re.findall(pattern, spec_content)
-    requirements = list(set(matches))  # Remove duplicates
-
-    return sorted(requirements)
+def requirement_text(spec_content: str) -> Dict[str, str]:
+    """Map each requirement to the line that declares it, for the gap report."""
+    text: Dict[str, str] = {}
+    for line in spec_content.splitlines():
+        for req in REQUIREMENT.findall(line):
+            if req not in text:
+                cleaned = re.sub(r"^[\s\-*#>]+", "", line).strip()
+                cleaned = cleaned.replace("**", "")
+                cleaned = re.sub(rf"^{re.escape(req)}\s*[:.\-]?\s*", "", cleaned)
+                text[req] = cleaned
+    return text
 
 
 def extract_tasks(tasks_content: str) -> Dict[str, Dict]:
-    """Extract tasks and their linked requirements from tasks.md."""
-    tasks = {}
+    """Tasks and the requirements each one cites.
 
-    # Split content into task sections
-    # Tasks typically start with ## T### or ### T###
-    task_pattern = r'^#{2,3}\s+(T\d{3})[:\s].*$'
-    task_splits = re.split(task_pattern, tasks_content, flags=re.MULTILINE)
+    A task starts at either a checkbox line or a `T###` heading, and owns every
+    line after it up to the next task or the next heading -- so a requirement
+    cited on an indented sub-bullet belongs to the task above it.
+    """
+    tasks: Dict[str, Dict] = {}
+    current: Optional[str] = None
+    lines: Dict[str, List[str]] = {}
 
-    # Process pairs (task_id, task_content)
-    for i in range(1, len(task_splits), 2):
-        if i + 1 < len(task_splits):
-            task_id = task_splits[i]
-            task_content = task_splits[i + 1]
+    for line in tasks_content.splitlines():
+        start = CHECKBOX_TASK.match(line) or HEADING_TASK.match(line)
+        if start:
+            current = start.group(1)
+            lines.setdefault(current, []).append(line)
+            continue
+        if current is None:
+            continue
+        if HEADING.match(line):
+            current = None
+            continue
+        lines[current].append(line)
 
-            # Find referenced requirements in task content
-            req_pattern = r'\b((?:FR|NFR)-\d{3})\b'
-            requirements = list(set(re.findall(req_pattern, task_content)))
-
-            tasks[task_id] = {
-                "requirements": requirements,
-                "content": task_content[:200]  # First 200 chars for context
-            }
-
+    for task_id, body in lines.items():
+        content = "\n".join(body)
+        tasks[task_id] = {
+            "requirements": sorted(set(REQUIREMENT.findall(content))),
+            "content": content[:200],
+        }
     return tasks
 
 
 def find_gaps(requirements: List[str], tasks: Dict[str, Dict]) -> List[str]:
-    """Find requirements without corresponding tasks."""
-    # Collect all requirements referenced in tasks
-    covered_requirements = set()
-    for task_data in tasks.values():
-        covered_requirements.update(task_data["requirements"])
-
-    # Find gaps
-    gaps = []
-    for req in requirements:
-        if req not in covered_requirements:
-            gaps.append(req)
-
-    return sorted(gaps)
+    """Requirements no task cites."""
+    covered = {req for task in tasks.values() for req in task["requirements"]}
+    return sorted(req for req in requirements if req not in covered)
 
 
 def extract_edge_cases(spec_content: str) -> List[str]:
     """Extract edge cases from spec content."""
     edge_cases = []
 
-    # Look for Edge Cases section
-    edge_section_pattern = r'#+\s*Edge Cases.*?(?=^#|\Z)'
-    edge_match = re.search(edge_section_pattern, spec_content, re.MULTILINE | re.DOTALL | re.IGNORECASE)
+    edge_section_pattern = r"#+\s*Edge Cases.*?(?=^#|\Z)"
+    edge_match = re.search(
+        edge_section_pattern, spec_content, re.MULTILINE | re.DOTALL | re.IGNORECASE
+    )
 
     if edge_match:
         edge_content = edge_match.group(0)
 
-        # Extract bullet points or questions
-        # Look for lines starting with -, *, or containing ?
-        lines = edge_content.split('\n')
-        for line in lines:
+        for line in edge_content.split("\n"):
             line = line.strip()
-            if line and (line.startswith('-') or line.startswith('*') or '?' in line):
-                # Clean up the line
-                cleaned = re.sub(r'^[-*]\s*', '', line)
-                if cleaned and len(cleaned) > 10:  # Skip very short lines
+            if line and (line.startswith("-") or line.startswith("*") or "?" in line):
+                cleaned = re.sub(r"^[-*]\s*", "", line)
+                if cleaned and len(cleaned) > 10:
                     edge_cases.append(cleaned)
 
     return edge_cases
 
 
 def validate_edge_cases(spec_content: str, tasks_content: str) -> List[str]:
-    """Find edge cases without corresponding test tasks."""
+    """Edge cases whose keywords appear nowhere in the tasks. Advisory only."""
     edge_cases = extract_edge_cases(spec_content)
     tasks_lower = tasks_content.lower()
 
     gaps = []
     for edge_case in edge_cases:
-        # Create searchable keywords from edge case
-        # Remove common words and punctuation
-        keywords = re.findall(r'\b\w{4,}\b', edge_case.lower())
-        important_keywords = [k for k in keywords if k not in
-                            ['what', 'when', 'where', 'how', 'happens', 'does', 'should', 'system']]
+        keywords = re.findall(r"\b\w{4,}\b", edge_case.lower())
+        important_keywords = [
+            k
+            for k in keywords
+            if k
+            not in [
+                "what",
+                "when",
+                "where",
+                "how",
+                "happens",
+                "does",
+                "should",
+                "system",
+            ]
+        ]
 
-        # Check if any important keyword appears in tasks
         found = False
-        for keyword in important_keywords[:3]:  # Check first 3 important keywords
+        for keyword in important_keywords[:3]:
             if keyword in tasks_lower:
                 found = True
                 break
@@ -127,6 +166,28 @@ def validate_edge_cases(spec_content: str, tasks_content: str) -> List[str]:
     return gaps
 
 
+def analyze(spec_content: str, tasks_content: str, feature: str | None = None) -> Dict:
+    """Everything the report and the exit code are derived from."""
+    requirements = extract_requirements(spec_content)
+    tasks = extract_tasks(tasks_content)
+    gaps = find_gaps(requirements, tasks)
+    total = len(requirements)
+    mapped = total - len(gaps)
+
+    return {
+        "feature": feature,
+        "total_requirements": total,
+        "mapped_requirements": mapped,
+        "gaps": gaps,
+        "gap_text": {req: requirement_text(spec_content).get(req, "") for req in gaps},
+        "coverage_percentage": (mapped / total * 100) if total else 100.0,
+        "edge_case_gaps": validate_edge_cases(spec_content, tasks_content),
+        "task_summary": tasks,
+        # Only requirement gaps fail. Edge-case matching is keyword guesswork.
+        "fails": bool(gaps),
+    }
+
+
 def generate_mapping_report(mapping_data: Dict) -> str:
     """Generate a formatted mapping report."""
     report = []
@@ -134,151 +195,157 @@ def generate_mapping_report(mapping_data: Dict) -> str:
     report.append("Requirement-Task Mapping Report")
     report.append("=" * 70)
 
+    if mapping_data.get("feature"):
+        report.append(f"\nFeature: {mapping_data['feature']}")
+
     report.append(f"\nTotal Requirements: {mapping_data['total_requirements']}")
     report.append(f"Mapped Requirements: {mapping_data['mapped_requirements']}")
+    report.append(f"Tasks: {len(mapping_data.get('task_summary', {}))}")
     report.append(f"Coverage: {mapping_data['coverage_percentage']:.1f}%")
 
-    if mapping_data['gaps']:
+    if mapping_data["gaps"]:
         report.append("\n" + "-" * 70)
-        report.append("Missing Requirements:")
+        report.append("Missing Requirements: no task cites these")
         report.append("-" * 70)
-        for gap in mapping_data['gaps']:
-            report.append(f"  ❌ {gap}")
+        for gap in mapping_data["gaps"]:
+            text = mapping_data.get("gap_text", {}).get(gap, "")
+            report.append(f"  ❌ {gap}" + (f" — {text}" if text else ""))
 
-    if mapping_data.get('edge_case_gaps'):
+    if mapping_data.get("edge_case_gaps"):
         report.append("\n" + "-" * 70)
-        report.append("Edge Case Gaps:")
+        report.append("Edge Case Gaps (advisory: never fails the check)")
         report.append("-" * 70)
-        for gap in mapping_data['edge_case_gaps']:
+        for gap in mapping_data["edge_case_gaps"]:
             report.append(f"  ⚠️  {gap}")
-
-    if mapping_data.get('task_summary'):
-        report.append("\n" + "-" * 70)
-        report.append("Task Summary:")
-        report.append("-" * 70)
-        for task_id, task_info in sorted(mapping_data['task_summary'].items())[:10]:
-            if task_info['requirements']:
-                report.append(f"  {task_id}: {', '.join(task_info['requirements'])}")
 
     report.append("\n" + "=" * 70)
     return "\n".join(report)
 
 
-def find_spec_and_tasks(base_path: Path) -> Tuple[Path, Path]:
-    """Find spec.md and tasks.md files in the project."""
-    # Look in specs directory
-    specs_dir = base_path / "specs"
-    if specs_dir.exists():
-        # Find most recent feature directory
-        feature_dirs = [d for d in specs_dir.iterdir() if d.is_dir() and d.name.startswith("0")]
-        if feature_dirs:
-            # Sort by name (assuming numbered features)
-            latest_feature = sorted(feature_dirs)[-1]
+def current_branch(base_path: Path) -> Optional[str]:
+    """The checked-out branch name, or None outside a git work tree."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=base_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return None
+    if result.returncode != 0:
+        return None
+    branch = result.stdout.strip()
+    return branch or None
 
-            spec_file = latest_feature / "spec.md"
-            tasks_file = latest_feature / "tasks.md"
 
-            if spec_file.exists() and tasks_file.exists():
-                return spec_file, tasks_file
+def find_spec_dir(specs_dir: Path, branch: Optional[str]) -> Optional[Path]:
+    """The feature directory the branch is working on, if there is one.
 
-    # Fallback to looking in current directory
-    spec_file = base_path / "spec.md"
-    tasks_file = base_path / "tasks.md"
+    A branch names its feature by number, so `082-table-shape-fixup` still checks
+    082. A branch with no feature number (master, a housekeeping branch) names no
+    feature, and a feature with no `tasks.md` yet has nothing to compare.
+    """
+    if not branch or not specs_dir.is_dir():
+        return None
 
-    return spec_file, tasks_file
+    match = FEATURE_BRANCH.match(branch)
+    if not match:
+        return None
+
+    exact = specs_dir / branch
+    candidates = [exact] if exact.is_dir() else []
+    candidates += sorted(
+        d
+        for d in specs_dir.iterdir()
+        if d.is_dir() and d.name.startswith(f"{match.group(1)}-") and d != exact
+    )
+
+    for candidate in candidates:
+        if (candidate / "spec.md").exists() and (candidate / "tasks.md").exists():
+            return candidate
+    return None
+
+
+def find_spec_and_tasks(
+    base_path: Path, branch: Optional[str] = None
+) -> Tuple[Optional[Path], Optional[Path]]:
+    """Locate the current feature's spec and tasks, or (None, None) if there isn't one."""
+    feature_dir = find_spec_dir(
+        base_path / "specs", branch if branch is not None else current_branch(base_path)
+    )
+    if feature_dir is None:
+        return None, None
+    return feature_dir / "spec.md", feature_dir / "tasks.md"
 
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Validate requirement-task mapping"
-    )
+    parser = argparse.ArgumentParser(description="Validate requirement-task mapping")
+    parser.add_argument("--spec", type=Path, help="Path to spec.md file")
+    parser.add_argument("--tasks", type=Path, help="Path to tasks.md file")
     parser.add_argument(
-        "--spec",
-        type=Path,
-        help="Path to spec.md file"
+        "--branch",
+        help="Branch name to derive the feature from (default: the checked-out branch)",
     )
-    parser.add_argument(
-        "--tasks",
-        type=Path,
-        help="Path to tasks.md file"
-    )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output results as JSON"
-    )
+    parser.add_argument("--json", action="store_true", help="Output results as JSON")
     parser.add_argument(
         "--fail-on-gaps",
         action="store_true",
-        help="Exit with non-zero code if gaps found"
+        help="Exit non-zero if a requirement has no task (edge cases stay advisory)",
     )
 
     args = parser.parse_args()
 
-    # Find files
     base_path = Path.cwd()
     if args.spec and args.tasks:
-        spec_file = args.spec
-        tasks_file = args.tasks
+        spec_file: Optional[Path] = args.spec
+        tasks_file: Optional[Path] = args.tasks
+        feature = args.spec.parent.name
     else:
-        spec_file, tasks_file = find_spec_and_tasks(base_path)
+        branch = args.branch if args.branch is not None else current_branch(base_path)
+        spec_file, tasks_file = find_spec_and_tasks(base_path, branch)
+        feature = spec_file.parent.name if spec_file else None
 
-    # Validate files exist
-    if not spec_file.exists():
-        print(f"Error: Spec file not found: {spec_file}", file=sys.stderr)
-        sys.exit(1)
+        if spec_file is None:
+            message = (
+                f"Skipped: no feature spec for branch {branch!r} "
+                "(no specs/<number>-* directory with both spec.md and tasks.md)."
+            )
+            print(
+                json.dumps({"skipped": True, "reason": message})
+                if args.json
+                else message
+            )
+            sys.exit(0)
 
-    if not tasks_file.exists():
-        print(f"Error: Tasks file not found: {tasks_file}", file=sys.stderr)
-        sys.exit(1)
+    for path, label in ((spec_file, "Spec"), (tasks_file, "Tasks")):
+        if not path.exists():
+            print(f"Error: {label} file not found: {path}", file=sys.stderr)
+            sys.exit(1)
 
-    # Read files
-    spec_content = spec_file.read_text()
-    tasks_content = tasks_file.read_text()
+    mapping_data = analyze(spec_file.read_text(), tasks_file.read_text(), feature)
 
-    # Extract and analyze
-    requirements = extract_requirements(spec_content)
-    tasks = extract_tasks(tasks_content)
-    gaps = find_gaps(requirements, tasks)
-    edge_case_gaps = validate_edge_cases(spec_content, tasks_content)
-
-    # Calculate metrics
-    total_requirements = len(requirements)
-    mapped_requirements = total_requirements - len(gaps)
-    coverage_percentage = (mapped_requirements / total_requirements * 100) if total_requirements > 0 else 100
-
-    # Prepare results
-    mapping_data = {
-        "total_requirements": total_requirements,
-        "mapped_requirements": mapped_requirements,
-        "gaps": gaps,
-        "coverage_percentage": coverage_percentage,
-        "edge_case_gaps": edge_case_gaps,
-        "task_summary": tasks
-    }
-
-    # Output results
     if args.json:
-        # Simplified JSON for output
-        json_data = {
-            "total_requirements": total_requirements,
-            "mapped_requirements": mapped_requirements,
-            "coverage_percentage": coverage_percentage,
-            "missing_requirements": gaps,
-            "edge_case_gaps": edge_case_gaps,
-            "task_count": len(tasks)
-        }
-        print(json.dumps(json_data, indent=2))
+        print(
+            json.dumps(
+                {
+                    "feature": mapping_data["feature"],
+                    "total_requirements": mapping_data["total_requirements"],
+                    "mapped_requirements": mapping_data["mapped_requirements"],
+                    "coverage_percentage": mapping_data["coverage_percentage"],
+                    "missing_requirements": mapping_data["gaps"],
+                    "edge_case_gaps": mapping_data["edge_case_gaps"],
+                    "task_count": len(mapping_data["task_summary"]),
+                },
+                indent=2,
+            )
+        )
     else:
-        report = generate_mapping_report(mapping_data)
-        print(report)
+        print(generate_mapping_report(mapping_data))
 
-    # Exit code
-    if args.fail_on_gaps and (gaps or edge_case_gaps):
-        sys.exit(1)
-    else:
-        sys.exit(0)
+    sys.exit(1 if args.fail_on_gaps and mapping_data["fails"] else 0)
 
 
 if __name__ == "__main__":
