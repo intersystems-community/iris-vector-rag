@@ -251,7 +251,9 @@ class SchemaManager:
     def table_exists(self, table_name: str) -> bool:
         """Check whether a table exists, defaulting to the RAG schema.
 
-        The name is matched as spelled, because that is how the catalog stores it.
+        The name is matched without regard to case: callers spell it the way their
+        configuration does, IRIS stores it the way the DDL declared it, and feature 074
+        established that the difference must not read as "no such table".
         """
         if "." in table_name:
             schema, table = table_name.split(".", 1)

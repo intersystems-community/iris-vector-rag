@@ -39,6 +39,12 @@ See [docs/api/table_shape.md](docs/api/table_shape.md).
   dimension. `is_canonical` is true only of a `VECTOR(FLOAT, n)` embedding, so a
   creation path reading the environment could emit a table the library then refused
   to call canonical.
+- **Table names are matched without regard to case, in one place.** The catalog reader
+  resolves a table's identity against `INFORMATION_SCHEMA.TABLES` with both sides
+  upper-cased, then describes it using the spelling the catalog reported. Feature 074
+  had given `table_exists` that tolerance; routing the check through the shape catalog
+  briefly dropped it, so a configuration naming `rag.sourcedocuments` read as "no such
+  table". A table that does not exist now costs one catalog query instead of two.
 - **A table with no embedding column raises.** Vector search on such a table used
   to fall back silently to `FLOAT` and return nothing; it now raises
   `NotVectorSearchable` naming the table.

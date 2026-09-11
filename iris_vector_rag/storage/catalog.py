@@ -4,8 +4,14 @@ This is the only module in the package that talks to `INFORMATION_SCHEMA` and
 `%Dictionary.*`. `TableShape` consumes what comes out of it, so the shape logic can
 be tested without a database and the SQL can be tested against a real one.
 
-Three queries per table, plus a fourth only when the first returns nothing:
+One query to establish that the table exists and what it is really called, then three
+to describe it:
 
+0. `INFORMATION_SCHEMA.TABLES` -- compared case-insensitively, because a caller spells
+   a table the way its configuration does and IRIS stores it the way the DDL declared
+   it. This is the only case-folding comparison in the module; every query below is
+   given the spelling this one reported, so a snapshot describes the table as IRIS
+   names it. A table that does not exist costs this query alone.
 1. `INFORMATION_SCHEMA.COLUMNS` -- names, SQL types, lengths, nullability, ordinal
    position, and the identity flags.
 2. `%Dictionary.CompiledClass` -- the class backing the table. This lookup is not
@@ -61,9 +67,9 @@ KEY_SQL = """
     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
 """
 
-TABLE_SQL = """
-    SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+IDENTITY_SQL = """
+    SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
+    WHERE UPPER(TABLE_SCHEMA) = UPPER(?) AND UPPER(TABLE_NAME) = UPPER(?)
 """
 
 INDEX_SQL = """
@@ -127,9 +133,16 @@ class IRISCatalogReader:
                 f"could not open a cursor to read the catalog: {exc}", schema, table
             ) from exc
         try:
-            columns = self._rows(cursor, COLUMN_SQL, [schema, table])
-            if not columns and not self._rows(cursor, TABLE_SQL, [schema, table]):
+            identity = self._rows(cursor, IDENTITY_SQL, [schema, table])
+            if not identity:
                 return None
+            # From here on the table is named the way the catalog names it. Callers
+            # spell it the way their configuration does, which is not always the same
+            # case, and only this query is tolerant of the difference.
+            schema = str(identity[0]["TABLE_SCHEMA"])
+            table = str(identity[0]["TABLE_NAME"])
+
+            columns = self._rows(cursor, COLUMN_SQL, [schema, table])
 
             cursor.execute(CLASS_SQL, [schema, table])
             class_rows = cursor.fetchall()
