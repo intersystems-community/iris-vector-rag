@@ -49,7 +49,7 @@ class TestCoverageWarningContract:
         # Mock coverage data for critical module
         mock_coverage = Mock()
         mock_coverage.get_data.return_value = Mock(
-            measured_files=lambda: ["iris_rag/pipelines/basic.py"],
+            measured_files=lambda: ["iris_vector_rag/pipelines/basic.py"],
             lines=lambda f: list(range(1, 101)),  # 100 lines
             executed_lines=lambda f: list(range(1, 76)),  # 75% coverage
         )
@@ -61,7 +61,7 @@ class TestCoverageWarningContract:
 
         # Should warn because 75% < 80% for critical module
         assert len(warnings) == 1
-        assert warnings[0].module_path == "iris_rag/pipelines/basic.py"
+        assert warnings[0].module_path == "iris_vector_rag/pipelines/basic.py"
         assert warnings[0].current_coverage == 75.0
         assert warnings[0].threshold == 80.0
         assert warnings[0].is_critical is True

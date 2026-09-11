@@ -337,8 +337,16 @@ async def async_mock_mem0_client():
     return mock_mem0
 
 
-# Markers for different test categories
-pytest_plugins = ["pytest_asyncio"]
+# The only place plugins actually load from. The `plugins =` key in the old
+# pytest.ini was never a pytest ini option, and the `pytest_plugins` list in
+# tests/plugins/__init__.py is not read either — a package __init__ is not a
+# conftest — so the three below had never run.
+pytest_plugins = [
+    "pytest_asyncio",
+    "tests.plugins.coverage_warnings",
+    "tests.plugins.error_message_validator",
+    "tests.plugins.tdd_compliance",
+]
 
 
 # Configure test markers
