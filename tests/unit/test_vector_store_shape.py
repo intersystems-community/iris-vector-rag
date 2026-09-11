@@ -436,6 +436,23 @@ def test_a_search_logs_the_row_counts_that_explain_an_empty_result(
     assert "Documents with embeddings: 0" in caplog.text
 
 
+def test_a_search_that_finds_rows_pays_nothing_for_the_diagnostic(recorded_catalog):
+    """SC-002: two statements per search -- rank the vectors, fetch their metadata.
+
+    The counts exist to explain an empty result, so a search that returned rows has
+    nothing for them to explain and a `COUNT(*)` over the whole table is pure cost.
+    """
+    cursor = FakeCursor(
+        ranked_rows=[("doc-1", "the text", 0.9)], metadata_rows=[("doc-1", "{}")]
+    )
+    store = make_store("canonical", cursor, recorded_catalog)
+
+    store.similarity_search_by_embedding(EMBEDDING, 5)
+
+    assert [sql for sql in cursor.sql if "COUNT(*)" in sql] == []
+    assert len(cursor.sql) == 2, cursor.sql
+
+
 def test_the_row_counts_are_read_from_the_embedding_column_the_table_has(
     recorded_catalog, caplog
 ):

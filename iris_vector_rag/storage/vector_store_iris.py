@@ -997,13 +997,15 @@ class IRISVectorStore(VectorStore):
         return kept, dropped
 
     def _log_row_counts(self, cursor, embedding_column: str) -> None:
-        """Log how many rows the search had to choose from (LOG-004, feature 033).
+        """Explain an empty result set by counting the rows (LOG-004, feature 033).
 
-        An empty result set has two very different causes -- an empty table and a
-        table whose embeddings were never written -- and these two counts are what
-        tells them apart. The embedding column is the one the table has, passed in
-        from the shape, so this diagnostic cannot name a column the query did not
-        use (FR-001).
+        An empty result has two very different causes -- an empty table and a table
+        whose embeddings were never written -- and these two counts are what tells
+        them apart. They are read only when the search found nothing, because a
+        `COUNT(*)` over the whole table on every search is two extra round trips
+        buying an explanation nobody needs (SC-002). The embedding column is the one
+        the table has, passed in from the shape, so this diagnostic cannot name a
+        column the query did not use (FR-001).
         """
         try:
             cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
@@ -1086,7 +1088,6 @@ class IRISVectorStore(VectorStore):
             logger.debug(f"Top-K parameter: {top_k}")
 
             embedding_column = shape.column_for(ColumnRole.EMBEDDING).name
-            self._log_row_counts(cursor, embedding_column)
 
             # The filter is applied in SQL; the page is top_k. The exact-match
             # check below is only a backstop for LIKE approximations and widens
@@ -1234,6 +1235,7 @@ class IRISVectorStore(VectorStore):
                 if result_count == 0:
                     logger.info("Vector search returned 0 results")
                     logger.debug("Similarity scores: []")
+                    self._log_row_counts(cursor, embedding_column)
                 else:
                     logger.debug(f"Vector search returned {result_count} results")
                     similarity_scores = [score for _, score in results]

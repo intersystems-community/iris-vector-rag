@@ -133,8 +133,10 @@ Nothing else invalidates: a table's shape does not change while a query runs.
   `title_column`, `metadata_column` and `embedding_column` keys in the
   `configuration` JSON of `RAG.SchemaMetadata`. They are now ignored and raise a
   `DeprecationWarning` naming the keys found.
-- `IRIS_VECTOR_DATA_TYPE` as a read-path fallback. It still applies to table
-  creation; it can no longer contradict a table that exists.
+- `IRIS_VECTOR_DATA_TYPE` as the vector element type. Reads take it from the column,
+  and the canonical `CREATE TABLE` takes it from the shape — `is_canonical` is true
+  only of a `VECTOR(FLOAT, n)` embedding, so a creation path that read the environment
+  could emit a table the library then refused to call canonical.
 - Canonical-then-legacy retry loops, which discovered the schema by letting a
   statement fail. One statement is built from the shape instead.
 - A silent `FLOAT` fallback when no embedding column existed, which turned a broken

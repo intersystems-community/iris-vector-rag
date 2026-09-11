@@ -33,10 +33,12 @@ See [docs/api/table_shape.md](docs/api/table_shape.md).
   another, so rows written through the library were invisible to search on such a
   table. Reads still fall back per row to the legacy column when the canonical one
   is empty, so existing data stays readable.
-- **`IRIS_VECTOR_DATA_TYPE` is no longer a fallback.** `TO_VECTOR` takes its
-  element type and length from the embedding column itself. The environment
-  variable still applies to table _creation_; it can no longer contradict a table
-  that already exists.
+- **`IRIS_VECTOR_DATA_TYPE` no longer decides the vector element type.** `TO_VECTOR`
+  takes its element type and length from the embedding column itself, and the
+  canonical `CREATE TABLE` takes them from the shape and the configured embedding
+  dimension. `is_canonical` is true only of a `VECTOR(FLOAT, n)` embedding, so a
+  creation path reading the environment could emit a table the library then refused
+  to call canonical.
 - **A table with no embedding column raises.** Vector search on such a table used
   to fall back silently to `FLOAT` and return nothing; it now raises
   `NotVectorSearchable` naming the table.
@@ -45,6 +47,11 @@ See [docs/api/table_shape.md](docs/api/table_shape.md).
 - **A caller-supplied identifier on a generated key raises**
   `IdentifierNotWritable` naming the schema, table and column, instead of letting
   IRIS reject the insert.
+- **The row-count diagnostic (LOG-004) is read only when a search finds nothing.**
+  The two `COUNT(*)` statements exist to tell an empty table apart from a table whose
+  embeddings were never written, so a search that returned rows has nothing for them
+  to explain. A search is two statements again: rank the vectors, fetch their
+  metadata.
 - **`attach_existing_corpus`** (`HybridGraphRAGPipeline`) no longer requires
   `id_col`, `text_col` and `embedding_col`: omitted arguments come from the
   attached table's shape, and `graph_label` defaults to the unqualified table name.

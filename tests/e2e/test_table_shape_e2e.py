@@ -24,7 +24,7 @@ from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 from iris_vector_rag.storage.catalog import RecordedCatalog
 from iris_vector_rag.storage.shape_resolver import TableShapeResolver
-from iris_vector_rag.storage.table_shape import ShapeKind
+from iris_vector_rag.storage.table_shape import CANONICAL_DOCUMENT_SHAPE, ShapeKind
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from tests.fixtures.shapes.ddl import (
     SHAPE_SCHEMA,
@@ -157,6 +157,24 @@ def test_us2(legacy_pipeline):
     assert store.shapes.reads == 1
 
 
+def canonical_diff(shape) -> str:
+    """What this shape has that the canonical one does not, and the reverse.
+
+    `is_canonical` is one bit, and one bit cannot say which creation path ran. The
+    columns, the role bindings and the vector spec are the three things it looks at,
+    so all three are reported here.
+    """
+    have = set(shape.columns)
+    want = set(CANONICAL_DOCUMENT_SHAPE.columns)
+    embedding = shape.columns.get("embedding")
+    return (
+        f"{shape.qualified_name}: extra={sorted(have - want)} "
+        f"missing={sorted(want - have)} "
+        f"roles={ {role.name: name for role, name in sorted(shape.roles.items(), key=lambda item: item[0].name)} } "
+        f"vector={embedding.vector if embedding is not None else None}"
+    )
+
+
 @pytest.fixture
 def fresh_instance(monkeypatch):
     """A schema with no document table, as a fresh install has.
@@ -212,7 +230,7 @@ def test_us3(fresh_instance):
 
     shape = pipeline.vector_store.shape()
     assert shape.qualified_name == fresh_instance
-    assert shape.is_canonical, sorted(shape.columns)
+    assert shape.is_canonical, canonical_diff(shape)
     assert shape.kind is ShapeKind.CANONICAL
 
     result = pipeline.query(QUESTION, top_k=3)

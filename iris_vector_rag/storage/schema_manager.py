@@ -1129,7 +1129,6 @@ class SchemaManager:
             create_sql = self._canonical_create_sql(
                 CANONICAL_DOCUMENT_SHAPE,
                 "SourceDocuments",
-                expected_config.get("vector_data_type", "FLOAT"),
                 expected_config["vector_dimension"],
             )
             logger.info(f"🔧 Recreating {table_name} in the canonical shape")
@@ -1202,21 +1201,30 @@ class SchemaManager:
             logger.error(f"Failed to migrate SourceDocuments table: {e}")
             return False
 
-    def _canonical_create_sql(
-        self, shape, table_name: str, element_type: str, dimension: Any
-    ) -> str:
+    def _canonical_create_sql(self, shape, table_name: str, dimension: Any) -> str:
         """The `CREATE TABLE` for a canonical table, rendered from its shape.
 
         Every creation path in this file goes through here, so there is one answer to
         what a document or chunk table looks like. Two hand-written literals for one
         table name are how a fresh instance ended up with a `SourceDocuments` the
         library could not read back (feature 082, FR-006).
+
+        The element type is the shape's own: `is_canonical` is true only of a
+        `VECTOR(FLOAT, n)` embedding, so reading it from the configuration or the
+        environment would let a creation path emit a table the library then refuses to
+        call canonical (FR-010). The dimension follows the embedding model and is a
+        real choice, so it still comes from the caller.
         """
+        declared = next(
+            column.vector
+            for column in shape.columns.values()
+            if column.vector is not None
+        )
         return create_table_statement(
             shape,
             schema=self.schema_prefix,
             table=table_name,
-            vector=VectorSpec(str(element_type), int(dimension)),
+            vector=VectorSpec(declared.element_type, int(dimension)),
         )
 
     def _update_schema_metadata(self, cursor, table_name: str, config: Dict[str, Any]):
@@ -1273,7 +1281,6 @@ class SchemaManager:
             create_sql = self._canonical_create_sql(
                 CANONICAL_CHUNK_SHAPE,
                 "DocumentChunks",
-                expected_config.get("vector_data_type", "FLOAT"),
                 expected_config["vector_dimension"],
             )
 
@@ -2240,7 +2247,6 @@ class SchemaManager:
                 self._canonical_create_sql(
                     CANONICAL_DOCUMENT_SHAPE,
                     "SourceDocuments",
-                    self._vector_element_type(),
                     embedding_config.get("dimension", 384),
                 )
             )
@@ -2248,12 +2254,6 @@ class SchemaManager:
         except Exception as e:
             logger.error(f"Failed to create SourceDocuments table: {e}")
             return False
-
-    def _vector_element_type(self) -> str:
-        """The element type this deployment stores vectors in."""
-        return os.environ.get("IRIS_VECTOR_DATA_TYPE") or self.config_manager.get(
-            "storage:iris:vector_data_type", "FLOAT"
-        )
 
     def _create_entities_table(self, cursor) -> bool:
         """Create Entities table."""
@@ -2367,7 +2367,6 @@ class SchemaManager:
                 self._canonical_create_sql(
                     CANONICAL_CHUNK_SHAPE,
                     "DocumentChunks",
-                    self._vector_element_type(),
                     self.config_manager.get("embedding:dimension", 384),
                 )
             )
