@@ -176,6 +176,11 @@ descriptions only; no test simulates catalog query text.
   and behaviour (0.15 is additive).
 - **FR-015**: Shape-dependent tests MUST be expressible with recorded shape
   descriptions, without simulating catalog query text.
+- **FR-016**: A capability the table cannot provide MUST be reported rather than
+  silently dropped. Writing documents whose metadata has nowhere to go MUST warn once
+  per table, not once per document; a metadata filter against a table with no metadata
+  column MUST raise a descriptive error naming the table, instead of returning an
+  empty page that is indistinguishable from a scope that genuinely holds no rows.
 
 ### Key Entities
 

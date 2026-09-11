@@ -163,3 +163,24 @@ Also stale, harmless, same root: `iris_vector_rag/mcp/technique_handlers.py:143`
 `iris_rag.core.validators` in a docstring. No import; nothing packaged depends on either
 directory (`pyproject.toml:191 include = ["iris_vector_rag*"]`, and there is no
 `.coveragerc`, `setup.cfg`, or `MANIFEST.in`).
+
+## 8. Every option in `pytest.ini` is inert
+
+The file's section header is `[tool:pytest]` (`pytest.ini:1`). That name is only
+recognised in `setup.cfg`; in a file called `pytest.ini` the section must be `[pytest]`.
+pytest still reports `configfile: pytest.ini`, so the file looks live, but nothing in it
+is read — not the 19-line `addopts` block, not the `markers` list.
+
+Proof from the block's own contents: it asks for `--verbose`, `--doctest-modules`,
+`--cov=iris_rag` and `--cov-fail-under=80`. A `-q` run prints quiet output, no coverage
+report is produced, and no run fails the 80% gate. `--strict-markers` is likewise not in
+force. The `-p no:randomly` at `:34` is the line that matters here: it is the suite's
+only stated defence against random ordering, and it does nothing
+(`tests/KNOWN_ORDER_DEPENDENCIES.md`).
+
+**Why deferred:** fixing the header turns 19 options on at once. `--cov-fail-under=80`
+alone would fail every run until coverage is measured and met, `--doctest-modules` would
+start collecting doctests across the package, `--strict-markers` would reject any marker
+not in the list, and `--cov=iris_rag` names the directory that no longer holds code
+(entry 7). Renaming the section is a one-character change with a suite-wide blast radius;
+it needs its own change, with each option turned on deliberately.

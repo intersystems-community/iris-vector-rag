@@ -202,6 +202,26 @@ python3 scripts/gates/antipatterns.py
 bash .specify/gates/verify.sh --boundary agent
 ```
 
+## Phase 8: Silent capability loss, and the diagnostic tests that hid a flake
+
+Added after Phase 7 shipped, from a review of what this feature left silent. Phase 3
+made every shape work; it did not make either of the two remaining silent drops
+audible, and `test_filtering_a_table_that_stores_no_metadata_matches_nothing` was
+written to pin one of them until it could be changed. This phase changes it.
+
+The diagnostic-logging tasks are here rather than on `master` because the
+zero-results-only emission they trip over is this feature's (SC-002); `master` emits
+the row counts on every search and cannot produce the failure.
+
+- [X] T060 Convert `test_filtering_a_table_that_stores_no_metadata_matches_nothing` in `tests/integration/test_table_shape_six_shapes.py` to `pytest.raises`, as its own docstring nominates it to be -- must fail before T062 (FR-016)
+- [X] T061 [P] Add `test_writing_metadata_to_a_table_without_a_metadata_column_warns_once` to `tests/integration/test_table_shape_six_shapes.py`, asserting one warning for three documents and none on a second `add_documents` for the same table -- must fail before T063 (FR-016)
+- [X] T062 Raise a descriptive error naming the table in `similarity_search_by_embedding` in `iris_vector_rag/storage/vector_store_iris.py` when a metadata filter is supplied and the shape has no metadata column, replacing the silent drop at the `if filter and metadata_column is not None` guard (FR-016)
+- [X] T063 Warn once per table in `_store_documents` in `iris_vector_rag/storage/vector_store_iris.py` when a document carries metadata the shape cannot hold, keyed on the qualified table name so a bulk ingest emits one line and not one per document (FR-016)
+- [X] T064 Guard the three unconditional row-count assertions in `tests/contract/test_diagnostic_logging_contract.py`, since SC-002 emits those counts only on a zero-result search and a corpus left populated by an earlier test makes the search non-empty: `pytest.skip` naming the retrieved count in the two tests whose whole subject is the count, and in `test_logging_level_debug_shows_detailed_diagnostics` assert every diagnostic that applies instead of "at least 5 of 6" -- which also un-hides the needle `"SQL query" in log_output.lower()` that can never match its own lowercased haystack
+- [X] T065 Restore the root logger level at all three sites in `tests/contract/test_diagnostic_logging_contract.py` that raise it, so the file stops leaking DEBUG into every test that runs after it
+- [X] T066 Correct the false claim in `tests/KNOWN_ORDER_DEPENDENCIES.md` that `-p no:randomly` is in use: `pytest-randomly` is not installed, and the flag would not apply in any case because `pytest.ini`'s section header is `[tool:pytest]`, which is only valid in `setup.cfg` -- record the inert file as `docs/DEBT.md` entry 8 rather than fixing it here
+- [X] T067 Run the full suite plus `bash .specify/gates/verify.sh --boundary agent` and `python3 scripts/gates/antipatterns.py`
+
 ---
 
 ## Dependencies

@@ -15,6 +15,7 @@ Container: `iris-vector-rag-iris` on 51972, per CLAUDE.md. Never another one.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pytest
@@ -29,6 +30,7 @@ from iris_vector_rag.storage.table_shape import (
     IdentifierNotWritable,
     NonCanonicalCreation,
     NotVectorSearchable,
+    RoleNotPresent,
     ShapeKind,
     TableNotFound,
     TableShape,
@@ -347,23 +349,60 @@ def test_a_table_without_a_metadata_column_stores_and_searches(store_for, clean_
     assert fetched[0].metadata.get("source") is None
 
 
-def test_filtering_a_table_that_stores_no_metadata_matches_nothing(
-    store_for, clean_rows
-):
-    """Current behaviour, pinned rather than endorsed.
+def test_filtering_a_table_that_stores_no_metadata_is_an_error(store_for, clean_rows):
+    """FR-016, and the change the pinned version of this test was written to await.
 
-    A metadata filter against a table with no metadata column cannot match: the
-    documents were stored without their metadata, so the exact-match backstop drops
-    every row. The result is an empty page and no explanation, which is the shape of
-    the bug class this feature exists to remove -- the caller asked a question the
-    table cannot answer and got silence. Naming that as an error is a behaviour
-    change and is not made here; this test is where it will be changed.
+    Until Phase 8 this asserted `== []`: a metadata filter against a table with no
+    metadata column matched nothing and said nothing, which is indistinguishable from
+    a filter that genuinely selects no rows. The caller asked a question the table
+    cannot answer, so the answer is an error naming the table -- not an empty page.
     """
     store = store_for("no_metadata")
     clean_rows.append(store)
     store.add_documents(DOCUMENTS, EMBEDDINGS)
 
-    assert store.similarity_search_by_embedding(QUERY, 3, {"source": "two"}) == []
+    with pytest.raises(RoleNotPresent) as raised:
+        store.similarity_search_by_embedding(QUERY, 3, {"source": "two"})
+    message = str(raised.value)
+    assert SHAPE_TABLES["no_metadata"] in message
+    assert "metadata" in message.lower()
+
+    # An unfiltered search on the same table is untouched: the error is about the
+    # filter, not about the shape.
+    assert len(store.similarity_search_by_embedding(QUERY, 3)) == 3
+
+
+def test_writing_metadata_to_a_table_without_a_metadata_column_warns_once(
+    store_for, clean_rows, caplog
+):
+    """FR-016 on the write path: audible, but once per table rather than per document.
+
+    The drop itself stays -- a table with no metadata column has nowhere to put it,
+    and refusing the write would break every caller of the `no_metadata` shape. What
+    changes is that it is no longer silent. Once per table, because the alternative is
+    one line per document, which is how a real warning gets scrolled past during a
+    bulk ingest.
+    """
+    store = store_for("no_metadata")
+    clean_rows.append(store)
+
+    with caplog.at_level(logging.WARNING, logger="iris_vector_rag.storage"):
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        first = [
+            record
+            for record in caplog.records
+            if record.levelno >= logging.WARNING and "metadata" in record.getMessage()
+        ]
+        assert len(first) == 1, [record.getMessage() for record in first]
+        assert SHAPE_TABLES["no_metadata"] in first[0].getMessage()
+
+        caplog.clear()
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        assert [
+            record
+            for record in caplog.records
+            if record.levelno >= logging.WARNING and "metadata" in record.getMessage()
+        ] == []
 
 
 def test_a_table_without_a_title_column_still_round_trips(store_for, clean_rows):

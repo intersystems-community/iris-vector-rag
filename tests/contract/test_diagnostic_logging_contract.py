@@ -8,7 +8,9 @@ Requirements: FR-004
 import logging
 import re
 from io import StringIO
+
 import pytest
+
 from iris_vector_rag import create_pipeline
 
 
@@ -26,13 +28,17 @@ class TestDiagnosticLoggingContract:
 
         # Add handler to root logger
         logger = logging.getLogger()
+        previous_level = logger.level
         logger.addHandler(handler)
         logger.setLevel(logging.DEBUG)
 
         yield log_stream
 
-        # Cleanup
+        # Cleanup. The level is restored as well as the handler: leaving the root
+        # logger at DEBUG makes every later test in the session noisier than it asked
+        # to be, and a test that changes global state must put it back.
         logger.removeHandler(handler)
+        logger.setLevel(previous_level)
 
     @pytest.fixture
     def graphrag_pipeline(self):
@@ -88,12 +94,27 @@ class TestDiagnosticLoggingContract:
         """
         FR-004: System MUST log total documents in RAG.SourceDocuments.
 
-        Given: Vector search executes
+        Given: Vector search returns 0 results
         When: Logging level is DEBUG
         Then: Log contains "Total documents in RAG.SourceDocuments: <count>"
+
+        The row counts exist to explain an empty result set, so
+        `VectorStoreIRIS._log_row_counts` is only called when the search found
+        nothing (SC-002: two COUNT(*) round trips on every search buy an explanation
+        nobody asked for). This test can therefore only assert the contract on an
+        empty result -- and whether the result is empty depends on what the rest of
+        the suite left in the table, which is why it used to flake.
         """
         query = "What are the symptoms of diabetes?"
-        graphrag_pipeline.query(query)
+        result = graphrag_pipeline.query(query)
+
+        retrieved = len(result["contexts"])
+        if retrieved:
+            pytest.skip(
+                f"search returned {retrieved} contexts, so the row-count diagnostic "
+                "is deliberately not logged; this contract only applies to an empty "
+                "result"
+            )
 
         log_output = log_capture.getvalue()
 
@@ -108,12 +129,23 @@ class TestDiagnosticLoggingContract:
         """
         FR-004: System MUST log count of documents with embeddings.
 
-        Given: Vector search executes
+        Given: Vector search returns 0 results
         When: Logging level is DEBUG
         Then: Log contains "Documents with embeddings: <count>"
+
+        Same conditional as `test_logs_total_documents`: the count is logged only to
+        explain an empty result.
         """
         query = "What are the symptoms of diabetes?"
-        graphrag_pipeline.query(query)
+        result = graphrag_pipeline.query(query)
+
+        retrieved = len(result["contexts"])
+        if retrieved:
+            pytest.skip(
+                f"search returned {retrieved} contexts, so the row-count diagnostic "
+                "is deliberately not logged; this contract only applies to an empty "
+                "result"
+            )
 
         log_output = log_capture.getvalue()
 
@@ -202,6 +234,7 @@ class TestDiagnosticLoggingContract:
         handler.setFormatter(formatter)
 
         logger = logging.getLogger()
+        previous_level = logger.level
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
 
@@ -225,6 +258,7 @@ class TestDiagnosticLoggingContract:
 
         finally:
             logger.removeHandler(handler)
+            logger.setLevel(previous_level)
 
     def test_logging_level_debug_shows_detailed_diagnostics(self, graphrag_pipeline):
         """
@@ -233,6 +267,12 @@ class TestDiagnosticLoggingContract:
         Given: Logging level set to DEBUG
         When: Vector search executes
         Then: DEBUG logs contain all diagnostic information
+
+        Four of the six diagnostics describe the query and are logged on every
+        search. The two row counts explain an empty result and are logged only then,
+        so they are asserted only when the result is in fact empty -- the old "at
+        least 5 of 6" threshold silently accepted a missing query diagnostic on an
+        empty table and failed on a full one.
         """
         # Capture DEBUG logs
         log_stream = StringIO()
@@ -242,30 +282,41 @@ class TestDiagnosticLoggingContract:
         handler.setFormatter(formatter)
 
         logger = logging.getLogger()
+        previous_level = logger.level
         logger.addHandler(handler)
         logger.setLevel(logging.DEBUG)
 
         try:
             query = "What are the symptoms of diabetes?"
-            graphrag_pipeline.query(query)
+            result = graphrag_pipeline.query(query)
 
             log_output = log_stream.getvalue()
 
-            # DEBUG should have detailed diagnostics (at least 5 of the following)
+            # Logged on every search, whatever the table holds. The needle is
+            # lower case because the haystack is: `"SQL query" in ....lower()` can
+            # never match, which is the missing sixth item the old threshold of 5
+            # quietly tolerated.
             diagnostics = [
                 re.search(r"Query embedding dimensions: \d+", log_output),
-                re.search(r"Total documents", log_output),
-                re.search(r"Documents with embeddings", log_output),
-                "SQL query" in log_output.lower(),
+                "sql query" in log_output.lower(),
                 re.search(r"Top-K parameter", log_output),
                 "VECTOR_DOT_PRODUCT" in log_output,
             ]
 
-            # At least 5 diagnostic items should be present
+            # Logged only to explain an empty result set.
+            if not result["contexts"]:
+                diagnostics += [
+                    re.search(r"Total documents", log_output),
+                    re.search(r"Documents with embeddings", log_output),
+                ]
+
+            # Every diagnostic that applies to this result must be present.
             present_diagnostics = sum(1 for d in diagnostics if d)
-            assert (
-                present_diagnostics >= 5
-            ), f"Only {present_diagnostics}/6 diagnostic items logged in DEBUG mode"
+            assert present_diagnostics == len(diagnostics), (
+                f"Only {present_diagnostics}/{len(diagnostics)} applicable diagnostic "
+                "items logged in DEBUG mode"
+            )
 
         finally:
             logger.removeHandler(handler)
+            logger.setLevel(previous_level)

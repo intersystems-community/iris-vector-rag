@@ -30,6 +30,7 @@ from .shape_resolver import TableShapeResolver
 from .table_shape import (
     ColumnFact,
     ColumnRole,
+    RoleNotPresent,
     TableNotFound,
     TableShape,
     TableShapeError,
@@ -83,6 +84,9 @@ class IRISVectorStore(VectorStore):
         # Feature 082: one answer to "which column holds what", read from the
         # database once per table. Resolved lazily so the constructor stays pure.
         self.shapes = shapes
+        # Tables already warned about dropping metadata, by qualified name. One line
+        # per table is a warning; one line per document is a scrollback (FR-016).
+        self._metadata_drop_warned: set = set()
         self.config_manager = config_manager
         if self.config_manager is None:
             # Create a default config manager for testing
@@ -744,6 +748,22 @@ class IRISVectorStore(VectorStore):
                 f"_store_documents called with {len(documents)} documents and embeddings: {embeddings is not None}"
             )
 
+            # The drop stays -- a table with no metadata column has nowhere to put it,
+            # and refusing the write would break every caller of such a table. It stops
+            # being silent (FR-016). Once per table: warning on every document is how a
+            # real warning gets scrolled past during a bulk ingest.
+            if (
+                metadata_column is None
+                and shape.qualified_name not in self._metadata_drop_warned
+                and any(document.metadata for document in documents)
+            ):
+                self._metadata_drop_warned.add(shape.qualified_name)
+                logger.warning(
+                    f"{shape.qualified_name} has no metadata column: the metadata on "
+                    f"these documents is being dropped, and filtering this table by "
+                    f"metadata will fail. Warned once per table."
+                )
+
             for i, doc in enumerate(documents):
                 # Only the canonical column for each role is written. A table that
                 # also carries the older spelling keeps it readable through the
@@ -1076,7 +1096,18 @@ class IRISVectorStore(VectorStore):
             )
 
             additional_where = None
-            if filter and metadata_column is not None:
+            if filter:
+                # A filter this table cannot apply is an error, not an empty page:
+                # silence here is indistinguishable from a scope that genuinely holds
+                # no rows (FR-016).
+                if metadata_column is None:
+                    raise RoleNotPresent(
+                        "a metadata filter was supplied but this table has no metadata "
+                        f"column, so the filter cannot be applied (filter keys: "
+                        f"{sorted(filter)})",
+                        shape.schema,
+                        shape.table,
+                    )
                 # Push the filter into SQL so recall is scoped to the filtered
                 # subset instead of to a global page (opsreview upstream report:
                 # docs/upstream/ivr-metadata-filter-pushdown.md).
@@ -1247,6 +1278,11 @@ class IRISVectorStore(VectorStore):
                 )
             return results
 
+        except TableShapeError:
+            # A shape problem is a statement about the table, not about the
+            # connection. Wrapping it in VectorStoreConnectionError would rename the
+            # one thing the caller needs to read (FR-016).
+            raise
         except Exception as e:
             logger.info("Vector search returned 0 results")
             logger.debug("Similarity scores: []")
