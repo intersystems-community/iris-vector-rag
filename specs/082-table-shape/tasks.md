@@ -76,23 +76,23 @@ and compare results.
 
 ### Tests first
 
-- [ ] T017 [P] [US1] Unit tests in `tests/unit/test_vector_store_shape.py` driven by `RecordedCatalog`: on the mixed shape the write path and the read path emit the same text column; on a stream metadata column the filter uses `SUBSTRING` and not `LIKE`; `TO_VECTOR` carries the shape's element type on the double-precision shape; a caller-supplied identifier against the legacy-serial shape raises `IdentifierNotWritable` before any SQL is sent (FR-008)
-- [ ] T018 [P] [US1] Unit test in `tests/unit/test_vector_store_shape.py`: a query embedding whose length differs from `vector_spec().dimension` is rejected naming both lengths, and no query is sent
-- [ ] T019 [P] [US1] Unit test in `tests/unit/test_vector_store_shape.py`: on a shape with no embedding column, a vector search raises `NotVectorSearchable` naming the table — replacing today's silent `FLOAT` fallback
-- [ ] T020 [US1] Integration test `tests/integration/test_table_shape_six_shapes.py::test_search_filter_write_delete_parity`: parameterised over the six shapes, load identical documents, assert identical identifiers, text, ordering and scores against the canonical shape's results, then assert delete removes exactly the named documents (FR-002)
-- [ ] T021 [US1] Integration test `tests/integration/test_table_shape_six_shapes.py::test_mixed_table_round_trip`: write a document to the mixed shape, read it back, assert the text read is the text written; then insert a row with only the legacy column populated and assert the per-row fallback returns its text
-- [ ] T022 [US1] E2E test `tests/e2e/test_table_shape_e2e.py::test_us1`: full pipeline query against a legacy-shaped table end to end, asserting answer and retrieved documents, with no column named by the caller
+- [X] T017 [P] [US1] Unit tests in `tests/unit/test_vector_store_shape.py` driven by `RecordedCatalog`: on the mixed shape the write path and the read path emit the same text column; on a stream metadata column the filter uses `SUBSTRING` and not `LIKE`; `TO_VECTOR` carries the shape's element type on the double-precision shape; a caller-supplied identifier against the legacy-serial shape raises `IdentifierNotWritable` before any SQL is sent (FR-008)
+- [X] T018 [P] [US1] Unit test in `tests/unit/test_vector_store_shape.py`: a query embedding whose length differs from `vector_spec().dimension` is rejected naming both lengths, and no query is sent
+- [X] T019 [P] [US1] Unit test in `tests/unit/test_vector_store_shape.py`: on a shape with no embedding column, a vector search raises `NotVectorSearchable` naming the table — replacing today's silent `FLOAT` fallback
+- [X] T020 [US1] Integration test `tests/integration/test_table_shape_six_shapes.py::test_search_filter_write_delete_parity`: parameterised over the six shapes, load identical documents, assert identical identifiers, text, ordering and scores against the canonical shape's results, then assert delete removes exactly the named documents (FR-002)
+- [X] T021 [US1] Integration test `tests/integration/test_table_shape_six_shapes.py::test_mixed_table_round_trip`: write a document to the mixed shape, read it back, assert the text read is the text written; then insert a row with only the legacy column populated and assert the per-row fallback returns its text
+- [X] T022 [US1] E2E test `tests/e2e/test_table_shape_e2e.py::test_us1`: full pipeline query against a legacy-shaped table end to end, asserting answer and retrieved documents, with no column named by the caller
 
 ### Implementation
 
-- [ ] T023 [US1] Add an optional `shapes: TableShapeResolver | None` parameter to `IRISVectorStore.__init__` in `iris_vector_rag/storage/vector_store_iris.py`, defaulting to one built from its own connection; resolve the document table's shape once on first use (FR-014)
-- [ ] T024 [US1] Migrate the write path (`_store_documents` at `vector_store_iris.py:671`, `add_documents` at `:849`) to `shape.column_for(...)` and `shape.writable_identifier()`, deleting the inline precedence at `:701-715`
-- [ ] T025 [US1] Migrate the read path (`similarity_search_by_embedding` at `:1054`, `search_with_embedding` at `:308`) to the shape, deleting the contradictory precedence at `:1110-1120` and implementing the documented per-row mixed-table text fallback (FR-004)
-- [ ] T026 [US1] Migrate `fetch_documents_by_ids` (`:1433`), `get_document_count` (`:1517`) and `get_all_documents` (`:1540`) to the shape and delete the try-canonical-catch-legacy retries at `:1452-1500` and `:1551-1590`
-- [ ] T027 [US1] Migrate the delete path: replace `_get_id_column` (`:925`) with `shape.column_for(IDENTIFIER)` in `delete_documents` (`:936`) and `clear_documents` (`:1608`), and remove the method
-- [ ] T028 [US1] Migrate `_metadata_filter_column_expr` (`:981`), `_metadata_filter_predicate` (`:1018`) and `_apply_exact_metadata_filter` (`:1042`) to decide `SUBSTRING` versus direct comparison from `ColumnFact.filterable_with_like`, deleting their own catalog read (FR-009)
-- [ ] T029 [US1] Replace `_get_vector_data_type` (`:151`) and `get_embedding_column_metadata` (`:247`) with `shape.vector_spec()`, deleting the `IRIS_VECTOR_DATA_TYPE` fallback and the fixed dimension defaults (FR-001, FR-010)
-- [ ] T030 [US1] Verify the US1 phase gate
+- [X] T023 [US1] Add an optional `shapes: TableShapeResolver | None` parameter to `IRISVectorStore.__init__` in `iris_vector_rag/storage/vector_store_iris.py`, defaulting to one built from its own connection; resolve the document table's shape once on first use (FR-014)
+- [X] T024 [US1] Migrate the write path (`_store_documents` at `vector_store_iris.py:671`, `add_documents` at `:849`) to `shape.column_for(...)` and `shape.writable_identifier()`, deleting the inline precedence at `:701-715`
+- [X] T025 [US1] Migrate the read path (`similarity_search_by_embedding` at `:1054`, `search_with_embedding` at `:308`) to the shape, deleting the contradictory precedence at `:1110-1120` and implementing the documented per-row mixed-table text fallback (FR-004)
+- [X] T026 [US1] Migrate `fetch_documents_by_ids` (`:1433`), `get_document_count` (`:1517`) and `get_all_documents` (`:1540`) to the shape and delete the try-canonical-catch-legacy retries at `:1452-1500` and `:1551-1590`
+- [X] T027 [US1] Migrate the delete path: replace `_get_id_column` (`:925`) with `shape.column_for(IDENTIFIER)` in `delete_documents` (`:936`) and `clear_documents` (`:1608`), and remove the method
+- [X] T028 [US1] Migrate `_metadata_filter_column_expr` (`:981`), `_metadata_filter_predicate` (`:1018`) and `_apply_exact_metadata_filter` (`:1042`) to decide `SUBSTRING` versus direct comparison from `ColumnFact.filterable_with_like`, deleting their own catalog read (FR-009)
+- [X] T029 [US1] Replace `_get_vector_data_type` (`:151`) and `get_embedding_column_metadata` (`:247`) with `shape.vector_spec()`, deleting the `IRIS_VECTOR_DATA_TYPE` fallback and the fixed dimension defaults (FR-001, FR-010)
+- [X] T030 [US1] Verify the US1 phase gate
 
 ```accept
 # verifies: US1 gate -- store behaviour is identical on every recorded shape
