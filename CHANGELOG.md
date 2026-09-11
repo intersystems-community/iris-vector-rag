@@ -45,6 +45,11 @@ See [docs/api/table_shape.md](docs/api/table_shape.md).
   had given `table_exists` that tolerance; routing the check through the shape catalog
   briefly dropped it, so a configuration naming `rag.sourcedocuments` read as "no such
   table". A table that does not exist now costs one catalog query instead of two.
+- **`SchemaManager.verify_table_structure` describes a table in this manager's own
+  schema.** Its `schema_name` default was the literal `RAG`, so every deployment that
+  configured a different schema prefix was told the table had no columns. An explicit
+  `schema_name` still wins, and `{}` still means "cannot tell" rather than "no
+  columns".
 - **A table with no embedding column raises.** Vector search on such a table used
   to fall back silently to `FLOAT` and return nothing; it now raises
   `NotVectorSearchable` naming the table.
