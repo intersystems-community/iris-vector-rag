@@ -265,6 +265,10 @@ The implementation directly supports the project roadmap goals for Phase 2 pipel
 [^1]: Lettria AWS Partner case study demonstrating 35% improvement in answer precision with graph-based RAG approaches (2024)
 
 **Merge Completed**: January 16, 2025
-**Implementation**: [`iris_rag/pipelines/graphrag_merged.py`](../iris_rag/pipelines/graphrag_merged.py)
+**Implementation**: `iris_rag/pipelines/graphrag_merged.py` — **removed in 0.15.** The
+merged module was never importable (it imported a `visualization` package that is not
+part of the library) and duplicated every name `iris_vector_rag/pipelines/graphrag.py`
+already exports. This document is kept as the record of the merge analysis, not as a
+guide to current code.
 **Lines of Code**: 597
 **Next Phase**: E2E Testing and Production Validation

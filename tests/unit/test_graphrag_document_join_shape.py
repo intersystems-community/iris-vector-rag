@@ -10,9 +10,9 @@ saying why. The identifier, the text column and the metadata column now come fro
 the shape the vector store reads with, so the retriever and the store cannot
 disagree about which table column holds what (FR-012).
 
-`graphrag_merged.py` carries a second copy of the same join. It is migrated to the
-same form, but it has no test here because the module cannot be imported at all --
-it imports `iris_vector_rag.visualization`, which is not part of the package.
+`graphrag_merged.py` carried a second copy of the same join, and no test, because the
+module could not be imported at all -- it imported `iris_vector_rag.visualization`,
+which is not part of the package. It is deleted rather than migrated.
 """
 
 from __future__ import annotations

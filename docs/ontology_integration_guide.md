@@ -49,9 +49,9 @@ ontology:
 ### 2. Basic Usage Example - Medical Domain
 
 ```python
-from iris_rag.pipelines.graphrag_merged import GraphRAGPipeline
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.models import Document
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.models import Document
 
 # Initialize with general ontology support
 config_manager = ConfigurationManager()
@@ -272,7 +272,7 @@ sources:
 The system uses a universal extraction approach that adapts to any domain:
 
 ```python
-from iris_rag.services.entity_extraction import OntologyAwareEntityExtractor
+from iris_vector_rag.services.entity_extraction import OntologyAwareEntityExtractor
 
 # Initialize with general ontology (works with any domain)
 extractor = OntologyAwareEntityExtractor(config_manager=config_manager)
@@ -305,7 +305,7 @@ for entities, domain_type in [(medical_entities, "medical"),
 The system automatically detects domains from ontology content:
 
 ```python
-from iris_rag.ontology.plugins import GeneralOntologyPlugin
+from iris_vector_rag.ontology.plugins import GeneralOntologyPlugin
 
 plugin = GeneralOntologyPlugin()
 
@@ -401,7 +401,7 @@ print(f"Memory used: {memory_after - memory_before:.1f} MB")
 **Solution**:
 
 ```python
-from iris_rag.ontology.plugins import GeneralOntologyPlugin
+from iris_vector_rag.ontology.plugins import GeneralOntologyPlugin
 
 plugin = GeneralOntologyPlugin()
 
@@ -491,7 +491,7 @@ for entity in entities:
 ### Custom Domain Definition
 
 ```python
-from iris_rag.ontology.plugins import GeneralOntologyPlugin
+from iris_vector_rag.ontology.plugins import GeneralOntologyPlugin
 
 plugin = GeneralOntologyPlugin()
 

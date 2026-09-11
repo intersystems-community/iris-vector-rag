@@ -191,7 +191,7 @@ python3 scripts/gates/antipatterns.py
 - [X] T052 [P] Migrate `iris_vector_rag/services/storage.py:130-146` to `shape.column_for(IDENTIFIER)`, deleting its own derivation
 - [X] T053 [P] Migrate `iris_vector_rag/validation/orchestrator.py:588-617` to the shape, deleting its `doc_id`-first precedence and its own content precedence
 - [X] T054 [P] Migrate `iris_vector_rag/pipelines/hybrid_graphrag.py:180-258` to take the embedding column and index presence from the shape, deleting its own catalog read
-- [X] T055 [P] Migrate the document-table joins in `iris_vector_rag/pipelines/graphrag.py` and `graphrag_merged.py` to `shape.column_for(IDENTIFIER)` so both agree (FR-012)
+- [X] T055 [P] Migrate the document-table join in `iris_vector_rag/pipelines/graphrag.py` to `shape.column_for(IDENTIFIER)` (FR-012). `graphrag_merged.py` carried a second copy of the same join and was **deleted instead of migrated**: it imported `iris_vector_rag.visualization`, which is not part of the package, so it could not be imported, was exported by nothing, and could carry no test.
 - [X] T056 Deprecate `schema_config` column overrides: emit `DeprecationWarning` and ignore them, with a unit test asserting the warning and that the database shape wins
 - [X] T057 Update `CHANGELOG.md` for 0.15 (behaviour change on mixed tables, `IRIS_VECTOR_DATA_TYPE` no longer a fallback, `schema_config` column overrides deprecated) and document the shape in the storage docs
 - [X] T058 Run the full CI-equivalent suite and, only if `test_graphrag_handler_execute_hybrid_search` passes there, remove its entry from `tests/contract/ci_known_failures.txt`

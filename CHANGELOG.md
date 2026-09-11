@@ -76,6 +76,16 @@ See [docs/api/table_shape.md](docs/api/table_shape.md).
   keys found. The table's own columns are the single source of that fact. Remove
   the keys from the stored configuration.
 
+#### Removed
+
+- `iris_vector_rag/pipelines/graphrag_merged.py` (1163 lines). Nothing imported it,
+  nothing exported it, and it could not be imported: it read from a
+  `iris_vector_rag.visualization` package that is not part of the library. Every name
+  it defined — `GraphRAGPipeline`, `GraphRAGException`,
+  `KnowledgeGraphNotPopulatedException`, `EntityExtractionFailedException` — is also
+  defined in `pipelines/graphrag.py`, which is what `pipelines/__init__.py` has always
+  exported. No call can have been affected.
+
 #### Test infrastructure: the order dependence is fixed
 
 `tests/utils/schema_models.py` carried a second, hand-written description of
