@@ -112,6 +112,15 @@ The `LOG-004` row-count diagnostics (`Total documents in <table>`, `Documents wi
 embeddings`) are kept, now counting through the embedding column the shape names
 rather than a hard-coded `embedding`.
 
+Two shapes were added to the recorded fixtures (`tests/fixtures/shapes/`), captured
+from real DDL like the six before them: `no_metadata` and `no_title`. All six of the
+original shapes carry a `metadata` column and all six carry a column that fills the
+TITLE role, so the two absent-optional-column paths the code has could only be
+exercised by deleting a column from a recorded snapshot — a test asserting against
+its own idea of a table. One consequence is now pinned rather than assumed: a
+metadata filter against a table that has no metadata column matches nothing and says
+nothing, because the documents were stored without their metadata.
+
 ### Dependencies / CI (Dependabot PRs #81–#91, #95–#98, #100, #101)
 
 - GitHub Actions: `actions/checkout` v7 everywhere, `codecov/codecov-action` v7

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture recorded catalog snapshots for the six observed table shapes.
+"""Capture recorded catalog snapshots for every declared table shape.
 
 Feature 082. Creates each shape in `tests/fixtures/shapes/ddl.py` for real against
 `iris-vector-rag-iris`, dumps what the catalog says about it, and drops the tables.
@@ -24,8 +24,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from tests.fixtures.shapes.ddl import (  # noqa: E402
+    SHAPE_DDL,
     SHAPE_TABLES,
-    SIX_SHAPES,
     create_statement,
     drop_statement,
 )
@@ -104,7 +104,7 @@ def main() -> int:
     written = []
     try:
         cursor = conn.cursor()
-        for shape in SIX_SHAPES:
+        for shape in SHAPE_DDL:
             table = SHAPE_TABLES[shape]
             cursor.execute(drop_statement(shape, args.schema))
             cursor.execute(create_statement(shape, args.schema))
@@ -121,7 +121,7 @@ def main() -> int:
     finally:
         if not args.keep:
             cursor = conn.cursor()
-            for shape in SIX_SHAPES:
+            for shape in SHAPE_DDL:
                 try:
                     cursor.execute(drop_statement(shape, args.schema))
                 except Exception as exc:  # noqa: BLE001 - cleanup is advisory

@@ -18,7 +18,6 @@ which is not part of the package. It is deleted rather than migrated.
 from __future__ import annotations
 
 import json
-from dataclasses import replace
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -54,27 +53,14 @@ class RecordingCursor:
 
 
 class RecordedStore:
-    """The vector store, reduced to the two things the join asks it for.
+    """The vector store, reduced to the two things the join asks it for."""
 
-    `without` drops a column from the recorded snapshot: all six recorded shapes carry
-    a metadata column, so a table that has none can only be described by stripping one.
-    """
-
-    def __init__(self, shape_name: str, without: str = "") -> None:
+    def __init__(self, shape_name: str) -> None:
         table = SHAPE_TABLES[shape_name]
         self.table_name = f"{SHAPE_SCHEMA}.{table}"
         snapshot = RecordedCatalog.from_fixture_dir(FIXTURE_DIR).snapshot(
             SHAPE_SCHEMA, table
         )
-        if without:
-            snapshot = replace(
-                snapshot,
-                columns=[
-                    column
-                    for column in snapshot.columns
-                    if str(column["COLUMN_NAME"]).lower() != without.lower()
-                ],
-            )
         self._shapes = TableShapeResolver(
             RecordedCatalog({(SHAPE_SCHEMA, table): snapshot})
         )
@@ -83,7 +69,7 @@ class RecordedStore:
         return self._shapes.resolve(SHAPE_SCHEMA, self.table_name.partition(".")[2])
 
 
-def pipeline_for(shape_name: str, cursor: RecordingCursor, without: str = ""):
+def pipeline_for(shape_name: str, cursor: RecordingCursor):
     """A pipeline with a connection and a store, and nothing else running."""
     pipeline = GraphRAGPipeline.__new__(GraphRAGPipeline)
     connection = Mock()
@@ -91,7 +77,7 @@ def pipeline_for(shape_name: str, cursor: RecordingCursor, without: str = ""):
     pipeline.connection_manager = Mock()
     pipeline.connection_manager.get_connection.return_value = connection
     pipeline.config_manager = Mock()
-    pipeline.vector_store = RecordedStore(shape_name, without=without)
+    pipeline.vector_store = RecordedStore(shape_name)
     return pipeline
 
 
@@ -149,12 +135,16 @@ def test_the_entities_table_lives_in_the_documents_schema():
 
 
 def test_a_table_without_a_metadata_column_still_joins():
-    """No metadata column: the select drops it and the documents carry none."""
+    """No metadata column: the select drops it and the documents carry none.
+
+    The shape is the recorded `no_metadata` table, not a snapshot with a column
+    deleted from it, so the absence is one IRIS actually reported.
+    """
     cursor = RecordingCursor(rows=[("DOC-1", "warfarin monitoring")])
 
-    docs = pipeline_for(
-        "canonical", cursor, without="metadata"
-    )._get_documents_from_entities({"E1"}, top_k=5)
+    docs = pipeline_for("no_metadata", cursor)._get_documents_from_entities(
+        {"E1"}, top_k=5
+    )
 
     assert "sd.metadata" not in cursor.sql, cursor.sql
     assert docs[0].metadata == {"retrieval_method": "knowledge_graph"}

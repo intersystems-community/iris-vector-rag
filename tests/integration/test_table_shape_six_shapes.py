@@ -1,9 +1,10 @@
 """The recorded shapes must still describe what IRIS reports (feature 082, T015).
 
 `tests/unit/test_table_shape.py` runs against recorded catalog rows, which is only
-sound while the recording is honest. This suite creates all six shapes for real,
-snapshots them with `IRISCatalogReader`, and asserts the resulting `TableShape`
-equals the one built from the committed fixture.
+sound while the recording is honest. This suite creates every shape in
+`tests/fixtures/shapes/ddl.py` for real, snapshots them with `IRISCatalogReader`,
+and asserts the resulting `TableShape` equals the one built from the committed
+fixture.
 
 So a driver upgrade that changes how a VECTOR column is reported, or a schema change
 that renames a column, fails here rather than being silently absorbed by fixtures
@@ -35,9 +36,9 @@ from iris_vector_rag.storage.table_shape import (
 )
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from tests.fixtures.shapes.ddl import (
+    SHAPE_DDL,
     SHAPE_SCHEMA,
     SHAPE_TABLES,
-    SIX_SHAPES,
     VECTOR_DIMENSION,
     create_statement,
     drop_statement,
@@ -62,9 +63,9 @@ def shape_connection():
 
 @pytest.fixture(scope="module")
 def live_shapes(shape_connection):
-    """Create all six shapes, snapshot each one, drop them again."""
+    """Create every recorded shape, snapshot each one, drop them again."""
     cursor = shape_connection.cursor()
-    for shape in SIX_SHAPES:
+    for shape in SHAPE_DDL:
         cursor.execute(drop_statement(shape, SHAPE_SCHEMA))
         cursor.execute(create_statement(shape, SHAPE_SCHEMA))
     shape_connection.commit()
@@ -76,11 +77,11 @@ def live_shapes(shape_connection):
             shape: TableShape.from_snapshot(
                 reader.snapshot(SHAPE_SCHEMA, SHAPE_TABLES[shape])
             )
-            for shape in SIX_SHAPES
+            for shape in SHAPE_DDL
         }
     finally:
         cursor = shape_connection.cursor()
-        for shape in SIX_SHAPES:
+        for shape in SHAPE_DDL:
             try:
                 cursor.execute(drop_statement(shape, SHAPE_SCHEMA))
             except Exception:  # noqa: BLE001 - teardown is advisory
@@ -96,11 +97,11 @@ def recorded_shapes():
         shape: TableShape.from_snapshot(
             catalog.snapshot(SHAPE_SCHEMA, SHAPE_TABLES[shape])
         )
-        for shape in SIX_SHAPES
+        for shape in SHAPE_DDL
     }
 
 
-@pytest.mark.parametrize("shape", sorted(SIX_SHAPES))
+@pytest.mark.parametrize("shape", sorted(SHAPE_DDL))
 def test_recorded_fixtures_match_live_catalog(live_shapes, recorded_shapes, shape):
     """The gate on the whole recorded-fixture approach."""
     live, recorded = live_shapes[shape], recorded_shapes[shape]
@@ -180,9 +181,10 @@ def test_absent_table_is_reported_as_absent(shape_connection):
 # --- US1: the same behaviour on every shape ----------------------------------
 
 #: Shapes that can be both written with a caller-supplied identifier and searched
-#: by vector. The other two are excluded for reasons the suite asserts directly:
-#: `legacy_serial` generates its own identifiers (FR-008) and `legacy_id` has no
-#: embedding column at all (FR-011).
+#: by vector, and that can hold every part of a document. The rest are excluded for
+#: reasons the suite asserts directly, one test each: `legacy_serial` generates its
+#: own identifiers (FR-008), `legacy_id` has no embedding column at all (FR-011),
+#: and `no_metadata` / `no_title` have nowhere to put one part of a document.
 SEARCHABLE_SHAPES = ("canonical", "fixture", "mixed", "double_vector")
 
 DOCUMENTS = [
@@ -320,6 +322,59 @@ def test_a_table_without_an_embedding_column_round_trips_but_cannot_be_searched(
     with pytest.raises(NotVectorSearchable) as raised:
         store.similarity_search_by_embedding(QUERY, 3)
     assert SHAPE_TABLES["legacy_id"] in str(raised.value)
+
+
+def test_a_table_without_a_metadata_column_stores_and_searches(store_for, clean_rows):
+    """The write path drops the column it does not have, and ranking is unaffected.
+
+    Recorded as a real table rather than a snapshot with a column removed: the six
+    US1 shapes all carry `metadata`, so this case had no fixture of its own.
+    """
+    baseline_store = store_for("canonical")
+    clean_rows.append(baseline_store)
+    baseline_store.add_documents(DOCUMENTS, EMBEDDINGS)
+    baseline = presented(baseline_store.similarity_search_by_embedding(QUERY, 3))
+
+    store = store_for("no_metadata")
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+
+    assert presented(store.similarity_search_by_embedding(QUERY, 3)) == baseline
+    fetched = store.fetch_documents_by_ids(["parity-2"])
+    assert fetched[0].page_content == DOCUMENTS[1].page_content
+    # The metadata went nowhere: the table has no column for it, and the store does
+    # not invent one.
+    assert fetched[0].metadata.get("source") is None
+
+
+def test_filtering_a_table_that_stores_no_metadata_matches_nothing(
+    store_for, clean_rows
+):
+    """Current behaviour, pinned rather than endorsed.
+
+    A metadata filter against a table with no metadata column cannot match: the
+    documents were stored without their metadata, so the exact-match backstop drops
+    every row. The result is an empty page and no explanation, which is the shape of
+    the bug class this feature exists to remove -- the caller asked a question the
+    table cannot answer and got silence. Naming that as an error is a behaviour
+    change and is not made here; this test is where it will be changed.
+    """
+    store = store_for("no_metadata")
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+
+    assert store.similarity_search_by_embedding(QUERY, 3, {"source": "two"}) == []
+
+
+def test_a_table_without_a_title_column_still_round_trips(store_for, clean_rows):
+    """FR-002 on the other absent optional role: only the title has nowhere to go."""
+    store = store_for("no_title")
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+
+    assert presented(store.similarity_search_by_embedding(QUERY, 3))[0][0] == "parity-1"
+    filtered = store.similarity_search_by_embedding(QUERY, 3, {"source": "two"})
+    assert presented(filtered) == [("parity-2", DOCUMENTS[1].page_content)]
 
 
 # --- US2: one resolution per table, invalidated where the shape can change ----

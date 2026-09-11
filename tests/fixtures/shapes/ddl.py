@@ -1,4 +1,4 @@
-"""DDL for the six observed document-table shapes (feature 082).
+"""DDL for the recorded document-table shapes (feature 082).
 
 One definition, two consumers: `scripts/dev/capture_shape_fixtures.py` records the
 catalog's description of each of these tables, and
@@ -6,7 +6,7 @@ catalog's description of each of these tables, and
 one source means a recorded fixture cannot drift from the shape it claims to
 describe.
 
-The six shapes are the ones observed in production and test environments, named in
+The first six are the shapes observed in production and test environments, named in
 `specs/082-table-shape/spec.md` US1:
 
 canonical       what the library creates today
@@ -15,6 +15,15 @@ legacy_id       id / source / content, no embedding column at all
 fixture         doc_id with the legacy `content` text column
 mixed           both column families after an in-place upgrade
 double_vector   canonical, but the vectors are double precision
+
+The last two exist because all six of those carry a `metadata` column and all six
+carry a column that fills the TITLE role, so the two absent-optional-column cases
+the code handles could only be described by deleting a column from a recorded
+snapshot -- a test asserting against its own idea of a table. These are captured
+from real DDL like the rest:
+
+no_metadata     the `fixture` shape with no metadata column
+no_title        the `fixture` shape with nothing that fills the TITLE role
 """
 
 from __future__ import annotations
@@ -27,8 +36,8 @@ VECTOR_DIMENSION = 384
 SHAPE_SCHEMA = "ShapeTest"
 
 # Table name is substituted, so the same shape can be created under several names
-# (the parity suite needs six tables alive at once).
-SIX_SHAPES: dict[str, str] = {
+# (the parity suite needs every table alive at once).
+SHAPE_DDL: dict[str, str] = {
     "canonical": """
         CREATE TABLE {table} (
             doc_id VARCHAR(255) PRIMARY KEY,
@@ -94,6 +103,22 @@ SIX_SHAPES: dict[str, str] = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """,
+    "no_metadata": """
+        CREATE TABLE {table} (
+            doc_id VARCHAR(255) PRIMARY KEY,
+            title VARCHAR(1000),
+            content VARCHAR(MAX),
+            embedding VECTOR(FLOAT, {dim})
+        )
+    """,
+    "no_title": """
+        CREATE TABLE {table} (
+            doc_id VARCHAR(255) PRIMARY KEY,
+            content VARCHAR(MAX),
+            embedding VECTOR(FLOAT, {dim}),
+            metadata VARCHAR(2000)
+        )
+    """,
 }
 
 # Default table name per shape, used by the fixture capture and by tests that only
@@ -105,15 +130,17 @@ SHAPE_TABLES: dict[str, str] = {
     "fixture": "ShapeFixture",
     "mixed": "ShapeMixed",
     "double_vector": "ShapeDoubleVector",
+    "no_metadata": "ShapeNoMetadata",
+    "no_title": "ShapeNoTitle",
 }
 
 
 def create_statement(shape: str, schema: str, table: str | None = None) -> str:
     """Render one shape's CREATE TABLE for `schema`.`table`."""
-    if shape not in SIX_SHAPES:
-        raise KeyError(f"unknown shape {shape!r}; known: {sorted(SIX_SHAPES)}")
+    if shape not in SHAPE_DDL:
+        raise KeyError(f"unknown shape {shape!r}; known: {sorted(SHAPE_DDL)}")
     qualified = f"{schema}.{table or SHAPE_TABLES[shape]}"
-    return SIX_SHAPES[shape].format(table=qualified, dim=VECTOR_DIMENSION).strip()
+    return SHAPE_DDL[shape].format(table=qualified, dim=VECTOR_DIMENSION).strip()
 
 
 def drop_statement(shape: str, schema: str, table: str | None = None) -> str:
