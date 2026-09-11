@@ -7,6 +7,15 @@ HybridGraphRAG, ColBERT. Public mirror: `isc-tdyar/iris-vector-rag`.
 
 **Container:** `iris-vector-rag-iris` · **Port:** `51972`
 
+The same two facts, where a script can read them —
+`.specify/scripts/bash/check-container.sh` and `scripts/ci/start-iris.sh` both parse
+these lines, so the container and port are declared once and nowhere else:
+
+```text
+IRIS_CONTAINER: iris-vector-rag-iris
+IRIS_PORT: 51972
+```
+
 ```bash
 docker start iris-vector-rag-iris   # start if stopped
 ```
