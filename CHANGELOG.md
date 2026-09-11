@@ -2,6 +2,100 @@
 
 ## Unreleased
 
+### IRIS session: one object owns the connection (0.15)
+
+Before this release there were eleven ways to get a connection to IRIS and each
+carried its own subset of the protections — one had the bounded handshake and the
+expired-password recovery, the others had none of them, so a caller that picked the
+wrong one could hang on an instance that was still starting. `IRISSession` owns one
+instance-and-namespace relationship: the identity, the driver choice, the connection,
+its health cadence and the connect back-off. Everything in the library goes through
+it, so a protection added once applies everywhere.
+
+```python
+from iris_vector_rag.session import session_for
+
+session = session_for(config_manager)          # does not connect
+rows = session.execute("SELECT TOP 5 doc_id FROM RAG.SourceDocuments")
+```
+
+New in `iris_vector_rag.session`: `session_for`, `IRISSession`, `SessionIdentity`,
+`Rows`, `Driver` / `EmbeddedDriver` / `NetworkDriver` / `select_driver`,
+`open_sessions` / `close_all_sessions`, and the error taxonomy — `SessionError`,
+`IRISUnreachable`, `HandshakeTimeout`, `ConnectFailed`, `InBackoff`,
+`NoUsableDriver`, `PasswordExpired`, `ConnectionLost`, `CallerConnectionBroken`.
+Every error names the instance and namespace; the password appears in no log, `repr`
+or message. `iris_vector_rag.testing.fake_driver.fake_session()` gives a working
+session with no driver and no network call.
+
+Tuning is environment-only: `IRIS_HEALTH_INTERVAL` (30s), `IRIS_CONNECT_TIMEOUT`
+(10s), `IRIS_CONNECT_BACKOFF` (30s).
+
+See [docs/api/session.md](docs/api/session.md).
+
+#### Behaviour changes
+
+- **Acquiring a session costs nothing.** The first statement opens the connection,
+  so constructing an engine no longer reaches the database.
+- **One probe per interval.** A connection is trusted for `IRIS_HEALTH_INTERVAL`
+  seconds; ordinary operations inside that window do not probe. `is_connected`
+  reports recorded state and never probes.
+- **A dead connection is replaced transparently**, at most once per operation, when
+  the session owns it. A connection supplied by the caller is never closed or
+  replaced — the session raises `CallerConnectionBroken` instead. A caller that
+  closes a handed-out connection is noticed (`is_closed`, an optional driver
+  operation) and given another.
+- **A failed or timed-out handshake puts that identity into a back-off window**, and
+  further attempts inside it fail immediately with `InBackoff` rather than queueing
+  behind a socket timeout.
+- **Expired-password recovery is attempted once per identity** and reported when it
+  happens.
+- **Rows outlive their cursor.** `session.execute()` copies values out and releases
+  the cursor in a `finally`, on success and on failure, so the `DataRow is
+inaccessible` failure that follows `cursor.close()` cannot happen.
+- **Connections are per thread**, with a fork guard, and a finished thread's
+  connection is closed when the thread exits — a thread-per-request server no longer
+  exhausts a Community licence.
+- **Driver selection is a decision, not an import side effect.** The session prefers
+  the embedded driver when it is usable and reports which one it chose;
+  `NoUsableDriver` names every driver tried.
+- **`RAGEngine` owns exactly one session** and pipelines sharing an engine share it.
+  Its embedding-dimension attribute reports the configured dimension instead of a
+  fixed 1536.
+- **The HTTP API serves concurrent requests from sessions**; `common/connection_pool.py`
+  is a pool over sessions with no direct driver connect of its own.
+- **A direct driver connect anywhere else in the library fails the quality gates**
+  (`unguarded-dbapi-connect` in `scripts/gates/antipatterns.py`: only the drivers
+  module may call a driver's `connect`).
+
+#### Deprecated
+
+Each of these keeps its 0.14 signature and behaviour, warns once naming its
+replacement, and **is removed in 0.16**:
+
+- `common.iris_connection.get_iris_connection()` →
+  `session_for().connection_for_adapter()`
+- `common.iris_dbapi_connector.get_iris_dbapi_connection()` → same
+- `common.iris_connection_manager.IRISConnectionManager` (and its module function) →
+  `session_for()`
+- `common.connection_manager.ConnectionManager` → `session_for()`
+
+#### Removed
+
+Gone in 0.15, not deprecated: nothing imported them.
+
+- `common/iris_connector.py` (whole module) and its re-exports.
+- `IRISConnectionPool` and `_PooledConnection` from `common/iris_connection.py`, and
+  `get_pool()` / `initialize_pool()` / `close_pool()` — hold a session instead.
+- `get_iris_connection_old` from `common/iris_connection_manager.py`.
+
+#### Renamed
+
+Two library classes shared the name `ConnectionManager`:
+
+- `common.connection_manager.ConnectionManager` → `LegacyConnectionManager`
+- `api.websocket.connection.ConnectionManager` → `WebSocketConnectionManager`
+
 ### Table shape: the database decides which column fills which role (0.15)
 
 `TableShape` reads a document or chunk table out of the IRIS catalog once and
