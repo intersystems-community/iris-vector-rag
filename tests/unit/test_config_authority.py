@@ -9,15 +9,15 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
+from typing import Any, Dict
 from unittest.mock import MagicMock, patch
-from typing import Dict, Any
 
 import pytest
 import yaml
 
+from iris_vector_rag.common.iris_connection import get_iris_connection
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
-from iris_vector_rag.common.iris_connection import get_iris_connection
 
 
 class TestDefaultPortIs1972:
@@ -109,7 +109,7 @@ class TestYAMLDrivesConnection:
             Path(temp_yaml).unlink()
 
     def test_connection_manager_uses_yaml_port(self):
-        """ConnectionManager passes YAML port to get_iris_connection."""
+        """ConnectionManager resolves the YAML port into the session identity."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(
                 {
@@ -135,27 +135,19 @@ class TestYAMLDrivesConnection:
                 cm = ConfigurationManager(config_path=temp_yaml)
                 conn_mgr = ConnectionManager(config_manager=cm)
 
-                # Mock get_iris_connection to capture the params
-                with patch(
-                    "iris_vector_rag.common.iris_connection.get_iris_connection"
-                ) as mock_get:
-                    mock_conn = MagicMock()
-                    mock_get.return_value = mock_conn
+                # The session's identity is what the connection is opened from.
+                identity = conn_mgr.session.identity
 
-                    conn_mgr.get_connection()
-
-                    # Verify that get_iris_connection was called with YAML params
-                    mock_get.assert_called_once()
-                    call_kwargs = mock_get.call_args.kwargs
-                    assert (
-                        call_kwargs.get("port") == 54321
-                    ), f"Expected port 54321, got {call_kwargs.get('port')}"
-                    assert (
-                        call_kwargs.get("host") == "test-host"
-                    ), f"Expected host 'test-host', got {call_kwargs.get('host')}"
-                    assert call_kwargs.get("namespace") == "TEST"
-                    assert call_kwargs.get("username") == "testuser"
-                    assert call_kwargs.get("password") == "testpass"
+                assert (
+                    identity.port == 54321
+                ), f"Expected port 54321, got {identity.port}"
+                assert (
+                    identity.host == "test-host"
+                ), f"Expected host 'test-host', got {identity.host}"
+                assert identity.namespace == "TEST"
+                assert identity.username == "testuser"
+                assert identity.password == "testpass"
+                assert conn_mgr.session.is_connected is False
         finally:
             Path(temp_yaml).unlink()
 
@@ -399,10 +391,10 @@ class TestPortTypeConsistency:
 
 
 class TestConnectionManagerPassesConfigToIrisConnection:
-    """Test that ConnectionManager actually passes resolved params to get_iris_connection."""
+    """Test that ConnectionManager resolves config params into the session identity."""
 
     def test_connection_manager_passes_config_params(self):
-        """ConnectionManager.get_connection() passes ConfigManager params to get_iris_connection."""
+        """ConnectionManager's session identity carries the ConfigManager params."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(
                 {
@@ -428,21 +420,13 @@ class TestConnectionManagerPassesConfigToIrisConnection:
                 cm = ConfigurationManager(config_path=temp_yaml)
                 conn_mgr = ConnectionManager(config_manager=cm)
 
-                with patch(
-                    "iris_vector_rag.common.iris_connection.get_iris_connection"
-                ) as mock_get:
-                    mock_conn = MagicMock()
-                    mock_get.return_value = mock_conn
+                identity = conn_mgr.session.identity
 
-                    conn_mgr.get_connection()
-
-                    # Verify all params were passed
-                    call_kwargs = mock_get.call_args.kwargs
-                    assert call_kwargs.get("host") == "config-host"
-                    assert call_kwargs.get("port") == 54321
-                    assert call_kwargs.get("namespace") == "CONFIG_NS"
-                    assert call_kwargs.get("username") == "config_user"
-                    assert call_kwargs.get("password") == "config_pass"
+                assert identity.host == "config-host"
+                assert identity.port == 54321
+                assert identity.namespace == "CONFIG_NS"
+                assert identity.username == "config_user"
+                assert identity.password == "config_pass"
         finally:
             Path(temp_yaml).unlink()
 
@@ -471,19 +455,10 @@ class TestConnectionManagerPassesConfigToIrisConnection:
                     cm = ConfigurationManager(config_path=temp_yaml)
                     conn_mgr = ConnectionManager(config_manager=cm)
 
-                    with patch(
-                        "iris_vector_rag.common.iris_connection.get_iris_connection"
-                    ) as mock_get:
-                        mock_conn = MagicMock()
-                        mock_get.return_value = mock_conn
-
-                        conn_mgr.get_connection()
-
-                        # Env override should win
-                        call_kwargs = mock_get.call_args.kwargs
-                        assert (
-                            call_kwargs.get("port") == 55555
-                        ), "Env var IRIS_PORT should override YAML"
+                    # Env override should win
+                    assert (
+                        conn_mgr.session.identity.port == 55555
+                    ), "Env var IRIS_PORT should override YAML"
         finally:
             Path(temp_yaml).unlink()
 
@@ -494,6 +469,7 @@ class TestGetIrisConnectionExplicitParams:
     def test_get_iris_connection_signature_accepts_explicit_params(self):
         """get_iris_connection function signature accepts explicit params."""
         import inspect
+
         from iris_vector_rag.common.iris_connection import get_iris_connection
 
         sig = inspect.signature(get_iris_connection)

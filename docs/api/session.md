@@ -1,0 +1,145 @@
+# IRIS Session
+
+One object owns one instance-and-namespace relationship: the identity, the driver
+choice, the connection, its health cadence and the connect back-off. Everything that
+talks to IRIS goes through it.
+
+```python
+from iris_vector_rag.session import session_for
+
+session = session_for(config_manager)          # does not connect
+rows = session.execute("SELECT TOP 5 doc_id FROM RAG.SourceDocuments")
+for doc_id, in rows:
+    print(doc_id)
+```
+
+Acquiring a session costs nothing. The first statement opens the connection.
+
+## Why
+
+Before 0.15 there were eleven ways to acquire a connection, and each had its own
+subset of the protections: one had the two-second socket precheck, the bounded
+handshake and the expired-password recovery; the others had none of them. A caller
+that took the wrong one could hang forever on a container that was still starting.
+
+The session is the one way in, so a protection added once applies everywhere.
+
+## Getting a session
+
+| Call                                      | Use                                            |
+| ----------------------------------------- | ---------------------------------------------- |
+| `session_for(config_manager)`             | Normal use: identity from config, then env.    |
+| `session_for()`                           | Identity from the environment alone.           |
+| `session_for(identity=...)`               | An explicit `SessionIdentity`.                 |
+| `session_for(driver=...)`                 | A substituted driver (tests, other transports) |
+| `IRISSession.from_connection(connection)` | A connection the caller owns and will close.   |
+
+One session exists per identity per process: two callers asking for the same
+instance, port, namespace and user get the same object, so they share its health
+cadence and its back-off window. The password is not part of the identity — a wrong
+password is a failure, not a second session.
+
+## Running statements
+
+| Method                      | Returns                                           |
+| --------------------------- | ------------------------------------------------- |
+| `execute(sql, params=None)` | `Rows` — plain tuples, safe after any close.      |
+| `one(sql, params=None)`     | One tuple, or `None`. Two rows is a `ValueError`. |
+| `execute_many(sql, seq)`    | Number of rows affected.                          |
+| `connection_for_adapter()`  | The driver connection, for code that needs it.    |
+
+`Rows` is iterable, sized, indexable and knows its `columns`; `rows.dicts()` zips
+them. Values are copied out of the cursor before it closes, because this driver's row
+objects die with their cursor.
+
+A trailing semicolon is stripped: IRIS rejects it, and callers keep writing it.
+
+## Health, reconnects and failures
+
+- **Health is a deadline, not a probe per call.** After a connect or a successful
+  probe the connection is trusted for `IRIS_HEALTH_INTERVAL` seconds. A hundred
+  statements inside that window cost zero probes. `is_connected` reads recorded
+  state and never dials.
+- **A dead connection is replaced once per operation.** A statement IRIS rejected is
+  never retried: it would fail identically and cost a handshake.
+- **A caller's own connection is never probed, never replaced, never closed.** Its
+  failures are reported as `CallerConnectionBroken`.
+
+Every failure is a `SessionError`, which is a builtin `ConnectionError`, and names the
+instance:
+
+| Error                    | Means                                               | Opens back-off |
+| ------------------------ | --------------------------------------------------- | -------------- |
+| `IRISUnreachable`        | The port is not accepting connections (2 s check).  | no             |
+| `HandshakeTimeout`       | TCP connected, the driver handshake never finished. | yes            |
+| `ConnectFailed`          | The driver refused for a reason of its own.         | yes            |
+| `InBackoff`              | A previous attempt burned the budget; fail now.     | no             |
+| `NoUsableDriver`         | Neither driver can be used in this process.         | no             |
+| `PasswordExpired`        | Expired password, and recovery did not clear it.    | no             |
+| `ConnectionLost`         | An owned connection died and its replacement too.   | no             |
+| `CallerConnectionBroken` | A borrowed connection failed.                       | no             |
+
+Only failures that cost a whole connect budget open the back-off window. The socket
+precheck answers a question that changes the moment IRIS starts, so refusing to ask
+it again would make the caller wait longer than the truth.
+
+## Tuning
+
+| Variable                      | Default     | Meaning                                                 |
+| ----------------------------- | ----------- | ------------------------------------------------------- |
+| `IRIS_HEALTH_INTERVAL`        | `30`        | Seconds a connection is trusted between probes.         |
+| `IRIS_CONNECT_TIMEOUT`        | `10`        | Seconds the driver handshake may take.                  |
+| `IRIS_CONNECT_BACKOFF`        | `30`        | Seconds before retrying after a budget-burning failure. |
+| `IRIS_HOST`                   | `localhost` | Instance host, when no config manager is given.         |
+| `IRIS_PORT`                   | detected    | SuperServer port.                                       |
+| `IRIS_NAMESPACE`              | `USER`      | Namespace.                                              |
+| `IRIS_USER` / `IRIS_USERNAME` | `_SYSTEM`   | Account.                                                |
+| `IRIS_PASSWORD`               | `SYS`       | Password. Never appears in a log, repr or error.        |
+
+Per-session overrides: `session_for(health_interval=...)`, and
+`IRISSession(connect_timeout=..., backoff_seconds=...)`.
+
+## Drivers
+
+A driver is anything with seven operations: `name`, `available()`, `connect(identity)`,
+`ping(connection)`, `close(connection)`, `password_expired(error)` and
+`recover_password(identity)`.
+
+- `EmbeddedDriver` — IRIS reached from inside the instance.
+- `NetworkDriver` — the SuperServer port, with the socket precheck, the bounded
+  handshake and the expired-password recovery.
+
+`select_driver` prefers embedded, logs which it chose and why, and names every driver
+it tried when none can be used. `iris_vector_rag/session/drivers.py` is the only
+module allowed to call a driver's own connect; the antipatterns gate enforces that.
+
+## Testing against a session
+
+```python
+from iris_vector_rag.testing.fake_driver import fake_session
+
+def test_something():
+    session = fake_session(columns=("doc_id",), rows=[("d1",)])
+    assert session.one("SELECT doc_id FROM RAG.SourceDocuments") == ("d1",)
+    assert session.driver.connects == 1
+```
+
+`FakeDriver` counts connects, pings, closes, cursors and statements, and can be told
+to fail a connect, expire a password or drop a connection after _n_ statements. It
+touches no network, so unit tests need no container.
+
+## Threads and forks
+
+Connections are per thread: two threads never share one, and each gets its own server
+job. A connection is tagged with the pid that opened it, so a forked child opens its
+own rather than corrupting the parent's. Cleanup runs at `atexit`, never in
+`__del__`.
+
+## Per-thread and process cleanup
+
+| Call                         | Closes                                      |
+| ---------------------------- | ------------------------------------------- |
+| `session.close()`            | This thread's connection.                   |
+| `session.close_all()`        | Every connection the session opened.        |
+| `close_all_sessions()`       | Every registered session. Runs at `atexit`. |
+| `reset_sessions_for_tests()` | Same, for tests that own the process.       |

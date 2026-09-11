@@ -91,15 +91,22 @@ Every error carries `identity` and renders `host:port/namespace` in its message.
 All of them subclass `SessionError`, which subclasses the builtin `ConnectionError`
 so that existing `except ConnectionError` call sites keep working.
 
-| Error | Raised when |
-| --- | --- |
-| `IRISUnreachable` | the socket precheck fails — port not accepting connections |
-| `HandshakeTimeout` | TCP connected but the driver handshake exceeded `connect_timeout` |
-| `InBackoff` | an attempt was made inside the back-off window opened by a previous failure |
-| `NoUsableDriver` | neither the embedded nor the network driver is available |
-| `PasswordExpired` | the account password is expired and recovery did not succeed |
-| `ConnectionLost` | an owned connection failed and its replacement failed too |
-| `CallerConnectionBroken` | a caller-supplied connection failed; the session replaces nothing |
+| Error | Raised when | `opens_backoff` |
+| --- | --- | --- |
+| `IRISUnreachable` | the socket precheck fails — port not accepting connections | `False` |
+| `HandshakeTimeout` | TCP connected but the driver handshake exceeded `connect_timeout` | `True` |
+| `ConnectFailed` | the driver refused the connect for a reason of its own | `True` |
+| `InBackoff` | an attempt was made inside the back-off window opened by a previous failure | `False` |
+| `NoUsableDriver` | neither the embedded nor the network driver is available | `False` |
+| `PasswordExpired` | the account password is expired and recovery did not succeed | `False` |
+| `ConnectionLost` | an owned connection failed and its replacement failed too | `False` |
+| `CallerConnectionBroken` | a caller-supplied connection failed; the session replaces nothing | `False` |
+
+Each error class carries a class-level `opens_backoff` flag, and the session opens the
+back-off window only for a failure whose flag is `True`: one that spent the whole
+connect budget. `IRISUnreachable` costs a two-second socket check and answers a
+question that changes the moment IRIS finishes starting, so refusing to ask it again
+would keep a caller waiting longer than the truth.
 
 ## Deprecation surface
 

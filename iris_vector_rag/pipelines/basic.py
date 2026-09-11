@@ -6,8 +6,8 @@ pipeline using vector similarity search and LLM generation.
 """
 
 import logging
-import time
 import os
+import time
 from typing import Any, Callable, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager
@@ -16,9 +16,9 @@ from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
 from ..exceptions import (
+    GenerationError,
     IngestionError,
     RetrievalError,
-    GenerationError,
     VectorStoreConfigurationError,
 )
 
@@ -389,7 +389,7 @@ class BasicRAGPipeline(RAGPipeline):
             for i in range(0, len(texts), batch_size):
                 batch_texts = texts[i : i + batch_size]
                 logger.debug(
-                    f"Generating embeddings for batch {i//batch_size + 1}: {len(batch_texts)} texts"
+                    f"Generating embeddings for batch {i // batch_size + 1}: {len(batch_texts)} texts"
                 )
                 batch_embeddings = self.embedding_manager.embed_texts(batch_texts)
                 logger.debug(
@@ -445,6 +445,17 @@ class BasicRAGPipeline(RAGPipeline):
                 "documents_processed": 0,
                 "pipeline_type": "basic",
             }
+
+    def _retrieval_connection(self):
+        """The live connection RetrievalEngine needs, or None if there is no manager.
+
+        Until 0.15 this read `connection_manager.connection`, an attribute the manager
+        never had, so every non-vector retrieval mode ran with connection=None
+        (Feature 083, FR-014).
+        """
+        if self.connection_manager is None:
+            return None
+        return self.connection_manager.get_connection()
 
     def query(self, query: str = None, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
@@ -585,11 +596,7 @@ class BasicRAGPipeline(RAGPipeline):
 
                 engine = RetrievalEngine(
                     vector_store=self.vector_store,
-                    connection=(
-                        getattr(self.connection_manager, "connection", None)
-                        if self.connection_manager
-                        else None
-                    ),
+                    connection=self._retrieval_connection(),
                 )
                 retrieved_documents = engine.retrieve(opts)
             elif hasattr(self, "vector_store") and self.vector_store:
