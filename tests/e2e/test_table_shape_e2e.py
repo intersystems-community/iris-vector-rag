@@ -131,3 +131,20 @@ def test_us1(legacy_pipeline):
     answer = result["answer"]
     assert answer, "an answer must be generated from the retrieved documents"
     assert "four weeks" in answer.lower(), answer
+
+
+def test_us2(legacy_pipeline):
+    """A session's worth of queries reads the table's shape once (US2 gate).
+
+    Retrieval only: what is under test is how often the catalog is consulted, and a
+    generated answer per query would buy nothing but latency.
+    """
+    legacy_pipeline.load_documents(documents=DOCUMENTS)
+    store = legacy_pipeline.vector_store
+
+    for _ in range(20):
+        result = legacy_pipeline.query(QUESTION, top_k=3, generate_answer=False)
+        assert result["error"] is None, result["error"]
+        assert result["retrieved_documents"][0].id == "shape-e2e-warfarin"
+
+    assert store.shapes.reads == 1

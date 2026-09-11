@@ -168,7 +168,13 @@ class TableShapeResolver:
     SC-002 asserts on. (FR-005)
 14. **The library invalidates its own DDL.** Any path in the package that creates
     or alters a table calls `invalidate` for it, so the next operation sees the new
-    shape with no caller action. (US2 scenario 2)
+    shape with no caller action. In `IRISVectorStore` that is
+    `_ensure_table_exists`, the one method every write path reaches creation
+    through. A change made outside the library is the caller's to declare:
+    `IRISVectorStore.refresh_shape(table=None)` invalidates and re-resolves one
+    table — the store's own by default — and returns the shape every later
+    operation will use. It is the only supported way to drop a cached shape.
+    (US2 scenario 2, US2 scenario 3)
 15. **No shared state.** The cache lives on the resolver instance. Two resolvers —
     two sessions, two instances, two namespaces — never observe each other's
     shapes. (Decision 8)

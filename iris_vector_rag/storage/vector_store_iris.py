@@ -122,7 +122,7 @@ class IRISVectorStore(VectorStore):
                 self.connection_manager,
                 self.config_manager,
             )
-        table_short_name = self.table_name.replace("RAG.", "")
+        _, table_short_name = self._schema_and_table()
         self.vector_dimension = self.schema_manager.get_vector_dimension(
             table_short_name
         )
@@ -168,12 +168,18 @@ class IRISVectorStore(VectorStore):
     # Table shape (Feature 082)
     # ========================================================================
 
-    def _schema_and_table(self) -> Tuple[str, str]:
-        """Split `self.table_name`; an unqualified name means the RAG schema."""
-        if "." in self.table_name:
-            schema, _, table = self.table_name.partition(".")
+    def _schema_and_table(self, table_name: Optional[str] = None) -> Tuple[str, str]:
+        """Split a table name; unqualified means the schema this store writes to.
+
+        That is the schema manager's prefix, not the literal "RAG": a caller who
+        configured `IRIS_SCHEMA_PREFIX` has one schema, and the shape must be read
+        from the table the store is actually writing to.
+        """
+        name = self.table_name if table_name is None else table_name
+        if "." in name:
+            schema, _, table = name.partition(".")
             return schema, table
-        return "RAG", self.table_name
+        return getattr(self.schema_manager, "schema_prefix", "RAG") or "RAG", name
 
     def _shape_resolver(self) -> TableShapeResolver:
         if self.shapes is None:
@@ -198,11 +204,24 @@ class IRISVectorStore(VectorStore):
         except TableNotFound:
             if cursor is None:
                 raise
+        # `_ensure_table_exists` invalidates what it changed, so the resolve below
+        # reads the table it just created. If creation failed this raises
+        # TableNotFound naming the table, which is the error the caller needs; the
+        # old code let the next statement fail instead.
         self._ensure_table_exists(cursor)
-        resolver.invalidate(schema, table)
-        # If creation failed this raises TableNotFound naming the table, which is the
-        # error the caller needs; the old code let the next statement fail instead.
         return resolver.resolve(schema, table)
+
+    def refresh_shape(self, table: Optional[str] = None) -> TableShape:
+        """Read a table's shape again, for a table changed outside this library.
+
+        The store invalidates its own DDL, so this is only needed when something
+        else altered the table under a running session. One call, one catalog read;
+        the shape it returns is the one every later operation will use.
+        """
+        schema, name = self._schema_and_table(table)
+        resolver = self._shape_resolver()
+        resolver.invalidate(schema, name)
+        return resolver.resolve(schema, name)
 
     def _get_vector_data_type(self) -> str:
         """The embedding column's element type, e.g. 'FLOAT' or 'DOUBLE'.
@@ -374,7 +393,14 @@ class IRISVectorStore(VectorStore):
     # ========================================================================
 
     def _ensure_table_exists(self, cursor):
-        """Ensure the target table exists, creating it if necessary."""
+        """Ensure the target table exists, creating it if necessary.
+
+        Every DDL path in this store goes through here, and so does the one piece of
+        bookkeeping DDL owes the rest of the store: the cached shape of a table that
+        was just created describes nothing, so it is dropped here rather than at each
+        call site (feature 082, FR-006).
+        """
+        schema, table_short_name = self._schema_and_table()
         try:
             # Check if table exists by trying to query it
             cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
@@ -383,8 +409,8 @@ class IRISVectorStore(VectorStore):
             logger.info(f"Table {self.table_name} does not exist, creating it: {e}")
             try:
                 # Use schema manager to ensure proper table creation
-                table_short_name = self.table_name.replace("RAG.", "")
                 success = self.schema_manager.ensure_table_schema(table_short_name)
+                self._shape_resolver().invalidate(schema, table_short_name)
                 if success:
                     logger.info(f"✅ Successfully created table {self.table_name}")
                 else:
@@ -1198,70 +1224,6 @@ class IRISVectorStore(VectorStore):
             raise VectorStoreConnectionError(f"Vector search failed: {sanitized_error}")
         finally:
             cursor.close()
-
-    def _create_table_automatically(self):
-        """
-        Create the required table automatically using schema manager.
-
-        This method uses the schema manager to create the table with the correct
-        schema based on the table name and configuration.
-        """
-        try:
-            logger.info(f"Creating table {self.table_name} automatically")
-
-            # Get the table short name (without RAG. prefix)
-            table_short_name = self.table_name.replace("RAG.", "")
-
-            # Get expected configuration for this table
-            expected_config = self.schema_manager._get_expected_schema_config(
-                table_short_name
-            )
-
-            # Get a connection and cursor
-            connection = self._get_connection()
-            cursor = connection.cursor()
-
-            try:
-                # Use the schema manager's migration method to create the table
-                if table_short_name == "SourceDocuments":
-                    success = self.schema_manager._migrate_source_documents_table(
-                        cursor, expected_config, preserve_data=False
-                    )
-                elif table_short_name == "DocumentTokenEmbeddings":
-                    success = (
-                        self.schema_manager._migrate_document_token_embeddings_table(
-                            cursor, expected_config, preserve_data=False
-                        )
-                    )
-                elif table_short_name == "DocumentEntities":
-                    success = self.schema_manager._migrate_document_entities_table(
-                        cursor, expected_config, preserve_data=False
-                    )
-                elif table_short_name == "KnowledgeGraphNodes":
-                    success = self.schema_manager._migrate_knowledge_graph_nodes_table(
-                        cursor, expected_config, preserve_data=False
-                    )
-                elif table_short_name == "KnowledgeGraphEdges":
-                    success = self.schema_manager._migrate_knowledge_graph_edges_table(
-                        cursor, expected_config, preserve_data=False
-                    )
-                else:
-                    logger.warning(
-                        f"Unknown table type: {table_short_name}, cannot create automatically"
-                    )
-                    success = False
-
-                if success:
-                    logger.info(f"Successfully created table {self.table_name}")
-                else:
-                    logger.error(f"Failed to create table {self.table_name}")
-
-            finally:
-                cursor.close()
-
-        except Exception as e:
-            logger.error(f"Error creating table {self.table_name}: {e}")
-            # Don't re-raise the error, let the original operation fail with the original error
 
     def _read_columns(self) -> List[str]:
         """The columns a plain read selects, in order.

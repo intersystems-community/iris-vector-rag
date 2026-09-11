@@ -28,6 +28,7 @@ from iris_vector_rag.storage.table_shape import (
     IdentifierNotWritable,
     NotVectorSearchable,
     ShapeKind,
+    TableNotFound,
     TableShape,
 )
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
@@ -317,6 +318,195 @@ def test_a_table_without_an_embedding_column_round_trips_but_cannot_be_searched(
     with pytest.raises(NotVectorSearchable) as raised:
         store.similarity_search_by_embedding(QUERY, 3)
     assert SHAPE_TABLES["legacy_id"] in str(raised.value)
+
+
+# --- US2: one resolution per table, invalidated where the shape can change ----
+
+
+class CountingCursor:
+    """A cursor that records the SQL sent through it, and nothing else."""
+
+    def __init__(self, inner, statements: list[str]):
+        self._inner = inner
+        self._statements = statements
+
+    def execute(self, sql, params=None):
+        self._statements.append(sql)
+        if params is None:
+            return self._inner.execute(sql)
+        return self._inner.execute(sql, params)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class CountingConnection:
+    def __init__(self, inner, statements: list[str]):
+        self._inner = inner
+        self._statements = statements
+
+    def cursor(self):
+        return CountingCursor(self._inner.cursor(), self._statements)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class CountingConnections:
+    """The connection-manager seam, recording every statement the store sends.
+
+    Counting statements rather than trusting `resolver.reads` is the point: the
+    claim is that no catalog query reaches the database, however it was issued.
+    """
+
+    def __init__(self, inner: ConnectionManager):
+        self._inner = inner
+        self.statements: list[str] = []
+
+    def get_connection(self, *args, **kwargs):
+        return CountingConnection(
+            self._inner.get_connection(*args, **kwargs), self.statements
+        )
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+def catalog_statements(statements: list[str]) -> list[str]:
+    return [
+        sql
+        for sql in statements
+        if "INFORMATION_SCHEMA" in sql.upper() or "%DICTIONARY" in sql.upper()
+    ]
+
+
+def test_catalog_round_trips(monkeypatch, live_shapes, shape_connection):
+    """SC-002 / FR-005: a hundred searches, one catalog round trip.
+
+    The first search pays for the shape; the ninety-nine after it send only the
+    statements the search itself needs.
+    """
+    monkeypatch.setenv(
+        "RAG_STORAGE__IRIS__TABLE_NAME",
+        f"{SHAPE_SCHEMA}.{SHAPE_TABLES['canonical']}",
+    )
+    config = ConfigurationManager()
+    connections = CountingConnections(ConnectionManager(config))
+    store = IRISVectorStore(connections, config)
+    try:
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        store.similarity_search_by_embedding(QUERY, 3)
+        assert store.shapes.reads == 1
+
+        mark = len(connections.statements)
+        for _ in range(100):
+            store.similarity_search_by_embedding(QUERY, 3)
+        during = connections.statements[mark:]
+
+        assert store.shapes.reads == 1
+        assert catalog_statements(during) == []
+        # Two statements per search: rank the vectors, then fetch the metadata of
+        # the rows that ranked. A third would mean something is re-deriving what
+        # the shape already knows.
+        assert len(during) == 200, len(during)
+    finally:
+        try:
+            store.delete_documents([doc.id for doc in DOCUMENTS])
+        except Exception:  # noqa: BLE001 - cleanup is advisory
+            pass
+        shape_connection.commit()
+
+
+def test_a_table_the_library_creates_is_resolved_without_caller_action(
+    monkeypatch, shape_connection
+):
+    """FR-006: the store's own DDL invalidates the shape it just changed.
+
+    The library creates `SourceDocuments` in whatever schema it is configured for,
+    so pointing it at the scratch schema exercises the real creation path without
+    touching the shared RAG table.
+    """
+    monkeypatch.setenv("IRIS_SCHEMA_PREFIX", SHAPE_SCHEMA)
+    monkeypatch.setenv(
+        "RAG_STORAGE__IRIS__TABLE_NAME", f"{SHAPE_SCHEMA}.SourceDocuments"
+    )
+    cursor = shape_connection.cursor()
+    try:
+        cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.SourceDocuments")
+        shape_connection.commit()
+        cursor.close()
+
+        config = ConfigurationManager()
+        store = IRISVectorStore(ConnectionManager(config), config)
+
+        # A missing table is reported as missing on a read: nothing is created behind
+        # the caller's back by a search.
+        with pytest.raises(TableNotFound):
+            store.similarity_search_by_embedding(QUERY, 3)
+
+        # The write path creates it, and the shape of the new table is what the very
+        # next operation uses -- no refresh, no restart, no caller action. Which
+        # columns the created table has is the schema manager's business; that the
+        # store reads back what it wrote is this test's.
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        results = store.similarity_search_by_embedding(QUERY, 3)
+        assert presented(results)[0] == ("parity-1", DOCUMENTS[0].page_content)
+        assert store.shape().qualified_name == f"{SHAPE_SCHEMA}.SourceDocuments"
+        assert store.shapes.reads == 1, "the created table is resolved once"
+    finally:
+        cursor = shape_connection.cursor()
+        try:
+            cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.SourceDocuments")
+            shape_connection.commit()
+        except Exception:  # noqa: BLE001 - teardown is advisory
+            pass
+        cursor.close()
+
+
+def test_an_out_of_band_change_is_seen_after_an_explicit_refresh(
+    monkeypatch, shape_connection
+):
+    """FR-007: someone else's ALTER TABLE needs one call to become visible.
+
+    Until that call the cached shape stands, which is the whole reason the cache is
+    allowed to exist: a table does not change shape under a running session unless
+    something outside the library changes it.
+    """
+    table = "ShapeRefresh"
+    qualified = f"{SHAPE_SCHEMA}.{table}"
+    cursor = shape_connection.cursor()
+    cursor.execute(drop_statement("canonical", SHAPE_SCHEMA, table))
+    cursor.execute(create_statement("canonical", SHAPE_SCHEMA, table))
+    shape_connection.commit()
+    cursor.close()
+
+    monkeypatch.setenv("RAG_STORAGE__IRIS__TABLE_NAME", qualified)
+    config = ConfigurationManager()
+    store = IRISVectorStore(ConnectionManager(config), config)
+    try:
+        assert store.shape().legacy_column_for(ColumnRole.TEXT) is None
+
+        cursor = shape_connection.cursor()
+        cursor.execute(f"ALTER TABLE {qualified} ADD content VARCHAR(2000)")
+        shape_connection.commit()
+        cursor.close()
+
+        assert (
+            store.shape().legacy_column_for(ColumnRole.TEXT) is None
+        ), "the cached shape stands until the caller says otherwise"
+
+        refreshed = store.refresh_shape()
+        assert refreshed.legacy_column_for(ColumnRole.TEXT).name == "content"
+        assert store.shape().kind is ShapeKind.MIXED
+        assert store.shapes.reads == 2
+    finally:
+        cursor = shape_connection.cursor()
+        try:
+            cursor.execute(drop_statement("canonical", SHAPE_SCHEMA, table))
+            shape_connection.commit()
+        except Exception:  # noqa: BLE001 - teardown is advisory
+            pass
+        cursor.close()
 
 
 def test_mixed_table_round_trip(store_for, shape_connection, clean_rows):

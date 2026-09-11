@@ -112,17 +112,17 @@ query and one metadata fetch and no catalog query.
 
 ### Tests first
 
-- [ ] T031 [P] [US2] Unit test in `tests/unit/test_shape_resolver.py`: a store built on a counting `RecordedCatalog` performs 100 searches with `reads` unchanged after the first resolution
-- [ ] T032 [US2] Integration test `tests/integration/test_table_shape_six_shapes.py::test_catalog_round_trips` (SC-002): wrap the live connection in a statement-counting proxy, run 100 searches, assert exactly one shape resolution and zero catalog statements inside the loop (FR-005)
-- [ ] T033 [US2] Integration test in the same file: after the library itself creates or alters the table, the next operation sees the new shape with no caller action; after an out-of-band change plus an explicit refresh, the next operation uses the new shape
-- [ ] T034 [US2] E2E test `tests/e2e/test_table_shape_e2e.py::test_us2`: a pipeline run issuing many queries resolves each table's shape once
+- [X] T031 [P] [US2] Unit test in `tests/unit/test_shape_resolver.py`: a store built on a counting `RecordedCatalog` performs 100 searches with `reads` unchanged after the first resolution
+- [X] T032 [US2] Integration test `tests/integration/test_table_shape_six_shapes.py::test_catalog_round_trips` (SC-002): wrap the live connection in a statement-counting proxy, run 100 searches, assert exactly one shape resolution and zero catalog statements inside the loop (FR-005)
+- [X] T033 [US2] Integration test in the same file: after the library itself creates or alters the table, the next operation sees the new shape with no caller action; after an out-of-band change plus an explicit refresh, the next operation uses the new shape
+- [X] T034 [US2] E2E test `tests/e2e/test_table_shape_e2e.py::test_us2`: a pipeline run issuing many queries resolves each table's shape once
 
 ### Implementation
 
-- [ ] T035 [US2] Call `resolver.invalidate(...)` from every DDL path in `vector_store_iris.py` (`_ensure_table_exists` at `:366`, `_create_table_automatically` at `:1369`)
-- [ ] T036 [US2] Expose a `refresh_shape(table)` passthrough on `IRISVectorStore` for callers who suspect an out-of-band change, and document it in the contract's promise 14
-- [ ] T037 [US2] Remove the remaining per-call catalog reads in `vector_store_iris.py` (`_get_connection`-adjacent column probes and `_get_table_columns` callers) so the only catalog access is `IRISCatalogReader`
-- [ ] T038 [US2] Verify the US2 phase gate
+- [X] T035 [US2] Call `resolver.invalidate(...)` from every DDL path in `vector_store_iris.py` (`_ensure_table_exists` at `:366`, `_create_table_automatically` at `:1369`)
+- [X] T036 [US2] Expose a `refresh_shape(table)` passthrough on `IRISVectorStore` for callers who suspect an out-of-band change, and document it in the contract's promise 14
+- [X] T037 [US2] Remove the remaining per-call catalog reads in `vector_store_iris.py` (`_get_connection`-adjacent column probes and `_get_table_columns` callers) so the only catalog access is `IRISCatalogReader`
+- [X] T038 [US2] Verify the US2 phase gate
 
 ```accept
 # verifies: US2 gate -- one shape resolution serves many operations

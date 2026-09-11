@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pytest
 
+from iris_vector_rag.core.models import Document
 from iris_vector_rag.storage.catalog import CatalogSnapshot, RecordedCatalog
 from iris_vector_rag.storage.shape_resolver import TableShapeResolver
 from iris_vector_rag.storage.table_shape import (
@@ -17,6 +18,10 @@ from iris_vector_rag.storage.table_shape import (
     TableNotFound,
 )
 from tests.fixtures.shapes.ddl import SHAPE_SCHEMA, SHAPE_TABLES
+
+# The store double lives with the US1 suite; importing it keeps one description of
+# how a store is built on a recorded shape rather than two that can drift.
+from tests.unit.test_vector_store_shape import DIM, EMBEDDING, FakeCursor, make_store
 
 CANONICAL = SHAPE_TABLES["canonical"]
 MIXED = SHAPE_TABLES["mixed"]
@@ -177,3 +182,65 @@ def _fixture_dir():
     from pathlib import Path
 
     return Path(__file__).resolve().parents[1] / "fixtures" / "shapes"
+
+
+# --- T031: one resolution serves a session's worth of searches ----------------
+
+
+def store_on(shape: str, catalog, ranked_rows=None, metadata_rows=None):
+    """A store whose resolver reads through `catalog`."""
+    cursor = FakeCursor(
+        ranked_rows=(
+            [("doc-1", "the text", 0.9)] if ranked_rows is None else ranked_rows
+        ),
+        metadata_rows=([("doc-1", "{}")] if metadata_rows is None else metadata_rows),
+    )
+    store = make_store(shape, cursor, catalog)
+    store.shapes = TableShapeResolver(catalog)
+    return store, cursor
+
+
+def test_a_store_resolves_its_table_once_over_a_hundred_searches(counting):
+    """SC-002: the catalog is read on the first operation and not again."""
+    store, _ = store_on("canonical", counting)
+
+    for _ in range(100):
+        store.similarity_search_by_embedding(EMBEDDING, 5)
+
+    assert counting.calls == [(SHAPE_SCHEMA, SHAPE_TABLES["canonical"])]
+    assert store.shapes.reads == 1
+
+
+def test_a_store_resolves_once_across_the_whole_surface(counting):
+    """Reads, writes and deletes share the resolution, not one each."""
+    # No rows: this is about how often the catalog is read, and the two read paths
+    # here select different column lists, so canned rows would have to be shaped
+    # per statement to say nothing extra.
+    store, _ = store_on("canonical", counting, ranked_rows=[], metadata_rows=[])
+
+    store.similarity_search_by_embedding(EMBEDDING, 5)
+    store._store_documents(
+        [Document(id="doc-1", page_content="the text", metadata={})], [EMBEDDING]
+    )
+    store.fetch_documents_by_ids(["doc-1"])
+    store.get_all_documents()
+    store.delete_documents(["doc-1"])
+
+    assert store.shapes.reads == 1
+
+
+def test_refresh_shape_forces_exactly_one_more_read(counting):
+    """T036: the caller who knows the table changed out of band says so, once."""
+    store, _ = store_on("canonical", counting)
+    store.similarity_search_by_embedding(EMBEDDING, 5)
+
+    store.refresh_shape()
+
+    store.similarity_search_by_embedding(EMBEDDING, 5)
+    store.similarity_search_by_embedding(EMBEDDING, 5)
+    assert store.shapes.reads == 2
+
+
+def test_refresh_shape_returns_the_shape_it_read(counting):
+    store, _ = store_on("canonical", counting)
+    assert store.refresh_shape().vector_spec().dimension == DIM
