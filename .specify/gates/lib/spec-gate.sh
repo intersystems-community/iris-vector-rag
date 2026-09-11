@@ -371,7 +371,10 @@ gates_spec_gate() { # <root> <accept-arg> <json 0|1>
         results="$results$rj,"
     done <<<"$(gates_spec_features "$root")"
     SPEC_RESULTS_JSON="[${results%,}]"
-    rm -rf "$tmp"
+    # Local patch: a guarded launcher may wrap `rm` and refuse `rm -rf` on any
+    # absolute path (vcs-guard exits 90). Failing to delete a mktemp dir must not
+    # decide the gate's verdict, so the cleanup is advisory.
+    rm -rf "$tmp" 2>/dev/null || :
     if [[ -n "$failures" ]]; then
         SPEC_RESULT="fail"
         SPEC_DETAIL="$failures"
