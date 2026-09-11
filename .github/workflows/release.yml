@@ -38,7 +38,7 @@ jobs:
           df -h / | tail -1
 
       - name: Start IRIS
-        run: bash scripts/ci/start-iris.sh
+        run: bash scripts/ci/start-iris.sh --container iris --port 1972 --recreate
 
       - name: Install package
         run: |
@@ -74,7 +74,7 @@ jobs:
             -q
 
       - name: Reset IRIS (clean database for contract suite)
-        run: bash scripts/ci/start-iris.sh
+        run: bash scripts/ci/start-iris.sh --container iris --port 1972 --recreate
 
       - name: Run contract tests
         env:

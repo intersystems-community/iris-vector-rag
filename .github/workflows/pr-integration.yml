@@ -22,7 +22,7 @@ jobs:
       # amd64 and the services health check then kills the job. The script starts
       # IRIS with that init skipped and unexpires the default password.
       - name: Start IRIS
-        run: bash scripts/ci/start-iris.sh
+        run: bash scripts/ci/start-iris.sh --container iris --port 1972 --recreate
 
       - name: Set up Python ${{ env.PYTHON_DEFAULT_VERSION }}
         uses: actions/setup-python@v5

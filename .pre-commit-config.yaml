@@ -57,12 +57,14 @@ repos:
       # Task mapping validation
       - id: task-mapping
         name: Requirement-Task Mapping Check
-        entry: python scripts/validate_task_mapping.py
+        entry: python scripts/validate_task_mapping.py --fail-on-gaps
         language: python
         files: '(spec|tasks)\.md$'
         pass_filenames: false
         verbose: true
-        # This is a warning only - won't block commits
+        # Blocks: a requirement with no task fails the commit. Edge-case matching
+        # is keyword guesswork and stays advisory. Branches that name no feature
+        # (master, housekeeping) are skipped, not compared to an unrelated spec.
         always_run: false
 
       # Check for good error messages in new tests

@@ -336,6 +336,26 @@ if declare -f gates_const_check_raw >/dev/null 2>&1; then
     fi
 fi
 
+# IRIS container declaration (project-local addition, not part of the projected
+# spec-gates runtime). All the logic lives in check-container.sh so that
+# re-projecting this file loses only the call, not the check.
+CHECK_CONTAINER="$PROJECT_ROOT/.specify/scripts/bash/check-container.sh"
+if [[ -f "$CHECK_CONTAINER" ]]; then
+    echo ""
+    echo "IRIS container (declared in CLAUDE.md, read by check-container.sh):"
+    if CONTAINER_OUT="$(bash "$CHECK_CONTAINER" --json 2>&1)"; then
+        echo "${OK}${CONTAINER_OUT}"
+    else
+        echo "${BAD}${CONTAINER_OUT}"
+        echo "  run: bash .specify/scripts/bash/check-container.sh"
+        MISSING=$((MISSING + 1))
+    fi
+else
+    echo ""
+    echo "${BAD}.specify/scripts/bash/check-container.sh missing — /speckit.implement's container pre-flight silently does nothing without it"
+    MISSING=$((MISSING + 1))
+fi
+
 echo ""
 echo "Recommended (optional):"
 have node && echo "${OK}node (to install pinned linters via npm ci)" \
