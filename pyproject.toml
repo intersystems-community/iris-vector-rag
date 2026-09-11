@@ -257,16 +257,105 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+# The single pytest config. There used to be a pytest.ini as well, opening with
+# the setup.cfg-only header [tool:pytest]; pytest treated it as the config file,
+# read nothing out of it, and ignored this block. Keep the settings here.
 minversion = "7.0"
-addopts = "-ra -q --strict-markers --strict-config"
+addopts = "-ra --strict-markers --strict-config --tb=short --durations=10"
 asyncio_mode = "auto"
 testpaths = ["tests"]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests",
-    "mcp: marks tests as MCP integration tests"
+norecursedirs = [
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    "htmlcov",
+    # Tests written against APIs that do not exist yet — collected only when a
+    # feature picks them up and moves them out.
+    "future_features",
+    "future_tests_not_ready",
 ]
+timeout = 300
+timeout_method = "thread"
+markers = [
+    # Scope
+    "unit: test one component in isolation, no external services",
+    "integration: test component interactions",
+    "e2e: end-to-end test of a complete user workflow",
+    "true_e2e: end-to-end against real IRIS and a real embedding model",
+    "smoke: minimal IRIS ingest+query, gates PR-integration",
+    "contract: defines expected behaviour; must fail before implementation",
+    "tdd_compliant: follows the TDD workflow",
+    "implementation_commit(commit_sha): commit where implementation was added",
+    "benchmark: performance benchmark",
+    "performance: performance characteristics, not correctness",
+    "security: security-related test",
+    "slow: takes a long time (deselect with '-m \"not slow\"')",
+    # Environment the test needs
+    "requires_docker: needs Docker running",
+    "requires_database: needs a database connection",
+    "requires_real_database: needs a real IRIS instance, no fakes",
+    "requires_real_data: needs a populated corpus, not synthetic documents",
+    "requires_internet: needs internet access",
+    "requires_llm: needs LLM API access",
+    "requires_llm_api: alias for requires_llm",
+    "requires_redis: needs a Redis connection",
+    "requires_vector_store: needs vector store access",
+    "requires_backend_mode: needs a specific IRIS backend mode (community or enterprise)",
+    "iris_required: needs IRIS reachable on the project port",
+    "clean_iris: needs the IRIS tables emptied first",
+    "mcp: MCP integration test",
+    # Fixtures a test opts into
+    "dat_fixture: uses the DAT-restored fixture database",
+    "pmc_data: uses the PMC document corpus",
+    # Feature 036 pipeline suites
+    "error_handling: error handling and diagnostic message validation",
+    "fallback: fallback mechanism validation",
+    "dimension: embedding dimension validation",
+    "basic_rag: BasicRAG pipeline",
+    "basic_rerank: BasicRerankRAG pipeline",
+    "crag: CRAG pipeline",
+    "pylate_colbert: PyLateColBERT pipeline",
+    "good_errors: exemplary three-part error messages",
+]
+filterwarnings = [
+    # A dependency deprecating something we call must fail the run, not scroll by.
+    "error",
+    # Below: only our own deprecations, and only where a test exercises the
+    # deprecated surface deliberately. Each one goes away with the code it names,
+    # so delete the entry when the API is removed rather than adding to the list.
+    #
+    # tests/conftest.py's `connection_pool` fixture hands the deprecated testing
+    # pool to the contract tests that cover it. Its own message points at
+    # IRISConnectionPool, which 0.15 removed; the replacement is
+    # iris_vector_rag.session.session_for().
+    "ignore:ConnectionPool \\(testing module\\) is deprecated:DeprecationWarning",
+    # tests/contract/test_iris_connection_contract.py is the contract for
+    # get_iris_connection() itself, deprecated in 0.15 and removed in 0.16.
+    "ignore:get_iris_connection\\(\\) is deprecated:DeprecationWarning",
+    # The only third-party entries, and they buy time rather than silence: ragas
+    # 0.4 deprecated both halves of the API this repo calls -- the metric
+    # singletons in ragas.metrics (now ragas.metrics.collections) and evaluate()
+    # itself (now the @experiment decorator) -- and drops them in v1.0. Neither
+    # is a rename: collections metrics are BaseMetric classes taking an
+    # instructor-wrapped LLM at construction, and they do not plug into
+    # evaluate(). Four call sites need the migration together --
+    # tests/contract/test_ragas_validation_contract.py,
+    # examples/custom_pipeline.py, examples/compare_pipelines.py,
+    # scripts/simple_working_ragas.py. Delete these two entries with that work.
+    "ignore:Importing .* from 'ragas\\.metrics' is deprecated:DeprecationWarning",
+    # evaluate() and the aevaluate() it delegates to warn separately.
+    "ignore:a?evaluate\\(\\) is deprecated and will be removed:DeprecationWarning",
+]
+# No log_file/log_cli defaults. The dead pytest.ini asked for log_file_level =
+# DEBUG, which turns DEBUG capture on for every run: caplog then sees records a
+# test never asked for, and any test that fakes the clock gets asked for the time
+# once per log record. Pass --log-file / --log-cli-level when debugging a run.
+junit_suite_name = "rag-templates-test-suite"
+junit_logging = "system-out"
+junit_log_passing_tests = false
 
 [tool.coverage.run]
 source = ["iris_vector_rag", "adapters", "evaluation_framework"]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import time
 from unittest.mock import patch
 
@@ -60,7 +61,9 @@ def test_initialization_records_timing():
     manager._initialize_ivg_schema = lambda: {"tables_created": True}
     manager._ivg_table_exists = lambda table_name: True
 
-    times = iter([100.0, 100.4])
+    # Anything else that reads the clock during the call -- a log handler, for
+    # one -- must not exhaust the fake and raise StopIteration out of it.
+    times = itertools.chain([100.0], itertools.repeat(100.4))
     with (
         patch(
             "iris_vector_rag.storage.schema_manager.assert_ivg_compatible",

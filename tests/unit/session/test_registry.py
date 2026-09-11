@@ -98,7 +98,9 @@ def test_the_same_cadence_asked_twice_says_nothing(caplog):
     with caplog.at_level(logging.WARNING, logger="iris_vector_rag.session.registry"):
         session_for(identity=identity(), driver=FakeDriver(), health_interval=45.0)
 
-    assert caplog.text == ""
+    # Level-precise: a run with DEBUG capture on still logs the open, and that is
+    # not the warning this test is about.
+    assert [r for r in caplog.records if r.levelno >= logging.WARNING] == []
 
 
 def test_acquiring_a_session_opens_no_connection():

@@ -5,9 +5,10 @@ Elasticsearch-inspired structured error responses.
 Implements FR-017 to FR-020: Comprehensive error handling with actionable guidance.
 """
 
-from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ErrorType(str, Enum):
@@ -127,10 +128,8 @@ class ErrorDetails(BaseModel):
         description="When API key expired (ISO8601)",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        extra = "allow"  # Allow additional fields for flexibility
+    # extra="allow": error details carry whatever fields the failing endpoint has.
+    model_config = ConfigDict(extra="allow")
 
 
 class ErrorInfo(BaseModel):
@@ -157,10 +156,8 @@ class ErrorInfo(BaseModel):
         description="Actionable error details",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "validation_exception",
                 "reason": "Invalid parameter value",
@@ -172,7 +169,8 @@ class ErrorInfo(BaseModel):
                     "max_value": 100,
                 },
             }
-        }
+        },
+    )
 
 
 class ErrorResponse(BaseModel):
@@ -188,10 +186,8 @@ class ErrorResponse(BaseModel):
         description="Error information",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "examples": [
                 # Authentication error (FR-010)
                 {
@@ -275,7 +271,8 @@ class ErrorResponse(BaseModel):
                     }
                 },
             ]
-        }
+        },
+    )
 
 
 # Convenience factory functions for common errors

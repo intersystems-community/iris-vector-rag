@@ -11,19 +11,31 @@ import time
 import pytest
 
 
-def test_pytest_ini_has_no_randomly_flag():
-    """REQ-1: pytest.ini disables pytest-randomly."""
-    with open("pytest.ini", "r") as f:
-        content = f.read()
-    assert "-p no:randomly" in content, "pytest.ini must contain '-p no:randomly' flag"
+def test_test_order_is_not_randomized(pytestconfig):
+    """REQ-1: pytest-randomly does not reorder the suite.
+
+    Asserted against the live config rather than the text of a config file: the
+    settings moved to pyproject.toml when pytest.ini turned out to be inert, and
+    a test that greps a file cannot tell whether pytest read it.
+    """
+    if not pytestconfig.pluginmanager.hasplugin("randomly"):
+        return
+
+    addopts = " ".join(pytestconfig.getini("addopts"))
+    assert "no:randomly" in addopts, (
+        "pytest-randomly is installed and active, so test order changes every "
+        "run. Known order dependencies are recorded in "
+        "tests/KNOWN_ORDER_DEPENDENCIES.md. Disable it with '-p no:randomly' in "
+        "addopts."
+    )
 
 
 def test_pythonpath_allows_imports():
     """REQ-2: PYTHONPATH enables module imports."""
     # PYTHONPATH already set in conftest.py
     # Should not raise ModuleNotFoundError
-    from iris_vector_rag import common
     import iris_vector_rag
+    from iris_vector_rag import common
 
     assert iris_vector_rag is not None
     assert common is not None
@@ -49,8 +61,10 @@ def test_iris_connection_fixture_available():
 def test_iris_health_check_passes():
     """REQ-4: IRIS database is healthy."""
 
-    # Try to find IRIS on common ports
-    iris_ports = [11972, 21972, 1972]
+    # This project owns exactly one IRIS container, on 51972 (see CLAUDE.md).
+    # Probing other projects' ports is how a test ends up asserting against
+    # someone else's database.
+    iris_ports = [51972]
     iris_available = False
 
     for port in iris_ports:
@@ -85,48 +99,22 @@ except Exception:
     assert iris_available, "IRIS must be running"
 
 
-def test_pytest_markers_configured():
-    """REQ-5: pytest markers are properly configured."""
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "--markers",
-            "--override-ini=addopts=",
-            "-c",
-            "pytest.ini",
-        ],
-        capture_output=True,
-        text=True,
-    )
+def test_pytest_markers_configured(pytestconfig):
+    """REQ-5: pytest markers are properly configured.
 
-    # If pytest collection fails (e.g. import errors in conftest), fall back to
-    # reading pytest.ini directly to verify markers are declared
-    if result.returncode != 0:
-        import configparser
+    Reads the config pytest is running under, so it cannot pass by grepping a
+    file pytest ignored. tests/unit/test_pytest_config_is_live.py checks the
+    whole marker set; these four are the ones this contract names.
+    """
+    declared = {
+        line.split(":", 1)[0].strip() for line in pytestconfig.getini("markers")
+    }
 
-        config = configparser.ConfigParser()
-        config.read("pytest.ini")
-        markers_text = config.get("tool:pytest", "markers", fallback="")
-        if not markers_text:
-            markers_text = config.get("pytest", "markers", fallback="")
-        # pytest.ini uses [tool:pytest] in some formats but ours uses [pytest]
-        with open("pytest.ini") as f:
-            content = f.read()
-        assert "e2e:" in content, "e2e marker must be configured in pytest.ini"
-        assert "integration:" in content, "integration marker must be configured"
-        assert (
-            "requires_database:" in content
-        ), "requires_database marker must be configured"
-        assert "unit:" in content, "unit marker must be configured"
-    else:
-        assert "e2e:" in result.stdout, "e2e marker must be configured"
-        assert "integration:" in result.stdout, "integration marker must be configured"
-        assert (
-            "requires_database:" in result.stdout
-        ), "requires_database marker must be configured"
-        assert "unit:" in result.stdout, "unit marker must be configured"
+    for marker in ("e2e", "integration", "requires_database", "unit"):
+        assert marker in declared, (
+            f"the {marker} marker is not registered in the live pytest config, "
+            f"so with --strict-markers every test using it is a collection error"
+        )
 
 
 def test_test_suite_execution_time():

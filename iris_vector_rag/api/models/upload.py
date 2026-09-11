@@ -5,11 +5,12 @@ Pydantic models for Document Upload Operation entity (Entity 6 from data-model.m
 Implements async document upload with progress tracking.
 """
 
-from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator
-from enum import Enum
-from uuid import UUID
 from datetime import datetime
+from enum import Enum
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class UploadStatus(str, Enum):
@@ -148,10 +149,8 @@ class DocumentUploadOperation(BaseModel):
             raise ValueError(f"File size exceeds 100MB limit: {v} bytes")
         return v
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "operation_id": "b1c2d3e4-5678-90ab-cdef-fedcba987654",
                 "api_key_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
@@ -169,7 +168,8 @@ class DocumentUploadOperation(BaseModel):
                     "Document 45: Exceeds maximum chunk size",
                 ],
             }
-        }
+        },
+    )
 
 
 class DocumentUploadRequest(BaseModel):
@@ -198,16 +198,15 @@ class DocumentUploadRequest(BaseModel):
         description="Overlap between chunks (characters)",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "pipeline_type": "graphrag",
                 "chunk_size": 1000,
                 "chunk_overlap": 200,
             }
-        }
+        },
+    )
 
 
 class DocumentUploadResponse(BaseModel):
@@ -234,13 +233,12 @@ class DocumentUploadResponse(BaseModel):
         examples=["Document upload initiated. Use operation_id to track progress."],
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "operation_id": "b1c2d3e4-5678-90ab-cdef-fedcba987654",
                 "status": "pending",
                 "message": "Document upload initiated. Use operation_id to track progress.",
             }
-        }
+        },
+    )

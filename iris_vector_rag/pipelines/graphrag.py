@@ -390,11 +390,26 @@ class GraphRAGPipeline(RAGPipeline):
         results = self.vector_store.search_by_vector(query_embedding, top_k=top_k)
         return [r[0] for r in results]
 
-    def _generate_answer(self, query: str, documents: List[Document]) -> str:
+    def _generate_answer(
+        self,
+        query: str,
+        documents: List[Document],
+        custom_prompt: Optional[str] = None,
+    ) -> str:
+        """Generate an answer from the retrieved documents.
+
+        `custom_prompt` is formatted with `{query}` and `{context}`, the same two
+        fields BasicRAG documents for the option. HybridGraphRAGPipeline.query()
+        forwards its own `custom_prompt` here.
+        """
         if not self.llm_func:
             return "No LLM configured."
         context = "\n\n".join([doc.page_content for doc in documents])
-        return self.llm_func(f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer:")
+        if custom_prompt:
+            prompt = custom_prompt.format(query=query, context=context)
+        else:
+            prompt = f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer:"
+        return self.llm_func(prompt)
 
     def _read_iris_data(self, data: Any) -> str:
         if data is None:

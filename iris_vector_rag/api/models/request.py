@@ -5,11 +5,12 @@ Pydantic models for API Request entity (Entity 1 from data-model.md).
 Validates incoming query requests and parameters.
 """
 
-from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field, field_validator
-from enum import Enum
-from uuid import UUID
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PipelineType(str, Enum):
@@ -66,10 +67,8 @@ class QueryRequest(BaseModel):
         description="Pipeline to use (for generic /_search endpoint)",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "What is diabetes?",
                 "top_k": 5,
@@ -77,7 +76,8 @@ class QueryRequest(BaseModel):
                 "include_sources": True,
                 "include_metadata": True,
             }
-        }
+        },
+    )
 
 
 class HTTPMethod(str, Enum):
@@ -196,10 +196,8 @@ class APIRequestLog(BaseModel):
             raise ValueError("Status code must be 200-599")
         return v
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "request_id": "550e8400-e29b-41d4-a716-446655440000",
                 "timestamp": "2025-10-16T12:34:56.789Z",
@@ -214,4 +212,5 @@ class APIRequestLog(BaseModel):
                 "status_code": 200,
                 "response_time_ms": 1456,
             }
-        }
+        },
+    )

@@ -5,11 +5,12 @@ Pydantic models for Rate Limit Quota entity (Entity 4 from data-model.md).
 Implements adaptive request concurrency and per-key quotas.
 """
 
-from typing import Optional
-from pydantic import BaseModel, Field, field_validator
-from enum import Enum
-from uuid import UUID
 from datetime import datetime
+from enum import Enum
+from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class QuotaType(str, Enum):
@@ -101,10 +102,8 @@ class RateLimitQuota(BaseModel):
             raise ValueError("window_end must be after window_start")
         return v
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "quota_id": "f4a3b2c1-5678-4d3e-9f0a-123456789def",
                 "api_key_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
@@ -117,7 +116,8 @@ class RateLimitQuota(BaseModel):
                 "exceeded_count": 5,
                 "last_exceeded_at": "2025-10-16T11:23:45.000Z",
             }
-        }
+        },
+    )
 
 
 class RateLimitHeaders(BaseModel):
@@ -151,18 +151,17 @@ class RateLimitHeaders(BaseModel):
         description="Seconds to wait before retrying (when rate limited)",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        populate_by_name = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
             "example": {
                 "X-RateLimit-Limit": 100,
                 "X-RateLimit-Remaining": 27,
                 "X-RateLimit-Reset": 1697461200,
                 "Retry-After": 60,
             }
-        }
+        },
+    )
 
 
 class RateLimitStatus(BaseModel):
@@ -192,10 +191,8 @@ class RateLimitStatus(BaseModel):
         description="Whether key is currently rate limited",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "api_key_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
                 "requests_per_minute": {
@@ -212,4 +209,5 @@ class RateLimitStatus(BaseModel):
                 },
                 "is_rate_limited": False,
             }
-        }
+        },
+    )

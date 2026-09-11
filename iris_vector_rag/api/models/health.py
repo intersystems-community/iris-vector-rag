@@ -5,10 +5,11 @@ Pydantic models for Health Status entity (Entity 8 from data-model.md).
 Implements health monitoring for all system components.
 """
 
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ComponentStatus(str, Enum):
@@ -78,10 +79,8 @@ class HealthStatus(BaseModel):
         description="Component-specific metrics",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "component_name": "iris_database",
                 "status": "healthy",
@@ -96,7 +95,8 @@ class HealthStatus(BaseModel):
                     "avg_query_time_ms": 345,
                 },
             }
-        }
+        },
+    )
 
 
 class HealthCheckResponse(BaseModel):
@@ -126,10 +126,8 @@ class HealthCheckResponse(BaseModel):
         description="Aggregate health (same as status)",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "status": "healthy",
                 "timestamp": "2025-10-16T12:34:56.789Z",
@@ -162,7 +160,8 @@ class HealthCheckResponse(BaseModel):
                 },
                 "overall_health": "healthy",
             }
-        }
+        },
+    )
 
 
 class ComponentHealthCheck(BaseModel):
@@ -184,12 +183,11 @@ class ComponentHealthCheck(BaseModel):
         description="Health check timeout (1-30 seconds)",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "component_name": "iris_database",
                 "timeout_seconds": 5,
             }
-        }
+        },
+    )
