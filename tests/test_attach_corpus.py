@@ -27,7 +27,7 @@ def _get_engine(conn):
     import intersystems_iris
     from iris_vector_graph import IRISGraphEngine
 
-    native = intersystems_iris.createConnection(
+    native = intersystems_iris.connect(
         hostname=IRIS_HOST,
         port=IRIS_PORT,
         namespace="USER",
@@ -100,7 +100,7 @@ def conn():
 def engine(conn):
     import intersystems_iris
 
-    native = intersystems_iris.createConnection(
+    native = intersystems_iris.connect(
         hostname=IRIS_HOST,
         port=IRIS_PORT,
         namespace="USER",
@@ -145,6 +145,24 @@ class TestAttachCorpusBasic:
         assert result["dimension"] == TOKEN_DIM
         assert result["row_count"] == 100
         assert isinstance(result["has_hnsw_index"], (bool, type(None)))
+
+    def test_attach_without_naming_the_columns(self, pipeline, engine, test_table):
+        """Feature 082: omitted columns come from the table's shape, read live.
+
+        The catalog is the real one here -- this is the case where naming the columns
+        by hand was the step that could disagree with what the table carries.
+        """
+        result = pipeline.attach_existing_corpus(
+            source_table=test_table,
+            graph_label="TestDocShape",
+        )
+        assert result["id_col"] == "doc_id"
+        assert result["embedding_col"] == "embedding"
+        assert result["dimension"] == TOKEN_DIM
+        rows = engine.execute_cypher(
+            "MATCH (d:TestDocShape) RETURN d.doc_id LIMIT 5",
+        )
+        assert len(rows) > 0
 
     def test_graph_query_returns_rows(self, pipeline, engine, test_table):
         pipeline.attach_existing_corpus(

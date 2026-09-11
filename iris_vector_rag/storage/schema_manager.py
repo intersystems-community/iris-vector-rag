@@ -11,6 +11,7 @@ import logging
 import os
 import re
 import time
+import warnings
 from typing import Any, Dict, Optional
 
 from iris_vector_rag.integrations.ivg import (
@@ -45,6 +46,37 @@ def _canonical_column_names(shape: TableShape) -> list:
         column.name
         for column in sorted(shape.columns.values(), key=lambda col: col.position)
     ]
+
+
+COLUMN_OVERRIDE_KEYS = (
+    "id_column",
+    "text_column",
+    "title_column",
+    "metadata_column",
+    "embedding_column",
+)
+
+
+def _drop_column_overrides(config: Dict[str, Any], table_name: str) -> Dict[str, Any]:
+    """Remove column-name overrides from a stored configuration, with a warning.
+
+    These keys used to tell the store which column filled which role. The table now
+    answers that question itself -- `TableShape` reads it from the catalog -- so a
+    configuration that still carries them is a second account of a fact that has one
+    source (feature 082, FR-001). Dropping them silently would leave an operator
+    believing a rename took effect, so say which keys were ignored.
+    """
+    stale = [key for key in COLUMN_OVERRIDE_KEYS if key in config]
+    if not stale:
+        return config
+    warnings.warn(
+        f"Column overrides in the schema configuration for {table_name} are ignored: "
+        f"{', '.join(stale)}. The table's own columns decide which column fills which "
+        "role; remove these keys from the SchemaMetadata configuration.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    return {key: value for key, value in config.items() if key not in stale}
 
 
 class SchemaManager:
@@ -635,6 +667,7 @@ class SchemaManager:
                     # Expected format: (schema_version, vector_dim, embedding_model, config_json)
                     schema_version, vector_dim, embedding_model, config_json = result
                     config = json.loads(config_json) if config_json else {}
+                    config = _drop_column_overrides(config, table_name)
 
                     # This won't actually exist in config yet
                     vector_data_type = config.get(

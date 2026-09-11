@@ -7,11 +7,14 @@ and prepare data for different pipeline types.
 
 import logging
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
 from ..embeddings.manager import EmbeddingManager
+from ..storage.catalog import IRISCatalogReader
+from ..storage.shape_resolver import TableShapeResolver
+from ..storage.table_shape import ColumnRole, TableShape
 from .requirements import PipelineRequirements, get_pipeline_requirements
 from .validator import PreConditionValidator, ValidationReport
 
@@ -60,6 +63,7 @@ class SetupOrchestrator:
         self,
         connection_manager: ConnectionManager,
         config_manager: ConfigurationManager,
+        shapes: Optional[TableShapeResolver] = None,
     ):
         """
         Initialize the setup orchestrator.
@@ -67,12 +71,42 @@ class SetupOrchestrator:
         Args:
             connection_manager: Database connection manager
             config_manager: Configuration manager
+            shapes: Resolver for this session's table shapes (optional). One is built
+                from this orchestrator's own connection on first use when not
+                supplied; pass a resolver over a `RecordedCatalog` to describe a
+                shape in a test.
         """
         self.connection_manager = connection_manager
         self.config_manager = config_manager
         self.embedding_manager = EmbeddingManager(config_manager)
         self.validator = PreConditionValidator(connection_manager)
         self.logger = logging.getLogger(__name__)
+        # The document table this orchestrator prepares, and the one description of
+        # it every statement below is written from (feature 082).
+        self.documents_table = (config_manager.get("storage:iris", {}) or {}).get(
+            "table_name", "RAG.SourceDocuments"
+        )
+        self.shapes = shapes
+
+    def _shape_resolver(self) -> TableShapeResolver:
+        if self.shapes is None:
+            self.shapes = TableShapeResolver(
+                IRISCatalogReader(self.connection_manager.get_connection())
+            )
+        return self.shapes
+
+    def _documents_shape(self) -> TableShape:
+        """The document table's shape, read from the database once.
+
+        A missing table raises `TableNotFound` naming it, which is the error the
+        caller needs: the code this replaces went on to build SQL out of an empty
+        column set and failed several statements later with a column-not-found.
+        """
+        if "." in self.documents_table:
+            schema, _, table = self.documents_table.partition(".")
+        else:
+            schema, table = "RAG", self.documents_table
+        return self._shape_resolver().resolve(schema, table)
 
     def setup_pipeline(
         self, pipeline_type: str, auto_fix: bool = True
@@ -512,41 +546,37 @@ class SetupOrchestrator:
         cursor = connection.cursor()
 
         try:
+            shape = self._documents_shape()
+            table = shape.qualified_name
+            identifier = shape.column_for(ColumnRole.IDENTIFIER).name
+            # Whether the embeddings live in this table or in a separate vector table
+            # is a fact about the table, so the table is what gets asked.
+            embedding = shape.optional_column_for(ColumnRole.EMBEDDING)
+            vector_table = f"{shape.schema}.VectorEmbeddings"
 
             # Check total docs
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
-            print("Total documents in RAG.SourceDocuments:", cursor.fetchone()[0])
+            cursor.execute(f"SELECT COUNT(*) FROM {table}")
+            print(f"Total documents in {table}:", cursor.fetchone()[0])
 
-            # Check for documents without embeddings
-            # Support both legacy schema (embedding in SourceDocuments) and clean schema (VectorEmbeddings table)
-
-            # First check if SourceDocuments has embedding field (legacy schema)
-            cursor.execute("""
-                SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments' AND COLUMN_NAME = 'embedding'
-            """)
-            has_embedding_field = cursor.fetchone()[0] > 0
-
-            if has_embedding_field:
-                # Legacy schema approach
-                cursor.execute("""
-                    SELECT COUNT(*) FROM RAG.SourceDocuments
-                    WHERE embedding IS NULL
-                """)
+            if embedding is not None:
+                cursor.execute(
+                    f"SELECT COUNT(*) FROM {table} WHERE {embedding.name} IS NULL"
+                )
                 missing_count = cursor.fetchone()[0]
             else:
                 # Clean schema approach - check VectorEmbeddings table
                 try:
-                    cursor.execute("""
-                        SELECT COUNT(*) FROM RAG.SourceDocuments s
-                        LEFT JOIN RAG.VectorEmbeddings v ON s.id = v.chunk_id
-                        WHERE v.embedding IS NULL OR v.id IS NULL
-                    """)
+                    cursor.execute(
+                        f"SELECT COUNT(*) FROM {table} s "
+                        f"LEFT JOIN {vector_table} v ON s.{identifier} = v.chunk_id "
+                        "WHERE v.embedding IS NULL OR v.id IS NULL"
+                    )
                     missing_count = cursor.fetchone()[0]
                 except Exception as e:
                     self.logger.warning(f"VectorEmbeddings join failed: {e}")
-                    # Fallback: just count all SourceDocuments since we don't have embeddings in clean schema
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    # Fallback: count every document, since none of them can be shown
+                    # to have an embedding.
+                    cursor.execute(f"SELECT COUNT(*) FROM {table}")
                     missing_count = cursor.fetchone()[0]
 
             if missing_count > 0:
@@ -554,13 +584,13 @@ class SetupOrchestrator:
                 self._generate_missing_document_embeddings()
 
                 # Validate that embeddings were actually generated
-                if has_embedding_field:
+                if embedding is not None:
                     self._validate_embeddings_after_generation(
-                        "RAG.SourceDocuments", "embedding", "document"
+                        table, embedding.name, "document"
                     )
                 else:
                     self._validate_embeddings_after_generation(
-                        "RAG.VectorEmbeddings", "embedding", "document"
+                        vector_table, "embedding", "document"
                     )
             else:
                 self.logger.info("All documents have embeddings")
@@ -574,69 +604,38 @@ class SetupOrchestrator:
         cursor = connection.cursor()
 
         try:
-            # Get documents without embeddings
-            # Check if SourceDocuments has embedding field (legacy schema)
-            cursor.execute("""
-                SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments' AND COLUMN_NAME = 'embedding'
-            """)
-            has_embedding_field = cursor.fetchone()[0] > 0
+            # One description of the table, and every statement below written from it:
+            # the identifier selected here is the identifier the UPDATE matches on, and
+            # the text embedded is the text the store reads back.
+            shape = self._documents_shape()
+            table = shape.qualified_name
+            identifier = shape.column_for(ColumnRole.IDENTIFIER).name
+            text_column = shape.column_for(ColumnRole.TEXT).name
+            embedding_column = shape.optional_column_for(ColumnRole.EMBEDDING)
+            vector_table = f"{shape.schema}.VectorEmbeddings"
 
-            if has_embedding_field:
-                # Legacy schema approach
-                cursor.execute("""
-                    SELECT COLUMN_NAME
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments'
-                """)
-                columns = {row[0].lower() for row in cursor.fetchall()}
-                candidate_content_columns = [
-                    "content",
-                    "text_content",
-                    "text",
-                    "document_text",
-                ]
-                content_column = next(
-                    (col for col in candidate_content_columns if col in columns),
-                    None,
+            if embedding_column is not None:
+                cursor.execute(
+                    f"SELECT {identifier}, {text_column} FROM {table} "
+                    f"WHERE {embedding_column.name} IS NULL"
                 )
-                doc_id_column = (
-                    "doc_id"
-                    if "doc_id" in columns
-                    else ("id" if "id" in columns else None)
-                )
-
-                if not content_column or not doc_id_column:
-                    logger.warning(
-                        "SourceDocuments missing required columns for embedding generation: %s",
-                        sorted(columns),
-                    )
-                    return
-
-                cursor.execute(f"""
-                    SELECT {doc_id_column} as doc_id, {content_column} as content
-                    FROM RAG.SourceDocuments
-                    WHERE embedding IS NULL
-                """)
                 documents = cursor.fetchall()
             else:
-                # Clean schema approach - get all documents since clean schema has no embeddings in SourceDocuments
+                # Clean schema approach - the embeddings live in their own table, so
+                # every document without a row there needs one.
                 try:
-                    cursor.execute("""
-                        SELECT s.id, s.filename as content
-                        FROM RAG.SourceDocuments s
-                        LEFT JOIN RAG.VectorEmbeddings v ON s.id = v.chunk_id
-                        WHERE v.embedding IS NULL OR v.id IS NULL
-                    """)
+                    cursor.execute(
+                        f"SELECT s.{identifier}, s.{text_column} FROM {table} s "
+                        f"LEFT JOIN {vector_table} v ON s.{identifier} = v.chunk_id "
+                        "WHERE v.embedding IS NULL OR v.id IS NULL"
+                    )
                     documents = cursor.fetchall()
                 except Exception as e:
                     self.logger.warning(
                         f"VectorEmbeddings join failed: {e}, using fallback"
                     )
-                    # Fallback: get all documents since we're in clean schema
-                    cursor.execute(
-                        "SELECT id, filename as content FROM RAG.SourceDocuments"
-                    )
+                    # Fallback: every document, since none can be shown to have one.
+                    cursor.execute(f"SELECT {identifier}, {text_column} FROM {table}")
                     documents = cursor.fetchall()
             if not documents:
                 self.logger.info("No documents missing embeddings")
@@ -669,24 +668,23 @@ class SetupOrchestrator:
                             # Use consistent vector format that validator expects
                             vector_str = f"[{','.join(map(str, embedding))}]"
 
-                            # Use appropriate schema for embedding storage
-                            if has_embedding_field:
-                                # Legacy schema approach
+                            # Written back through the column it was selected by: the
+                            # `WHERE doc_id = ?` this replaces was fixed text, so on a
+                            # table keyed by `id` it updated nothing and reported
+                            # success.
+                            if embedding_column is not None:
                                 cursor.execute(
-                                    """
-                                    UPDATE RAG.SourceDocuments
-                                    SET embedding = TO_VECTOR(?)
-                                    WHERE doc_id = ?
-                                """,
+                                    f"UPDATE {table} "
+                                    f"SET {embedding_column.name} = TO_VECTOR(?) "
+                                    f"WHERE {identifier} = ?",
                                     [vector_str, doc_id],
                                 )
                             else:
                                 # Clean schema approach - insert into VectorEmbeddings table
                                 cursor.execute(
-                                    """
-                                    INSERT INTO RAG.VectorEmbeddings (chunk_id, embedding_model, embedding)
-                                    VALUES (?, 'validation-generated', TO_VECTOR(?))
-                                """,
+                                    f"INSERT INTO {vector_table} "
+                                    "(chunk_id, embedding_model, embedding) "
+                                    "VALUES (?, 'validation-generated', TO_VECTOR(?))",
                                     [doc_id, vector_str],
                                 )
                             total_processed += 1
@@ -699,32 +697,31 @@ class SetupOrchestrator:
 
                     connection.commit()
                     self.logger.info(
-                        f"Generated embeddings for batch {i//batch_size + 1}/{(len(documents) + batch_size - 1)//batch_size}"
+                        f"Generated embeddings for batch {i // batch_size + 1}/{(len(documents) + batch_size - 1) // batch_size}"
                     )
 
                 except Exception as batch_error:
                     self.logger.error(
-                        f"Failed to generate embeddings for batch {i//batch_size + 1}: {batch_error}"
+                        f"Failed to generate embeddings for batch {i // batch_size + 1}: {batch_error}"
                     )
                     total_failed += len(batch)
                     connection.rollback()
 
             # Final verification
-            if has_embedding_field:
-                # Legacy schema approach
-                cursor.execute("""
-                    SELECT COUNT(*) FROM RAG.SourceDocuments
-                    WHERE embedding IS NULL
-                """)
+            if embedding_column is not None:
+                cursor.execute(
+                    f"SELECT COUNT(*) FROM {table} "
+                    f"WHERE {embedding_column.name} IS NULL"
+                )
                 remaining_missing = cursor.fetchone()[0]
             else:
                 # Clean schema approach - check VectorEmbeddings table
                 try:
-                    cursor.execute("""
-                        SELECT COUNT(*) FROM RAG.SourceDocuments s
-                        LEFT JOIN RAG.VectorEmbeddings v ON s.id = v.chunk_id
-                        WHERE v.embedding IS NULL OR v.id IS NULL
-                    """)
+                    cursor.execute(
+                        f"SELECT COUNT(*) FROM {table} s "
+                        f"LEFT JOIN {vector_table} v ON s.{identifier} = v.chunk_id "
+                        "WHERE v.embedding IS NULL OR v.id IS NULL"
+                    )
                     remaining_missing = cursor.fetchone()[0]
                 except Exception as e:
                     self.logger.warning(
@@ -732,9 +729,9 @@ class SetupOrchestrator:
                     )
                     # Check if we have any embeddings in VectorEmbeddings table
                     try:
-                        cursor.execute("SELECT COUNT(*) FROM RAG.VectorEmbeddings")
+                        cursor.execute(f"SELECT COUNT(*) FROM {vector_table}")
                         embedding_count = cursor.fetchone()[0]
-                        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                        cursor.execute(f"SELECT COUNT(*) FROM {table}")
                         doc_count = cursor.fetchone()[0]
                         remaining_missing = max(0, doc_count - embedding_count)
                     except Exception:
@@ -1040,7 +1037,7 @@ class SetupOrchestrator:
             SELECT doc_id
             FROM (
                 SELECT DISTINCT '{doc_ids_str.split("', '")[0]}' as doc_id
-                {' UNION ALL SELECT DISTINCT ' + "' UNION ALL SELECT DISTINCT '".join(f"'{doc_id}'" for doc_id in target_doc_ids[1:]) if len(target_doc_ids) > 1 else ''}
+                {" UNION ALL SELECT DISTINCT " + "' UNION ALL SELECT DISTINCT '".join(f"'{doc_id}'" for doc_id in target_doc_ids[1:]) if len(target_doc_ids) > 1 else ""}
             ) target_docs
             WHERE doc_id NOT IN (
                 SELECT DISTINCT doc_id
@@ -1128,7 +1125,7 @@ class SetupOrchestrator:
             # Inside the loop, log the current batch of doc_ids
             current_batch_doc_ids = [doc_id for doc_id, _ in batch]
             self.logger.info(
-                f"Processing batch {i//batch_size + 1} with doc_ids: {current_batch_doc_ids}"
+                f"Processing batch {i // batch_size + 1} with doc_ids: {current_batch_doc_ids}"
             )
 
             batch_texts_to_embed = [content for _, content in batch]
@@ -1166,7 +1163,7 @@ class SetupOrchestrator:
             # Progress logging
             if (i // batch_size + 1) % 5 == 0:
                 self.logger.info(
-                    f"Processed batch {i//batch_size + 1}/{(len(doc_items) + batch_size - 1)//batch_size}, "
+                    f"Processed batch {i // batch_size + 1}/{(len(doc_items) + batch_size - 1) // batch_size}, "
                     f"{total_processed} documents completed"
                 )
 

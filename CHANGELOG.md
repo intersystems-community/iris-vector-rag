@@ -2,6 +2,88 @@
 
 ## Unreleased
 
+### Table shape: the database decides which column fills which role (0.15)
+
+`TableShape` reads a document or chunk table out of the IRIS catalog once and
+answers the only question the pipelines ever asked of it: which column is the
+identifier, the text, the metadata, the embedding. Every column name in the read,
+write, delete and join paths now comes from that one answer, so the writer and the
+reader can no longer disagree about the same table.
+
+New in `iris_vector_rag.storage`:
+
+- `table_shape.TableShape` — `column_for(role)`, `optional_column_for(role)`,
+  `has(role)`, `legacy_column_for(role)`, `vector_spec()`, `writable_identifier()`,
+  plus `qualified_name`, `columns`, `kind`, `is_canonical`.
+- `catalog.IRISCatalogReader` / `catalog.RecordedCatalog` — the only place in the
+  package that queries `INFORMATION_SCHEMA` or `%Dictionary.*`.
+- `shape_resolver.TableShapeResolver` — one catalog read per table per instance.
+
+`IRISVectorStore`, `EntityStorageAdapter`, `SetupOrchestrator` and
+`HybridGraphRAGPipeline` all take an optional `shapes=` resolver, so a caller (or a
+test) can describe a table without touching a database.
+
+See [docs/api/table_shape.md](docs/api/table_shape.md).
+
+#### Behaviour changes
+
+- **Mixed tables.** A table carrying both a canonical and a legacy column (for
+  example `text_content` _and_ `content`) now resolves to the canonical one
+  everywhere. Previously the write path chose one column and the read path chose
+  another, so rows written through the library were invisible to search on such a
+  table. Reads still fall back per row to the legacy column when the canonical one
+  is empty, so existing data stays readable.
+- **`IRIS_VECTOR_DATA_TYPE` is no longer a fallback.** `TO_VECTOR` takes its
+  element type and length from the embedding column itself. The environment
+  variable still applies to table _creation_; it can no longer contradict a table
+  that already exists.
+- **A table with no embedding column raises.** Vector search on such a table used
+  to fall back silently to `FLOAT` and return nothing; it now raises
+  `NotVectorSearchable` naming the table.
+- **A query embedding of the wrong length raises** before any SQL is sent, naming
+  both the length given and the length the column declares.
+- **A caller-supplied identifier on a generated key raises**
+  `IdentifierNotWritable` naming the schema, table and column, instead of letting
+  IRIS reject the insert.
+- **`attach_existing_corpus`** (`HybridGraphRAGPipeline`) no longer requires
+  `id_col`, `text_col` and `embedding_col`: omitted arguments come from the
+  attached table's shape, and `graph_label` defaults to the unqualified table name.
+  Explicit arguments still win.
+
+#### Deprecated
+
+- Column-name overrides in the `configuration` JSON of `RAG.SchemaMetadata`
+  (`id_column`, `text_column`, `title_column`, `metadata_column`,
+  `embedding_column`) are ignored and now raise a `DeprecationWarning` naming the
+  keys found. The table's own columns are the single source of that fact. Remove
+  the keys from the stored configuration.
+
+#### Test infrastructure: the order dependence is fixed
+
+`tests/utils/schema_models.py` carried a second, hand-written description of
+`RAG.SourceDocuments` (`id`, `source`, `content`, no embedding column at all).
+`SchemaValidator` therefore rejected a healthy canonical table, the
+`database_with_clean_schema` fixture called `SchemaResetter`, and the resetter
+replaced the table with one that cannot answer a vector search — for the rest of
+the session. Validation could not pass even against the resetter's own output,
+because it demanded `JSON` where `VARCHAR(MAX)` reads back as `LONGVARCHAR`, so
+the reset fired for every test class that asked for a clean schema.
+
+- The document and chunk tables are now derived from `CANONICAL_DOCUMENT_SHAPE` /
+  `CANONICAL_CHUNK_SHAPE` and created with the library's own
+  `create_table_statement`, so the test infrastructure cannot disagree with the
+  code under test.
+- `SchemaValidator.satisfies(expected, actual)` accepts the types IRIS actually
+  reports: `varchar`/`varbinary` for a `VECTOR` column, `longvarchar` for `JSON`.
+- `test_graphrag_handler_execute_hybrid_search` passes in the full CI-equivalent
+  contract run and has been removed from
+  `tests/contract/ci_known_failures.txt` (the 0.14.2 note below is what this
+  supersedes).
+
+The `LOG-004` row-count diagnostics (`Total documents in <table>`, `Documents with
+embeddings`) are kept, now counting through the embedding column the shape names
+rather than a hard-coded `embedding`.
+
 ### Dependencies / CI (Dependabot PRs #81–#91, #95–#98, #100, #101)
 
 - GitHub Actions: `actions/checkout` v7 everywhere, `codecov/codecov-action` v7

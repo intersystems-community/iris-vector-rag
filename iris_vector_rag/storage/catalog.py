@@ -71,6 +71,11 @@ INDEX_SQL = """
     WHERE TABLE_NAME = ?
 """
 
+INDEX_COLUMN_SQL = """
+    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.INDEXES
+    WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+"""
+
 
 @dataclass(frozen=True)
 class CatalogSnapshot:
@@ -176,6 +181,29 @@ class IRISCatalogReader:
         finally:
             if own_cursor:
                 _close(cursor)
+
+    def indexed_columns(self, schema: str, table: str) -> set[str]:
+        """The columns of a table that some index covers, upper-cased.
+
+        A different question from `index_names`: index creation wants to know whether
+        an index of a given name is already there, and attaching a corpus wants to know
+        whether one column in particular is reachable by an index at all. Scoped by
+        schema as well as table, because two schemas can carry the same table name and
+        the `INDEXES` view will happily report both.
+        """
+        cursor = self._connection.cursor()
+        try:
+            return {
+                str(row["COLUMN_NAME"]).upper()
+                for row in self._rows(cursor, INDEX_COLUMN_SQL, [schema, table])
+                if row["COLUMN_NAME"]
+            }
+        except Exception as exc:  # noqa: BLE001 - the driver error becomes the cause
+            raise CatalogUnavailable(
+                f"index column query failed: {exc}", schema, table
+            ) from exc
+        finally:
+            _close(cursor)
 
     @staticmethod
     def _rows(cursor: Any, sql: str, params: Sequence[Any]) -> list[dict[str, Any]]:

@@ -23,12 +23,10 @@ from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
 
 # Import general-purpose ontology components
-from ..ontology.plugins import (
-    GeneralOntologyPlugin,
-    create_plugin_from_config,
-)
+from ..ontology.plugins import GeneralOntologyPlugin, create_plugin_from_config
 from ..ontology.reasoner import OntologyReasoner, QueryExpander
 from ..services.entity_extraction import EntityExtractionService
+from ..storage.table_shape import ColumnRole
 from ..visualization.graph_visualizer import (
     GraphVisualizationException,
     GraphVisualizer,
@@ -646,7 +644,7 @@ class GraphRAGPipeline(RAGPipeline):
             query = f"""
                 SELECT TOP 10 entity_id, entity_name, entity_type
                 FROM RAG.Entities
-                WHERE {' OR '.join(conditions)}
+                WHERE {" OR ".join(conditions)}
                   AND entity_type IN ('PERSON', 'ORG', 'DISEASE', 'DRUG', 'TREATMENT', 'SYMPTOM')
             """
 
@@ -759,19 +757,30 @@ class GraphRAGPipeline(RAGPipeline):
         if not entity_ids:
             raise GraphRAGException("No entity IDs provided for document retrieval")
 
+        # Same shape the vector store reads with, for the same reason as
+        # `graphrag.py`: a join written in fixed text matched nothing on a table not
+        # keyed by `doc_id` (FR-012).
+        shape = self.vector_store.shape()
+        identifier = shape.column_for(ColumnRole.IDENTIFIER).name
+        text = shape.column_for(ColumnRole.TEXT).name
+        title_column = shape.optional_column_for(ColumnRole.TITLE)
+
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
 
         try:
             entity_list = list(entity_ids)[:50]
             placeholders = ",".join(["?" for _ in entity_list])
+            selected = [f"sd.{identifier}", f"sd.{text}"]
+            if title_column is not None:
+                selected.append(f"sd.{title_column.name}")
 
             query = f"""
-                SELECT DISTINCT sd.doc_id, sd.text_content, sd.title
-                FROM RAG.SourceDocuments sd
-                JOIN RAG.Entities e ON sd.doc_id = e.source_doc_id
+                SELECT DISTINCT {", ".join(selected)}
+                FROM {shape.qualified_name} sd
+                JOIN {shape.schema}.Entities e ON sd.{identifier} = e.source_doc_id
                 WHERE e.entity_id IN ({placeholders})
-                ORDER BY sd.doc_id
+                ORDER BY sd.{identifier}
             """
 
             self._debug_db_execs = getattr(self, "_debug_db_execs", 0) + 1
@@ -785,12 +794,14 @@ class GraphRAGPipeline(RAGPipeline):
 
             docs = []
             seen_ids = set()
-            for doc_id, content, title in results:
-                doc_id_str = str(doc_id)
+            for row in results:
+                doc_id_str = str(row[0])
                 if doc_id_str not in seen_ids:
                     seen_ids.add(doc_id_str)
-                    content_str = self._read_iris_data(content)
-                    title_str = self._read_iris_data(title)
+                    content_str = self._read_iris_data(row[1])
+                    title_str = (
+                        self._read_iris_data(row[2]) if title_column is not None else ""
+                    )
 
                     docs.append(
                         Document(

@@ -9,12 +9,20 @@ import time
 from typing import List, Optional
 
 from tests.utils.schema_models import (
-    SchemaDefinition,
-    SchemaValidationResult,
-    SchemaMismatch,
+    ColumnType,
     MismatchType,
+    SchemaDefinition,
+    SchemaMismatch,
+    SchemaValidationResult,
     get_expected_rag_schema,
 )
+
+#: The normalized types that satisfy an expectation. Only the two that IRIS does not
+#: report back as they were declared need an entry; everything else is equality.
+_ACCEPTED_TYPES = {
+    ColumnType.VECTOR: ("VECTOR", "VARCHAR", "VARBINARY"),
+    ColumnType.JSON: ("JSON", "CLOB", "VARCHAR"),
+}
 
 
 class SchemaValidator:
@@ -191,22 +199,36 @@ class SchemaValidator:
 
             # Check column type
             actual_col = actual_columns[expected_col.name]
-            actual_type = self._normalize_type(actual_col["data_type"])
-            expected_type = expected_col.column_type.value
-
-            if actual_type != expected_type:
+            if not self.satisfies(expected_col.column_type, actual_col["data_type"]):
                 mismatches.append(
                     SchemaMismatch(
                         table_name=schema_def.table_name,
                         mismatch_type=MismatchType.TYPE_MISMATCH,
                         column_name=expected_col.name,
-                        expected_value=expected_type,
-                        actual_value=actual_type,
+                        expected_value=expected_col.column_type.value,
+                        actual_value=self._normalize_type(actual_col["data_type"]),
                         severity="error",
                     )
                 )
 
         return mismatches
+
+    def satisfies(self, expected: ColumnType, actual_iris_type: str) -> bool:
+        """Whether the type IRIS reports is the one the expectation asks for.
+
+        Not equality, because two of these types are not reported back as they were
+        declared:
+
+        * `INFORMATION_SCHEMA` reports `VECTOR(FLOAT, 384)` as `varchar` -- a driver
+          limitation, documented in `CLAUDE.md`, not a schema defect.
+        * `JSON` is created as `VARCHAR(MAX)`, which comes back as `longvarchar`.
+
+        Demanding equality meant validation always failed, so every test class that
+        asked for a clean schema triggered a reset it did not need.
+        """
+        actual = self._normalize_type(actual_iris_type)
+        accepted = _ACCEPTED_TYPES.get(expected, (expected.value,))
+        return actual in accepted
 
     def _normalize_type(self, iris_type: str) -> str:
         """

@@ -11,6 +11,7 @@ The cursor here answers data queries only. If a test sees a catalog query in
 
 from __future__ import annotations
 
+from dataclasses import replace
 from unittest.mock import MagicMock
 
 import pytest
@@ -19,6 +20,7 @@ from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.exceptions import VectorStoreDataError
+from iris_vector_rag.storage.catalog import RecordedCatalog
 from iris_vector_rag.storage.schema_manager import SchemaManager
 from iris_vector_rag.storage.shape_resolver import TableShapeResolver
 from iris_vector_rag.storage.table_shape import (
@@ -393,6 +395,91 @@ def test_get_all_documents_needs_no_retry(shape, recorded_catalog):
     identifier = store.shape().column_for(ColumnRole.IDENTIFIER).name
     assert len(cursor.sql) == 1
     assert f"SELECT {identifier}," in cursor.sql[0]
+
+
+def test_the_stored_configuration_is_never_asked_about_columns(recorded_catalog):
+    """The overrides in `make_store` are not merely overruled -- they are unread.
+
+    The other tests here would fail if a wrong column name reached the SQL. This one
+    fails earlier and says why: nothing in the read or write path consults the stored
+    configuration for a column name any more, so the deprecated keys have no route
+    back in (FR-001, T056).
+    """
+    cursor = FakeCursor(
+        ranked_rows=[("doc-1", "the text", 0.9)], metadata_rows=[("doc-1", "{}")]
+    )
+    store = make_store("mixed", cursor, recorded_catalog)
+
+    store.add_documents([document()])
+    store.similarity_search_by_embedding(EMBEDDING, 5)
+
+    store.schema_manager.get_current_schema_config.assert_not_called()
+
+
+def test_a_search_logs_the_row_counts_that_explain_an_empty_result(
+    recorded_catalog, caplog
+):
+    """LOG-004: a search that returns nothing says how many rows were there to find.
+
+    The counts used to be read with the column name `embedding` written into the SQL,
+    which is exactly what this feature removes -- but removing the statement removed
+    the diagnostic too, and an empty result set with no explanation is the failure
+    mode feature 033 added this logging for.
+    """
+    cursor = FakeCursor()
+    store = make_store("canonical", cursor, recorded_catalog)
+
+    with caplog.at_level("DEBUG", logger="iris_vector_rag.storage.vector_store_iris"):
+        store.similarity_search_by_embedding(EMBEDDING, 5)
+
+    assert f"Total documents in {store.table_name}: 0" in caplog.text
+    assert "Documents with embeddings: 0" in caplog.text
+
+
+def test_the_row_counts_are_read_from_the_embedding_column_the_table_has(
+    recorded_catalog, caplog
+):
+    """Every recorded shape spells it `embedding`, so one is renamed here.
+
+    The count is a second statement naming the embedding column, and a second place
+    to write a column name is a second place to write the wrong one (FR-001).
+    """
+    table = SHAPE_TABLES["canonical"]
+    snapshot = recorded_catalog.snapshot(SHAPE_SCHEMA, table)
+    renamed = replace(
+        snapshot,
+        columns=[
+            (
+                {**column, "COLUMN_NAME": "chunk_embedding"}
+                if str(column["COLUMN_NAME"]).lower() == "embedding"
+                else column
+            )
+            for column in snapshot.columns
+        ],
+        properties=[
+            (
+                {**prop, "SqlFieldName": "chunk_embedding"}
+                if str(prop.get("SqlFieldName", "")).lower() == "embedding"
+                else prop
+            )
+            for prop in snapshot.properties
+        ],
+    )
+    cursor = FakeCursor()
+    store = make_store(
+        "canonical",
+        cursor,
+        RecordedCatalog({(SHAPE_SCHEMA, table): renamed}),
+    )
+
+    with caplog.at_level("DEBUG", logger="iris_vector_rag.storage.vector_store_iris"):
+        store.similarity_search_by_embedding(EMBEDDING, 5)
+
+    counting = store.shape().column_for(ColumnRole.EMBEDDING).name
+    assert counting == "chunk_embedding"
+    counts = [sql for sql in cursor.sql if "COUNT(*)" in sql]
+    assert any(f"{counting} IS NOT NULL" in sql for sql in counts), counts
+    assert not any(" embedding IS NOT NULL" in sql for sql in counts), counts
 
 
 def test_the_shape_is_resolved_once_per_store(recorded_catalog):

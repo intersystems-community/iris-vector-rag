@@ -996,6 +996,32 @@ class IRISVectorStore(VectorStore):
                 dropped += 1
         return kept, dropped
 
+    def _log_row_counts(self, cursor, embedding_column: str) -> None:
+        """Log how many rows the search had to choose from (LOG-004, feature 033).
+
+        An empty result set has two very different causes -- an empty table and a
+        table whose embeddings were never written -- and these two counts are what
+        tells them apart. The embedding column is the one the table has, passed in
+        from the shape, so this diagnostic cannot name a column the query did not
+        use (FR-001).
+        """
+        try:
+            cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
+            total = cursor.fetchone()[0]
+            logger.debug(f"Total documents in {self.table_name}: {total}")
+
+            cursor.execute(
+                f"SELECT COUNT(*) FROM {self.table_name} "
+                f"WHERE {embedding_column} IS NOT NULL"
+            )
+            embedded = cursor.fetchone()[0]
+            logger.debug(f"Documents with embeddings: {embedded}")
+        except Exception as exc:
+            # Diagnostics never fail a search: the counts are here to explain a
+            # result, not to produce one.
+            logger.debug(f"Unable to count rows in {self.table_name}: {exc}")
+            logger.debug("Documents with embeddings: 0")
+
     def similarity_search_by_embedding(
         self,
         query_embedding: List[float],
@@ -1059,6 +1085,9 @@ class IRISVectorStore(VectorStore):
             logger.debug(f"Query embedding dimensions: {len(query_embedding)}")
             logger.debug(f"Top-K parameter: {top_k}")
 
+            embedding_column = shape.column_for(ColumnRole.EMBEDDING).name
+            self._log_row_counts(cursor, embedding_column)
+
             # The filter is applied in SQL; the page is top_k. The exact-match
             # check below is only a backstop for LIKE approximations and widens
             # the page once if it actually drops rows.
@@ -1078,7 +1107,7 @@ class IRISVectorStore(VectorStore):
             def _build_sql(page_size: int) -> str:
                 return build_safe_vector_dot_sql(
                     table=self.table_name,
-                    vector_column=shape.column_for(ColumnRole.EMBEDDING).name,
+                    vector_column=embedding_column,
                     vector_string=embedding_str,
                     vector_dimension=vector.dimension,
                     id_column=identifier.name,
