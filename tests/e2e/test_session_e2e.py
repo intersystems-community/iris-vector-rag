@@ -325,3 +325,130 @@ class TestUserStory4DriverChoiceIsADecision:
 
         assert session.one("SELECT 1") == (1,)
         assert session.driver_name == "fake"
+
+
+class TestUserStory5TheOldNamesStillWork:
+    """Superseded entry points keep working against the real instance, and warn once.
+
+    The migration this feature asks for is a rename, not a rewrite: the names 0.14
+    shipped still hand out a connection, and it is the session's -- so a caller who
+    upgrades and changes nothing gets the bounded handshake and the health cadence
+    for free, plus one warning naming what to move to.
+    """
+
+    def test_every_superseded_name_answers_from_the_one_session(self, session):
+        import warnings as _warnings
+
+        from iris_vector_rag.common.connection_manager import LegacyConnectionManager
+        from iris_vector_rag.common.iris_connection import get_iris_connection
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.common.iris_dbapi_connector import (
+            get_iris_dbapi_connection,
+        )
+
+        expected = session.connection_for_adapter()
+        calls = {
+            "get_iris_connection": get_iris_connection,
+            "get_iris_dbapi_connection": get_iris_dbapi_connection,
+            "IRISConnectionManager": lambda: IRISConnectionManager().get_connection(),
+            "LegacyConnectionManager": lambda: LegacyConnectionManager().connect(),
+        }
+
+        for name, call in calls.items():
+            with _warnings.catch_warnings(record=True) as caught:
+                _warnings.simplefilter("always")
+                connection = call()
+            deprecations = [
+                w for w in caught if issubclass(w.category, DeprecationWarning)
+            ]
+
+            assert connection is expected, f"{name} did not answer from the session"
+            assert len(deprecations) == 1, f"{name} warned {len(deprecations)} times"
+            assert "session" in str(deprecations[0].message).lower()
+
+        # Four entry points, one connection, one session.
+        assert len(open_sessions()) == 1
+        assert session.one("SELECT 1") == (1,)
+
+    def test_the_api_pool_serves_concurrent_requests_from_sessions(self, session):
+        """What the HTTP API does at startup, and what its request threads then do.
+
+        `fastapi` is not installed in the test environment, so this exercises the
+        layer the API depends on: the pool it builds at startup, used the way its
+        routes use it -- many threads at once, each running a statement.
+
+        Twelve requests over a capacity of three, on a Community Edition licence that
+        refuses the sixth connection: the pool has to hold the total down, which is
+        the whole of what is left of its job now the session owns the connections.
+        """
+        import threading
+
+        from iris_vector_rag.common.connection_pool import _session_pool
+
+        identity = SessionIdentity.from_env()
+        pool = _session_pool(
+            host=identity.host,
+            port=identity.port,
+            namespace=identity.namespace,
+            username=identity.username,
+            password=identity.password,
+            pool_size=2,
+            max_overflow=1,
+        )
+
+        answers: list[object] = []
+        failures: list[BaseException] = []
+        lock = threading.Lock()
+
+        def serve_one_request():
+            try:
+                with pool.get_connection() as connection:
+                    cursor = connection.cursor()
+                    try:
+                        cursor.execute("SELECT TOP 1 1 FROM %Dictionary.CompiledClass")
+                        row = cursor.fetchone()
+                        value = row[0] if row else None
+                    finally:
+                        cursor.close()
+                with lock:
+                    answers.append(value)
+            except BaseException as exc:  # recorded, not raised in a thread
+                with lock:
+                    failures.append(exc)
+
+        threads = [threading.Thread(target=serve_one_request) for _ in range(12)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=60)
+
+        assert failures == [], failures
+        assert len(answers) == 12
+        assert {int(a) for a in answers} == {1}
+
+        stats = pool.get_stats()
+        assert stats["in_use_connections"] == 0
+        assert stats["total_acquisitions"] == 12
+        assert stats["capacity"] == 3
+
+        # Every request came from the one session for this identity, and the licence
+        # never saw more connections than the pool advertises -- nor, now the requests
+        # have finished, any at all.
+        assert pool.session is session
+        assert session.open_connection_count == 0
+
+        # A request in flight is what "connected" reports on.
+        with pool.get_connection():
+            assert pool.get_stats()["connected"] is True
+            assert pool.get_stats()["open_connections"] == 1
+
+    def test_the_removed_names_are_removed(self):
+        """0.15 deletes the duplicates outright: they had no caller to break."""
+        import importlib
+
+        from iris_vector_rag.common import connection_pool, iris_connection
+
+        assert not hasattr(iris_connection, "IRISConnectionPool")
+        assert not hasattr(connection_pool, "get_pool")
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module("iris_vector_rag.common.iris_connector")

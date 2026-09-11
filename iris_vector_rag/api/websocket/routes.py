@@ -11,21 +11,21 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from iris_vector_rag.api.models.websocket import (
-    WebSocketAuthMessage,
     EventType,
     SubscriptionType,
+    WebSocketAuthMessage,
 )
-from iris_vector_rag.api.websocket.connection import ConnectionManager
+from iris_vector_rag.api.websocket.connection import WebSocketConnectionManager
 from iris_vector_rag.api.websocket.handlers import (
-    QueryStreamingHandler,
     DocumentUploadProgressHandler,
+    QueryStreamingHandler,
 )
 
 logger = logging.getLogger(__name__)
 
 
 def create_websocket_router(
-    connection_manager: ConnectionManager,
+    connection_manager: WebSocketConnectionManager,
     query_handler: QueryStreamingHandler,
     upload_handler: DocumentUploadProgressHandler,
 ) -> APIRouter:

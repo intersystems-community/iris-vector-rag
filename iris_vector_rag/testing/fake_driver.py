@@ -102,6 +102,9 @@ class FakeConnection:
     def close(self) -> None:
         self.closed = True
 
+    def isClosed(self) -> bool:  # noqa: N802 - the name the IRIS DBAPI driver uses
+        return self.closed
+
 
 class FakeDriver:
     """A ``Driver`` that connects to nothing and records everything."""
@@ -157,6 +160,11 @@ class FakeDriver:
     def ping(self, connection: FakeConnection) -> bool:
         self.pings += 1
         return not (connection.closed or connection.dropped)
+
+    def is_closed(self, connection: FakeConnection) -> bool:
+        # A dropped connection is not a closed one: the peer's reset is only visible
+        # to a probe, which is the distinction the session's two paths rely on.
+        return connection.closed
 
     def close(self, connection: FakeConnection) -> None:
         self.closes += 1

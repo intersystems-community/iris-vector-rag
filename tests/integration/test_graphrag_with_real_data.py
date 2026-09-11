@@ -9,20 +9,16 @@ IMPORTANT: These tests only run if the database has sufficient data.
 """
 
 import pytest
+
 from iris_vector_rag import create_pipeline
-from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+from iris_vector_rag.session import session_for
 
 
 def get_entity_count():
     """Helper to check if database has sufficient entities."""
     try:
-        conn = get_iris_dbapi_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
-        count = cursor.fetchone()[0]
-        cursor.close()
-        conn.close()
-        return count
+        row = session_for().one("SELECT COUNT(*) FROM RAG.Entities")
+        return row[0] if row else 0
     except Exception as e:
         print(f"Warning: Could not count entities: {e}")
         return 0
@@ -31,13 +27,8 @@ def get_entity_count():
 def get_relationship_count():
     """Helper to check if database has sufficient relationships."""
     try:
-        conn = get_iris_dbapi_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM RAG.EntityRelationships")
-        count = cursor.fetchone()[0]
-        cursor.close()
-        conn.close()
-        return count
+        row = session_for().one("SELECT COUNT(*) FROM RAG.EntityRelationships")
+        return row[0] if row else 0
     except Exception as e:
         print(f"Warning: Could not count relationships: {e}")
         return 0

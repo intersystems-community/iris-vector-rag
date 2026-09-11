@@ -18,9 +18,10 @@ class PLAIDNotBuiltError(RuntimeError):
 def _ensure_native_conn(conn):
     import os
 
-    from iris_vector_rag.common.iris_connection import get_iris_connection
+    # The non-warning twin: this is the library calling itself (US5).
+    from iris_vector_rag.common.iris_connection import _session_connection
 
-    return get_iris_connection(
+    return _session_connection(
         host=getattr(conn, "hostname", os.environ.get("IRIS_HOST", "localhost")),
         port=getattr(conn, "port", int(os.environ.get("IRIS_PORT", "1972"))),
         namespace=getattr(conn, "namespace", os.environ.get("IRIS_NAMESPACE", "USER")),

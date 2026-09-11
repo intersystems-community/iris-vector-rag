@@ -6,12 +6,14 @@ Tests FR-003: Quality maintenance (4.86 entities/doc average)
 Tests FR-009: Mixed document types handling
 """
 
-import pytest
 import time
+
+import pytest
+
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.services.entity_extraction import EntityExtractionService
-from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
 
 @pytest.mark.integration
@@ -24,7 +26,7 @@ class TestBatchPerformance:
     def service(self):
         """Initialize EntityExtractionService."""
         config_manager = ConfigurationManager()
-        connection_manager = IRISConnectionManager()
+        connection_manager = ConnectionManager(config_manager)
         return EntityExtractionService(config_manager, connection_manager)
 
     @pytest.fixture
@@ -355,8 +357,9 @@ class TestBatchPerformance:
 
     def test_memory_usage_bounded(self, service, documents_1k):
         """Validate memory usage stays bounded during batch processing."""
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

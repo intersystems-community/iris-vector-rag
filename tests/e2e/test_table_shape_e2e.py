@@ -16,12 +16,12 @@ from pathlib import Path
 
 import pytest
 
-from iris_vector_rag.common.iris_connection import get_iris_connection
 from iris_vector_rag.common.utils import get_llm_func
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.session import session_for
 from iris_vector_rag.storage.catalog import RecordedCatalog
 from iris_vector_rag.storage.shape_resolver import TableShapeResolver
 from iris_vector_rag.storage.table_shape import CANONICAL_DOCUMENT_SHAPE, ShapeKind
@@ -76,7 +76,7 @@ def legacy_table(monkeypatch):
     The table name reaches the store through configuration, the same way a caller
     with an existing table would supply it.
     """
-    connection = get_iris_connection()
+    connection = session_for().connection_for_adapter()
     table = f"{SHAPE_SCHEMA}.{SHAPE_TABLES[LEGACY_SHAPE]}"
     cursor = connection.cursor()
     try:
@@ -96,8 +96,9 @@ def legacy_table(monkeypatch):
             connection.commit()
         except Exception:  # noqa: BLE001 - teardown is advisory
             pass
+        # The cursor is this fixture's; the connection is the session's, and the next
+        # test on this thread expects to find it open.
         cursor.close()
-        connection.close()
 
 
 @pytest.fixture
@@ -187,7 +188,7 @@ def fresh_instance(monkeypatch):
     table = f"{SHAPE_SCHEMA}.SourceDocuments"
     monkeypatch.setenv("RAG_STORAGE__IRIS__TABLE_NAME", table)
 
-    connection = get_iris_connection()
+    connection = session_for().connection_for_adapter()
 
     def drop():
         cursor = connection.cursor()
@@ -202,8 +203,9 @@ def fresh_instance(monkeypatch):
     try:
         yield table
     finally:
+        # Only the table is this fixture's to remove; the connection belongs to the
+        # session, which closes it at exit.
         drop()
-        connection.close()
 
 
 def test_us3(fresh_instance):

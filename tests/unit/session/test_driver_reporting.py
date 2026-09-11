@@ -79,7 +79,9 @@ def test_the_dbapi_entry_point_hands_out_the_sessions_connection(monkeypatch):
     session = fake_session()
     monkeypatch.setattr("iris_vector_rag.session.session_for", lambda *a, **k: session)
 
-    connection = iris_dbapi_connector.get_iris_dbapi_connection()
+    # The entry point is deprecated as of 0.15 (US5); it still has to answer.
+    with pytest.warns(DeprecationWarning):
+        connection = iris_dbapi_connector.get_iris_dbapi_connection()
 
     assert connection is session.connection_for_adapter()
     assert session.driver.connects == 1

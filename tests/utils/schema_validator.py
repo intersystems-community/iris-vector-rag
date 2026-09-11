@@ -56,11 +56,9 @@ class SchemaValidator:
         mismatches: List[SchemaMismatch] = []
 
         try:
-            from iris_vector_rag.common.iris_connection_manager import (
-                get_iris_connection,
-            )
+            from iris_vector_rag.session import session_for
 
-            conn = get_iris_connection()
+            conn = session_for().connection_for_adapter()
             cursor = conn.cursor()
 
             # Get list of existing tables in RAG schema

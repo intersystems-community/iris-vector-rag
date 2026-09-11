@@ -94,3 +94,29 @@ def test_the_fake_driver_satisfies_the_protocol_without_importing_a_real_one():
     from iris_vector_rag.testing.fake_driver import FakeDriver
 
     assert isinstance(FakeDriver(), Driver)
+
+
+class TestADriverKnowsItsOwnClosedConnections:
+    """Whether a handle is closed is a local fact, so asking costs no round trip."""
+
+    def test_the_network_driver_reports_a_closed_connection(self):
+        class Handle:
+            def __init__(self, closed):
+                self._closed = closed
+
+            def isClosed(self):  # the name the IRIS DBAPI driver uses
+                return self._closed
+
+        driver = NetworkDriver()
+
+        assert driver.is_closed(Handle(True)) is True
+        assert driver.is_closed(Handle(False)) is False
+
+    def test_a_handle_that_cannot_say_is_treated_as_open(self):
+        """A driver that offers no answer must not be assumed dead."""
+
+        class Silent:
+            pass
+
+        assert NetworkDriver().is_closed(Silent()) is False
+        assert EmbeddedDriver().is_closed(Silent()) is False

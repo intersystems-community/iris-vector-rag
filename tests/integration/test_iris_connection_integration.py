@@ -24,6 +24,32 @@ import pytest
 from iris_vector_rag.common.exceptions import ValidationError
 from iris_vector_rag.common.iris_connection import get_iris_connection
 
+# `get_iris_connection` is the subject here, and it is deprecated in 0.15 (083): the
+# warning is the point of the deprecation, not a defect these tests should trip over.
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
+
+
+def _pool(**overrides):
+    """The pool the HTTP API builds, on this project's instance.
+
+    0.15 deleted the second pool that used to live in `common.iris_connection`; the
+    surviving one is a bounded view of one session (083, FR-017), so it takes the
+    identity rather than discovering it.
+    """
+    from iris_vector_rag.common.connection_pool import _session_pool
+    from iris_vector_rag.session import SessionIdentity
+
+    identity = SessionIdentity.from_env()
+    parameters = {
+        "host": identity.host,
+        "port": identity.port,
+        "namespace": identity.namespace,
+        "username": identity.username,
+        "password": identity.password,
+    }
+    parameters.update(overrides)
+    return _session_pool(**parameters)
+
 
 @pytest.mark.skipif(
     os.environ.get("SKIP_IRIS_CONTAINER", "0") == "1",
@@ -49,7 +75,11 @@ class TestIRISConnectionIntegration:
 
         # Execute test query
         cursor.execute("SELECT $ZVERSION")
-        version = cursor.fetchone()
+        row = cursor.fetchone()
+        # The driver's row dies with its cursor, so read it before closing. Callers who
+        # want a row that outlives the cursor use `session.execute()`, which returns
+        # plain tuples (083, FR-011).
+        version = tuple(row) if row is not None else None
         cursor.close()
 
         # Verify results
@@ -83,14 +113,14 @@ class TestIRISConnectionIntegration:
 
         # Second connection should be significantly faster (at least 10x)
         # Note: This is a loose check as timing can vary
-        print(f"First connection: {first_connection_time*1000:.2f}ms")
-        print(f"Cached connection: {second_connection_time*1000:.2f}ms")
-        print(f"Speedup: {first_connection_time/second_connection_time:.1f}x")
+        print(f"First connection: {first_connection_time * 1000:.2f}ms")
+        print(f"Cached connection: {second_connection_time * 1000:.2f}ms")
+        print(f"Speedup: {first_connection_time / second_connection_time:.1f}x")
 
         # Cache hit should be under 5ms
         assert (
             second_connection_time < 0.005
-        ), f"Cached connection too slow: {second_connection_time*1000:.2f}ms"
+        ), f"Cached connection too slow: {second_connection_time * 1000:.2f}ms"
 
     def test_parameter_validation_fails_fast(self):
         """
@@ -116,9 +146,9 @@ class TestIRISConnectionIntegration:
         # Validation should be instant (< 1ms)
         assert (
             validation_time < 0.001
-        ), f"Validation too slow: {validation_time*1000:.2f}ms"
+        ), f"Validation too slow: {validation_time * 1000:.2f}ms"
         assert exc_info.value.parameter_name == "port"
-        print(f"✅ Port validation failed fast: {validation_time*1000:.3f}ms")
+        print(f"✅ Port validation failed fast: {validation_time * 1000:.3f}ms")
 
         # Test 2: Invalid namespace
         start_time = time.perf_counter()
@@ -134,9 +164,9 @@ class TestIRISConnectionIntegration:
 
         assert (
             validation_time < 0.001
-        ), f"Validation too slow: {validation_time*1000:.2f}ms"
+        ), f"Validation too slow: {validation_time * 1000:.2f}ms"
         assert exc_info.value.parameter_name == "namespace"
-        print(f"✅ Namespace validation failed fast: {validation_time*1000:.3f}ms")
+        print(f"✅ Namespace validation failed fast: {validation_time * 1000:.3f}ms")
 
         # Test 3: Empty host
         start_time = time.perf_counter()
@@ -152,9 +182,9 @@ class TestIRISConnectionIntegration:
 
         assert (
             validation_time < 0.001
-        ), f"Validation too slow: {validation_time*1000:.2f}ms"
+        ), f"Validation too slow: {validation_time * 1000:.2f}ms"
         assert exc_info.value.parameter_name == "host"
-        print(f"✅ Host validation failed fast: {validation_time*1000:.3f}ms")
+        print(f"✅ Host validation failed fast: {validation_time * 1000:.3f}ms")
 
     def test_multiple_queries_with_single_connection(self):
         """
@@ -171,11 +201,12 @@ class TestIRISConnectionIntegration:
         for i in range(5):
             cursor = conn.cursor()
             cursor.execute(f"SELECT {i} AS value")
-            result = cursor.fetchone()
+            row = cursor.fetchone()
+            value = row[0] if row is not None else None
             cursor.close()
 
-            assert result is not None
-            assert result[0] == i, f"Expected {i}, got {result[0]}"
+            assert row is not None
+            assert value == i, f"Expected {i}, got {value}"
 
         print("✅ Successfully executed 5 queries on same connection")
 
@@ -200,11 +231,12 @@ class TestIRISConnectionIntegration:
             # Verify connection works
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
-            result = cursor.fetchone()
+            row = cursor.fetchone()
+            value = row[0] if row is not None else None
             cursor.close()
 
-            assert result is not None
-            assert result[0] == 1
+            assert row is not None
+            assert value == 1
             print("✅ Auto-port detection successful")
 
         finally:
@@ -220,6 +252,20 @@ class TestIRISConnectionIntegration:
 class TestIRISConnectionPoolIntegration:
     """Integration tests for connection pooling (User Story 3)."""
 
+    @pytest.fixture(autouse=True)
+    def only_this_pools_connections(self):
+        """Start from no open connection, and leave none behind.
+
+        Community Edition allows five at once, and the tests above this class leave a
+        session per identity holding one. A pool test that shares the licence with
+        them measures the licence, not the pool.
+        """
+        from iris_vector_rag.session.registry import reset_sessions_for_tests
+
+        reset_sessions_for_tests()
+        yield
+        reset_sessions_for_tests()
+
     def test_pool_with_concurrent_acquire_release(self):
         """
         T069: Pool with concurrent acquire/release.
@@ -232,19 +278,20 @@ class TestIRISConnectionPoolIntegration:
         import queue
         import threading
 
-        from iris_vector_rag.common.iris_connection import IRISConnectionPool
-
-        pool = IRISConnectionPool(max_connections=3)
+        pool = _pool(pool_size=3, max_overflow=0)
         results = queue.Queue()
 
         def worker(worker_id):
             try:
-                with pool.acquire(timeout=5.0) as conn:
+                with pool.get_connection() as conn:
                     cursor = conn.cursor()
                     cursor.execute(f"SELECT {worker_id} AS worker_id")
-                    result = cursor.fetchone()
+                    row = cursor.fetchone()
+                    value = row[
+                        0
+                    ]  # read before the cursor closes: the row dies with it
                     cursor.close()
-                    results.put(("success", worker_id, result[0]))
+                    results.put(("success", worker_id, value))
             except Exception as e:
                 results.put(("error", worker_id, str(e)))
 
@@ -266,6 +313,10 @@ class TestIRISConnectionPoolIntegration:
                 pytest.fail(f"Worker {worker_id} failed: {data}")
 
         assert success_count == 10, f"Expected 10 successes, got {success_count}"
+        assert pool.get_stats()["in_use_connections"] == 0
+        # A licence counts connections, not callers: the pool holds the total to the
+        # capacity it advertises even when ten fresh threads ask at once.
+        assert pool.session.open_connection_count <= 3
         print("✅ Concurrent acquire/release successful (10 workers, 3 connections)")
 
     def test_pool_connection_reuse_verification(self):
@@ -274,30 +325,28 @@ class TestIRISConnectionPoolIntegration:
 
         Validates:
         - Connections are actually reused (not recreated)
-        - Connection pool size doesn't exceed max_connections
-        - Released connections are added back to pool
+        - Open connections don't exceed the pool's capacity
+        - A released connection is the same one the next request gets
         """
-        from iris_vector_rag.common.iris_connection import IRISConnectionPool
-
-        pool = IRISConnectionPool(max_connections=2)
+        pool = _pool(pool_size=2, max_overflow=0)
 
         # First acquisition - creates new connection
-        with pool.acquire(timeout=5.0) as conn1:
+        with pool.get_connection() as conn1:
             conn1_id = id(conn1)
             cursor = conn1.cursor()
             cursor.execute("SELECT 1")
-            result = cursor.fetchone()
+            value = cursor.fetchone()[0]
             cursor.close()
-            assert result[0] == 1
+            assert value == 1
 
         # Second acquisition - should reuse released connection
-        with pool.acquire(timeout=5.0) as conn2:
+        with pool.get_connection() as conn2:
             conn2_id = id(conn2)
             cursor = conn2.cursor()
             cursor.execute("SELECT 2")
-            result = cursor.fetchone()
+            value = cursor.fetchone()[0]
             cursor.close()
-            assert result[0] == 2
+            assert value == 2
 
         # Verify connection was reused (same object)
         assert conn1_id == conn2_id, "Connection should be reused, not recreated"
@@ -305,10 +354,11 @@ class TestIRISConnectionPoolIntegration:
             f"✅ Connection reuse verified (conn1_id={conn1_id}, conn2_id={conn2_id})"
         )
 
-        # Verify pool size doesn't exceed max_connections
+        # Verify the licence never sees more than the pool advertises
+        stats = pool.get_stats()
         assert (
-            len(pool._all_connections) <= pool.max_connections
-        ), f"Pool size ({len(pool._all_connections)}) exceeds max ({pool.max_connections})"
+            stats["open_connections"] <= stats["capacity"]
+        ), f"open ({stats['open_connections']}) exceeds capacity ({stats['capacity']})"
 
     def test_pool_timeout_behavior(self):
         """
@@ -319,19 +369,16 @@ class TestIRISConnectionPoolIntegration:
         - Timeout parameter is respected
         - Connection becomes available after release
         """
-        import queue
         import time
 
-        from iris_vector_rag.common.iris_connection import IRISConnectionPool
-
-        pool = IRISConnectionPool(max_connections=1)
+        pool = _pool(pool_size=1, max_overflow=0, pool_timeout=1)
 
         # Acquire the only connection
-        with pool.acquire(timeout=5.0) as conn:
-            # Try to acquire second connection (should timeout)
+        with pool.get_connection():
+            # Try to acquire a second slot (should time out)
             start_time = time.perf_counter()
-            with pytest.raises(queue.Empty):
-                pool.acquire(timeout=1.0).__enter__()
+            with pytest.raises(TimeoutError):
+                pool.acquire()
             elapsed = time.perf_counter() - start_time
 
             # Verify timeout was respected (1s ± 0.5s tolerance)
@@ -339,12 +386,12 @@ class TestIRISConnectionPoolIntegration:
             print(f"✅ Timeout respected ({elapsed:.2f}s for 1.0s timeout)")
 
         # After release, connection should be available again
-        with pool.acquire(timeout=5.0) as conn:
+        with pool.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
-            result = cursor.fetchone()
+            value = cursor.fetchone()[0]
             cursor.close()
-            assert result[0] == 1
+            assert value == 1
             print("✅ Connection available after release")
 
 

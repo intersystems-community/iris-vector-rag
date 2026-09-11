@@ -287,7 +287,9 @@ class TestEditionDetection:
         assert result1 == result2, "Cached result must match first result"
 
         # Contract: Cached call is significantly faster
-        print(f"First call: {first_time*1000:.3f}ms, Cached: {cached_time*1000:.3f}ms")
+        print(
+            f"First call: {first_time * 1000:.3f}ms, Cached: {cached_time * 1000:.3f}ms"
+        )
         assert (
             cached_time < first_time or cached_time < 0.001
         ), "Cached call should be faster"
@@ -378,157 +380,106 @@ class TestEditionDetection:
 
 
 class TestConnectionPooling:
-    """Contract tests for optional connection pooling (User Story 3)."""
+    """Contract tests for the one pool left (User Story 3, revised by 083-iris-session).
 
-    def test_connection_pool_init_with_max_connections(self):
-        """
-        T055: IRISConnectionPool.__init__ with max_connections param.
+    There used to be two `IRISConnectionPool` classes -- one in `common/iris_connection.py`
+    with a free list of its own and edition-aware `max_connections`, one in
+    `common/connection_pool.py` for the HTTP API. 083 deleted the first and rebuilt the
+    second over the session, so the contract is now about bounding concurrent holders:
+    the connections themselves are the session's, one per thread, health-checked on a
+    cadence. What edition-aware sizing was protecting -- Community Edition's single
+    connection -- the session enforces by construction.
+    """
 
-        Contract:
-        - Class accepts max_connections parameter
-        - Default max_connections uses edition-aware sizing
-        - Can override max_connections explicitly
-        """
-        from iris_vector_rag.common.iris_connection import IRISConnectionPool
+    @pytest.fixture(autouse=True)
+    def fresh_sessions(self):
+        """The cadence belongs to whichever caller asked first, so start with none."""
+        from iris_vector_rag.session.registry import reset_sessions_for_tests
 
-        # Test with explicit max_connections
-        pool = IRISConnectionPool(max_connections=10)
-        assert hasattr(pool, "max_connections")
-        assert pool.max_connections == 10
+        reset_sessions_for_tests()
+        yield
+        reset_sessions_for_tests()
 
-        # Test with edition-aware default
-        pool_default = IRISConnectionPool()
-        assert hasattr(pool_default, "max_connections")
-        assert pool_default.max_connections >= 1  # Community (1) or Enterprise (20)
+    def _pool(self, **overrides):
+        from iris_vector_rag.common.connection_pool import _session_pool
 
-        print("✅ IRISConnectionPool initialization validated")
+        parameters = {
+            "host": "localhost",
+            "port": int(os.environ.get("IRIS_PORT", "1972")),
+            "namespace": "USER",
+            "username": "_SYSTEM",
+            "password": "SYS",
+        }
+        parameters.update(overrides)
+        return _session_pool(**parameters)
+
+    def test_the_pool_bounds_concurrent_holders(self):
+        """T055: capacity is `pool_size` plus `max_overflow`, and it is reported."""
+        pool = self._pool(pool_size=10, max_overflow=5)
+
+        assert pool.pool_size == 10
+        assert pool.max_overflow == 5
+        assert pool.get_stats()["capacity"] == 15
+
+        default = self._pool()
+        assert default.get_stats()["capacity"] >= 1
+
+        print("✅ IRISConnectionPool capacity validated")
 
     def test_pool_acquire_returns_connection(self):
-        """
-        T056: pool.acquire() returns connection.
+        """T056: `acquire()` hands out a connection and the pool is a context manager."""
+        pool = self._pool(pool_size=2)
 
-        Contract:
-        - acquire() method exists
-        - Returns connection object with cursor() method
-        - Connection is usable
-        - Works as context manager
-        """
-        from iris_vector_rag.common.iris_connection import IRISConnectionPool
-
-        pool = IRISConnectionPool(max_connections=2)
-
-        # Test acquire() method exists
-        assert hasattr(pool, "acquire")
         assert callable(pool.acquire)
-
-        # Test context manager protocol
         assert hasattr(pool, "__enter__")
         assert hasattr(pool, "__exit__")
 
         print("✅ IRISConnectionPool.acquire() contract validated")
 
-    def test_pool_release_returns_connection_to_pool(self):
-        """
-        T057: pool.release() returns connection to pool.
+    def test_pool_release_returns_the_slot(self):
+        """T057: `release()` frees the slot; the connection stays with its thread."""
+        pool = self._pool(pool_size=1)
 
-        Contract:
-        - release() method exists
-        - Connection becomes available after release
-        - Released connection can be reacquired
-        """
-        from iris_vector_rag.common.iris_connection import IRISConnectionPool
-
-        pool = IRISConnectionPool(max_connections=1)
-
-        # Test release() method exists
-        assert hasattr(pool, "release")
         assert callable(pool.release)
+        assert callable(pool.get_connection)
 
         print("✅ IRISConnectionPool.release() contract validated")
 
     def test_pool_acquire_raises_timeout_when_exhausted(self):
-        """
-        T058: pool.acquire() raises TimeoutError when exhausted.
+        """T058: `acquire()` raises `TimeoutError` once every slot is taken."""
+        pool = self._pool(pool_size=1, max_overflow=0, pool_timeout=1)
 
-        Contract:
-        - Acquiring from exhausted pool times out
-        - Timeout parameter is respected
-        - Timeout raises queue.Empty or TimeoutError
-        """
-        import queue
+        # Take the only slot without asking the session for anything.
+        assert pool._slots.acquire(timeout=1)
+        try:
+            with pytest.raises(TimeoutError) as caught:
+                pool.acquire()
+        finally:
+            pool._slots.release()
 
-        from iris_vector_rag.common.iris_connection import IRISConnectionPool
-
-        pool = IRISConnectionPool(max_connections=1)
-
-        # Test timeout behavior structure (implementation will be tested in integration)
-        # For now, just verify timeout parameter is accepted
-        assert hasattr(pool, "acquire")
-
-        # Verify queue.Empty exception is available for timeout handling
-        assert queue.Empty is not None
+        assert "Timeout acquiring connection" in str(caught.value)
 
         print("✅ IRISConnectionPool timeout contract validated")
 
-    def test_pool_edition_aware_sizing(self):
-        """
-        T059: pool edition-aware sizing (Community=1, Enterprise=20).
+    def test_pool_recycle_becomes_the_sessions_health_interval(self):
+        """T059: what the recycle timer approximated, the health deadline now is."""
+        pool = self._pool(pool_recycle=45)
 
-        Contract:
-        - Default max_connections respects edition
-        - Community Edition: defaults to 1
-        - Enterprise Edition: defaults to 20 (not 999 to avoid resource exhaustion)
-        """
-        from iris_vector_rag.common.iris_connection import (
-            IRISConnectionPool,
-            detect_iris_edition,
+        assert pool.pool_recycle == 45
+        assert pool.session.health_interval == 45.0
+
+        print("✅ Recycle-as-health-interval validated")
+
+    def test_the_pool_is_the_only_one_in_the_package(self):
+        """T060: one name, one class -- `common.iris_connection` has no pool of its own."""
+        import iris_vector_rag.common.iris_connection as conn_module
+        from iris_vector_rag.common import IRISConnectionPool
+        from iris_vector_rag.common.connection_pool import (
+            IRISConnectionPool as PoolFromItsModule,
         )
 
-        # Get detected edition
-        edition, max_connections = detect_iris_edition()
-
-        # Create pool with default sizing
-        pool = IRISConnectionPool()
-
-        # Validate edition-aware defaults
-        if edition == "community":
-            assert (
-                pool.max_connections == 1
-            ), "Community pool should default to 1 connection"
-        elif edition == "enterprise":
-            # Enterprise defaults to reasonable pool size (20), not max limit (999)
-            assert (
-                pool.max_connections == 20
-            ), "Enterprise pool should default to 20 connections"
-
-        print(
-            f"✅ Edition-aware sizing validated: {edition} → {pool.max_connections} connections"
-        )
-
-    @pytest.mark.requires_database
-    @pytest.mark.skipif(
-        os.environ.get("SKIP_IRIS_CONTAINER", "0") == "1",
-        reason="IRIS database required for pool context manager test",
-    )
-    def test_pool_context_manager_support(self):
-        """
-        T060 (bonus): pool.acquire() context manager support.
-
-        Contract:
-        - acquire() works as context manager
-        - Connection automatically released on exit
-        - Works with 'with' statement
-        """
-        from iris_vector_rag.common.iris_connection import IRISConnectionPool
-
-        try:
-            pool = IRISConnectionPool(max_connections=1)
-            conn_context = pool.acquire(timeout=5.0)
-        except (ConnectionError, Exception) as e:
-            pytest.skip(f"IRIS not reachable: {e}")
-
-        assert hasattr(conn_context, "__enter__")
-        assert hasattr(conn_context, "__exit__")
+        assert IRISConnectionPool is PoolFromItsModule
+        assert not hasattr(conn_module, "IRISConnectionPool")
 
 
 # ---------------------------------------------------------------------------

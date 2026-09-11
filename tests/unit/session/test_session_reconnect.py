@@ -61,3 +61,34 @@ def test_the_replaced_connection_is_closed():
     session.execute("SELECT 1")
 
     assert session.driver.closes == 1
+
+
+def test_a_connection_the_caller_closed_is_replaced_without_a_round_trip():
+    """The old entry points hand out the session's connection, and callers close it.
+
+    Ten years of code says `conn = get_iris_dbapi_connection(); ...; conn.close()`.
+    That connection is the session's now, so the close has to cost the caller nothing
+    more than a reconnect on the next statement -- and noticing costs no probe,
+    because a driver knows whether its own connection is closed (FR-009, US5).
+    """
+    session = fake_session(rows=[(1,)], health_interval=3600)
+
+    session.execute("SELECT 1")
+    session.connection_for_adapter().close()  # what an unmigrated caller does
+    pings_before = session.driver.pings
+
+    assert session.one("SELECT 1") == (1,)
+    assert session.driver.connects == 2
+    assert session.driver.pings == pings_before, "noticing a closed handle is free"
+    assert session.open_connection_count == 1
+
+
+def test_an_adapter_is_never_handed_a_closed_connection():
+    session = fake_session(rows=[(1,)], health_interval=3600)
+
+    first = session.connection_for_adapter()
+    first.close()
+    second = session.connection_for_adapter()
+
+    assert second is not first
+    assert second.closed is False

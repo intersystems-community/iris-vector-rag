@@ -7,15 +7,25 @@ import time. Prefer `session_for(...)` in new code.
 """
 
 import logging
+import warnings
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 
 def get_iris_dbapi_connection(config: Optional[Dict[str, Any]] = None) -> Any:
-    """
-    Unified entry point for IRIS DBAPI connections.
-    """
+    """Deprecated: the session's connection. Removed in 0.16."""
+    warnings.warn(
+        "get_iris_dbapi_connection() is deprecated and is removed in 0.16. Use "
+        "iris_vector_rag.session.session_for(...).connection_for_adapter().",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return _session_connection(config)
+
+
+def _session_connection(config: Optional[Dict[str, Any]] = None) -> Any:
+    """The session's connection for a plain connection-parameter mapping."""
     from iris_vector_rag.session import SessionIdentity, session_for
 
     identity = SessionIdentity.from_mapping(config) if config else None

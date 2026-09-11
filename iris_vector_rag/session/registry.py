@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 _sessions: Dict[Tuple[Any, ...], IRISSession] = {}
 _lock = threading.RLock()
+# Cadences already reported as ignored, so the pool -- which resolves its session on
+# every acquire and release -- says it once rather than twice per served request.
+_reported_cadences: set = set()
 
 
 def session_for(
@@ -38,6 +41,24 @@ def session_for(
     with _lock:
         existing = _sessions.get(resolved.key)
         if existing is not None:
+            if (
+                health_interval is not None
+                and health_interval != existing.health_interval
+                and (resolved.key, float(health_interval)) not in _reported_cadences
+            ):
+                # The first caller decided the cadence. Dropping the second one's
+                # request without saying so is how a pool's `pool_recycle` quietly
+                # stops meaning anything -- and repeating it per request is how the
+                # line that says so gets filtered out.
+                _reported_cadences.add((resolved.key, float(health_interval)))
+                logger.warning(
+                    "session for %s already probes every %.0fs; ignoring the "
+                    "requested %.0fs -- the cadence is the session's, not the "
+                    "caller's",
+                    resolved.label,
+                    existing.health_interval,
+                    health_interval,
+                )
             return existing
         session = IRISSession(
             identity=resolved,
@@ -60,6 +81,7 @@ def close_all_sessions() -> None:
     with _lock:
         sessions = list(_sessions.values())
         _sessions.clear()
+        _reported_cadences.clear()
     for session in sessions:
         try:
             session.close_all()

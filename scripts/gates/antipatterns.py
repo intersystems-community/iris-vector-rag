@@ -153,26 +153,42 @@ def inline_standard_ddl() -> list[Finding]:
     return out
 
 
+DRIVER_MODULE = "iris_vector_rag/session/drivers.py"
+_CONNECT_PATTERN = re.compile(
+    r"\.dbapi\.connect\(|\bcreateConnection\(|\biris\.connect\("
+)
+
+
+def driver_connects(path: str, source: str) -> list[Finding]:
+    """Every driver connect in `source`, unless `path` is the module that owns them."""
+    if path == DRIVER_MODULE:
+        return []
+    out = []
+    for n, line in enumerate(source.splitlines(), start=1):
+        if not _CONNECT_PATTERN.search(line):
+            continue
+        if "#" in line and line.index("#") < line.find("connect("):
+            continue
+        out.append(
+            Finding(
+                "unguarded-dbapi-connect",
+                f"{path}:{n}",
+                f"only {DRIVER_MODULE} may call a driver's connect; every other "
+                "caller goes through the session, which bounds the handshake, opens "
+                "the back-off window and recovers an expired password",
+            )
+        )
+    return out
+
+
 def unguarded_dbapi_connect() -> list[Finding]:
-    """Shipped: the native DBAPI handshake can block forever. get_iris_connection()
-    bounds it (IRIS_CONNECT_TIMEOUT) and applies backoff; a direct connect
-    elsewhere bypasses both and hangs CI (v0.14.0 release runs)."""
-    pat = re.compile(r"\.dbapi\.connect\(|\bcreateConnection\(|\biris\.connect\(")
-    allowed = {"iris_vector_rag/common/iris_connection.py"}
+    """Shipped: the native DBAPI handshake can block forever, and four modules called
+    it themselves, so which protections applied depended on which one a caller
+    reached (v0.14.0 release runs hung in CI). Since 083-iris-session the session's
+    driver module is the only place that connects."""
     out = []
     for p in files(PKG, ".py"):
-        if rel(p) in allowed:
-            continue
-        for n, line in grep(p, pat):
-            if "#" in line and line.index("#") < line.find("connect("):
-                continue
-            out.append(
-                Finding(
-                    "unguarded-dbapi-connect",
-                    f"{rel(p)}:{n}",
-                    "direct DBAPI connect bypasses get_iris_connection() timeout/backoff",
-                )
-            )
+        out.extend(driver_connects(rel(p), read(p)))
     return out
 
 
@@ -387,6 +403,7 @@ CHECKS: dict[str, Callable[[], list[Finding]]] = {
 # Checks that carry no baseline and must stay at zero: each fails open when
 # violated (a gate list that matches nothing, a test that cannot import).
 NO_BASELINE = {
+    "unguarded-dbapi-connect",
     "untracked-module-import",
     "positional-load-documents",
     "stale-deselect-entry",

@@ -51,6 +51,56 @@ def test_a_different_password_does_not_yield_a_second_session():
     assert first is second
 
 
+def test_the_first_callers_cadence_is_the_sessions_and_a_later_one_is_told(caplog):
+    """The second caller's `health_interval` cannot win, so it is not lost silently.
+
+    Two callers share one session, and the pool's `pool_recycle` arrives as a
+    `health_interval`. Whichever asked first decided; a later, different request
+    would otherwise be dropped with nothing said (FR-002).
+    """
+    import logging
+
+    first = session_for(identity=identity(), driver=FakeDriver(), health_interval=30.0)
+
+    with caplog.at_level(logging.WARNING, logger="iris_vector_rag.session.registry"):
+        second = session_for(
+            identity=identity(), driver=FakeDriver(), health_interval=45.0
+        )
+
+    assert second is first
+    assert first.health_interval == 30.0
+    assert "45" in caplog.text and "30" in caplog.text
+
+
+def test_the_ignored_cadence_is_reported_once_not_per_call(caplog):
+    """The pool asks on every request; a per-request warning is not a warning.
+
+    `IRISConnectionPool.session` resolves the session on each acquire and release, so
+    a caller whose `pool_recycle` lost the race would otherwise get two lines of log
+    per served request -- which is how a real warning gets filtered out (FR-002).
+    """
+    import logging
+
+    session_for(identity=identity(), driver=FakeDriver(), health_interval=30.0)
+
+    with caplog.at_level(logging.WARNING, logger="iris_vector_rag.session.registry"):
+        for _ in range(20):
+            session_for(identity=identity(), health_interval=45.0)
+
+    assert caplog.text.count("ignoring the requested") == 1
+
+
+def test_the_same_cadence_asked_twice_says_nothing(caplog):
+    import logging
+
+    session_for(identity=identity(), driver=FakeDriver(), health_interval=45.0)
+
+    with caplog.at_level(logging.WARNING, logger="iris_vector_rag.session.registry"):
+        session_for(identity=identity(), driver=FakeDriver(), health_interval=45.0)
+
+    assert caplog.text == ""
+
+
 def test_acquiring_a_session_opens_no_connection():
     driver = FakeDriver()
 

@@ -586,7 +586,7 @@ def database_with_clean_schema(request):
 
     Implements FR-001, FR-004 from Feature 028.
     """
-    from iris_vector_rag.common.iris_connection_manager import get_iris_connection
+    from iris_vector_rag.session import session_for
     from tests.fixtures.database_cleanup import DatabaseCleanupHandler
     from tests.fixtures.database_state import TestDatabaseState, TestStateRegistry
     from tests.fixtures.schema_reset import SchemaResetter
@@ -610,7 +610,7 @@ def database_with_clean_schema(request):
     registry.register_state(test_state)
 
     # Get database connection
-    conn = get_iris_connection()
+    conn = session_for().connection_for_adapter()
 
     # Register cleanup handler - ALWAYS runs
     def cleanup():

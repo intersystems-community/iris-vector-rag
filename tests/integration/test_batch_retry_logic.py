@@ -5,13 +5,15 @@ Tests AS-2 from spec.md: Batch failure recovery with exponential backoff.
 Tests FR-005: Retry with 2s, 4s, 8s delays, then split batch.
 """
 
-import pytest
 import time
 from unittest.mock import patch
+
+import pytest
+
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.services.entity_extraction import EntityExtractionService
-from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
 
 @pytest.mark.integration
@@ -23,7 +25,7 @@ class TestBatchRetryLogic:
     def service(self):
         """Initialize EntityExtractionService."""
         config_manager = ConfigurationManager()
-        connection_manager = IRISConnectionManager()
+        connection_manager = ConnectionManager(config_manager)
         return EntityExtractionService(config_manager, connection_manager)
 
     @pytest.fixture

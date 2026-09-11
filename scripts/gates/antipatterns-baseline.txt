@@ -1,14 +1,14 @@
 # antipatterns baseline: findings that existed when each detector was written.
 # A line here silences ONE known instance. Remove lines as instances are fixed;
 # the gate fails on stale entries so this list only shrinks. Format: <check>\t<path:line>
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:154
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:195
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:248
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:258
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:305
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:315
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:363
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:416
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:157
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:194
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:247
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:257
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:300
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:310
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:358
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:407
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:194
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:211
 catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:153
@@ -23,4 +23,3 @@ inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:347
 inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:360
 inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:385
 inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:397
-unguarded-dbapi-connect	iris_vector_rag/common/connection_pool.py:109

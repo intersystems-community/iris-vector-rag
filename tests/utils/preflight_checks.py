@@ -47,11 +47,9 @@ class PreflightChecker:
         start = time.time()
 
         try:
-            from iris_vector_rag.common.iris_connection_manager import (
-                get_iris_connection,
-            )
+            from iris_vector_rag.session import session_for
 
-            conn = get_iris_connection()
+            conn = session_for().connection_for_adapter()
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
             result = cursor.fetchone()
@@ -89,11 +87,9 @@ class PreflightChecker:
 
                     if reset_iris_password_if_needed(e):
                         # Retry connection after password reset
-                        from iris_vector_rag.common.iris_connection_manager import (
-                            get_iris_connection,
-                        )
+                        from iris_vector_rag.session import session_for
 
-                        conn = get_iris_connection()
+                        conn = session_for().connection_for_adapter()
                         cursor = conn.cursor()
                         cursor.execute("SELECT 1")
                         result = cursor.fetchone()
@@ -165,11 +161,9 @@ class PreflightChecker:
         start = time.time()
 
         try:
-            from iris_vector_rag.common.iris_connection_manager import (
-                get_iris_connection,
-            )
+            from iris_vector_rag.session import session_for
 
-            conn = get_iris_connection()
+            conn = session_for().connection_for_adapter()
             cursor = conn.cursor()
 
             # Query for RAG schema tables

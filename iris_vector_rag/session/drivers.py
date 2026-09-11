@@ -53,6 +53,9 @@ class Driver(Protocol):
     def ping(self, connection: Any) -> bool:
         """Is this connection still usable? False rather than raising."""
 
+    def is_closed(self, connection: Any) -> bool:
+        """Has this handle been closed? Answered locally, without a round trip."""
+
     def close(self, connection: Any) -> None:
         """Release a connection. Never raises."""
 
@@ -91,6 +94,23 @@ def _close(connection: Any) -> None:
         connection.close()
     except Exception:
         pass
+
+
+def _is_closed(connection: Any) -> bool:
+    """Ask the handle whether it is closed, which costs no round trip.
+
+    Measured on the IRIS DBAPI driver: ``isClosed()`` is a local flag read, so a
+    session can notice that a caller closed the connection it was handed without
+    paying for a probe. A handle that offers no answer is treated as open --
+    guessing "dead" would throw away a working connection.
+    """
+    ask = getattr(connection, "isClosed", None)
+    if ask is None:
+        return False
+    try:
+        return bool(ask())
+    except Exception:
+        return False
 
 
 class EmbeddedDriver:
@@ -143,6 +163,9 @@ class EmbeddedDriver:
 
     def ping(self, connection: Any) -> bool:
         return _ping(connection)
+
+    def is_closed(self, connection: Any) -> bool:
+        return _is_closed(connection)
 
     def close(self, connection: Any) -> None:
         _close(connection)
@@ -251,6 +274,9 @@ class NetworkDriver:
 
     def ping(self, connection: Any) -> bool:
         return _ping(connection)
+
+    def is_closed(self, connection: Any) -> bool:
+        return _is_closed(connection)
 
     def close(self, connection: Any) -> None:
         _close(connection)

@@ -10,14 +10,17 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Import the DBAPI connector for self-managed connections
+# The session's connection, for the checks below that are given no connection of
+# their own. This is the non-warning twin of `get_iris_dbapi_connection`, which is
+# deprecated in 0.15: a warning raised from inside the library names nothing its
+# caller can change.
 try:
-    from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+    from iris_vector_rag.common.iris_dbapi_connector import _session_connection
 except ImportError:
     logger.warning(
-        "Could not import get_iris_dbapi_connection. Self-managed connections will not be available."
+        "Could not import the session connector. Self-managed connections will not be available."
     )
-    get_iris_dbapi_connection = None
+    _session_connection = None
 
 
 class IRISSQLUtils:
@@ -121,7 +124,7 @@ class IRISSQLUtils:
     def check_table_exists(connection: Any, table_name: str) -> bool:
         """Check if a table exists using IRIS-compatible syntax."""
         # Use self-managed connection to avoid interference with other operations
-        if get_iris_dbapi_connection is None:
+        if _session_connection is None:
             logger.warning(
                 "Self-managed connections not available, falling back to provided connection"
             )
@@ -132,7 +135,7 @@ class IRISSQLUtils:
         temp_connection = None
         cursor = None
         try:
-            temp_connection = get_iris_dbapi_connection()
+            temp_connection = _session_connection()
             if not temp_connection:
                 logger.error(
                     "Failed to obtain temporary connection for table existence check"
@@ -164,15 +167,11 @@ class IRISSQLUtils:
             logger.error(f"Failed to check table existence for {table_name}: {e}")
             return False
         finally:
-            # Ensure cleanup of temporary connection and cursor
+            # The cursor is ours to close; the connection is the session's, and it
+            # stays open for the rest of this thread's work.
             if cursor:
                 try:
                     cursor.close()
-                except Exception:
-                    pass
-            if temp_connection:
-                try:
-                    temp_connection.close()
                 except Exception:
                     pass
 
@@ -212,7 +211,7 @@ class IRISSQLUtils:
     ) -> bool:
         """Check if an index exists using IRIS-compatible syntax."""
         # Use self-managed connection to avoid interference with other operations
-        if get_iris_dbapi_connection is None:
+        if _session_connection is None:
             logger.warning(
                 "Self-managed connections not available, falling back to provided connection"
             )
@@ -223,7 +222,7 @@ class IRISSQLUtils:
         temp_connection = None
         cursor = None
         try:
-            temp_connection = get_iris_dbapi_connection()
+            temp_connection = _session_connection()
             if not temp_connection:
                 logger.error(
                     "Failed to obtain temporary connection for index existence check"
@@ -269,15 +268,11 @@ class IRISSQLUtils:
             # Fallback: assume index doesn't exist
             return False
         finally:
-            # Ensure cleanup of temporary connection and cursor
+            # The cursor is ours to close; the connection is the session's, and it
+            # stays open for the rest of this thread's work.
             if cursor:
                 try:
                     cursor.close()
-                except Exception:
-                    pass
-            if temp_connection:
-                try:
-                    temp_connection.close()
                 except Exception:
                     pass
 
@@ -331,7 +326,7 @@ class IRISSQLUtils:
     def get_table_columns(connection: Any, table_name: str) -> List[Dict[str, Any]]:
         """Get column information for a table using IRIS-compatible syntax."""
         # Use self-managed connection to avoid interference with other operations
-        if get_iris_dbapi_connection is None:
+        if _session_connection is None:
             logger.warning(
                 "Self-managed connections not available, falling back to provided connection"
             )
@@ -342,7 +337,7 @@ class IRISSQLUtils:
         temp_connection = None
         cursor = None
         try:
-            temp_connection = get_iris_dbapi_connection()
+            temp_connection = _session_connection()
             if not temp_connection:
                 logger.error(
                     "Failed to obtain temporary connection for table columns check"
@@ -384,15 +379,11 @@ class IRISSQLUtils:
             logger.error(f"Failed to get columns for {table_name}: {e}")
             return []
         finally:
-            # Ensure cleanup of temporary connection and cursor
+            # The cursor is ours to close; the connection is the session's, and it
+            # stays open for the rest of this thread's work.
             if cursor:
                 try:
                     cursor.close()
-                except Exception:
-                    pass
-            if temp_connection:
-                try:
-                    temp_connection.close()
                 except Exception:
                     pass
 
@@ -573,8 +564,8 @@ def test_iris_sql_utils():
         print(f"✓ Index existence check: {index_exists}")
 
         # For index creation, we still need a connection since it performs DDL operations
-        if get_iris_dbapi_connection:
-            connection = get_iris_dbapi_connection()
+        if _session_connection:
+            connection = _session_connection()
             if connection:
                 # Test vector index creation (this should work with proper syntax)
                 print("Testing vector index creation...")

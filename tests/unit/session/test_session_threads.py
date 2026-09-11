@@ -28,6 +28,73 @@ def test_each_thread_gets_its_own_connection():
     assert session.driver.connects == 4
 
 
+def test_the_session_says_how_many_connections_it_has_open():
+    """A caller bounded by a licence has to be able to ask (FR-017)."""
+    session = fake_session(rows=[(1,)], health_interval=3600)
+    assert session.open_connection_count == 0
+
+    session.execute("SELECT 1")
+    assert session.open_connection_count == 1
+
+    session.close_all()
+    assert session.open_connection_count == 0
+
+
+def test_a_thread_that_exits_takes_its_connection_with_it():
+    """A licence counts connections, and a finished thread cannot use one (FR-017).
+
+    A server thread that serves a request and exits without closing anything used to
+    leave its connection open for the life of the process: five such threads exhaust
+    a Community Edition licence while nothing at all is running.
+    """
+    import gc
+
+    session = fake_session(rows=[(1,)], health_interval=3600)
+
+    def run():
+        session.execute("SELECT 1")
+
+    for _ in range(8):
+        thread = threading.Thread(target=run)
+        thread.start()
+        thread.join()
+
+    gc.collect()
+
+    assert session.open_connection_count == 0
+    assert session.driver.connects == 8
+    assert all(connection.closed for connection in session.driver.connections)
+
+
+def test_a_live_threads_connection_is_not_reaped():
+    """Only the connections of threads that have finished go back."""
+    import gc
+
+    session = fake_session(rows=[(1,)], health_interval=3600)
+    running = threading.Event()
+    release = threading.Event()
+
+    def run():
+        session.execute("SELECT 1")
+        running.set()
+        release.wait(timeout=10)
+
+    thread = threading.Thread(target=run)
+    thread.start()
+    running.wait(timeout=10)
+
+    session.execute("SELECT 1")  # this thread's own
+    gc.collect()
+
+    assert session.open_connection_count == 2
+
+    release.set()
+    thread.join()
+    gc.collect()
+
+    assert session.open_connection_count == 1
+
+
 def test_no_thread_observes_a_half_built_session():
     session = fake_session(rows=[(1,)], health_interval=3600)
     errors = []

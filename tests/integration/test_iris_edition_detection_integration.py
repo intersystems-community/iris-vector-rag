@@ -25,6 +25,9 @@ from iris_vector_rag.common.iris_connection import (
     get_iris_connection,
 )
 
+# `get_iris_connection` is deprecated in 0.15 (083) and still under test here.
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
+
 
 @pytest.mark.skipif(
     os.environ.get("SKIP_IRIS_CONTAINER", "0") == "1",
@@ -148,9 +151,11 @@ class TestEditionDetectionIntegration:
             conn = get_iris_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
-            result = cursor.fetchone()
+            # A DataRow dies with its cursor, so read the value before closing.
+            # `session.execute()` returns plain tuples for exactly this reason.
+            value = cursor.fetchone()[0]
             cursor.close()
-            assert result[0] == 1
+            assert value == 1
 
             print("✅ Community override works with live connection")
 

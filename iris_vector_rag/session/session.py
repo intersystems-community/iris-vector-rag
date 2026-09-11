@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
+import weakref
 from time import monotonic
 from typing import Any, Callable, List, Optional, Sequence
 
@@ -39,6 +40,18 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
+class _ThreadMarker:
+    """Nothing but a lifetime: it lives exactly as long as its thread's state.
+
+    A request thread that finishes without closing anything cannot use its connection
+    again, but a licence still counts it. Storing this object in the thread's own
+    state means Python drops it when the thread ends, which is the signal to close
+    what that thread was holding.
+    """
+
+    __slots__ = ("__weakref__",)
+
+
 class _BorrowedDriver:
     """Stands in for a driver when the caller brought their own connection."""
 
@@ -55,6 +68,11 @@ class _BorrowedDriver:
 
     def ping(self, connection: Any) -> bool:
         return True
+
+    def is_closed(self, connection: Any) -> bool:
+        # The session cannot replace what it did not open, so it must not decide the
+        # caller's connection is finished.
+        return False
 
     def close(self, connection: Any) -> None:
         pass
@@ -149,6 +167,19 @@ class IRISSession:
     @property
     def in_backoff(self) -> bool:
         return monotonic() < self._backoff_until
+
+    @property
+    def open_connection_count(self) -> int:
+        """How many connections this session holds, across every thread.
+
+        A licence counts connections, not callers: IRIS Community Edition refuses
+        the sixth. The HTTP API's pool reads this to decide whether a finished
+        request's connection may stay with its thread (FR-017).
+        """
+        if not self._owns:
+            return 1 if self._borrowed_connection is not None else 0
+        with self._connect_lock:
+            return len(self._tracked)
 
     @property
     def is_connected(self) -> bool:
@@ -266,6 +297,17 @@ class IRISSession:
             connection = None
             state.connection = None
 
+        if connection is not None and self._is_closed(connection):
+            # Ten years of callers end with `conn.close()`, and the connection they
+            # were handed is the session's. Noticing that costs nothing, so the
+            # session replaces it rather than letting the next statement fail.
+            logger.debug(
+                "the connection for %s was closed by its caller; opening another",
+                self.identity.label,
+            )
+            self._discard(close=False)
+            connection = None
+
         if connection is None:
             return self._open()
 
@@ -279,6 +321,16 @@ class IRISSession:
                 self._discard(close=True)
                 return self._open()
         return connection
+
+    def _is_closed(self, connection: Any) -> bool:
+        """Has this handle been closed under us? Only drivers that can say are asked."""
+        ask = getattr(self.driver, "is_closed", None)
+        if ask is None:
+            return False
+        try:
+            return bool(ask(connection))
+        except Exception:
+            return False
 
     def _open(self) -> Any:
         now = monotonic()
@@ -342,12 +394,33 @@ class IRISSession:
         state.healthy_until = monotonic() + self.health_interval
         with self._connect_lock:
             self._tracked.append(connection)
+        marker = _ThreadMarker()
+        state.marker = marker
+        state.reaper = weakref.finalize(marker, self._reap, connection)
+
+    def _reap(self, connection: Any) -> None:
+        """Close a connection whose thread has ended. Never raises: nothing is waiting."""
+        with self._connect_lock:
+            if connection not in self._tracked:
+                return  # already closed by close(), close_all() or a replacement
+            self._tracked.remove(connection)
+        try:
+            self.driver.close(connection)
+        except Exception as exc:  # pragma: no cover - teardown of a dead thread
+            logger.debug("closing a finished thread's connection failed: %s", exc)
 
     def _discard(self, close: bool) -> None:
         state = self._local
         connection = getattr(state, "connection", None)
+        reaper = getattr(state, "reaper", None)
+        if reaper is not None:
+            # Before the marker goes: dropping it would otherwise run the reaper, and
+            # this thread is closing the connection itself.
+            reaper.detach()
         state.connection = None
         state.healthy_until = 0.0
+        state.marker = None
+        state.reaper = None
         if connection is None:
             return
         with self._connect_lock:

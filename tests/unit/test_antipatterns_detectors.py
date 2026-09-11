@@ -66,6 +66,67 @@ def gate():
     return module
 
 
+DRIVER_CONNECT = """
+def _connect(host, port):
+    import iris
+
+    return iris.dbapi.connect(hostname=host, port=port)
+"""
+
+DRIVERS_FILE = "iris_vector_rag/session/drivers.py"
+
+
+def test_a_driver_connect_outside_the_driver_module_is_reported(gate):
+    """083 US5: one module opens connections, and the gate is what keeps it one.
+
+    A connect anywhere else skips the socket precheck, the bounded handshake, the
+    back-off window and the expired-password recovery -- the four things the v0.14.0
+    CI hangs were missing.
+    """
+    findings = gate.driver_connects(PACKAGE_FILE, DRIVER_CONNECT)
+
+    assert len(findings) == 1, findings
+    (finding,) = findings
+    assert finding.check == "unguarded-dbapi-connect"
+    assert finding.location == f"{PACKAGE_FILE}:5"
+    assert "session" in finding.message
+
+
+def test_the_driver_module_is_where_connects_belong(gate):
+    assert gate.driver_connects(DRIVERS_FILE, DRIVER_CONNECT) == []
+
+
+def test_the_old_connection_module_is_no_longer_exempt(gate):
+    """`common/iris_connection.py` used to be the exemption; since 083 it delegates."""
+    findings = gate.driver_connects(
+        "iris_vector_rag/common/iris_connection.py", DRIVER_CONNECT
+    )
+
+    assert [f.location for f in findings] == [
+        "iris_vector_rag/common/iris_connection.py:5"
+    ]
+
+
+def test_a_comment_about_connecting_is_not_connecting(gate):
+    assert (
+        gate.driver_connects(PACKAGE_FILE, "# never call iris.dbapi.connect(...)") == []
+    )
+
+
+def test_the_package_has_exactly_one_module_that_connects(gate):
+    """The registered check, against the real tree, holds at zero findings."""
+    assert "unguarded-dbapi-connect" in gate.CHECKS
+    assert "unguarded-dbapi-connect" in gate.NO_BASELINE
+
+    findings = gate.CHECKS["unguarded-dbapi-connect"]()
+
+    assert findings == [], [f.location for f in findings]
+    # And the exempt module really is the one that connects, so the check is not
+    # passing because the pattern stopped matching anything.
+    assert gate.driver_connects(DRIVERS_FILE, gate.read(ROOT / DRIVERS_FILE)) == []
+    assert "dbapi.connect(" in gate.read(ROOT / DRIVERS_FILE)
+
+
 def test_catalog_read_in_a_package_file_is_reported(gate):
     """A column query anywhere but the catalog module is a finding, with its line."""
     findings = gate.catalog_reads(PACKAGE_FILE, COLUMN_QUERY)

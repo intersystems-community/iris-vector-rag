@@ -6,21 +6,21 @@ with automatic validation, checksum verification, and embedding generation.
 """
 
 import hashlib
-import time
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 import json
 import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from .models import (
-    FixtureMetadata,
-    FixtureManifest,
     FixtureLoadResult,
+    FixtureManifest,
+    FixtureMetadata,
     FixtureSourceType,
     MigrationResult,
 )
-from dataclasses import dataclass
-from datetime import datetime
 
 # ==============================================================================
 # FIXTURE STATE TRACKING
@@ -563,11 +563,9 @@ class FixtureManager:
         # Skip cleanup if no connection available (contract tests)
         if self._connection is None:
             try:
-                from iris_vector_rag.common.iris_dbapi_connector import (
-                    get_iris_dbapi_connection,
-                )
+                from iris_vector_rag.session import session_for
 
-                conn = get_iris_dbapi_connection()
+                conn = session_for().connection_for_adapter()
             except Exception:
                 # No connection available - skip cleanup (contract tests)
                 return 0
@@ -782,11 +780,9 @@ class FixtureManager:
             return self._connection
 
         # Import connection helper
-        from iris_vector_rag.common.iris_dbapi_connector import (
-            get_iris_dbapi_connection,
-        )
+        from iris_vector_rag.session import session_for
 
-        return get_iris_dbapi_connection()
+        return session_for().connection_for_adapter()
 
     def _track_fixture_state(
         self,

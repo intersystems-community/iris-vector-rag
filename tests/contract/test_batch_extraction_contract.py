@@ -6,7 +6,8 @@ Tests MUST fail initially, then pass after implementation (TDD).
 """
 
 import pytest
-from iris_vector_rag.core.models import Document, BatchExtractionResult
+
+from iris_vector_rag.core.models import BatchExtractionResult, Document
 
 
 class TestBatchExtractionContract:
@@ -22,8 +23,9 @@ class TestBatchExtractionContract:
 
     def test_extract_batch_signature(self):
         """Validate extract_batch() has correct signature."""
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
         import inspect
+
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         sig = inspect.signature(EntityExtractionService.extract_batch)
         params = sig.parameters
@@ -42,13 +44,13 @@ class TestBatchExtractionContract:
 
     def test_extract_batch_returns_batch_result(self):
         """Validate extract_batch() returns BatchExtractionResult type."""
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
         from iris_vector_rag.config.manager import ConfigurationManager
-        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         # Initialize service (will need real config in implementation)
         config_manager = ConfigurationManager()
-        connection_manager = IRISConnectionManager()
+        connection_manager = ConnectionManager(config_manager)
         service = EntityExtractionService(config_manager, connection_manager)
 
         # Create test document
@@ -70,12 +72,12 @@ class TestBatchExtractionContract:
 
     def test_extract_batch_empty_documents_raises_error(self):
         """Validate extract_batch() raises ValueError on empty documents list."""
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
         from iris_vector_rag.config.manager import ConfigurationManager
-        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         config_manager = ConfigurationManager()
-        connection_manager = IRISConnectionManager()
+        connection_manager = ConnectionManager(config_manager)
         service = EntityExtractionService(config_manager, connection_manager)
 
         # Empty documents list should raise ValueError
@@ -84,12 +86,12 @@ class TestBatchExtractionContract:
 
     def test_extract_batch_respects_token_budget(self):
         """Validate extract_batch() respects token_budget parameter."""
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
         from iris_vector_rag.config.manager import ConfigurationManager
-        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         config_manager = ConfigurationManager()
-        connection_manager = IRISConnectionManager()
+        connection_manager = ConnectionManager(config_manager)
         service = EntityExtractionService(config_manager, connection_manager)
 
         # Create test documents
@@ -106,8 +108,9 @@ class TestBatchExtractionContract:
 
     def test_batch_extraction_result_has_required_fields(self):
         """Validate BatchExtractionResult has all required fields from data model."""
-        from iris_vector_rag.core.models import BatchExtractionResult
         import inspect
+
+        from iris_vector_rag.core.models import BatchExtractionResult
 
         # Get BatchExtractionResult attributes
         sig = inspect.signature(BatchExtractionResult.__init__)

@@ -43,10 +43,29 @@ def test_no_import_iris_dbapi_directly():
 # ---------------------------------------------------------------------------
 
 
-class TestEmbeddedModeSupport:
-    """T001: get_iris_connection() uses embedded path when IRISINSTALLDIR is set."""
+@pytest.fixture
+def fresh_sessions():
+    """No session outlives a test that substitutes the `iris` module.
 
-    def test_embedded_kernel_mode_skips_tcp(self):
+    Since 083 the embedded decision belongs to the session's `EmbeddedDriver`, and
+    sessions are cached per identity, so a leftover one would answer with the driver
+    the previous test chose.
+    """
+    from iris_vector_rag.session import registry
+
+    registry.reset_sessions_for_tests()
+    yield
+    registry.reset_sessions_for_tests()
+
+
+class TestEmbeddedModeSupport:
+    """T001: the embedded path is taken when the runtime says so, or IRISINSTALLDIR is set.
+
+    The decision moved into `session/drivers.py` (083-iris-session, FR-006); these
+    tests still enter through the connection function callers use.
+    """
+
+    def test_embedded_kernel_mode_skips_tcp(self, fresh_sessions):
         """When iris.runtime reports embedded-kernel, use iris.dbapi.connect(namespace=...)."""
         import iris_vector_rag.common.iris_connection as conn_module
 
@@ -63,14 +82,13 @@ class TestEmbeddedModeSupport:
         mock_iris.dbapi.connect.return_value = mock_conn
 
         with patch.dict(sys.modules, {"iris": mock_iris}):
-            with patch.object(conn_module, "_connection_cache", {}):
-                result = conn_module.get_iris_connection(
-                    host="localhost",
-                    port=1972,
-                    namespace="USER",
-                    username="_SYSTEM",
-                    password="SYS",
-                )
+            result = conn_module._session_connection(
+                host="localhost",
+                port=1972,
+                namespace="USER",
+                username="_SYSTEM",
+                password="SYS",
+            )
 
         mock_iris.dbapi.connect.assert_called_once()
         call_kwargs = mock_iris.dbapi.connect.call_args
@@ -79,7 +97,9 @@ class TestEmbeddedModeSupport:
         ), "embedded-kernel must call iris.dbapi.connect with namespace"
         assert result is mock_conn
 
-    def test_irisinstalldir_triggers_embedded_local(self, tmp_path, monkeypatch):
+    def test_irisinstalldir_triggers_embedded_local(
+        self, tmp_path, monkeypatch, fresh_sessions
+    ):
         """When IRISINSTALLDIR is set and runtime is unavailable, configure embedded-local."""
         import iris_vector_rag.common.iris_connection as conn_module
 
@@ -88,31 +108,35 @@ class TestEmbeddedModeSupport:
         mock_cursor.fetchone.return_value = (1,)
         mock_conn.cursor.return_value = mock_cursor
 
-        mock_runtime_ctx_unavailable = MagicMock()
-        mock_runtime_ctx_unavailable.state = "unavailable"
+        # The runtime reports "unavailable" until it is configured, and the session
+        # asks more than once (once to pick the driver, once to connect), so the
+        # state is a fact about the runtime rather than a fixed sequence of answers.
+        runtime_state = {"value": "unavailable"}
 
-        mock_runtime_ctx_embedded = MagicMock()
-        mock_runtime_ctx_embedded.state = "embedded-local"
+        def runtime_get():
+            context = MagicMock()
+            context.state = runtime_state["value"]
+            return context
+
+        def runtime_configure(mode, install_dir):
+            runtime_state["value"] = "embedded-local"
+            return runtime_get()
 
         mock_iris = MagicMock()
-        mock_iris.runtime.get.side_effect = [
-            mock_runtime_ctx_unavailable,  # first check
-            mock_runtime_ctx_embedded,  # after configure()
-        ]
-        mock_iris.runtime.configure.return_value = mock_runtime_ctx_embedded
+        mock_iris.runtime.get.side_effect = runtime_get
+        mock_iris.runtime.configure.side_effect = runtime_configure
         mock_iris.dbapi.connect.return_value = mock_conn
 
         monkeypatch.setenv("IRISINSTALLDIR", str(tmp_path))
 
         with patch.dict(sys.modules, {"iris": mock_iris}):
-            with patch.object(conn_module, "_connection_cache", {}):
-                result = conn_module.get_iris_connection(
-                    host="localhost",
-                    port=1972,
-                    namespace="USER",
-                    username="_SYSTEM",
-                    password="SYS",
-                )
+            result = conn_module._session_connection(
+                host="localhost",
+                port=1972,
+                namespace="USER",
+                username="_SYSTEM",
+                password="SYS",
+            )
 
         mock_iris.runtime.configure.assert_called_once_with(
             mode="embedded", install_dir=str(tmp_path)
@@ -148,24 +172,23 @@ class TestConnectionPoolLazyImport:
 
 
 # ---------------------------------------------------------------------------
-# T004 — colbert _ensure_native_conn must route through get_iris_connection
+# T004 — colbert _ensure_native_conn must route through the session
 # ---------------------------------------------------------------------------
 
 
 class TestColbertEnsureNativeConn:
-    """T004: colbert _ensure_native_conn() must call get_iris_connection(), not intersystems_iris."""
+    """T004: colbert _ensure_native_conn() must reach the session, not intersystems_iris."""
 
-    def test_plaid_ensure_native_conn_calls_get_iris_connection(self):
-        """plaid._ensure_native_conn calls get_iris_connection when conn is not native."""
+    def test_plaid_ensure_native_conn_reaches_the_session(self):
+        """plaid._ensure_native_conn asks the session when conn is not native."""
         from iris_vector_rag.pipelines.colbert_iris import plaid
 
         mock_result_conn = MagicMock()
         fake_conn = MagicMock(spec=[])  # no IRISConnection attrs
 
-        # The function does `from iris_vector_rag.common.iris_connection import get_iris_connection`
-        # at call time, so we patch the source module's name.
+        # The function imports the name at call time, so patch the source module's.
         with patch(
-            "iris_vector_rag.common.iris_connection.get_iris_connection",
+            "iris_vector_rag.common.iris_connection._session_connection",
             return_value=mock_result_conn,
         ) as mock_get:
             result = plaid._ensure_native_conn(fake_conn)
@@ -173,15 +196,15 @@ class TestColbertEnsureNativeConn:
         mock_get.assert_called_once()
         assert result is mock_result_conn
 
-    def test_vecindex_ensure_native_conn_calls_get_iris_connection(self):
-        """vecindex_phase2._ensure_native_conn calls get_iris_connection when conn is not native."""
+    def test_vecindex_ensure_native_conn_reaches_the_session(self):
+        """vecindex_phase2._ensure_native_conn asks the session when conn is not native."""
         from iris_vector_rag.pipelines.colbert_iris import vecindex_phase2
 
         mock_result_conn = MagicMock()
         fake_conn = MagicMock(spec=[])
 
         with patch(
-            "iris_vector_rag.common.iris_connection.get_iris_connection",
+            "iris_vector_rag.common.iris_connection._session_connection",
             return_value=mock_result_conn,
         ) as mock_get:
             result = vecindex_phase2._ensure_native_conn(fake_conn)
