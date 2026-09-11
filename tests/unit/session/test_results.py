@@ -58,3 +58,23 @@ def test_rows_hold_plain_tuples_even_when_built_from_other_sequences():
     assert rows.columns == ("a", "b")
     assert rows.rows == ((1, 2),)
     assert isinstance(rows[0], tuple)
+
+
+def test_rows_are_only_equal_to_other_rows():
+    rows = Rows(columns=("a",), rows=((1,),))
+
+    assert rows == Rows(columns=("a",), rows=((1,),))
+    assert rows != Rows(columns=("b",), rows=((1,),))
+    # Not equal to the bare tuples it holds: the columns are part of the answer.
+    assert rows != ((1,),)
+
+
+def test_the_repr_says_how_many_rows_rather_than_printing_them():
+    rows = Rows(columns=("a",), rows=tuple((n,) for n in range(1000)))
+
+    assert repr(rows) == "Rows(columns=('a',), rows=1000)"
+
+
+def test_empty_rows_are_falsey_and_a_row_is_truthy():
+    assert not Rows(columns=("a",), rows=())
+    assert Rows(columns=("a",), rows=((1,),))

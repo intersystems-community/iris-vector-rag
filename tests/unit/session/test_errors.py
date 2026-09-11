@@ -105,3 +105,25 @@ def test_the_failure_modes_are_distinct_types():
     for error_type in ERRORS:
         others = [o for o in ERRORS if o is not error_type]
         assert not any(issubclass(error_type, other) for other in others)
+
+
+def test_an_os_error_is_a_transport_failure_whatever_it_says():
+    """The transport failing is the transport failing; the text is the driver's."""
+    from iris_vector_rag.session.errors import looks_like_lost_connection
+
+    assert looks_like_lost_connection(OSError("errno 54")) is True
+    assert looks_like_lost_connection(BrokenPipeError()) is True
+    assert looks_like_lost_connection(EOFError()) is True
+
+
+def test_a_session_error_is_never_retried_on_a_fresh_connection():
+    """The session already classified it; a reconnect would only cost a reconnect."""
+    from iris_vector_rag.session.errors import (
+        InBackoff,
+        IRISUnreachable,
+        looks_like_lost_connection,
+    )
+    from iris_vector_rag.testing.fake_driver import fake_identity
+
+    assert looks_like_lost_connection(IRISUnreachable(fake_identity(), "no")) is False
+    assert looks_like_lost_connection(InBackoff(fake_identity(), "later")) is False

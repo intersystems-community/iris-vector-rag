@@ -112,3 +112,26 @@ def test_from_config_falls_back_to_the_environment_for_what_it_omits(monkeypatch
 
     assert identity.host == "confighost"
     assert identity.namespace == "FROMENV"
+
+
+def test_the_drivers_own_spelling_of_host_is_accepted(monkeypatch):
+    """Callers pass what the driver takes, and `hostname` is what the driver takes."""
+    identity = SessionIdentity.from_mapping({"hostname": "elsewhere", "port": 51972})
+
+    assert identity.host == "elsewhere"
+
+
+def test_a_port_given_as_text_becomes_a_port(monkeypatch):
+    identity = SessionIdentity.from_mapping({"host": "h", "port": "51972"})
+
+    assert identity.port == 51972
+    assert identity.key == ("h", 51972, identity.namespace, identity.username)
+
+
+def test_a_port_that_is_not_a_number_is_refused_by_name(monkeypatch):
+    # Silently substituting a default would connect to an instance nobody asked for,
+    # so the value that cannot be a port is named instead.
+    with pytest.raises(ValidationError) as caught:
+        SessionIdentity.from_mapping({"host": "h", "port": "not-a-port"})
+
+    assert "not-a-port" in str(caught.value)

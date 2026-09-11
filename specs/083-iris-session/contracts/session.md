@@ -48,7 +48,9 @@ session, never replaced (FR-010, US1 scenario 3). `identity` defaults to a
 | `execute_many(sql, seq_of_params)` | `int` | affected rows; one cursor, released either way |
 | `one(sql, params=None)` | `tuple \| None` | `None` for no rows (US3 scenario 3) |
 | `connection_for_adapter()` | driver connection | the single documented accessor (FR-013) |
-| `close()` | `None` | closes this thread's connection if the session owns it; idempotent |
+| `close()` | `None` | releases this thread's connection if the session owns it; idempotent |
+| `close_all()` | `None` | closes every connection the session opened, in every thread |
+| `open_connection_count` | `int` | how many connections the session holds right now, across threads |
 | `__enter__` / `__exit__` | | `close()` on exit |
 
 `execute` contract:
@@ -60,6 +62,29 @@ session, never replaced (FR-010, US1 scenario 3). `identity` defaults to a
 4. No health probe is issued if the thread's health deadline has not passed (FR-008).
 5. SQL is passed through unchanged apart from stripping a trailing `;`, which IRIS
    rejects.
+6. A connection the caller closed is replaced before the statement runs, with no probe
+   and no failure (see "Connection lifetime" below).
+
+## Connection lifetime
+
+A licence counts connections, not callers: IRIS Community Edition refuses the sixth
+concurrent connection. Per-thread connections mean a thread-per-request server opens
+one per request, so the session gives them up as soon as they cannot be used again.
+
+- **A thread that ends releases its connection.** The session keeps a marker object in
+  the thread's own state and finalizes on it; when the thread dies the connection is
+  closed and dropped from the tracked set. An idle thread-per-request server therefore
+  holds nothing, and `open_connection_count` is `0`.
+- **A connection the caller closed is replaced, not probed.** `isClosed()` on an IRIS
+  DBAPI handle is a local flag read (measured at ~0.1 µs), so the session asks before
+  every use. Ten years of call sites end with `conn.close()`, and since 0.15 the
+  connection they were handed is the session's: closing it costs a reconnect, not a
+  failure.
+- **`close()` releases this thread's connection only.** Other threads keep theirs;
+  `close_all()` is the whole-session form.
+- A dropped connection — reset by the peer, killed server-side — is not visible
+  locally. That one is found by the health probe or by the statement, and replaced
+  once (FR-009).
 
 ## The driver protocol
 
@@ -70,6 +95,7 @@ class Driver(Protocol):
     def available(self) -> bool: ...
     def connect(self, identity: SessionIdentity) -> Any: ...
     def ping(self, connection: Any) -> bool: ...
+    def is_closed(self, connection: Any) -> bool: ...
     def close(self, connection: Any) -> None: ...
     def password_expired(self, error: BaseException) -> bool: ...
     def recover_password(self, identity: SessionIdentity) -> bool: ...
@@ -78,7 +104,12 @@ class Driver(Protocol):
 Obligations on an implementation:
 
 - `available()` must not open a connection and must not raise.
-- `close()` and `ping()` must not raise; `ping()` returns `False` instead.
+- `close()`, `ping()` and `is_closed()` must not raise; `ping()` returns `False` and
+  `is_closed()` returns `False` instead.
+- `is_closed()` must answer locally — a driver that would have to ask the server should
+  return `False`, because the session's point in asking is that it is free. A driver
+  that does not implement it at all is treated as always answering `False`, so the
+  session falls back to probing.
 - `connect()` raises on failure; the session decides whether that failure means
   back-off, password recovery or unreachable.
 - `select_driver(identity, prefer_embedded=True)` returns the first available driver,
@@ -137,6 +168,36 @@ Renamed so that no two library classes share a name (SC-001): the ODBC/JDBC-era
 `core.connection.ConnectionManager` keeps its name — it is the one storage and the
 pipelines pass around. `api.websocket.connection.ConnectionManager` is a WebSocket
 registry, unrelated to databases, and is renamed `WebSocketConnectionManager`.
+
+## The pool that survives
+
+`common.connection_pool.IRISConnectionPool` stays for 0.15 because the HTTP API holds
+one, but it is a pool over one session rather than over connections it opens itself.
+Its remaining job is capacity, not connection reuse: the session already gives every
+thread its own connection, so the pool's `release()` closes a connection once the
+number held exceeds the advertised capacity. Its stats say what is true of a pool:
+
+| Stat | Means |
+| --- | --- |
+| `open_connections` | `session.open_connection_count` — held right now, across threads |
+| `connected` | `open_connections > 0`: some thread holds one *now* |
+
+`connected` is `False` for an idle pool and `True` inside a live `get_connection()`.
+Not `session.is_connected`: that is the asking thread's own state, and the thread that
+serves a health route is never the thread that served a request.
+
+`_session_pool(**parameters)` is the non-warning twin used inside the library.
+
+## Documented deviations from the plan
+
+| Deviation | Why |
+| --- | --- |
+| Every deprecated public name has a non-warning internal twin (`iris_connection._session_connection`, `iris_dbapi_connector._session_connection`, `connection_pool._session_pool`) | a warning raised from inside the library names nothing its caller can change; the library calls the twin, the caller's own call still warns |
+| `core.connection.ConnectionManager` does **not** warn in 0.15 | it is what storage and every pipeline pass around; warning on it would fire on nearly every import path and train callers to filter the category, and it already resolves to the session |
+| `close()` no longer closes the process's connections, only this thread's | with per-thread connections, "close the connection" had no single referent; `close_all()` is the whole-session form |
+| The registry's ignored-cadence warning fires once per (identity, requested interval) | the pool resolves its session on every acquire and release, so a per-call warning said the same thing twice per served request — which is how the line that matters gets filtered out |
+| `is_closed` is an **optional** eighth driver operation | a driver that cannot answer locally is treated as answering "open"; the session then falls back to the health probe, which is the pre-083 behaviour |
+| Thread-exit reaping was added beyond FR-017 as written | FR-017 asks for per-thread connections; on Community Edition, per-thread connections without reaping exhaust the licence in a thread-per-request server, so the requirement is only met with it |
 
 ## Quality gate (FR-018, SC-004)
 

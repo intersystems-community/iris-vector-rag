@@ -24,6 +24,33 @@ that took the wrong one could hang forever on a container that was still startin
 
 The session is the one way in, so a protection added once applies everywhere.
 
+## Migrating
+
+Everything in the left column still works in 0.15 and warns once, naming its
+replacement. All of it is gone in 0.16.
+
+| Before                                                                 | Now                                                          |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `common.iris_connection.get_iris_connection()`                         | `session_for().connection_for_adapter()`                     |
+| `common.iris_dbapi_connector.get_iris_dbapi_connection()`              | same                                                         |
+| `common.iris_connection_manager.IRISConnectionManager()`               | `session_for()`                                              |
+| `common.connection_manager.ConnectionManager()`                        | `session_for()` (the class is now `LegacyConnectionManager`) |
+| `common.connection_pool.IRISConnectionPool()`                          | `session_for()`                                              |
+| `cursor = conn.cursor(); ...; cursor.close()`                          | `session.execute(...)`                                       |
+| `IRISConnectionPool.get_pool()` / `initialize_pool()` / `close_pool()` | gone in 0.15 — hold a session                                |
+| `common.iris_connector` (whole module)                                 | gone in 0.15 — `session_for()`                               |
+
+Three things to know while migrating:
+
+1. **The connection the old names hand you is the session's**, not yours. You may still
+   close it — the session notices and opens another — but you no longer have to, and a
+   thread that ends releases it anyway.
+2. **Rows outlive their cursor.** `session.execute()` returns plain tuples, so the
+   `DataRow is inaccessible` failure that follows `cursor.close()` cannot happen.
+3. **A wrong password is a failure, not a second session.** The identity is host, port,
+   namespace and user; the password is not part of it and never appears in a log, a
+   `repr` or an error message.
+
 ## Getting a session
 
 | Call                                      | Use                                            |
@@ -62,6 +89,10 @@ A trailing semicolon is stripped: IRIS rejects it, and callers keep writing it.
   state and never dials.
 - **A dead connection is replaced once per operation.** A statement IRIS rejected is
   never retried: it would fail identically and cost a handshake.
+- **A connection you closed is replaced, not mourned.** `conn.close()` on what
+  `connection_for_adapter()` (or a deprecated entry point) handed you is safe: asking a
+  handle whether it is closed is a local flag read, so the session notices and opens
+  another before the next statement. It costs a reconnect, not an error.
 - **A caller's own connection is never probed, never replaced, never closed.** Its
   failures are reported as `CallerConnectionBroken`.
 
@@ -103,7 +134,9 @@ Per-session overrides: `session_for(health_interval=...)`, and
 
 A driver is anything with seven operations: `name`, `available()`, `connect(identity)`,
 `ping(connection)`, `close(connection)`, `password_expired(error)` and
-`recover_password(identity)`.
+`recover_password(identity)` — plus an optional eighth, `is_closed(connection)`, for a
+driver that can say locally whether a handle is closed. A driver without it makes the
+session fall back to probing.
 
 - `EmbeddedDriver` — IRIS reached from inside the instance.
 - `NetworkDriver` — the SuperServer port, with the socket precheck, the bounded
@@ -135,6 +168,15 @@ job. A connection is tagged with the pid that opened it, so a forked child opens
 own rather than corrupting the parent's. Cleanup runs at `atexit`, never in
 `__del__`.
 
+**A thread that ends gives its connection back.** IRIS Community Edition refuses the
+sixth concurrent connection, and a request thread that has exited cannot use the one it
+was holding — so the session closes it when the thread dies. A thread-per-request
+server sitting idle therefore holds nothing:
+
+```python
+session.open_connection_count      # 0 when no thread is in a statement
+```
+
 ## Per-thread and process cleanup
 
 | Call                         | Closes                                      |
@@ -143,3 +185,25 @@ own rather than corrupting the parent's. Cleanup runs at `atexit`, never in
 | `session.close_all()`        | Every connection the session opened.        |
 | `close_all_sessions()`       | Every registered session. Runs at `atexit`. |
 | `reset_sessions_for_tests()` | Same, for tests that own the process.       |
+
+A thread that just ends needs none of these.
+
+## The pool
+
+`IRISConnectionPool` still exists for the HTTP API, and in 0.15 it is a pool over one
+session. The session already gives each thread its own connection, so what the pool
+adds is a capacity bound: `release()` closes a connection once more are held than the
+pool advertises.
+
+| Stat               | Means                                                   |
+| ------------------ | ------------------------------------------------------- |
+| `open_connections` | Connections held right now, across every thread.        |
+| `connected`        | `open_connections > 0` — some thread holds one **now**. |
+| `pool_size`        | The advertised capacity.                                |
+
+`connected` is `False` for an idle pool, and `True` inside a live `get_connection()`.
+That is a pool's question, not a thread's: the thread that reads a health route is
+never the thread that served a request.
+
+The pool is deprecated with everything else in this table — a new caller should hold a
+session.

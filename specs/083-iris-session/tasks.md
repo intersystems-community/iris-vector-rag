@@ -94,25 +94,25 @@ re-exports go now.
 **Independent test**: run the previous release's usage examples; identical results
 plus one deprecation warning each.
 
-- [ ] T043 [P] [US5] Write unit tests asserting exactly one `DeprecationWarning` per superseded name and unchanged return types in `tests/unit/session/test_deprecations.py`
-- [ ] T044 [P] [US5] Write unit tests asserting the removed names are gone and the renamed classes leave no two library classes sharing a name in `tests/unit/session/test_removals.py`
-- [ ] T045 [US5] Deprecate `get_iris_connection` and delete `IRISConnectionPool` and `_PooledConnection` from `iris_vector_rag/common/iris_connection.py`
-- [ ] T046 [P] [US5] Deprecate the manager and its function, and delete `get_iris_connection_old`, in `iris_vector_rag/common/iris_connection_manager.py`
-- [ ] T047 [P] [US5] Deprecate `get_iris_dbapi_connection` in `iris_vector_rag/common/iris_dbapi_connector.py`
-- [ ] T048 [P] [US5] Rename `ConnectionManager` to `LegacyConnectionManager` in `iris_vector_rag/common/connection_manager.py`
-- [ ] T049 [P] [US5] Rename `ConnectionManager` to `WebSocketConnectionManager` in `iris_vector_rag/api/websocket/connection.py` and update its callers
-- [ ] T050 [US5] Delete the dead module `iris_vector_rag/common/iris_connector.py` and any re-export of it
-- [ ] T051 [US5] Rebuild `common/connection_pool.py` as a pool over sessions with no direct driver connect, deleting `get_pool`/`initialize_pool`/`close_pool`
-- [ ] T052 [US5] Fix the HTTP API shutdown to call the pool method that exists in `iris_vector_rag/api/main.py`
-- [ ] T053 [US5] Add the direct-driver-connect detector to `scripts/gates/antipatterns.py` and record any remaining offender in `scripts/gates/antipatterns-baseline.txt`
-- [ ] T054 [US5] **Phase gate** — write and pass the end-to-end test for US5 (superseded entry points work with one warning each; the API serves concurrent requests from sessions) in `tests/e2e/test_session_e2e.py`
+- [x] T043 [P] [US5] Write unit tests asserting exactly one `DeprecationWarning` per superseded name and unchanged return types in `tests/unit/session/test_deprecations.py`
+- [x] T044 [P] [US5] Write unit tests asserting the removed names are gone and the renamed classes leave no two library classes sharing a name in `tests/unit/session/test_removals.py`
+- [x] T045 [US5] Deprecate `get_iris_connection` and delete `IRISConnectionPool` and `_PooledConnection` from `iris_vector_rag/common/iris_connection.py`
+- [x] T046 [P] [US5] Deprecate the manager and its function, and delete `get_iris_connection_old`, in `iris_vector_rag/common/iris_connection_manager.py`
+- [x] T047 [P] [US5] Deprecate `get_iris_dbapi_connection` in `iris_vector_rag/common/iris_dbapi_connector.py`
+- [x] T048 [P] [US5] Rename `ConnectionManager` to `LegacyConnectionManager` in `iris_vector_rag/common/connection_manager.py`
+- [x] T049 [P] [US5] Rename `ConnectionManager` to `WebSocketConnectionManager` in `iris_vector_rag/api/websocket/connection.py` and update its callers
+- [x] T050 [US5] Delete the dead module `iris_vector_rag/common/iris_connector.py` and any re-export of it
+- [x] T051 [US5] Rebuild `common/connection_pool.py` as a pool over sessions with no direct driver connect, deleting `get_pool`/`initialize_pool`/`close_pool`
+- [x] T052 [US5] Fix the HTTP API shutdown to call the pool method that exists in `iris_vector_rag/api/main.py`
+- [x] T053 [US5] Add the direct-driver-connect detector to `scripts/gates/antipatterns.py` and record any remaining offender in `scripts/gates/antipatterns-baseline.txt`
+- [x] T054 [US5] **Phase gate** — write and pass the end-to-end test for US5 (superseded entry points work with one warning each; the API serves concurrent requests from sessions) in `tests/e2e/test_session_e2e.py`
 
 ## Phase 8: Polish
 
-- [ ] T055 [P] Document the session, its tuning variables and the migration table in `docs/api/session.md`
-- [ ] T056 [P] Record the deprecations, the removals and the 0.16 removal note in `CHANGELOG.md`
-- [ ] T057 Measure coverage of `iris_vector_rag/session/` and raise it to 90%+ with the tests the gaps name
-- [ ] T058 Run the full contract, unit and end-to-end suites and confirm the baselines hold with no new failures
+- [x] T055 [P] Document the session, its tuning variables and the migration table in `docs/api/session.md`
+- [ ] T056 [P] Record the deprecations, the removals and the 0.16 removal note in `CHANGELOG.md` — **held**: the 0.15 CHANGELOG section is outside this branch's scope; needs the coordinator's word before it is written
+- [x] T057 Measure coverage of `iris_vector_rag/session/` and raise it to 90%+ with the tests the gaps name — 96% (`drivers.py`, `identity.py`, `results.py` at 100%)
+- [x] T058 Run the full contract, unit and end-to-end suites and confirm the baselines hold with no new failures — contract 690 passed / 28 skipped / 40 deselected, unit 769 passed / 4 skipped, e2e 277 passed / 6 xfailed / 6 failed (all six on the placeholder `OPENAI_API_KEY`, none naming a connection)
 
 ## Dependencies
 
