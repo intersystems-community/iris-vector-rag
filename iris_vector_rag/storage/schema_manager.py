@@ -22,8 +22,29 @@ from iris_vector_rag.integrations.ivg import (
     create_graph_engine,
     get_ivg_version,
 )
+from iris_vector_rag.storage.catalog import IRISCatalogReader
+from iris_vector_rag.storage.table_shape import (
+    CANONICAL_CHUNK_SHAPE,
+    CANONICAL_DOCUMENT_SHAPE,
+    TableShape,
+    VectorSpec,
+    create_table_statement,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _canonical_column_names(shape: TableShape) -> list:
+    """The columns a canonical table has, in the order it declares them.
+
+    Recorded in the schema metadata so a later `needs_migration` check compares the
+    table against the shape the library creates, not against a hand-kept list that
+    named columns no creation path ever emitted (feature 082, FR-006).
+    """
+    return [
+        column.name
+        for column in sorted(shape.columns.values(), key=lambda col: col.position)
+    ]
 
 
 class SchemaManager:
@@ -196,24 +217,36 @@ class SchemaManager:
             return False
 
     def table_exists(self, table_name: str) -> bool:
-        """Check whether a table exists, defaulting to the RAG schema."""
+        """Check whether a table exists, defaulting to the RAG schema.
+
+        The name is matched as spelled, because that is how the catalog stores it.
+        """
         if "." in table_name:
             schema, table = table_name.split(".", 1)
         else:
             schema, table = "RAG", table_name
 
-        conn = self.connection_manager.get_connection()
-        cursor = conn.cursor()
-        try:
-            cursor.execute(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
-                "WHERE UPPER(TABLE_SCHEMA) = UPPER(?) "
-                "AND UPPER(TABLE_NAME) = UPPER(?)",
-                [schema, table],
-            )
-            return cursor.fetchone()[0] > 0
-        finally:
-            cursor.close()
+        return self._snapshot(table, schema=schema) is not None
+
+    def _snapshot(self, table_name: str, *, schema: Optional[str] = None):
+        """The catalog's own account of a table, or None if it does not exist.
+
+        Read fresh every time rather than through a resolver's cache: this class is
+        the one that creates and drops tables, so a cached answer here would describe
+        the schema as it stood before its own last statement. All catalog SQL lives in
+        `IRISCatalogReader`, which is what makes it testable against a real instance
+        and replayable without one (feature 082, FR-013).
+        """
+        connection = self.connection_manager.get_connection()
+        reader = IRISCatalogReader(connection)
+        return reader.snapshot(schema or self.schema_prefix, table_name)
+
+    def _catalog_columns(self, table_name: str) -> set:
+        """Lower-cased column names of an existing table; empty if it has none."""
+        snapshot = self._snapshot(table_name)
+        if snapshot is None:
+            return set()
+        return {str(row["COLUMN_NAME"]).lower() for row in snapshot.columns}
 
     def validate_graph_prerequisites(self, pipeline_type: str = "graphrag"):
         """Validate iris-vector-graph package and required tables."""
@@ -673,18 +706,9 @@ class SchemaManager:
                 {
                     "table_type": "document_storage",
                     "created_by": "BasicRAG",
-                    "expected_columns": [
-                        "id",
-                        "doc_id",
-                        "title",
-                        "abstract",
-                        "text_content",
-                        "authors",
-                        "keywords",
-                        "embedding",
-                        "metadata",
-                        "created_at",
-                    ],
+                    "expected_columns": _canonical_column_names(
+                        CANONICAL_DOCUMENT_SHAPE
+                    ),
                 }
             )
         elif table_name == "DocumentChunks":
@@ -692,17 +716,7 @@ class SchemaManager:
                 {
                     "table_type": "chunk_storage",
                     "created_by": "BasicRAG",
-                    "expected_columns": [
-                        "id",
-                        "chunk_id",
-                        "source_document_id",
-                        "chunk_text",
-                        "chunk_embedding",
-                        "chunk_index",
-                        "chunk_type",
-                        "metadata",
-                        "created_at",
-                    ],
+                    "expected_columns": _canonical_column_names(CANONICAL_CHUNK_SHAPE),
                 }
             )
         elif table_name == "Entities":
@@ -1071,141 +1085,106 @@ class SchemaManager:
     def _migrate_source_documents_table(
         self, cursor, expected_config: Dict[str, Any], preserve_data: bool
     ) -> bool:
-        """Migrate SourceDocuments table with requirements-driven DDL generation."""
-        try:
-            vector_dim = expected_config["vector_dimension"]
-            vector_data_type = expected_config.get("vector_data_type", "FLOAT")
-            text_content_type = expected_config.get("text_content_type", "LONGVARCHAR")
-            supports_ifind = expected_config.get("supports_ifind", False)
+        """Recreate SourceDocuments in the canonical shape.
 
-            # Try multiple table name approaches to work around IRIS schema issues
-            table_attempts = [
-                self._qn("SourceDocuments"),  # Preferred
-                "SourceDocuments",  # Fallback
+        Destructive by construction: it drops the table. Only an explicit
+        `migrate_table` call reaches here -- nothing decides on its own that a table
+        looks wrong enough to be rebuilt (feature 082, FR-007).
+        """
+        table_name = self._qn("SourceDocuments")
+        try:
+            create_sql = self._canonical_create_sql(
+                CANONICAL_DOCUMENT_SHAPE,
+                "SourceDocuments",
+                expected_config.get("vector_data_type", "FLOAT"),
+                expected_config["vector_dimension"],
+            )
+            logger.info(f"🔧 Recreating {table_name} in the canonical shape")
+
+            # Handle foreign key constraints from referencing tables
+            logger.info("Checking for foreign key constraints on SourceDocuments...")
+            known_constraints = [
+                ("DOCUMENTCHUNKSFKEY2", "DocumentChunks"),
             ]
 
-            for table_name in table_attempts:
-                try:
+            for constraint_name, referencing_table in known_constraints:
+                # Check if referencing table exists first. The predicate this replaces
+                # compared an upper-cased name against the catalog's stored spelling,
+                # so it never matched and the constraint was never dropped.
+                if self._snapshot(referencing_table) is None:
                     logger.info(
-                        f"🔧 Attempting to create SourceDocuments table as {table_name}"
+                        f"Referencing table {self._qn(referencing_table)} does not exist — skipping constraint drop"
                     )
-                    logger.info(
-                        f"   Text content type: {text_content_type}, iFind support: {supports_ifind}"
-                    )
-
-                    # Handle foreign key constraints from referencing tables
-                    logger.info(
-                        "Checking for foreign key constraints on SourceDocuments..."
-                    )
-                    known_constraints = [
-                        ("DOCUMENTCHUNKSFKEY2", "DocumentChunks"),
-                    ]
-
-                    for constraint_name, referencing_table in known_constraints:
-                        # Check if referencing table exists first
-                        cursor.execute(
-                            f"""
-                            SELECT COUNT(*)
-                            FROM INFORMATION_SCHEMA.TABLES
-                            WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = ?
-                        """,
-                            [referencing_table.upper()],
-                        )
-                        table_exists = cursor.fetchone()[0] > 0
-
-                        if not table_exists:
-                            logger.info(
-                                f"Referencing table {self._qn(referencing_table)} does not exist — skipping constraint drop"
-                            )
-                            continue
-
-                        try:
-                            logger.info(
-                                f"Dropping foreign key constraint {constraint_name} from {self._qn(referencing_table)}"
-                            )
-                            cursor.execute(
-                                f"ALTER TABLE {self._qn(referencing_table)} DROP CONSTRAINT {constraint_name}"
-                            )
-                            logger.info(
-                                f"✓ Successfully dropped constraint {constraint_name}"
-                            )
-                        except Exception as fk_error:
-                            logger.warning(
-                                f"Could not drop foreign key {constraint_name}: {fk_error}"
-                            )
-                            try:
-                                logger.info(
-                                    f"Attempting to drop referencing table {self._qn(referencing_table)}"
-                                )
-                                cursor.execute(
-                                    f"DROP TABLE IF EXISTS {self._qn(referencing_table)}"
-                                )
-                                logger.info(
-                                    f"✓ Dropped referencing table {self._qn(referencing_table)}"
-                                )
-                            except Exception as table_error:
-                                logger.warning(
-                                    f"Could not drop referencing table {referencing_table}: {table_error}"
-                                )
-
-                    # Drop existing table
-                    cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
-                    logger.info(f"Dropped existing {table_name} table")
-
-                    # Recreate with correct schema
-                    create_sql = f"""
-                    CREATE TABLE {table_name} (
-                        doc_id VARCHAR(255) PRIMARY KEY,
-                        title VARCHAR(1000),
-                        abstract VARCHAR(MAX),
-                        text_content {text_content_type},
-                        authors VARCHAR(MAX),
-                        keywords VARCHAR(MAX),
-                        embedding VECTOR({vector_data_type}, {vector_dim}),
-                        metadata VARCHAR(2000),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                    """
-                    cursor.execute(create_sql)
-                    logger.info(f"✅ Successfully created {table_name} table")
-
-                    # Indexes (doc_id is UNIQUE via table constraint; add created_at index)
-                    indexes = [
-                        f"CREATE INDEX idx_source_docs_created ON {table_name} (created_at)",
-                    ]
-                    for index_sql in indexes:
-                        try:
-                            cursor.execute(index_sql)
-                        except Exception as e:
-                            logger.warning(f"Failed to create index: {e}")
-
-                    # Schema metadata
-                    try:
-                        self._update_schema_metadata(
-                            cursor, "SourceDocuments", expected_config
-                        )
-                    except Exception as meta_error:
-                        logger.debug(f"Schema metadata update failed: {meta_error}")
-
-                    logger.info(
-                        f"✅ SourceDocuments table created successfully as {table_name}"
-                    )
-                    return True
-
-                except Exception as table_error:
-                    logger.warning(
-                        f"Failed to create table as {table_name}: {table_error}"
-                    )
-                    if table_name == table_attempts[-1]:
-                        logger.error("All table creation attempts failed")
-                        return False
                     continue
 
-            return False
+                try:
+                    logger.info(
+                        f"Dropping foreign key constraint {constraint_name} from {self._qn(referencing_table)}"
+                    )
+                    cursor.execute(
+                        f"ALTER TABLE {self._qn(referencing_table)} DROP CONSTRAINT {constraint_name}"
+                    )
+                    logger.info(f"✓ Successfully dropped constraint {constraint_name}")
+                except Exception as fk_error:
+                    logger.warning(
+                        f"Could not drop foreign key {constraint_name}: {fk_error}"
+                    )
+                    try:
+                        logger.info(
+                            f"Attempting to drop referencing table {self._qn(referencing_table)}"
+                        )
+                        cursor.execute(
+                            f"DROP TABLE IF EXISTS {self._qn(referencing_table)}"
+                        )
+                        logger.info(
+                            f"✓ Dropped referencing table {self._qn(referencing_table)}"
+                        )
+                    except Exception as table_error:
+                        logger.warning(
+                            f"Could not drop referencing table {referencing_table}: {table_error}"
+                        )
+
+            cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+            logger.info(f"Dropped existing {table_name} table")
+
+            cursor.execute(create_sql)
+            logger.info(f"✅ Successfully created {table_name} table")
+
+            # doc_id is UNIQUE via the table constraint, so created_at is the one index
+            try:
+                cursor.execute(
+                    f"CREATE INDEX idx_source_docs_created ON {table_name} (created_at)"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to create index: {e}")
+
+            try:
+                self._update_schema_metadata(cursor, "SourceDocuments", expected_config)
+            except Exception as meta_error:
+                logger.debug(f"Schema metadata update failed: {meta_error}")
+
+            return True
 
         except Exception as e:
             logger.error(f"Failed to migrate SourceDocuments table: {e}")
             return False
+
+    def _canonical_create_sql(
+        self, shape, table_name: str, element_type: str, dimension: Any
+    ) -> str:
+        """The `CREATE TABLE` for a canonical table, rendered from its shape.
+
+        Every creation path in this file goes through here, so there is one answer to
+        what a document or chunk table looks like. Two hand-written literals for one
+        table name are how a fresh instance ended up with a `SourceDocuments` the
+        library could not read back (feature 082, FR-006).
+        """
+        return create_table_statement(
+            shape,
+            schema=self.schema_prefix,
+            table=table_name,
+            vector=VectorSpec(str(element_type), int(dimension)),
+        )
 
     def _update_schema_metadata(self, cursor, table_name: str, config: Dict[str, Any]):
         """Update schema metadata for a table."""
@@ -1248,98 +1227,41 @@ class SchemaManager:
             logger.error(f"Failed to update schema metadata for {table_name}: {e}")
             raise
 
-    def _migrate_documentchunks_add_chunk_id(self, cursor):
-        """Add chunk_id column and index if missing (idempotent migration).
-
-        This migration adds the chunk_id field that was added to the schema
-        definition but not present in existing databases.
-        """
-        try:
-            # Check if chunk_id column exists
-            cursor.execute(f"""
-                SELECT COLUMN_NAME
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = '{self.schema_prefix}'
-                  AND TABLE_NAME = 'DOCUMENTCHUNKS'
-                  AND COLUMN_NAME = 'chunk_id'
-            """)
-            if cursor.fetchone():
-                logger.info("chunk_id column already exists, skipping migration")
-                return
-
-            # Add chunk_id column
-            logger.info(f"Adding chunk_id column to {self._qn('DocumentChunks')}...")
-            cursor.execute(
-                f"ALTER TABLE {self._qn('DocumentChunks')} ADD chunk_id VARCHAR(255)"
-            )
-
-            # Create index on chunk_id
-            logger.info("Creating index on chunk_id...")
-            cursor.execute(
-                f"CREATE INDEX idx_chunks_chunk_id ON {self._qn('DocumentChunks')} (chunk_id)"
-            )
-
-            logger.info("✓ Migration complete: chunk_id column and index added")
-        except Exception as e:
-            logger.error(f"Migration failed: {e}")
-            raise
-
     def _migrate_document_chunks_table(
         self, cursor, expected_config: Dict[str, Any], preserve_data: bool
     ) -> bool:
-        """Migrate DocumentChunks table."""
-        try:
-            vector_dim = expected_config["vector_dimension"]
-            vector_data_type = expected_config.get("vector_data_type", "FLOAT")
+        """Recreate DocumentChunks in the canonical shape.
 
-            logger.info(
-                f"🔧 Migrating DocumentChunks table to {vector_dim}D vectors with {vector_data_type} type"
+        As with the document table, this drops what is there: it runs only when a
+        caller asks for a migration, and it leaves an existing table alone when asked
+        to preserve data rather than altering it into a third shape (FR-007).
+        """
+        try:
+            create_sql = self._canonical_create_sql(
+                CANONICAL_CHUNK_SHAPE,
+                "DocumentChunks",
+                expected_config.get("vector_data_type", "FLOAT"),
+                expected_config["vector_dimension"],
             )
 
-            # Check if table exists
-            cursor.execute(f"""
-                SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'DOCUMENTCHUNKS'
-            """)
-            table_exists = cursor.fetchone()[0] > 0
+            table_exists = self._snapshot("DocumentChunks") is not None
 
             if table_exists and preserve_data:
-                # Just add the missing chunk_id column if needed
                 logger.info(
-                    "Table exists and preserving data - checking for chunk_id column"
+                    f"{self._qn('DocumentChunks')} exists and data is preserved - "
+                    "leaving its shape as it is"
                 )
-                self._migrate_documentchunks_add_chunk_id(cursor)
                 self._update_schema_metadata(cursor, "DocumentChunks", expected_config)
-                logger.info(
-                    "✅ DocumentChunks table migrated successfully (preserved data)"
-                )
                 return True
 
             # If no preservation or table doesn't exist, create it fresh
             if table_exists:
                 cursor.execute(f"DROP TABLE IF EXISTS {self._qn('DocumentChunks')}")
 
-            create_sql = f"""
-            CREATE TABLE {self._qn("DocumentChunks")} (
-                id VARCHAR(255) PRIMARY KEY,
-                chunk_id VARCHAR(255),
-                source_document_id VARCHAR(255),
-                chunk_text TEXT,
-                chunk_embedding VECTOR(FLOAT, 384),
-                chunk_index INTEGER,
-                chunk_type VARCHAR(100),
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_document_id) REFERENCES {self._qn("SourceDocuments")}(doc_id)
-            )
-            """
             cursor.execute(create_sql)
 
             for index_sql in [
-                f"CREATE INDEX idx_chunks_source_doc_id ON {self._qn('DocumentChunks')} (source_document_id)",
-                f"CREATE INDEX idx_chunks_chunk_id ON {self._qn('DocumentChunks')} (chunk_id)",
-                f"CREATE INDEX idx_chunks_type ON {self._qn('DocumentChunks')} (chunk_type)",
+                f"CREATE INDEX idx_chunks_document_id ON {self._qn('DocumentChunks')} (document_id)",
             ]:
                 try:
                     cursor.execute(index_sql)
@@ -1352,44 +1274,6 @@ class SchemaManager:
 
         except Exception as e:
             logger.error(f"Failed to migrate DocumentChunks table: {e}")
-            return False
-
-    def _ensure_table_schema_legacy(
-        self, table_name: str, pipeline_type: Optional[str] = None
-    ) -> bool:
-        """
-        Ensure table schema matches current configuration.
-        Performs migration if needed and ensures vector indexes exist.
-
-        Args:
-            table_name: Name of the table to ensure
-            pipeline_type: Optional pipeline type for requirements-driven DDL
-
-        Returns:
-            True if schema is correct or migration successful, False otherwise
-        """
-        try:
-            # Ensure metadata table exists
-            self.ensure_schema_metadata_table()
-
-            # Check if migration is needed
-            if self.needs_migration(table_name, pipeline_type):
-                logger.info(f"Schema migration needed for {table_name}")
-                success = self.migrate_table(table_name, pipeline_type=pipeline_type)
-                if not success:
-                    return False
-            else:
-                logger.info(f"Schema for {table_name} is up to date")
-
-            # Ensure vector indexes after schema is correct
-            if table_name in ["SourceDocuments", "Entities"]:
-                logger.info(f"🔍 Ensuring vector indexes for {table_name}")
-                self.ensure_all_vector_indexes()
-
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to ensure schema for {table_name}: {e}")
             return False
 
     def get_vector_dimension(
@@ -1755,15 +1639,10 @@ class SchemaManager:
             try_acorn: Whether to attempt ACORN=1 optimization (default: True)
         """
         try:
-            # Check if index already exists
-            check_sql = """
-                SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES
-                WHERE TABLE_NAME = ? AND INDEX_NAME = ?
-            """
-            cursor.execute(check_sql, [table.split(".")[-1], index_name])
-            index_exists = cursor.fetchone()[0] > 0
+            reader = IRISCatalogReader(self.connection_manager.get_connection())
+            existing = reader.index_names(table.split(".")[-1], cursor=cursor)
 
-            if index_exists:
+            if index_name.upper() in existing:
                 logger.debug(
                     f"HNSW index {index_name} already exists on {table}.{column}"
                 )
@@ -1866,37 +1745,28 @@ class SchemaManager:
     # These methods replace direct SQL anti-patterns in integration tests
 
     def verify_table_structure(
-        self, table_name: str, schema_name: str = "RAG"
+        self, table_name: str, schema_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Verify table structure using proper abstractions (replaces direct SQL in tests).
 
         Args:
             table_name: Table name without schema (e.g., 'SourceDocuments')
-            schema_name: SQL schema containing the table.
+            schema_name: SQL schema containing the table; this manager's own by default.
+                The old default was the literal `RAG`, which reported an empty structure
+                for every deployment that configured a different schema prefix.
 
         Returns:
             Dictionary mapping column names to data types
         """
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
         try:
-            cursor.execute(
-                """
-                SELECT COLUMN_NAME, DATA_TYPE
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE UPPER(TABLE_SCHEMA) = UPPER(?) AND UPPER(TABLE_NAME) = UPPER(?)
-                ORDER BY ORDINAL_POSITION
-            """,
-                [schema_name, table_name],
-            )
-            return {row[0]: row[1] for row in cursor.fetchall()}
-        except Exception as e:
+            snapshot = self._snapshot(table_name, schema=schema_name)
+        except Exception as e:  # noqa: BLE001 - callers treat {} as "cannot tell"
             logger.error(f"Failed to verify table structure for {table_name}: {e}")
             return {}
-        finally:
-            cursor.close()
+        if snapshot is None:
+            return {}
+        return {str(row["COLUMN_NAME"]): row["DATA_TYPE"] for row in snapshot.columns}
 
     # ========== IRIS GRAPH CORE TABLE MIGRATION METHODS ==========
 
@@ -2227,76 +2097,31 @@ class SchemaManager:
         """Ensure standard RAG tables exist."""
         try:
             # Check class-level cache first to avoid repeated validation spam
-            if table_name in self._tables_validated and table_name not in (
-                "Entities",
-                "SourceDocuments",
-            ):
+            # `Entities` is re-checked every time because its column-adding path below
+            # still runs; the document and chunk tables are not altered at all now, so
+            # once seen they are done.
+            if table_name in self._tables_validated and table_name != "Entities":
                 logger.debug(
                     f"Table {self._qn(table_name)} already validated (cached) - skipping check"
                 )
                 return True
 
+            snapshot = self._snapshot(table_name)
+
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
-            # Check if table exists
-            cursor.execute(f"""
-                SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = '{table_name}'
-            """)
-
-            exists = cursor.fetchone()[0] > 0
-
-            if exists:
-                if table_name == "SourceDocuments":
-                    try:
-                        cursor.execute(f"""
-                            SELECT COLUMN_NAME
-                            FROM INFORMATION_SCHEMA.COLUMNS
-                            WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'SourceDocuments'
-                            """)
-                        columns = {row[0].lower() for row in cursor.fetchall()}
-
-                        if "text_content" not in columns:
-                            cursor.execute(
-                                f"ALTER TABLE {self._qn('SourceDocuments')} ADD text_content LONGVARCHAR"
-                            )
-                            conn.commit()
-                            columns.add("text_content")
-
-                        if "doc_id" not in columns:
-                            cursor.execute(
-                                f"ALTER TABLE {self._qn('SourceDocuments')} ADD doc_id VARCHAR(255)"
-                            )
-                            if "id" in columns:
-                                cursor.execute(
-                                    f"UPDATE {self._qn('SourceDocuments')} SET doc_id = id WHERE doc_id IS NULL"
-                                )
-                            conn.commit()
-                            columns.add("doc_id")
-
-                        if "embedding" not in columns:
-                            embedding_config = (
-                                self.config_manager.get_embedding_config()
-                            )
-                            dimension = embedding_config.get("dimension", 384)
-                            cursor.execute(
-                                f"ALTER TABLE {self._qn('SourceDocuments')} ADD embedding VECTOR(FLOAT, {dimension})"
-                            )
-                            conn.commit()
-                    except Exception as exc:
-                        logger.warning(
-                            f"Failed to ensure SourceDocuments columns: {exc}"
-                        )
+            if snapshot is not None:
+                # An existing document table is used in whatever shape it has: the
+                # resolved shape tells the store which column holds the text, so
+                # adding a canonical column to a legacy table buys nothing and costs
+                # the caller a silent schema change (feature 082, FR-007). An explicit
+                # `migrate_table` call is the only way to change a table's shape.
                 if table_name == "Entities":
                     try:
-                        cursor.execute(f"""
-                            SELECT COLUMN_NAME
-                            FROM INFORMATION_SCHEMA.COLUMNS
-                            WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'Entities'
-                            """)
-                        columns = {row[0].lower() for row in cursor.fetchall()}
+                        columns = {
+                            str(row["COLUMN_NAME"]).lower() for row in snapshot.columns
+                        }
 
                         if "entity_id" not in columns:
                             cursor.execute(
@@ -2375,27 +2200,27 @@ class SchemaManager:
             return False
 
     def _create_source_documents_table(self, cursor) -> bool:
-        """Create SourceDocuments table."""
+        """Create SourceDocuments in the canonical shape."""
         try:
             embedding_config = self.config_manager.get_embedding_config()
-            dimension = embedding_config.get("dimension", 384)
-
-            create_sql = f"""
-            CREATE TABLE {self._qn("SourceDocuments")} (
-                doc_id VARCHAR(255) NOT NULL,
-                text_content LONGVARCHAR,
-                metadata VARCHAR(2000),
-                embedding VECTOR(FLOAT, {dimension}),
-                created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-                PRIMARY KEY (doc_id)
+            cursor.execute(
+                self._canonical_create_sql(
+                    CANONICAL_DOCUMENT_SHAPE,
+                    "SourceDocuments",
+                    self._vector_element_type(),
+                    embedding_config.get("dimension", 384),
+                )
             )
-            """
-            cursor.execute(create_sql)
             return True
         except Exception as e:
             logger.error(f"Failed to create SourceDocuments table: {e}")
             return False
+
+    def _vector_element_type(self) -> str:
+        """The element type this deployment stores vectors in."""
+        return os.environ.get("IRIS_VECTOR_DATA_TYPE") or self.config_manager.get(
+            "storage:iris:vector_data_type", "FLOAT"
+        )
 
     def _create_entities_table(self, cursor) -> bool:
         """Create Entities table."""
@@ -2503,35 +2328,19 @@ class SchemaManager:
             return False
 
     def _create_document_chunks_table(self, cursor) -> bool:
-        """Create DocumentChunks table."""
+        """Create DocumentChunks in the canonical shape."""
         try:
-            dimension = self.config_manager.get("embedding:dimension", 384)
-
-            create_sql = f"""
-            CREATE TABLE {self._qn("DocumentChunks")} (
-                id VARCHAR(255) PRIMARY KEY,
-                chunk_id VARCHAR(255),
-                source_document_id VARCHAR(255),
-                chunk_text TEXT,
-                chunk_embedding VECTOR(FLOAT, {dimension}),
-                chunk_index INTEGER,
-                chunk_type VARCHAR(100),
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_document_id) REFERENCES {self._qn("SourceDocuments")}(doc_id)
+            cursor.execute(
+                self._canonical_create_sql(
+                    CANONICAL_CHUNK_SHAPE,
+                    "DocumentChunks",
+                    self._vector_element_type(),
+                    self.config_manager.get("embedding:dimension", 384),
+                )
             )
-            """
-            cursor.execute(create_sql)
-
-            # Create indexes
-            indexes = [
-                f"CREATE INDEX idx_chunks_source_doc_id ON {self._qn('DocumentChunks')} (source_document_id)",
-                f"CREATE INDEX idx_chunks_chunk_id ON {self._qn('DocumentChunks')} (chunk_id)",
-            ]
-
-            for index_sql in indexes:
-                cursor.execute(index_sql)
-
+            cursor.execute(
+                f"CREATE INDEX idx_chunks_document_id ON {self._qn('DocumentChunks')} (document_id)"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to create DocumentChunks table: {e}")

@@ -26,10 +26,12 @@ from iris_vector_rag.storage.shape_resolver import TableShapeResolver
 from iris_vector_rag.storage.table_shape import (
     ColumnRole,
     IdentifierNotWritable,
+    NonCanonicalCreation,
     NotVectorSearchable,
     ShapeKind,
     TableNotFound,
     TableShape,
+    create_table_statement,
 )
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from tests.fixtures.shapes.ddl import (
@@ -545,3 +547,127 @@ def test_mixed_table_round_trip(store_for, shape_connection, clean_rows):
         except Exception:  # noqa: BLE001 - cleanup is advisory
             pass
         cursor.close()
+
+
+# --- US3: only one shape is ever created --------------------------------------
+
+
+def resolved(connection, schema: str, table: str) -> TableShape:
+    """The shape a table really has, read fresh."""
+    return TableShapeResolver(IRISCatalogReader(connection)).resolve(schema, table)
+
+
+@pytest.fixture
+def scratch_documents(monkeypatch, shape_connection):
+    """`SourceDocuments` in the scratch schema, dropped before and after.
+
+    The library creates `SourceDocuments` in the schema it is configured for, so this
+    exercises the real creation paths without touching the shared `RAG` table.
+    """
+    monkeypatch.setenv("IRIS_SCHEMA_PREFIX", SHAPE_SCHEMA)
+    monkeypatch.setenv(
+        "RAG_STORAGE__IRIS__TABLE_NAME", f"{SHAPE_SCHEMA}.SourceDocuments"
+    )
+
+    def drop():
+        cursor = shape_connection.cursor()
+        try:
+            cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.SourceDocuments")
+            shape_connection.commit()
+        except Exception:  # noqa: BLE001 - teardown is advisory
+            pass
+        cursor.close()
+
+    drop()
+    try:
+        yield "SourceDocuments"
+    finally:
+        drop()
+
+
+def test_every_creation_path_is_canonical(scratch_documents, shape_connection):
+    """SC-004: the two DDL emitters and the store's auto-create agree.
+
+    Two creation paths shipped two different tables under one name -- one with
+    `text_content`/`created_at`, one with `metadata VARCHAR(2000)` and
+    `created_timestamp` -- which is how a fresh instance came to have a shape the
+    library could not read back. Whatever created the table, its shape is the same.
+    """
+    from iris_vector_rag.storage.schema_manager import SchemaManager
+
+    config = ConfigurationManager()
+    manager = SchemaManager(ConnectionManager(config), config)
+
+    assert manager.ensure_table_schema(scratch_documents) is True
+    ensured = resolved(shape_connection, SHAPE_SCHEMA, scratch_documents)
+
+    cursor = shape_connection.cursor()
+    cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.{scratch_documents}")
+    shape_connection.commit()
+    cursor.close()
+
+    assert manager.migrate_table(scratch_documents) is True
+    migrated = resolved(shape_connection, SHAPE_SCHEMA, scratch_documents)
+
+    cursor = shape_connection.cursor()
+    cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.{scratch_documents}")
+    shape_connection.commit()
+    cursor.close()
+
+    store = IRISVectorStore(ConnectionManager(config), config)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+    auto_created = resolved(shape_connection, SHAPE_SCHEMA, scratch_documents)
+
+    assert ensured.is_canonical, sorted(ensured.columns)
+    assert migrated.is_canonical, sorted(migrated.columns)
+    assert auto_created.is_canonical, sorted(auto_created.columns)
+    assert ensured.columns == migrated.columns
+    assert ensured.columns == auto_created.columns
+
+
+def test_pointing_the_library_at_a_legacy_shape_alters_nothing(
+    monkeypatch, live_shapes, shape_connection, clean_rows
+):
+    """FR-007: a table someone else created is used as it is, not repaired.
+
+    Counted rather than argued: every statement the store sends is recorded, and none
+    of them may be DDL. An `ALTER TABLE` here is how a reported `varchar` for a
+    VECTOR column turned into a destroyed embedding column in the field.
+    """
+    for shape in SEARCHABLE_SHAPES:
+        monkeypatch.setenv(
+            "RAG_STORAGE__IRIS__TABLE_NAME", f"{SHAPE_SCHEMA}.{SHAPE_TABLES[shape]}"
+        )
+        config = ConfigurationManager()
+        connections = CountingConnections(ConnectionManager(config))
+        store = IRISVectorStore(connections, config)
+        clean_rows.append(store)
+
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        store.similarity_search_by_embedding(QUERY, 3)
+        store.fetch_documents_by_ids([doc.id for doc in DOCUMENTS])
+
+        ddl = [
+            sql
+            for sql in connections.statements
+            if sql.strip().upper().startswith(("ALTER", "DROP", "CREATE"))
+        ]
+        assert ddl == [], (shape, ddl)
+
+
+def test_creating_a_non_canonical_shape_is_refused(live_shapes):
+    """FR-006: the refusal names the table, on a shape read from the live catalog."""
+    for shape in ("fixture", "legacy_id", "legacy_serial", "mixed"):
+        with pytest.raises(NonCanonicalCreation) as raised:
+            create_table_statement(live_shapes[shape])
+        assert SHAPE_TABLES[shape] in str(raised.value), shape
+
+    # And the canonical shape renders, against the live table it describes.
+    statement = create_table_statement(
+        live_shapes["canonical"],
+        schema=SHAPE_SCHEMA,
+        table=SHAPE_TABLES["canonical"],
+    )
+    assert statement.startswith(
+        f"CREATE TABLE {SHAPE_SCHEMA}.{SHAPE_TABLES['canonical']} ("
+    )

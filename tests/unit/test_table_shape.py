@@ -20,17 +20,21 @@ import pytest
 
 from iris_vector_rag.storage.catalog import CatalogSnapshot, RecordedCatalog
 from iris_vector_rag.storage.table_shape import (
+    CANONICAL_CHUNK_SHAPE,
+    CANONICAL_DOCUMENT_SHAPE,
     ColumnFact,
     ColumnRole,
     IdentifierNotWritable,
+    NonCanonicalCreation,
     NotVectorSearchable,
     RoleNotPresent,
     ShapeKind,
     ShapeUnresolvable,
     TableShape,
     VectorSpec,
+    create_table_statement,
 )
-from tests.fixtures.shapes.ddl import SHAPE_SCHEMA, SHAPE_TABLES
+from tests.fixtures.shapes.ddl import SHAPE_SCHEMA, SHAPE_TABLES, create_statement
 
 # The Parameters string exactly as %Dictionary.CompiledProperty reports it for a
 # VECTOR(FLOAT, 384) column.
@@ -471,3 +475,107 @@ def _prop_row(sql_field_name, class_type, parameters=""):
         "Type": class_type,
         "Parameters": parameters,
     }
+
+
+# --- US3: the DDL a creation path emits is rendered from the canonical shape ---
+#
+# There is one statement per canonical table and it is derived, not typed: a literal
+# in the schema manager is how the two shapes of RAG.SourceDocuments came to exist in
+# the first place. These tests pin the rendered text exactly, because that text is
+# what a fresh instance ends up with.
+
+CANONICAL_DOCUMENT_DDL = """CREATE TABLE RAG.SourceDocuments (
+    doc_id VARCHAR(255) PRIMARY KEY,
+    title VARCHAR(1000),
+    abstract VARCHAR(MAX),
+    text_content VARCHAR(MAX),
+    authors VARCHAR(MAX),
+    keywords VARCHAR(MAX),
+    embedding VECTOR(FLOAT, 384),
+    metadata VARCHAR(2000),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)"""
+
+CANONICAL_CHUNK_DDL = """CREATE TABLE RAG.DocumentChunks (
+    doc_id VARCHAR(255) PRIMARY KEY,
+    document_id VARCHAR(255),
+    chunk_text VARCHAR(MAX),
+    chunk_embedding VECTOR(FLOAT, 384),
+    metadata VARCHAR(2000),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)"""
+
+
+def test_canonical_document_ddl_is_rendered_from_the_shape():
+    """The document table's statement comes from CANONICAL_DOCUMENT_SHAPE (FR-006)."""
+    assert create_table_statement(CANONICAL_DOCUMENT_SHAPE) == CANONICAL_DOCUMENT_DDL
+
+
+def test_canonical_chunk_ddl_is_rendered_from_the_shape():
+    """The chunk table's statement comes from CANONICAL_CHUNK_SHAPE (FR-006)."""
+    assert create_table_statement(CANONICAL_CHUNK_SHAPE) == CANONICAL_CHUNK_DDL
+
+
+def test_canonical_ddl_is_rendered_for_the_schema_and_table_asked_for():
+    """A caller with `IRIS_SCHEMA_PREFIX` set gets its own schema, same shape."""
+    statement = create_table_statement(
+        CANONICAL_DOCUMENT_SHAPE, schema="Other", table="Documents"
+    )
+    assert statement.startswith("CREATE TABLE Other.Documents (")
+    assert statement.splitlines()[1:] == CANONICAL_DOCUMENT_DDL.splitlines()[1:]
+
+
+def test_canonical_ddl_carries_the_vector_type_and_dimension_it_is_given():
+    """A configured 768-dimension DOUBLE table is still the canonical shape.
+
+    The element type and dimension are the two facts a deployment legitimately
+    varies; every column name and every other type stays derived.
+    """
+    statement = create_table_statement(
+        CANONICAL_DOCUMENT_SHAPE, vector=VectorSpec("DOUBLE", 768)
+    )
+    assert "    embedding VECTOR(DOUBLE, 768),\n" in statement
+    assert statement.count("VECTOR(") == 1
+
+
+def test_canonical_ddl_matches_the_recorded_canonical_fixture():
+    """The renderer and the fixture family describe the same table.
+
+    `tests/fixtures/shapes/ddl.py` is what the recorded snapshots were captured from,
+    so if these two ever disagree the fixtures stop describing what the library
+    creates -- which is the drift the recorded fixtures exist to catch.
+    """
+    rendered = create_table_statement(
+        CANONICAL_DOCUMENT_SHAPE, schema=SHAPE_SCHEMA, table=SHAPE_TABLES["canonical"]
+    )
+    fixture = create_statement("canonical", SHAPE_SCHEMA)
+    assert _normalised(rendered) == _normalised(fixture)
+
+
+def test_a_non_canonical_shape_is_refused_for_creation():
+    """Nothing may create a second shape of the document table (FR-006, FR-007)."""
+    snapshot = CatalogSnapshot(
+        schema="RAG",
+        table="Legacy",
+        class_name="RAG.Legacy",
+        columns=[
+            _col_row("id", "varchar", 1, length=255, nullable="NO"),
+            _col_row("content", "varchar", 2, length=2000),
+        ],
+        properties=[
+            _prop_row("id", "%Library.String"),
+            _prop_row("content", "%Library.String"),
+        ],
+        key_columns=["id"],
+    )
+    legacy = TableShape.from_snapshot(snapshot)
+    assert legacy.kind is not ShapeKind.CANONICAL
+
+    with pytest.raises(NonCanonicalCreation) as raised:
+        create_table_statement(legacy)
+
+    assert "RAG.Legacy" in str(raised.value)
+
+
+def _normalised(statement: str) -> str:
+    return " ".join(statement.split())

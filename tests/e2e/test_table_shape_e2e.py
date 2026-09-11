@@ -21,6 +21,7 @@ from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.storage.table_shape import ShapeKind
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from tests.fixtures.shapes.ddl import (
     SHAPE_SCHEMA,
@@ -148,3 +149,67 @@ def test_us2(legacy_pipeline):
         assert result["retrieved_documents"][0].id == "shape-e2e-warfarin"
 
     assert store.shapes.reads == 1
+
+
+@pytest.fixture
+def fresh_instance(monkeypatch):
+    """A schema with no document table, as a fresh install has.
+
+    The scratch schema stands in for the fresh instance: the library creates
+    `SourceDocuments` in whatever schema it is configured for, so this is the real
+    bootstrap path without dropping the shared `RAG` table.
+    """
+    monkeypatch.setenv("IRIS_SCHEMA_PREFIX", SHAPE_SCHEMA)
+    table = f"{SHAPE_SCHEMA}.SourceDocuments"
+    monkeypatch.setenv("RAG_STORAGE__IRIS__TABLE_NAME", table)
+
+    connection = get_iris_connection()
+
+    def drop():
+        cursor = connection.cursor()
+        try:
+            cursor.execute(f"DROP TABLE IF EXISTS {table}")
+            connection.commit()
+        except Exception:  # noqa: BLE001 - teardown is advisory
+            pass
+        cursor.close()
+
+    drop()
+    try:
+        yield table
+    finally:
+        drop()
+        connection.close()
+
+
+def test_us3(fresh_instance):
+    """A fresh instance bootstrapped through the pipeline has the canonical shape.
+
+    US3's claim end to end: the table the library creates for itself is the one it
+    describes as canonical, and it answers a real question on the first run -- no
+    migration step, no second shape.
+    """
+    llm_func = get_llm_func(provider="openai", model_name="gpt-4o-mini")
+    if not os.environ.get("OPENAI_API_KEY"):
+        pytest.skip("answer generation needs OPENAI_API_KEY")
+
+    config = ConfigurationManager()
+    connections = ConnectionManager(config)
+    pipeline = BasicRAGPipeline(
+        connection_manager=connections,
+        config_manager=config,
+        llm_func=llm_func,
+        vector_store=IRISVectorStore(connections, config),
+    )
+
+    pipeline.load_documents(documents=DOCUMENTS)
+
+    shape = pipeline.vector_store.shape()
+    assert shape.qualified_name == fresh_instance
+    assert shape.is_canonical, sorted(shape.columns)
+    assert shape.kind is ShapeKind.CANONICAL
+
+    result = pipeline.query(QUESTION, top_k=3)
+    assert result["error"] is None, result["error"]
+    assert result["retrieved_documents"][0].id == "shape-e2e-warfarin"
+    assert "four weeks" in result["answer"].lower(), result["answer"]

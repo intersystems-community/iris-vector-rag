@@ -141,17 +141,17 @@ fresh IRIS and compare the resulting shapes.
 
 ### Tests first
 
-- [ ] T039 [P] [US3] Unit test in `tests/unit/test_table_shape.py`: the DDL rendered from `CANONICAL_DOCUMENT_SHAPE` and `CANONICAL_CHUNK_SHAPE` matches the expected statement exactly, including vector element type and dimension
-- [ ] T040 [US3] Integration test `tests/integration/test_table_shape_six_shapes.py::test_every_creation_path_is_canonical` (SC-004): create the document table via `SchemaManager` and via the store's auto-create path on a fresh instance and assert the two resolved shapes are equal and canonical
-- [ ] T041 [US3] Integration test in the same file: pointing the library at each legacy shape performs no `ALTER TABLE` and no `DROP` (statement-counting proxy), and a request to create a non-canonical shape is refused with an error naming the table
-- [ ] T042 [US3] E2E test `tests/e2e/test_table_shape_e2e.py::test_us3`: fresh-instance bootstrap through the public entry point yields the canonical shape
+- [X] T039 [P] [US3] Unit test in `tests/unit/test_table_shape.py`: the DDL rendered from `CANONICAL_DOCUMENT_SHAPE` and `CANONICAL_CHUNK_SHAPE` matches the expected statement exactly, including vector element type and dimension
+- [X] T040 [US3] Integration test `tests/integration/test_table_shape_six_shapes.py::test_every_creation_path_is_canonical` (SC-004): create the document table via `SchemaManager` and via the store's auto-create path on a fresh instance and assert the two resolved shapes are equal and canonical
+- [X] T041 [US3] Integration test in the same file: pointing the library at each legacy shape performs no `ALTER TABLE` and no `DROP` (statement-counting proxy), and a request to create a non-canonical shape is refused with an error naming the table
+- [X] T042 [US3] E2E test `tests/e2e/test_table_shape_e2e.py::test_us3`: fresh-instance bootstrap through the public entry point yields the canonical shape
 
 ### Implementation
 
-- [ ] T043 [US3] Emit the canonical DDL in `iris_vector_rag/storage/schema_manager.py` from `CANONICAL_DOCUMENT_SHAPE` (replacing the literal at `:1157-1167`) and `CANONICAL_CHUNK_SHAPE` (replacing `:1324-1335`) (FR-006)
-- [ ] T044 [US3] Route `schema_manager.py`'s own catalog reads (`:209`, `:1109`, `:1260-1264`, `:1302`, `:1760`, `:1887-1890`, `:2245`, `:2255-2258`) through `IRISCatalogReader` / the resolver (FR-013)
-- [ ] T045 [US3] Make the alter paths explicit: refuse non-canonical creation, and require an explicit destructive-migration call rather than altering on the strength of a reported type (FR-007)
-- [ ] T046 [US3] Verify the US3 phase gate
+- [X] T043 [US3] Emit the canonical DDL in `iris_vector_rag/storage/schema_manager.py` from `CANONICAL_DOCUMENT_SHAPE` (replacing the literal at `:1157-1167`) and `CANONICAL_CHUNK_SHAPE` (replacing `:1324-1335`) (FR-006)
+- [X] T044 [US3] Route `schema_manager.py`'s own catalog reads (`:209`, `:1109`, `:1260-1264`, `:1302`, `:1760`, `:1887-1890`, `:2245`, `:2255-2258`) through `IRISCatalogReader` / the resolver (FR-013)
+- [X] T045 [US3] Make the alter paths explicit: refuse non-canonical creation, and require an explicit destructive-migration call rather than altering on the strength of a reported type (FR-007)
+- [X] T046 [US3] Verify the US3 phase gate
 
 ```accept
 # verifies: US3 gate -- canonical DDL is rendered from the canonical shape

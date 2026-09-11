@@ -66,6 +66,11 @@ TABLE_SQL = """
     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
 """
 
+INDEX_SQL = """
+    SELECT INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES
+    WHERE TABLE_NAME = ?
+"""
+
 
 @dataclass(frozen=True)
 class CatalogSnapshot:
@@ -149,6 +154,28 @@ class IRISCatalogReader:
             properties=properties,
             key_columns=keys,
         )
+
+    def index_names(self, table: str, cursor: Any = None) -> set[str]:
+        """The indexes declared on a table, upper-cased.
+
+        Not part of the `CatalogReader` protocol and not part of `TableShape`: a shape
+        describes columns, and nothing in the read or write path branches on whether an
+        index exists. It lives here because this module owns every `INFORMATION_SCHEMA`
+        query in the package, and the one caller -- index creation in the schema manager
+        -- needs the answer inside its own transaction, hence the optional cursor.
+        """
+        own_cursor = cursor is None
+        cursor = self._connection.cursor() if own_cursor else cursor
+        try:
+            return {
+                str(row["INDEX_NAME"]).upper()
+                for row in self._rows(cursor, INDEX_SQL, [table])
+            }
+        except Exception as exc:  # noqa: BLE001 - the driver error becomes the cause
+            raise CatalogUnavailable(f"index query failed: {exc}", "", table) from exc
+        finally:
+            if own_cursor:
+                _close(cursor)
 
     @staticmethod
     def _rows(cursor: Any, sql: str, params: Sequence[Any]) -> list[dict[str, Any]]:

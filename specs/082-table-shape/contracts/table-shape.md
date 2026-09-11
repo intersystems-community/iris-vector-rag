@@ -61,6 +61,14 @@ class TableShape:
 CANONICAL_DOCUMENT_SHAPE: TableShape   # the shape every creation path emits
 CANONICAL_CHUNK_SHAPE: TableShape
 
+def create_table_statement(
+    shape: TableShape,
+    *,
+    schema: str | None = None,
+    table: str | None = None,
+    vector: VectorSpec | None = None,
+) -> str: ...                          # the CREATE TABLE a canonical shape describes
+
 class TableShapeError(Exception): ...
 class TableNotFound(TableShapeError): ...
 class ShapeUnresolvable(TableShapeError): ...
@@ -68,6 +76,7 @@ class RoleNotPresent(TableShapeError): ...
 class NotVectorSearchable(TableShapeError): ...
 class IdentifierNotWritable(TableShapeError): ...
 class CatalogUnavailable(TableShapeError): ...
+class NonCanonicalCreation(TableShapeError): ...
 ```
 
 ```python
@@ -87,6 +96,9 @@ class CatalogReader(Protocol):
 class IRISCatalogReader:
     def __init__(self, connection: Any) -> None: ...
     def snapshot(self, schema: str, table: str) -> CatalogSnapshot | None: ...
+    def index_names(self, table: str, cursor: Any = None) -> set[str]: ...
+    # not on the protocol: a shape describes columns, and no read or write path
+    # branches on an index. It lives here because this module owns the catalog SQL.
 
 class RecordedCatalog:
     def __init__(self, snapshots: Mapping[tuple[str, str], CatalogSnapshot]) -> None: ...
@@ -159,7 +171,13 @@ class TableShapeResolver:
 12. **No implicit alter.** Nothing reachable from this module issues
     `ALTER TABLE`, `DROP`, or a create-if-different. Creation paths emit
     `CANONICAL_DOCUMENT_SHAPE` / `CANONICAL_CHUNK_SHAPE` and nothing else; a
-    non-canonical existing table is used as it is. (FR-006, FR-007)
+    non-canonical existing table is used as it is. `SchemaManager.migrate_table` is
+    the one destructive path, and it only runs when a caller names it. (FR-006,
+    FR-007) `create_table_statement` renders the `CREATE TABLE` from the shape, so a
+    creation path cannot type a second spelling of a table it claims is canonical:
+    only the vector element type and dimension may be supplied, and every column
+    name, order and type comes from the shape. A non-canonical shape raises
+    `NonCanonicalCreation` naming the table. (SC-004)
 
 ### Caching
 

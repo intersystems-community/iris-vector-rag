@@ -37,6 +37,7 @@ __all__ = [
     "ColumnFact",
     "ColumnRole",
     "IdentifierNotWritable",
+    "NonCanonicalCreation",
     "NotVectorSearchable",
     "RoleNotPresent",
     "ShapeKind",
@@ -45,6 +46,7 @@ __all__ = [
     "TableShape",
     "TableShapeError",
     "VectorSpec",
+    "create_table_statement",
 ]
 
 CANONICAL_VECTOR_TYPE = "FLOAT"
@@ -160,6 +162,10 @@ class IdentifierNotWritable(TableShapeError):
 
 class CatalogUnavailable(TableShapeError):
     """The catalog query itself failed; the driver error is the ``__cause__``."""
+
+
+class NonCanonicalCreation(TableShapeError):
+    """A creation path was handed a shape other than the canonical one."""
 
 
 # --- values -----------------------------------------------------------------
@@ -548,3 +554,93 @@ CANONICAL_CHUNK_SHAPE = _canonical_shape(
         ColumnFact("created_at", "timestamp", None, True, 6, "%Library.PosixTime"),
     ],
 )
+
+
+# --- rendering the canonical shape as DDL ------------------------------------
+
+
+def create_table_statement(
+    shape: TableShape,
+    *,
+    schema: Optional[str] = None,
+    table: Optional[str] = None,
+    vector: Optional[VectorSpec] = None,
+) -> str:
+    """Render the ``CREATE TABLE`` for a canonical shape.
+
+    Two hand-written literals for one table name are how a fresh instance came to
+    have a document table the library could not read back, so the statement is
+    derived from the shape a creation path claims to emit rather than typed next to
+    it. Only the vector element type and dimension may be supplied, because those
+    are the two facts a deployment legitimately varies; every column name, order and
+    type comes from the shape.
+
+    A non-canonical shape is refused: nothing in the package may create a second
+    shape of a document or chunk table (FR-006, FR-007).
+    """
+    if shape.kind is not ShapeKind.CANONICAL:
+        raise NonCanonicalCreation(
+            f"refusing to create a {shape.kind.value} shape; "
+            "only the canonical shape is created",
+            schema=schema or shape.schema,
+            table=table or shape.table,
+        )
+
+    name = f"{schema or shape.schema}.{table or shape.table}"
+    ordered = sorted(shape.columns.values(), key=lambda column: column.position)
+    keys = [column for column in ordered if column.is_key]
+
+    lines = [
+        f"    {column.name} {_column_definition(column, shape, vector, len(keys))}"
+        for column in ordered
+    ]
+    if len(keys) > 1:
+        lines.append(f"    PRIMARY KEY ({', '.join(column.name for column in keys)})")
+    body = ",\n".join(lines)
+    return f"CREATE TABLE {name} (\n{body}\n)"
+
+
+def _column_definition(
+    column: ColumnFact,
+    shape: TableShape,
+    vector: Optional[VectorSpec],
+    key_count: int,
+) -> str:
+    definition = _sql_type(column, shape, vector)
+    if column.name.lower() == CANONICAL_COLUMNS[ColumnRole.CREATED_AT]:
+        definition += " DEFAULT CURRENT_TIMESTAMP"
+    if column.is_key and key_count == 1:
+        definition += " PRIMARY KEY"
+    elif not column.nullable:
+        definition += " NOT NULL"
+    return definition
+
+
+def _sql_type(
+    column: ColumnFact, shape: TableShape, vector: Optional[VectorSpec]
+) -> str:
+    """The type as DDL, from the type the catalog reports for the same column.
+
+    `VARCHAR(MAX)` rather than `LONGVARCHAR` for long text: they are the same type in
+    IRIS, and it is the spelling the recorded shapes were captured from.
+    """
+    if column.vector is not None:
+        spec = vector or column.vector
+        return f"VECTOR({spec.element_type}, {spec.dimension})"
+    if column.is_long_text:
+        return "VARCHAR(MAX)"
+    if column.sql_type == "varchar":
+        if column.max_length is None:
+            raise ShapeUnresolvable(
+                f"column {column.name} is varchar with no length",
+                schema=shape.schema,
+                table=shape.table,
+            )
+        return f"VARCHAR({column.max_length})"
+    if column.sql_type in ("timestamp", "date", "integer", "bigint", "double"):
+        return column.sql_type.upper()
+    raise ShapeUnresolvable(
+        f"no DDL spelling for column {column.name} of type {column.sql_type}",
+        schema=shape.schema,
+        table=shape.table,
+    )
