@@ -8,9 +8,9 @@ Implements T015 from Feature 028.
 import time
 
 from tests.utils.schema_models import (
-    get_expected_rag_schema,
-    SchemaDefinition,
     ColumnType,
+    SchemaDefinition,
+    get_expected_rag_schema,
 )
 
 
@@ -68,6 +68,13 @@ class SchemaResetter:
         Returns:
             CREATE TABLE SQL statement
         """
+        # A library-owned table carries the statement the library itself emits. Built
+        # from the canonical shape, not rebuilt here: a reset that produced a
+        # different document table than the code under test creates is what left the
+        # session with a table vector search could not use (feature 082).
+        if schema_def.create_sql:
+            return schema_def.create_sql
+
         columns_sql = []
 
         for col in schema_def.columns:

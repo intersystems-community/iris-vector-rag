@@ -24,7 +24,17 @@ from ..exceptions import (
     VectorStoreConnectionError,
     VectorStoreDataError,
 )
+from .catalog import IRISCatalogReader
 from .clob_handler import ensure_string_content
+from .shape_resolver import TableShapeResolver
+from .table_shape import (
+    ColumnFact,
+    ColumnRole,
+    RoleNotPresent,
+    TableNotFound,
+    TableShape,
+    TableShapeError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +53,7 @@ class IRISVectorStore(VectorStore):
         connection_manager: Optional[ConnectionManager] = None,
         config_manager: Optional[ConfigurationManager] = None,
         schema_manager=None,
+        shapes: Optional[TableShapeResolver] = None,
         **kwargs,
     ):
         """
@@ -52,6 +63,9 @@ class IRISVectorStore(VectorStore):
             connection_manager: Manager for database connections (optional for testing)
             config_manager: Manager for configuration settings (optional for testing)
             schema_manager: Schema manager for table management (optional, will be created if not provided)
+            shapes: Resolver for this session's table shapes (optional). One is built
+                from this store's own connection on first use when not supplied; pass
+                a resolver over a `RecordedCatalog` to describe a shape in a test.
             **kwargs: Additional keyword arguments for compatibility
 
         Raises:
@@ -67,6 +81,12 @@ class IRISVectorStore(VectorStore):
             from ..core.connection import ConnectionManager
 
             self.connection_manager = ConnectionManager()
+        # Feature 082: one answer to "which column holds what", read from the
+        # database once per table. Resolved lazily so the constructor stays pure.
+        self.shapes = shapes
+        # Tables already warned about dropping metadata, by qualified name. One line
+        # per table is a warning; one line per document is a scrollback (FR-016).
+        self._metadata_drop_warned: set = set()
         self.config_manager = config_manager
         if self.config_manager is None:
             # Create a default config manager for testing
@@ -106,7 +126,7 @@ class IRISVectorStore(VectorStore):
                 self.connection_manager,
                 self.config_manager,
             )
-        table_short_name = self.table_name.replace("RAG.", "")
+        _, table_short_name = self._schema_and_table()
         self.vector_dimension = self.schema_manager.get_vector_dimension(
             table_short_name
         )
@@ -148,35 +168,72 @@ class IRISVectorStore(VectorStore):
             raise VectorStoreConnectionError(f"Failed to get IRIS connection: {e}")
         return self._connection
 
-    def _get_vector_data_type(self) -> str:
-        """
-        Detect actual vector column data type from IRIS metadata.
+    # ========================================================================
+    # Table shape (Feature 082)
+    # ========================================================================
 
-        Returns 'FLOAT' or 'DOUBLE'.
+    def _schema_and_table(self, table_name: Optional[str] = None) -> Tuple[str, str]:
+        """Split a table name; unqualified means the schema this store writes to.
+
+        That is the schema manager's prefix, not the literal "RAG": a caller who
+        configured `IRIS_SCHEMA_PREFIX` has one schema, and the shape must be read
+        from the table the store is actually writing to.
         """
+        name = self.table_name if table_name is None else table_name
+        if "." in name:
+            schema, _, table = name.partition(".")
+            return schema, table
+        return getattr(self.schema_manager, "schema_prefix", "RAG") or "RAG", name
+
+    def _shape_resolver(self) -> TableShapeResolver:
+        if self.shapes is None:
+            self.shapes = TableShapeResolver(IRISCatalogReader(self._get_connection()))
+        return self.shapes
+
+    def shape(self, cursor=None) -> TableShape:
+        """The physical shape of this store's table, read from the database once.
+
+        Every call site that used to derive a column name from a name list, a
+        configuration entry or an environment variable asks this instead, so a table
+        is written and read through the same column by construction.
+
+        Passing a cursor allows the table to be created if it does not exist yet,
+        which is what the write path wants and no read path does: a search against a
+        missing table must say so rather than quietly create one.
+        """
+        schema, table = self._schema_and_table()
+        resolver = self._shape_resolver()
         try:
-            connection = self._get_connection()
-            cursor = connection.cursor()
-            # Use IRIS system dictionary to find the actual datatype parameter
-            cursor.execute(
-                "SELECT Parameters FROM %Dictionary.CompiledProperty WHERE parent = ? AND Name = 'embedding'",
-                [self.table_name],
-            )
-            row = cursor.fetchone()
-            cursor.close()
-            if row and row[0]:
-                params = str(row[0])
-                if "DATATYPE,DOUBLE" in params:
-                    return "DOUBLE"
-                if "DATATYPE,FLOAT" in params:
-                    return "FLOAT"
-        except Exception as e:
-            logger.debug(
-                f"Failed to detect vector data type for {self.table_name}: {e}"
-            )
+            return resolver.resolve(schema, table)
+        except TableNotFound:
+            if cursor is None:
+                raise
+        # `_ensure_table_exists` invalidates what it changed, so the resolve below
+        # reads the table it just created. If creation failed this raises
+        # TableNotFound naming the table, which is the error the caller needs; the
+        # old code let the next statement fail instead.
+        self._ensure_table_exists(cursor)
+        return resolver.resolve(schema, table)
 
-        # Fallback to ENV or default
-        return os.environ.get("IRIS_VECTOR_DATA_TYPE") or "FLOAT"
+    def refresh_shape(self, table: Optional[str] = None) -> TableShape:
+        """Read a table's shape again, for a table changed outside this library.
+
+        The store invalidates its own DDL, so this is only needed when something
+        else altered the table under a running session. One call, one catalog read;
+        the shape it returns is the one every later operation will use.
+        """
+        schema, name = self._schema_and_table(table)
+        resolver = self._shape_resolver()
+        resolver.invalidate(schema, name)
+        return resolver.resolve(schema, name)
+
+    def _get_vector_data_type(self) -> str:
+        """The embedding column's element type, e.g. 'FLOAT' or 'DOUBLE'.
+
+        Deprecated since 0.15 and removed in 0.16: ask `shape().vector_spec()`. Kept
+        because `iris_vector_rag.pipelines.crag` still calls it.
+        """
+        return self.shape().vector_spec().element_type
 
     # ========================================================================
     # IRIS EMBEDDING Support Methods (Feature 051)
@@ -246,64 +303,40 @@ class IRISVectorStore(VectorStore):
 
     def get_embedding_column_metadata(self, table_name: str) -> List[Dict[str, Any]]:
         """
-        Get metadata about EMBEDDING columns in a table.
+        Get metadata about the vector column of this store's table.
+
+        Answered from the resolved shape rather than from `INFORMATION_SCHEMA`: a
+        `VECTOR(FLOAT, 384)` column is reported there as `varchar`, so the query this
+        replaced (`DATA_TYPE = 'EMBEDDING'`) matched nothing on any real table.
 
         Args:
-            table_name: Name of the table to query (e.g., "RAG.SourceDocuments")
+            table_name: Name of the table to query. Must be this store's table.
 
         Returns:
-            List of dictionaries with EMBEDDING column metadata
-
-        Raises:
-            VectorStoreConnectionError: If database query fails
+            A single-entry list describing the vector column, or an empty list if the
+            table has no vector column.
         """
-        if not self.use_iris_embedding:
-            logger.warning("IRIS EMBEDDING support not enabled for this vector store")
-            return []
-
-        connection = self._get_connection()
-        cursor = connection.cursor()
-
-        try:
-            # Query INFORMATION_SCHEMA for EMBEDDING columns
-            # Note: IRIS may require different system tables for this query
-            # This is a placeholder implementation
-            sql = """
-                SELECT
-                    COLUMN_NAME,
-                    DATA_TYPE,
-                    IS_NULLABLE
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_NAME = ?
-                AND DATA_TYPE = 'EMBEDDING'
-            """
-
-            # Extract short table name if fully qualified
-            short_table_name = table_name.split(".")[-1]
-            cursor.execute(sql, [short_table_name])
-            rows = cursor.fetchall()
-
-            columns = []
-            for row in rows:
-                columns.append(
-                    {
-                        "column_name": row[0],
-                        "data_type": row[1],
-                        "is_nullable": row[2] == "YES",
-                    }
-                )
-
-            logger.debug(f"Found {len(columns)} EMBEDDING columns in {table_name}")
-            return columns
-
-        except Exception as e:
-            # If INFORMATION_SCHEMA query fails, return empty list (table may not support EMBEDDING)
-            logger.debug(
-                f"Could not query EMBEDDING column metadata for {table_name}: {e}"
+        if table_name.split(".")[-1].lower() != self._schema_and_table()[1].lower():
+            logger.warning(
+                "get_embedding_column_metadata asked about %s but this store holds %s",
+                table_name,
+                self.table_name,
             )
             return []
-        finally:
-            cursor.close()
+
+        shape = self.shape()
+        column = shape.optional_column_for(ColumnRole.EMBEDDING)
+        if column is None or column.vector is None:
+            return []
+        return [
+            {
+                "column_name": column.name,
+                "data_type": "VECTOR",
+                "element_type": column.vector.element_type,
+                "dimension": column.vector.dimension,
+                "is_nullable": column.nullable,
+            }
+        ]
 
     def search_with_embedding(
         self,
@@ -364,7 +397,14 @@ class IRISVectorStore(VectorStore):
     # ========================================================================
 
     def _ensure_table_exists(self, cursor):
-        """Ensure the target table exists, creating it if necessary."""
+        """Ensure the target table exists, creating it if necessary.
+
+        Every DDL path in this store goes through here, and so does the one piece of
+        bookkeeping DDL owes the rest of the store: the cached shape of a table that
+        was just created describes nothing, so it is dropped here rather than at each
+        call site (feature 082, FR-006).
+        """
+        schema, table_short_name = self._schema_and_table()
         try:
             # Check if table exists by trying to query it
             cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
@@ -373,8 +413,8 @@ class IRISVectorStore(VectorStore):
             logger.info(f"Table {self.table_name} does not exist, creating it: {e}")
             try:
                 # Use schema manager to ensure proper table creation
-                table_short_name = self.table_name.replace("RAG.", "")
                 success = self.schema_manager.ensure_table_schema(table_short_name)
+                self._shape_resolver().invalidate(schema, table_short_name)
                 if success:
                     logger.info(f"✅ Successfully created table {self.table_name}")
                 else:
@@ -690,89 +730,62 @@ class IRISVectorStore(VectorStore):
         cursor = connection.cursor()
 
         try:
-            # Ensure table exists before any operations
-            self._ensure_table_exists(cursor)
-
-            # Determine actual schema columns for inserts
-            table_short_name = self.table_name.replace("RAG.", "")
-            cursor.execute(
-                """
-                SELECT COLUMN_NAME
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-                """,
-                ["RAG", table_short_name],
+            # The shape both proves the table exists (creating it if it does not) and
+            # names every column written below. A caller-supplied identifier aimed at
+            # a database-generated column fails here, before any SQL (FR-008).
+            shape = self.shape(cursor)
+            identifier = shape.writable_identifier()
+            text = shape.column_for(ColumnRole.TEXT)
+            metadata_column = shape.optional_column_for(ColumnRole.METADATA)
+            title_column = shape.optional_column_for(ColumnRole.TITLE)
+            vector = shape.vector_spec() if embeddings else None
+            embedding_column = (
+                shape.column_for(ColumnRole.EMBEDDING) if embeddings else None
             )
-            columns = {row[0].lower() for row in cursor.fetchall()}
-            id_column = "id" if "id" in columns else "doc_id"
-            text_column = (
-                "text_content"
-                if "text_content" in columns
-                else ("content" if "content" in columns else "text_content")
-            )
-            has_content_column = "content" in columns
-            has_source_column = "source" in columns
-            has_doc_id_column = "doc_id" in columns
-
-            # If embeddings are provided, ensure the table has the proper vector schema
-            if embeddings:
-                logger.debug(
-                    f"Embeddings provided: {len(embeddings)} embeddings - ensuring vector schema"
-                )
-                table_short_name = self.table_name.replace("RAG.", "")
-                # Force schema update to ensure embedding column exists
-                schema_success = self.schema_manager.ensure_table_schema(
-                    table_short_name
-                )
-                if not schema_success:
-                    logger.warning(
-                        f"Schema update may have failed for {self.table_name} - proceeding anyway"
-                    )
 
             added_ids = []
             logger.debug(
                 f"_store_documents called with {len(documents)} documents and embeddings: {embeddings is not None}"
             )
 
-            for i, doc in enumerate(documents):
-                metadata_json = json.dumps(doc.metadata)
-
-                # Check if document exists - use actual id column
-                check_sql = (
-                    f"SELECT COUNT(*) FROM {self.table_name} WHERE {id_column} = ?"
+            # The drop stays -- a table with no metadata column has nowhere to put it,
+            # and refusing the write would break every caller of such a table. It stops
+            # being silent (FR-016). Once per table: warning on every document is how a
+            # real warning gets scrolled past during a bulk ingest.
+            if (
+                metadata_column is None
+                and shape.qualified_name not in self._metadata_drop_warned
+                and any(document.metadata for document in documents)
+            ):
+                self._metadata_drop_warned.add(shape.qualified_name)
+                logger.warning(
+                    f"{shape.qualified_name} has no metadata column: the metadata on "
+                    f"these documents is being dropped, and filtering this table by "
+                    f"metadata will fail. Warned once per table."
                 )
-                cursor.execute(check_sql, [doc.id])
-                exists = cursor.fetchone()[0] > 0
 
-                # Always use insert_vector utility for consistent handling (it works with or without embeddings)
+            for i, doc in enumerate(documents):
+                # Only the canonical column for each role is written. A table that
+                # also carries the older spelling keeps it readable through the
+                # per-row fallback on the read path; writing both would create two
+                # copies of one fact that can disagree after an update (FR-003).
+                values: Dict[str, Any] = {text.name: doc.page_content}
+                if metadata_column is not None:
+                    values[metadata_column.name] = json.dumps(doc.metadata)
+                title = doc.metadata.get("title") or doc.metadata.get("source")
+                if title_column is not None and title:
+                    values[title_column.name] = title
+
                 if embeddings and len(embeddings) > i:
-                    logger.debug(
-                        f"Inserting document {doc.id} with embedding using insert_vector utility"
-                    )
-                    # Use the required insert_vector utility function for vector insertions/updates
-                    # Use doc_id and text_content per the actual IRIS schema
-                    additional_data = {
-                        text_column: doc.page_content,
-                        "metadata": metadata_json,
-                    }
-                    if has_content_column and "content" not in additional_data:
-                        additional_data["content"] = doc.page_content
-                    if has_source_column:
-                        additional_data["source"] = doc.metadata.get(
-                            "source", "unknown"
-                        )
-                    if has_doc_id_column and id_column != "doc_id":
-                        additional_data["doc_id"] = doc.id
-
                     success = insert_vector(
                         cursor=cursor,
                         table_name=self.table_name,
-                        vector_column="embedding",
+                        vector_column=embedding_column.name,
                         vector_data=embeddings[i],
-                        dimension=self.vector_dimension,
-                        key_columns={id_column: doc.id},
-                        additional_columns=additional_data,
-                        dtype=self._get_vector_data_type(),
+                        dimension=vector.dimension,
+                        key_columns={identifier.name: doc.id},
+                        additional_columns=values,
+                        dtype=vector.element_type,
                     )
                     if success:
                         added_ids.append(doc.id)
@@ -781,63 +794,51 @@ class IRISVectorStore(VectorStore):
                         )
                     else:
                         logger.error(f"Failed to upsert document {doc.id} with vector")
+                    continue
+
+                check_sql = (
+                    f"SELECT COUNT(*) FROM {self.table_name} "
+                    f"WHERE {identifier.name} = ?"
+                )
+                cursor.execute(check_sql, [doc.id])
+                exists = cursor.fetchone()[0] > 0
+
+                if exists:
+                    columns = list(values)
+                    update_sql = (
+                        f"UPDATE {self.table_name} SET "
+                        f"{', '.join(f'{column} = ?' for column in columns)} "
+                        f"WHERE {identifier.name} = ?"
+                    )
+                    cursor.execute(
+                        update_sql, [values[column] for column in columns] + [doc.id]
+                    )
+                    logger.debug(f"Updated existing document {doc.id} without vector")
                 else:
-                    # Insert without embedding - use correct schema (doc_id, text_content, metadata)
-                    if exists:
-                        set_columns = [text_column]
-                        params = [doc.page_content]
-                        if has_content_column and text_column != "content":
-                            set_columns.append("content")
-                            params.append(doc.page_content)
-                        if has_source_column:
-                            set_columns.append("source")
-                            params.append(doc.metadata.get("source", "unknown"))
-                        if has_doc_id_column and id_column != "doc_id":
-                            set_columns.append("doc_id")
-                            params.append(doc.id)
-                        set_columns.append("metadata")
-                        params.append(metadata_json)
+                    columns = [identifier.name] + list(values)
+                    insert_sql = (
+                        f"INSERT INTO {self.table_name} "
+                        f"({', '.join(columns)}) VALUES "
+                        f"({', '.join('?' for _ in columns)})"
+                    )
+                    cursor.execute(
+                        insert_sql,
+                        [doc.id] + [values[column] for column in list(values)],
+                    )
+                    logger.debug(f"Inserted new document {doc.id} without vector")
 
-                        update_sql = f"""
-                        UPDATE {self.table_name}
-                        SET {', '.join([f'{col} = ?' for col in set_columns])}
-                        WHERE {id_column} = ?
-                        """
-                        params.append(doc.id)
-                        cursor.execute(update_sql, params)
-                        logger.debug(
-                            f"Updated existing document {doc.id} without vector"
-                        )
-                    else:
-                        # Insert using correct schema
-                        insert_columns = [id_column, text_column]
-                        values = [doc.id, doc.page_content]
-                        if has_content_column and text_column != "content":
-                            insert_columns.append("content")
-                            values.append(doc.page_content)
-                        if has_source_column:
-                            insert_columns.append("source")
-                            values.append(doc.metadata.get("source", "unknown"))
-                        if has_doc_id_column and id_column != "doc_id":
-                            insert_columns.append("doc_id")
-                            values.append(doc.id)
-                        insert_columns.append("metadata")
-                        values.append(metadata_json)
-
-                        insert_sql = (
-                            f"INSERT INTO {self.table_name} "
-                            f"({', '.join(insert_columns)}) VALUES "
-                            f"({', '.join(['?' for _ in insert_columns])})"
-                        )
-                        cursor.execute(insert_sql, values)
-                        logger.debug(f"Inserted new document {doc.id} without vector")
-
-                    added_ids.append(doc.id)
+                added_ids.append(doc.id)
 
             connection.commit()
             logger.info(f"Successfully stored {len(added_ids)} documents")
             return added_ids
 
+        except TableShapeError:
+            # The shape errors already name the table and the real cause; wrapping
+            # them in a storage failure is what used to send callers looking a
+            # layer away for a problem in their own schema.
+            connection.rollback()
+            raise
         except Exception as e:
             connection.rollback()
             error_msg = self._sanitize_error_message(e, "document storage")
@@ -922,17 +923,6 @@ class IRISVectorStore(VectorStore):
         # Use the _store_documents method to handle the actual storage
         return self._store_documents(processed_documents, embeddings)
 
-    def _get_id_column(self, cursor) -> str:
-        table_parts = self.table_name.split(".")
-        schema = table_parts[0] if len(table_parts) > 1 else "RAG"
-        table = table_parts[-1]
-        cursor.execute(
-            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=?",
-            [schema, table],
-        )
-        columns = {row[0].lower() for row in cursor.fetchall()}
-        return "id" if "id" in columns else "doc_id"
-
     def delete_documents(self, ids: List[str]) -> bool:
         """
         Delete documents from the IRIS vector store by their IDs.
@@ -946,11 +936,12 @@ class IRISVectorStore(VectorStore):
         if not ids:
             return True
 
+        id_col = self.shape().column_for(ColumnRole.IDENTIFIER).name
+
         connection = self._get_connection()
         cursor = connection.cursor()
 
         try:
-            id_col = self._get_id_column(cursor)
             placeholders = ",".join(["?" for _ in ids])
             delete_sql = (
                 f"DELETE FROM {self.table_name} WHERE {id_col} IN ({placeholders})"
@@ -975,44 +966,18 @@ class IRISVectorStore(VectorStore):
 
     # Stream (LONGVARCHAR) metadata columns cannot be used with LIKE directly:
     # IRIS silently matches nothing. SUBSTRING projects the stream to a string.
-    _STREAM_METADATA_TYPES = ("longvarchar", "longvarbinary", "clob")
     _STREAM_METADATA_PROJECTION = 32000
 
-    def _metadata_filter_column_expr(
-        self, cursor, table_short_name: str, metadata_column: str
-    ) -> str:
-        """SQL expression for the metadata column that LIKE can evaluate."""
-        cache = getattr(self, "_metadata_column_exprs", None)
-        if cache is None:
-            cache = self._metadata_column_exprs = {}
-        key = (self.table_name, metadata_column)
-        if key in cache:
-            return cache[key]
-        schema = self.table_name.split(".")[0] if "." in self.table_name else "RAG"
-        expr = metadata_column
-        try:
-            cursor.execute(
-                """
-                SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = ? AND UPPER(TABLE_NAME) = UPPER(?)
-                  AND UPPER(COLUMN_NAME) = UPPER(?)
-                """,
-                [schema, table_short_name, metadata_column],
-            )
-            row = cursor.fetchone()
-            data_type = str(row[0]).lower() if row and row[0] else ""
-            if data_type in self._STREAM_METADATA_TYPES:
-                expr = (
-                    f"SUBSTRING({metadata_column},1,{self._STREAM_METADATA_PROJECTION})"
-                )
-        except (
-            Exception
-        ) as exc:  # pragma: no cover - defensive; fall back to the bare column
-            logger.debug(
-                "metadata column type lookup failed for %s: %s", metadata_column, exc
-            )
-        cache[key] = expr
-        return expr
+    def _metadata_filter_column_expr(self, metadata_column: ColumnFact) -> str:
+        """SQL expression for the metadata column that LIKE can evaluate.
+
+        The shape already knows whether the column is filterable, so this needs no
+        query of its own; before feature 082 it read the catalog once per column and
+        cached the answer itself (FR-005, FR-009).
+        """
+        if metadata_column.filterable_with_like:
+            return metadata_column.name
+        return f"SUBSTRING({metadata_column.name},1,{self._STREAM_METADATA_PROJECTION})"
 
     @staticmethod
     def _metadata_filter_predicate(filter: Dict[str, Any], metadata_expr: str) -> str:
@@ -1051,6 +1016,34 @@ class IRISVectorStore(VectorStore):
                 dropped += 1
         return kept, dropped
 
+    def _log_row_counts(self, cursor, embedding_column: str) -> None:
+        """Explain an empty result set by counting the rows (LOG-004, feature 033).
+
+        An empty result has two very different causes -- an empty table and a table
+        whose embeddings were never written -- and these two counts are what tells
+        them apart. They are read only when the search found nothing, because a
+        `COUNT(*)` over the whole table on every search is two extra round trips
+        buying an explanation nobody needs (SC-002). The embedding column is the one
+        the table has, passed in from the shape, so this diagnostic cannot name a
+        column the query did not use (FR-001).
+        """
+        try:
+            cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
+            total = cursor.fetchone()[0]
+            logger.debug(f"Total documents in {self.table_name}: {total}")
+
+            cursor.execute(
+                f"SELECT COUNT(*) FROM {self.table_name} "
+                f"WHERE {embedding_column} IS NOT NULL"
+            )
+            embedded = cursor.fetchone()[0]
+            logger.debug(f"Documents with embeddings: {embedded}")
+        except Exception as exc:
+            # Diagnostics never fail a search: the counts are here to explain a
+            # result, not to produce one.
+            logger.debug(f"Unable to count rows in {self.table_name}: {exc}")
+            logger.debug("Documents with embeddings: 0")
+
     def similarity_search_by_embedding(
         self,
         query_embedding: List[float],
@@ -1073,6 +1066,25 @@ class IRISVectorStore(VectorStore):
             self._validate_filter_keys(filter)
             self._validate_filter_values(filter)
 
+        # Resolved before the cursor is opened, so a table that cannot answer a
+        # vector search says so instead of failing inside a SQL error several
+        # layers away, and so these errors are not caught by the handler below.
+        shape = self.shape()
+        vector = shape.vector_spec()
+        identifier = shape.column_for(ColumnRole.IDENTIFIER)
+        text = shape.column_for(ColumnRole.TEXT)
+        legacy_text = shape.legacy_column_for(ColumnRole.TEXT)
+        metadata_column = shape.optional_column_for(ColumnRole.METADATA)
+
+        if len(query_embedding) != vector.dimension:
+            error_msg = (
+                f"query embedding has {len(query_embedding)} dimensions but "
+                f"{shape.qualified_name}.{shape.column_for(ColumnRole.EMBEDDING).name} "
+                f"holds {vector.dimension}"
+            )
+            logger.error(error_msg)
+            raise VectorStoreDataError(error_msg)
+
         connection = self._get_connection()
         cursor = connection.cursor()
 
@@ -1083,107 +1095,30 @@ class IRISVectorStore(VectorStore):
                 execute_safe_vector_search,
             )
 
-            # Build metadata filter clause if needed
             additional_where = None
-            filter_conditions = []
-
-            # Get current vector dimension from schema manager
-            table_short_name = self.table_name.replace("RAG.", "")
-            schema_config = (
-                self.schema_manager.get_current_schema_config(table_short_name) or {}
-            )
-            if not schema_config:
-                try:
-                    cursor.execute(
-                        """
-                        SELECT COLUMN_NAME
-                        FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE TABLE_SCHEMA = ? AND UPPER(TABLE_NAME) = UPPER(?)
-                        """,
-                        ["RAG", table_short_name],
-                    )
-                    columns = {row[0].lower() for row in cursor.fetchall()}
-                except Exception:
-                    columns = set()
-                schema_config = {
-                    "id_column": (
-                        "id"
-                        if "id" in columns
-                        else ("doc_id" if "doc_id" in columns else "doc_id")
-                    ),
-                    "text_column": (
-                        "content"
-                        if "content" in columns
-                        else (
-                            "text_content"
-                            if "text_content" in columns
-                            else "text_content"
-                        )
-                    ),
-                    "metadata_column": (
-                        "metadata"
-                        if "metadata" in columns
-                        else (
-                            "metadata_json"
-                            if "metadata_json" in columns
-                            else "metadata"
-                        )
-                    ),
-                }
-
-            id_column = schema_config.get("id_column", "doc_id")
-            text_column = schema_config.get("text_column", "text_content")
-            metadata_column = schema_config.get("metadata_column", "metadata")
-
             if filter:
+                # A filter this table cannot apply is an error, not an empty page:
+                # silence here is indistinguishable from a scope that genuinely holds
+                # no rows (FR-016).
+                if metadata_column is None:
+                    raise RoleNotPresent(
+                        "a metadata filter was supplied but this table has no metadata "
+                        f"column, so the filter cannot be applied (filter keys: "
+                        f"{sorted(filter)})",
+                        shape.schema,
+                        shape.table,
+                    )
                 # Push the filter into SQL so recall is scoped to the filtered
                 # subset instead of to a global page (opsreview upstream report:
                 # docs/upstream/ivr-metadata-filter-pushdown.md).
-                metadata_expr = self._metadata_filter_column_expr(
-                    cursor, table_short_name, metadata_column
-                )
                 additional_where = self._metadata_filter_predicate(
-                    filter, metadata_expr
+                    filter, self._metadata_filter_column_expr(metadata_column)
                 )
-
-            try:
-                expected_dimension = self.schema_manager.get_vector_dimension(
-                    table_short_name
-                )
-            except Exception:
-                expected_dimension = len(query_embedding)
-
-            # Use data type from actual table metadata if available, fallback to ENV or FLOAT
-            vector_data_type = self._get_vector_data_type()
-
-            # Validate query embedding dimension matches expected
-            if len(query_embedding) != expected_dimension:
-                error_msg = f"Query embedding dimension {len(query_embedding)} doesn't match expected {expected_dimension} for table {table_short_name}"
-                logger.error(error_msg)
-                raise VectorStoreDataError(error_msg)
 
             logger.debug(f"Query embedding dimensions: {len(query_embedding)}")
             logger.debug(f"Top-K parameter: {top_k}")
 
-            try:
-                cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
-                total_docs = cursor.fetchone()[0]
-                logger.debug(f"Total documents in {self.table_name}: {total_docs}")
-
-                cursor.execute(
-                    f"SELECT COUNT(*) FROM {self.table_name} WHERE embedding IS NOT NULL"
-                )
-                embedded_docs = cursor.fetchone()[0]
-                logger.debug(f"Documents with embeddings: {embedded_docs}")
-            except Exception as exc:
-                logger.debug(
-                    f"Unable to fetch document counts for {self.table_name}: {exc}"
-                )
-                logger.debug("Documents with embeddings: 0")
-
-            logger.debug(
-                f"Vector search: query={len(query_embedding)}D, expected={expected_dimension}D, table={table_short_name}"
-            )
+            embedding_column = shape.column_for(ColumnRole.EMBEDDING).name
 
             # The filter is applied in SQL; the page is top_k. The exact-match
             # check below is only a backstop for LIKE approximations and widens
@@ -1194,59 +1129,42 @@ class IRISVectorStore(VectorStore):
             # IMPORTANT: TO_VECTOR() does NOT accept parameter markers
             embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
 
-            def _build_sql(page_size: int, data_type: str) -> str:
+            # The older spelling of the text column is selected alongside the
+            # canonical one on a mixed table, so a row written before 0.15 can be
+            # presented from whichever column actually holds its text (FR-004).
+            text_columns = [text.name]
+            if legacy_text is not None:
+                text_columns.append(legacy_text.name)
+
+            def _build_sql(page_size: int) -> str:
                 return build_safe_vector_dot_sql(
                     table=self.table_name,
-                    vector_column="embedding",
+                    vector_column=embedding_column,
                     vector_string=embedding_str,
-                    vector_dimension=expected_dimension,
-                    id_column=id_column,
-                    extra_columns=[text_column],
+                    vector_dimension=vector.dimension,
+                    id_column=identifier.name,
+                    extra_columns=text_columns,
                     top_k=page_size,
                     additional_where=additional_where,
-                    vector_data_type=data_type,
+                    vector_data_type=vector.element_type,
                 )
 
             def _fetch_page(page_size: int):
                 """Run the ranked query for one page and load its metadata."""
-                sql = _build_sql(page_size, vector_data_type)
+                sql = _build_sql(page_size)
                 logger.debug(f"SQL query executed: {sql}")
-                try:
-                    page_rows = execute_safe_vector_search(cursor, sql)
-                except Exception as e:
-                    error_text = str(e)
-                    if "Table" in error_text and "not found" in error_text:
-                        logger.info(
-                            f"Table {self.table_name} not found, attempting to create it automatically"
-                        )
-                        self._create_table_automatically()
-                        page_rows = execute_safe_vector_search(cursor, sql)
-                    elif "different datatypes" in error_text.lower():
-                        # Retry with alternate vector data type (FLOAT <-> DOUBLE)
-                        fallback_type = (
-                            "DOUBLE" if vector_data_type.upper() == "FLOAT" else "FLOAT"
-                        )
-                        logger.warning(
-                            "Vector datatype mismatch detected; retrying with %s",
-                            fallback_type,
-                        )
-                        page_rows = execute_safe_vector_search(
-                            cursor, _build_sql(page_size, fallback_type)
-                        )
-                    else:
-                        logger.error(f"Vector search SQL that failed: {sql[:500]}...")
-                        logger.error(f"Error details: {type(e).__name__}: {e}")
-                        raise
+                page_rows = execute_safe_vector_search(cursor, sql)
 
                 page_metadata = {}
-                if page_rows:
+                if page_rows and metadata_column is not None:
                     # Handle Mock objects that aren't iterable
                     try:
                         doc_ids = [row[0] for row in page_rows]
                         placeholders = ",".join(["?" for _ in doc_ids])
                         metadata_sql = (
-                            f"SELECT {id_column}, {metadata_column} FROM {self.table_name} "
-                            f"WHERE {id_column} IN ({placeholders})"
+                            f"SELECT {identifier.name}, {metadata_column.name} "
+                            f"FROM {self.table_name} "
+                            f"WHERE {identifier.name} IN ({placeholders})"
                         )
                         cursor.execute(metadata_sql, doc_ids)
                         for doc_id, metadata_json in cursor.fetchall():
@@ -1308,14 +1226,16 @@ class IRISVectorStore(VectorStore):
                 return []
 
             for row in rows:
-                doc_id, content, similarity_score = row
+                doc_id, similarity_score = row[0], row[-1]
+                # One presented form regardless of which column holds the text:
+                # the canonical column when it is populated, the older spelling
+                # otherwise (FR-004). Column order follows `text_columns`.
+                content = next(
+                    (value for value in row[1:-1] if value not in (None, "")), ""
+                )
 
                 # Get metadata from the map
-                metadata_json = (
-                    metadata_map.get(doc_id, None)
-                    if "metadata_map" in locals()
-                    else None
-                )
+                metadata_json = metadata_map.get(doc_id, None)
 
                 # Process row data to ensure string content
                 document_data = {
@@ -1346,6 +1266,7 @@ class IRISVectorStore(VectorStore):
                 if result_count == 0:
                     logger.info("Vector search returned 0 results")
                     logger.debug("Similarity scores: []")
+                    self._log_row_counts(cursor, embedding_column)
                 else:
                     logger.debug(f"Vector search returned {result_count} results")
                     similarity_scores = [score for _, score in results]
@@ -1357,6 +1278,11 @@ class IRISVectorStore(VectorStore):
                 )
             return results
 
+        except TableShapeError:
+            # A shape problem is a statement about the table, not about the
+            # connection. Wrapping it in VectorStoreConnectionError would rename the
+            # one thing the caller needs to read (FR-016).
+            raise
         except Exception as e:
             logger.info("Vector search returned 0 results")
             logger.debug("Similarity scores: []")
@@ -1366,69 +1292,48 @@ class IRISVectorStore(VectorStore):
         finally:
             cursor.close()
 
-    def _create_table_automatically(self):
+    def _read_columns(self) -> List[str]:
+        """The columns a plain read selects, in order.
+
+        Identifier, then the text column and the older spelling of it where the
+        table carries both, then metadata where the table has it.
         """
-        Create the required table automatically using schema manager.
+        shape = self.shape()
+        columns = [
+            shape.column_for(ColumnRole.IDENTIFIER).name,
+            shape.column_for(ColumnRole.TEXT).name,
+        ]
+        legacy_text = shape.legacy_column_for(ColumnRole.TEXT)
+        if legacy_text is not None:
+            columns.append(legacy_text.name)
+        metadata = shape.optional_column_for(ColumnRole.METADATA)
+        if metadata is not None:
+            columns.append(metadata.name)
+        return columns
 
-        This method uses the schema manager to create the table with the correct
-        schema based on the table name and configuration.
-        """
-        try:
-            logger.info(f"Creating table {self.table_name} automatically")
+    def _documents_from_rows(self, rows, columns: List[str]) -> List[Document]:
+        """Rows selected through `_read_columns`, presented as documents."""
+        metadata = self.shape().optional_column_for(ColumnRole.METADATA)
+        metadata_index = columns.index(metadata.name) if metadata is not None else None
+        text_end = len(columns) if metadata_index is None else metadata_index
 
-            # Get the table short name (without RAG. prefix)
-            table_short_name = self.table_name.replace("RAG.", "")
-
-            # Get expected configuration for this table
-            expected_config = self.schema_manager._get_expected_schema_config(
-                table_short_name
+        documents = []
+        for row in rows:
+            text = next(
+                (value for value in row[1:text_end] if value not in (None, "")), ""
             )
-
-            # Get a connection and cursor
-            connection = self._get_connection()
-            cursor = connection.cursor()
-
-            try:
-                # Use the schema manager's migration method to create the table
-                if table_short_name == "SourceDocuments":
-                    success = self.schema_manager._migrate_source_documents_table(
-                        cursor, expected_config, preserve_data=False
-                    )
-                elif table_short_name == "DocumentTokenEmbeddings":
-                    success = (
-                        self.schema_manager._migrate_document_token_embeddings_table(
-                            cursor, expected_config, preserve_data=False
-                        )
-                    )
-                elif table_short_name == "DocumentEntities":
-                    success = self.schema_manager._migrate_document_entities_table(
-                        cursor, expected_config, preserve_data=False
-                    )
-                elif table_short_name == "KnowledgeGraphNodes":
-                    success = self.schema_manager._migrate_knowledge_graph_nodes_table(
-                        cursor, expected_config, preserve_data=False
-                    )
-                elif table_short_name == "KnowledgeGraphEdges":
-                    success = self.schema_manager._migrate_knowledge_graph_edges_table(
-                        cursor, expected_config, preserve_data=False
-                    )
-                else:
-                    logger.warning(
-                        f"Unknown table type: {table_short_name}, cannot create automatically"
-                    )
-                    success = False
-
-                if success:
-                    logger.info(f"Successfully created table {self.table_name}")
-                else:
-                    logger.error(f"Failed to create table {self.table_name}")
-
-            finally:
-                cursor.close()
-
-        except Exception as e:
-            logger.error(f"Error creating table {self.table_name}: {e}")
-            # Don't re-raise the error, let the original operation fail with the original error
+            documents.append(
+                self._ensure_string_content(
+                    {
+                        "doc_id": row[0],
+                        "text_content": text,
+                        "metadata": (
+                            None if metadata_index is None else row[metadata_index]
+                        ),
+                    }
+                )
+            )
+        return documents
 
     def fetch_documents_by_ids(self, ids: List[str]) -> List[Document]:
         """
@@ -1443,67 +1348,23 @@ class IRISVectorStore(VectorStore):
         if not ids:
             return []
 
+        columns = self._read_columns()
+
         connection = self._get_connection()
         cursor = connection.cursor()
 
         try:
             placeholders = ",".join(["?" for _ in ids])
-
-            # Try new schema first (doc_id, text_content)
-            try:
-                select_sql = f"""
-                SELECT doc_id, text_content, metadata
-                FROM {self.table_name}
-                WHERE doc_id IN ({placeholders})
-                """
-                cursor.execute(select_sql, ids)
-                rows = cursor.fetchall()
-
-                documents = []
-                for row in rows:
-                    doc_id, text_content, metadata_json = row
-                    document_data = {
-                        "doc_id": doc_id,
-                        "text_content": text_content,
-                        "metadata": metadata_json,
-                    }
-                    document = self._ensure_string_content(document_data)
-                    documents.append(document)
-
-                logger.debug(
-                    f"Fetched {len(documents)} documents by IDs using new schema"
-                )
-                return documents
-
-            except Exception as new_schema_error:
-                # Fallback to simple schema (id, content)
-                if "not found in the applicable tables" in str(new_schema_error):
-                    logger.debug("Falling back to simple schema (id, content)")
-                    select_sql = f"""
-                    SELECT id, content, metadata
-                    FROM {self.table_name}
-                    WHERE id IN ({placeholders})
-                    """
-                    cursor.execute(select_sql, ids)
-                    rows = cursor.fetchall()
-
-                    documents = []
-                    for row in rows:
-                        doc_id, text_content, metadata_json = row
-                        document_data = {
-                            "doc_id": doc_id,
-                            "text_content": text_content,
-                            "metadata": metadata_json,
-                        }
-                        document = self._ensure_string_content(document_data)
-                        documents.append(document)
-
-                    logger.debug(
-                        f"Fetched {len(documents)} documents by IDs using simple schema"
-                    )
-                    return documents
-                else:
-                    raise
+            # One statement, built from the shape. The canonical-then-legacy retry
+            # this replaces guessed at the schema by letting a statement fail.
+            select_sql = (
+                f"SELECT {', '.join(columns)} FROM {self.table_name} "
+                f"WHERE {columns[0]} IN ({placeholders})"
+            )
+            cursor.execute(select_sql, ids)
+            documents = self._documents_from_rows(cursor.fetchall(), columns)
+            logger.debug(f"Fetched {len(documents)} documents by IDs")
+            return documents
 
         except Exception as e:
             sanitized_error = self._sanitize_error_message(e, "fetch_documents_by_ids")
@@ -1544,57 +1405,16 @@ class IRISVectorStore(VectorStore):
         Returns:
             List of all Document objects in the store
         """
+        columns = self._read_columns()
+
         connection = self._get_connection()
         cursor = connection.cursor()
 
         try:
-            # Try new schema first (doc_id, text_content)
-            try:
-                cursor.execute(
-                    f"SELECT doc_id, text_content, metadata FROM {self.table_name}"
-                )
-                rows = cursor.fetchall()
-
-                documents = []
-                for row in rows:
-                    doc_id, text_content, metadata_json = row
-                    document_data = {
-                        "doc_id": doc_id,
-                        "text_content": text_content,
-                        "metadata": metadata_json,
-                    }
-                    document = self._ensure_string_content(document_data)
-                    documents.append(document)
-
-                logger.debug(f"Retrieved {len(documents)} documents using new schema")
-                return documents
-
-            except Exception as new_schema_error:
-                # Fallback to simple schema (id, content)
-                if "not found in the applicable tables" in str(new_schema_error):
-                    logger.debug("Falling back to simple schema for get_all_documents")
-                    cursor.execute(
-                        f"SELECT id, content, metadata FROM {self.table_name}"
-                    )
-                    rows = cursor.fetchall()
-
-                    documents = []
-                    for row in rows:
-                        doc_id, text_content, metadata_json = row
-                        document_data = {
-                            "doc_id": doc_id,
-                            "text_content": text_content,
-                            "metadata": metadata_json,
-                        }
-                        document = self._ensure_string_content(document_data)
-                        documents.append(document)
-
-                    logger.debug(
-                        f"Retrieved {len(documents)} documents using simple schema"
-                    )
-                    return documents
-                else:
-                    raise
+            cursor.execute(f"SELECT {', '.join(columns)} FROM {self.table_name}")
+            documents = self._documents_from_rows(cursor.fetchall(), columns)
+            logger.debug(f"Retrieved {len(documents)} documents")
+            return documents
 
         except Exception as e:
             sanitized_error = self._sanitize_error_message(e, "get_all_documents")

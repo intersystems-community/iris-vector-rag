@@ -6,65 +6,42 @@ Tests confidence-based retrieval, corrective actions, and knowledge refinement.
 """
 
 import pytest
+
+from iris_vector_rag.common.iris_connection_manager import get_iris_connection
+from iris_vector_rag.common.utils import get_embedding_func, get_llm_func
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.storage.schema_manager import SchemaManager
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
-from iris_vector_rag.common.utils import get_llm_func, get_embedding_func
-from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
 
 @pytest.fixture(scope="session", autouse=True)
 def clean_database_once():
-    """Drop and recreate tables at session start with correct DOUBLE schema."""
-    import os
+    """Empty document and chunk tables, created by the library's own path.
 
-    os.environ["IRIS_VECTOR_DATA_TYPE"] = "DOUBLE"
+    This used to hand-write both tables with `VECTOR(DOUBLE, 384)` columns and export
+    `IRIS_VECTOR_DATA_TYPE=DOUBLE` for the rest of the session. That was a second
+    account of what these tables look like, and it disagreed with the first: the shape
+    the library calls canonical has a `VECTOR(FLOAT, n)` embedding, so every later test
+    in the same session -- including the one asserting a fresh instance bootstraps
+    canonically -- saw tables this fixture had made non-canonical.
+    """
+    config_manager = ConfigurationManager()
+    connection_manager = ConnectionManager(config_manager)
+    schema_manager = SchemaManager(connection_manager, config_manager)
+
     conn = get_iris_connection()
     cursor = conn.cursor()
-
-    # Drop tables completely
     cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks CASCADE")
     cursor.execute("DROP TABLE IF EXISTS RAG.SourceDocuments CASCADE")
     conn.commit()
-
-    # Recreate with DOUBLE datatype
-    cursor.execute("""
-    CREATE TABLE RAG.SourceDocuments (
-        doc_id VARCHAR(255) PRIMARY KEY,
-        text_content TEXT,
-        metadata TEXT,
-        embedding VECTOR(DOUBLE, 384),
-        created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-    cursor.execute(
-        "CREATE INDEX idx_hnsw_source_embedding ON RAG.SourceDocuments (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')"
-    )
-
-    cursor.execute("""
-    CREATE TABLE RAG.DocumentChunks (
-        id VARCHAR(255) PRIMARY KEY,
-        chunk_id VARCHAR(255),
-        doc_id VARCHAR(255),
-        chunk_text TEXT,
-        chunk_embedding VECTOR(DOUBLE, 384),
-        chunk_index INTEGER,
-        chunk_type VARCHAR(100),
-        metadata TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
-    )
-    """)
-    cursor.execute("CREATE INDEX idx_chunks_doc_id ON RAG.DocumentChunks (doc_id)")
-    cursor.execute("CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)")
-    cursor.execute(
-        "CREATE INDEX idx_hnsw_chunk_embedding ON RAG.DocumentChunks (chunk_embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')"
-    )
-
-    conn.commit()
     cursor.close()
+
+    assert schema_manager.ensure_table_schema("SourceDocuments")
+    assert schema_manager.ensure_table_schema("DocumentChunks")
+    schema_manager.ensure_all_vector_indexes()
     yield
 
 

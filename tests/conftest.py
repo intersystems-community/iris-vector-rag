@@ -992,3 +992,26 @@ def performance_monitor():
             }
 
     return PerformanceMonitor()
+
+
+# --- Feature 082: recorded table shapes -------------------------------------
+
+
+@pytest.fixture(scope="session")
+def shape_fixtures() -> Path:
+    """Directory holding the six recorded catalog snapshots.
+
+    Regenerate with `python scripts/dev/capture_shape_fixtures.py`.
+    """
+    path = Path(__file__).parent / "fixtures" / "shapes"
+    if not path.is_dir():
+        pytest.fail(f"recorded shape fixtures missing at {path}")
+    return path
+
+
+@pytest.fixture
+def recorded_catalog(shape_fixtures: Path):
+    """A `RecordedCatalog` over the six recorded shapes."""
+    from iris_vector_rag.storage.catalog import RecordedCatalog
+
+    return RecordedCatalog.from_fixture_dir(shape_fixtures)

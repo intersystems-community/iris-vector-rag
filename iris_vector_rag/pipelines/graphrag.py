@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 from ..services.entity_extraction import EntityExtractionService
 from ..storage.schema_manager import SchemaManager
+from ..storage.table_shape import ColumnRole, TableShape
 
 logger = logging.getLogger(__name__)
 
@@ -328,27 +329,45 @@ class GraphRAGPipeline(RAGPipeline):
 
         return visited
 
+    def _document_shape(self) -> TableShape:
+        """The document table as the vector store describes it.
+
+        Asked of the store rather than resolved again here: the store wrote the rows
+        this join reads, so taking the column names from anywhere else is how the two
+        come to disagree (FR-012).
+        """
+        return self.vector_store.shape()
+
     def _get_documents_from_entities(
         self, entity_ids: Set[str], top_k: int
     ) -> List[Document]:
         if not entity_ids:
             return []
+        shape = self._document_shape()
+        identifier = shape.column_for(ColumnRole.IDENTIFIER).name
+        text = shape.column_for(ColumnRole.TEXT).name
+        metadata_column = shape.optional_column_for(ColumnRole.METADATA)
+
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
         docs = []
         entity_list = list(entity_ids)[:50]
         placeholders = ",".join(["?" for _ in entity_list])
+        selected = [f"sd.{identifier}", f"sd.{text}"]
+        if metadata_column is not None:
+            selected.append(f"sd.{metadata_column.name}")
         sql = (
-            f"SELECT DISTINCT sd.doc_id, sd.text_content, sd.metadata "
-            f"FROM RAG.SourceDocuments sd "
-            f"JOIN RAG.Entities e ON sd.doc_id = e.source_doc_id "
+            f"SELECT DISTINCT {', '.join(selected)} "
+            f"FROM {shape.qualified_name} sd "
+            f"JOIN {shape.schema}.Entities e ON sd.{identifier} = e.source_doc_id "
             f"WHERE e.entity_id IN ({placeholders}) "
-            f"ORDER BY sd.doc_id"
+            f"ORDER BY sd.{identifier}"
         )
         try:
             cursor.execute(sql, entity_list)
             for row in cursor.fetchall():
-                metadata = json.loads(self._read_iris_data(row[2])) if row[2] else {}
+                raw = row[2] if metadata_column is not None else None
+                metadata = json.loads(self._read_iris_data(raw)) if raw else {}
                 docs.append(
                     Document(
                         id=str(row[0]),
@@ -360,6 +379,8 @@ class GraphRAGPipeline(RAGPipeline):
                     break
         except Exception as e:
             logger.error(f"Database error getting docs: {e}")
+        finally:
+            cursor.close()
         return docs
 
     def _fallback_to_vector_search(self, query_text: str, top_k: int) -> List[Document]:

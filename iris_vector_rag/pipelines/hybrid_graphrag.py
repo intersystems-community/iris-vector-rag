@@ -15,6 +15,9 @@ from typing import Any, Callable, Dict, List, Optional, TypedDict
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
 from ..core.models import Document
+from ..storage.catalog import IRISCatalogReader
+from ..storage.shape_resolver import TableShapeResolver
+from ..storage.table_shape import ColumnRole, TableShape
 from .graphrag import GraphRAGPipeline
 from .hybrid_graphrag_discovery import GraphCoreDiscovery
 from .hybrid_graphrag_retrieval import HybridRetrievalMethods
@@ -61,6 +64,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         schema_manager=None,
         embedding_config: Optional[str] = None,
         executor=None,
+        shapes: Optional[TableShapeResolver] = None,
     ):
         super().__init__(
             connection_manager,
@@ -94,6 +98,10 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         self.vector_optimizer = None
 
         self._attached_corpora: Dict[str, AttachResult] = {}
+
+        # Injectable so a test can describe a table without a database; built from the
+        # graph engine's own connection on first use otherwise.
+        self.shapes = shapes
 
         # Initialize graph core integration
         self._initialize_graph_core()
@@ -177,45 +185,86 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         embedding_config = self.config_manager.get_embedding_config()
         return int(embedding_config.get("dimension") or 384)
 
+    def _catalog_connection(self):
+        """The connection the catalog is read on.
+
+        The graph engine's connection when there is one, so a corpus attached inside
+        the engine's session is described by that same session.
+        """
+        engine = getattr(self, "iris_engine", None)
+        if engine is not None and getattr(engine, "conn", None) is not None:
+            return engine.conn
+        return self.connection_manager.get_connection()
+
+    def _shape_resolver(self) -> TableShapeResolver:
+        shapes = getattr(self, "shapes", None)
+        if shapes is None:
+            shapes = TableShapeResolver(IRISCatalogReader(self._catalog_connection()))
+            self.shapes = shapes
+        return shapes
+
+    def _corpus_shape(self, source_table: str) -> TableShape:
+        """What the table being attached actually carries.
+
+        `SQLUser` for an unqualified name because that is the schema IRIS itself
+        resolves one to, and an attached corpus is somebody else's table.
+        """
+        if "." in source_table:
+            schema, _, table = source_table.partition(".")
+        else:
+            schema, table = "SQLUser", source_table
+        return self._shape_resolver().resolve(schema, table)
+
     def _detect_hnsw_index(
         self, source_table: str, embedding_col: str
     ) -> Optional[bool]:
+        """Whether an index covers the embedding column; None if unestablished.
+
+        The `INFORMATION_SCHEMA.INDEXES` query this used to write itself now lives in
+        the catalog module with every other one (FR-015).
+        """
+        if "." in source_table:
+            schema, _, table = source_table.partition(".")
+        else:
+            schema, table = "SQLUser", source_table
         try:
-            schema, tbl = (
-                source_table.split(".", 1)
-                if "." in source_table
-                else ("", source_table)
+            indexed = IRISCatalogReader(self._catalog_connection()).indexed_columns(
+                schema, table
             )
-            conn = self.iris_engine.conn if self.iris_engine else None
-            if conn is None:
-                return None
-            cur = conn.cursor()
-            try:
-                cur.execute(
-                    "SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES "
-                    "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
-                    [schema or "USER", tbl, embedding_col],
-                )
-                row = cur.fetchone()
-                return row is not None and int(row[0]) > 0
-            finally:
-                cur.close()
-        except Exception:
+        except Exception:  # noqa: BLE001 - brute-force search is not a failure
             return None
+        return embedding_col.upper() in indexed
 
     def attach_existing_corpus(
         self,
         source_table: str,
-        id_col: str,
-        text_col: str,
-        embedding_col: str,
-        graph_label: str,
+        id_col: Optional[str] = None,
+        text_col: Optional[str] = None,
+        embedding_col: Optional[str] = None,
+        graph_label: Optional[str] = None,
     ) -> AttachResult:
+        """Bridge an existing IRIS table to graph nodes and vector search.
+
+        The three column arguments are optional: omitted, each is taken from the
+        table's shape, so the corpus is attached by the same columns the rest of the
+        package reads and writes. Supplying one still wins -- a table whose columns
+        are named `note_id`/`note_text`/`note_embedding` is not describable by role
+        precedence and naming it explicitly is the point of this method.
+        """
         if self.iris_engine is None:
             raise RuntimeError(
                 "iris_vector_graph engine not initialized. "
                 "Call _initialize_graph_core() first."
             )
+
+        if graph_label is None:
+            graph_label = source_table.rpartition(".")[2]
+
+        if id_col is None or text_col is None or embedding_col is None:
+            shape = self._corpus_shape(source_table)
+            id_col = id_col or shape.column_for(ColumnRole.IDENTIFIER).name
+            text_col = text_col or shape.column_for(ColumnRole.TEXT).name
+            embedding_col = embedding_col or shape.column_for(ColumnRole.EMBEDDING).name
 
         validation = self.iris_engine.validate_vector_table(source_table, embedding_col)
         dimension = validation.get("dimension")

@@ -11,7 +11,8 @@ Contract asserted here:
 - the filter predicate is present in the executed vector-search SQL
 - the page size is top_k, not a fixed 5x over-fetch
 - stream (LONGVARCHAR) metadata columns are wrapped in SUBSTRING, because
-  LIKE on a stream column silently matches nothing in IRIS
+  LIKE on a stream column silently matches nothing in IRIS -- and the column's
+  type comes from the table shape, so no catalog query happens here (feature 082)
 - the Python exact-match check stays as a backstop for LIKE false positives,
   and only when it drops rows is a single wider page fetched
 - non-string values are matched unquoted (JSON numbers / booleans)
@@ -29,11 +30,68 @@ import pytest
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.storage.table_shape import (
+    ColumnFact,
+    ColumnRole,
+    ShapeKind,
+    TableShape,
+    VectorSpec,
+)
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 DIM = 4
 QUERY = [0.1, 0.2, 0.3, 0.4]
 Row = Tuple[str, str, float]
+TABLE = ("RAG", "SourceDocuments")
+
+
+def shape_with_metadata_type(sql_type: str) -> TableShape:
+    """A canonical shape whose metadata column has the given SQL type.
+
+    Built as a value rather than taken from `tests/fixtures/shapes`: this suite is
+    about the filter predicate, so it wants a 4-dimension vector and a stream
+    metadata column beside an embedding column -- a combination no recorded shape
+    has. `tests/unit/test_vector_store_shape.py` is where real shapes are asserted.
+    """
+    schema, table = TABLE
+    columns = [
+        ColumnFact("doc_id", "varchar", 255, False, 1, "%Library.String", is_key=True),
+        ColumnFact("text_content", "longvarchar", None, True, 2, "%Library.String"),
+        ColumnFact("metadata", sql_type, 2000, True, 3, "%Library.String"),
+        ColumnFact(
+            "embedding",
+            "varchar",
+            132863,
+            True,
+            4,
+            "%Library.Vector",
+            vector=VectorSpec("FLOAT", DIM),
+        ),
+    ]
+    return TableShape(
+        schema=schema,
+        table=table,
+        class_name=f"{schema}.{table}",
+        columns={column.name: column for column in columns},
+        roles={
+            ColumnRole.IDENTIFIER: "doc_id",
+            ColumnRole.TEXT: "text_content",
+            ColumnRole.METADATA: "metadata",
+            ColumnRole.EMBEDDING: "embedding",
+        },
+        kind=ShapeKind.CANONICAL,
+    )
+
+
+class FixedShapes:
+    """The resolver seam, answering with one prepared shape."""
+
+    def __init__(self, shape: TableShape):
+        self._shape = shape
+        self.reads = 1
+
+    def resolve(self, schema: str, table: str) -> TableShape:
+        return self._shape
 
 
 class FakeCursor:
@@ -48,25 +106,23 @@ class FakeCursor:
         self.executed: List[Tuple[str, object]] = []
         self._rows_for_page = rows_for_page
         self._metadata = metadata
-        self._metadata_type = metadata_type
+        self.metadata_type = metadata_type
         self._pending: list = []
 
     def execute(self, sql, params=None):
         self.executed.append((sql, params))
         flat = " ".join(sql.split()).upper()
+        if "INFORMATION_SCHEMA" in flat or "%DICTIONARY" in flat:
+            raise AssertionError(f"the store read the catalog itself: {sql}")
         if "VECTOR_DOT_PRODUCT" in flat:
             top = int(re.search(r"SELECT TOP (\d+)", flat).group(1))
             self._pending = list(self._rows_for_page(top))
-        elif "INFORMATION_SCHEMA.COLUMNS" in flat and "DATA_TYPE" in flat:
-            self._pending = [(self._metadata_type,)]
         elif "WHERE DOC_ID IN" in flat:
             self._pending = [
                 (d, json.dumps(self._metadata[d]))
                 for d in (params or [])
                 if d in self._metadata
             ]
-        elif "%DICTIONARY.COMPILEDPROPERTY" in flat:
-            self._pending = [None]
         else:  # COUNT(*) and other bookkeeping
             self._pending = [(0,)]
 
@@ -105,12 +161,12 @@ def make_store(cursor: FakeCursor) -> IRISVectorStore:
 
     sm = MagicMock(spec=SchemaManager)
     sm.get_vector_dimension.return_value = DIM
-    sm.get_current_schema_config.return_value = {
-        "id_column": "doc_id",
-        "text_column": "text_content",
-        "metadata_column": "metadata",
-    }
-    return IRISVectorStore(cm, cfg, schema_manager=sm)
+    return IRISVectorStore(
+        cm,
+        cfg,
+        schema_manager=sm,
+        shapes=FixedShapes(shape_with_metadata_type(cursor.metadata_type)),
+    )
 
 
 def _page(ids: List[str]) -> Callable[[int], List[Row]]:

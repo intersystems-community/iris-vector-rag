@@ -1,0 +1,767 @@
+"""The recorded shapes must still describe what IRIS reports (feature 082, T015).
+
+`tests/unit/test_table_shape.py` runs against recorded catalog rows, which is only
+sound while the recording is honest. This suite creates every shape in
+`tests/fixtures/shapes/ddl.py` for real, snapshots them with `IRISCatalogReader`,
+and asserts the resulting `TableShape` equals the one built from the committed
+fixture.
+
+So a driver upgrade that changes how a VECTOR column is reported, or a schema change
+that renames a column, fails here rather than being silently absorbed by fixtures
+that no longer match anything real.
+
+Container: `iris-vector-rag-iris` on 51972, per CLAUDE.md. Never another one.
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+import pytest
+
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.storage.catalog import IRISCatalogReader, RecordedCatalog
+from iris_vector_rag.storage.shape_resolver import TableShapeResolver
+from iris_vector_rag.storage.table_shape import (
+    ColumnRole,
+    IdentifierNotWritable,
+    NonCanonicalCreation,
+    NotVectorSearchable,
+    RoleNotPresent,
+    ShapeKind,
+    TableNotFound,
+    TableShape,
+    create_table_statement,
+)
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
+from tests.fixtures.shapes.ddl import (
+    SHAPE_DDL,
+    SHAPE_SCHEMA,
+    SHAPE_TABLES,
+    VECTOR_DIMENSION,
+    create_statement,
+    drop_statement,
+)
+
+pytestmark = pytest.mark.integration
+
+FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "shapes"
+
+
+@pytest.fixture(scope="module")
+def shape_connection():
+    """A raw DBAPI connection: the catalog reader needs `cursor()`, not SQLAlchemy."""
+    from iris_vector_rag.common.iris_connection import get_iris_connection
+
+    conn = get_iris_connection()
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+@pytest.fixture(scope="module")
+def live_shapes(shape_connection):
+    """Create every recorded shape, snapshot each one, drop them again."""
+    cursor = shape_connection.cursor()
+    for shape in SHAPE_DDL:
+        cursor.execute(drop_statement(shape, SHAPE_SCHEMA))
+        cursor.execute(create_statement(shape, SHAPE_SCHEMA))
+    shape_connection.commit()
+    cursor.close()
+
+    reader = IRISCatalogReader(shape_connection)
+    try:
+        yield {
+            shape: TableShape.from_snapshot(
+                reader.snapshot(SHAPE_SCHEMA, SHAPE_TABLES[shape])
+            )
+            for shape in SHAPE_DDL
+        }
+    finally:
+        cursor = shape_connection.cursor()
+        for shape in SHAPE_DDL:
+            try:
+                cursor.execute(drop_statement(shape, SHAPE_SCHEMA))
+            except Exception:  # noqa: BLE001 - teardown is advisory
+                pass
+        shape_connection.commit()
+        cursor.close()
+
+
+@pytest.fixture(scope="module")
+def recorded_shapes():
+    catalog = RecordedCatalog.from_fixture_dir(FIXTURE_DIR)
+    return {
+        shape: TableShape.from_snapshot(
+            catalog.snapshot(SHAPE_SCHEMA, SHAPE_TABLES[shape])
+        )
+        for shape in SHAPE_DDL
+    }
+
+
+@pytest.mark.parametrize("shape", sorted(SHAPE_DDL))
+def test_recorded_fixtures_match_live_catalog(live_shapes, recorded_shapes, shape):
+    """The gate on the whole recorded-fixture approach."""
+    live, recorded = live_shapes[shape], recorded_shapes[shape]
+    assert live.kind is recorded.kind
+    assert live.roles == recorded.roles
+    assert sorted(live.columns) == sorted(recorded.columns)
+    for name, column in recorded.columns.items():
+        assert live.columns[name] == column, name
+    assert live == recorded
+
+
+def test_live_vector_columns_report_their_element_type(live_shapes):
+    """The standing gotcha, against a real column: SQL says varchar, class says vector."""
+    canonical = live_shapes["canonical"].column_for(ColumnRole.EMBEDDING)
+    assert canonical.sql_type == "varchar"
+    assert canonical.class_type == "%Library.Vector"
+    assert canonical.vector.element_type == "FLOAT"
+    assert canonical.vector.dimension == VECTOR_DIMENSION
+    assert live_shapes["double_vector"].vector_spec().element_type == "DOUBLE"
+
+
+def test_live_identity_column_is_recognised(live_shapes):
+    """`INTEGER IDENTITY PRIMARY KEY` must not look writable."""
+    identifier = live_shapes["legacy_serial"].column_for(ColumnRole.IDENTIFIER)
+    assert identifier.is_identity is True
+    assert identifier.is_key is True
+
+
+def test_vector_cosine_confirms_the_column_independently(shape_connection, live_shapes):
+    """A second, mechanism-independent check that the vector column is really a vector.
+
+    The shape reads the class view; this reads the SQL engine. Agreement between two
+    unrelated mechanisms is what makes the class-view answer trustworthy.
+    """
+    table = f"{SHAPE_SCHEMA}.{SHAPE_TABLES['canonical']}"
+    vector = ",".join(["0.1"] * VECTOR_DIMENSION)
+    cursor = shape_connection.cursor()
+    try:
+        cursor.execute(
+            f"INSERT INTO {table} (doc_id, text_content, embedding) "
+            f"VALUES (?, ?, TO_VECTOR(?, FLOAT, {VECTOR_DIMENSION}))",
+            ["shape-probe", "probe text", vector],
+        )
+        shape_connection.commit()
+        cursor.execute(
+            f"SELECT TOP 1 VECTOR_COSINE(embedding, embedding) FROM {table} "
+            "WHERE doc_id = ?",
+            ["shape-probe"],
+        )
+        row = cursor.fetchone()
+        similarity = float(row[0])
+    finally:
+        try:
+            cursor.execute(f"DELETE FROM {table} WHERE doc_id = ?", ["shape-probe"])
+            shape_connection.commit()
+        except Exception:  # noqa: BLE001 - cleanup is advisory
+            pass
+        cursor.close()
+    assert similarity == pytest.approx(1.0, abs=1e-4)
+
+
+def test_resolver_reads_the_live_catalog_once(shape_connection, live_shapes):
+    """SC-002 against the real catalog, not a double."""
+    resolver = TableShapeResolver(IRISCatalogReader(shape_connection))
+    first = resolver.resolve(SHAPE_SCHEMA, SHAPE_TABLES["canonical"])
+    for _ in range(20):
+        assert resolver.resolve(SHAPE_SCHEMA, SHAPE_TABLES["canonical"]) is first
+    assert resolver.reads == 1
+    assert first.kind is ShapeKind.CANONICAL
+
+
+def test_absent_table_is_reported_as_absent(shape_connection):
+    reader = IRISCatalogReader(shape_connection)
+    assert reader.snapshot(SHAPE_SCHEMA, "NoSuchShapeTable") is None
+
+
+# --- US1: the same behaviour on every shape ----------------------------------
+
+#: Shapes that can be both written with a caller-supplied identifier and searched
+#: by vector, and that can hold every part of a document. The rest are excluded for
+#: reasons the suite asserts directly, one test each: `legacy_serial` generates its
+#: own identifiers (FR-008), `legacy_id` has no embedding column at all (FR-011),
+#: and `no_metadata` / `no_title` have nowhere to put one part of a document.
+SEARCHABLE_SHAPES = ("canonical", "fixture", "mixed", "double_vector")
+
+DOCUMENTS = [
+    Document(
+        id="parity-1",
+        page_content="vector search over a document table",
+        metadata={"source": "one"},
+    ),
+    Document(
+        id="parity-2",
+        page_content="the shape of a table decides its columns",
+        metadata={"source": "two"},
+    ),
+    Document(
+        id="parity-3",
+        page_content="unrelated notes about the weather",
+        metadata={"source": "three"},
+    ),
+]
+
+
+def shape_vector(seed: int) -> list[float]:
+    """A deterministic vector, so ranking is a property of the store, not chance."""
+    return [((seed * 7 + i) % 13) / 13.0 for i in range(VECTOR_DIMENSION)]
+
+
+EMBEDDINGS = [shape_vector(n) for n in range(1, len(DOCUMENTS) + 1)]
+QUERY = shape_vector(1)
+
+
+@pytest.fixture
+def store_for(monkeypatch, live_shapes):
+    """A real store pointed at one shape's table, configured the way callers do.
+
+    The table name arrives through configuration and nothing else: no column name
+    is named by this test, which is the whole point of US1.
+    """
+
+    def make(shape: str) -> IRISVectorStore:
+        monkeypatch.setenv(
+            "RAG_STORAGE__IRIS__TABLE_NAME", f"{SHAPE_SCHEMA}.{SHAPE_TABLES[shape]}"
+        )
+        config = ConfigurationManager()
+        return IRISVectorStore(ConnectionManager(config), config)
+
+    return make
+
+
+@pytest.fixture
+def clean_rows(shape_connection):
+    """Remove the documents a test loaded, whatever the identifier column is."""
+    loaded: list[IRISVectorStore] = []
+    yield loaded
+    for store in loaded:
+        try:
+            store.delete_documents([doc.id for doc in DOCUMENTS])
+        except Exception:  # noqa: BLE001 - cleanup is advisory
+            pass
+    shape_connection.commit()
+
+
+def presented(results):
+    """(identifier, text) per hit, in rank order."""
+    return [(document.id, document.page_content) for document, _ in results]
+
+
+@pytest.mark.parametrize("shape", SEARCHABLE_SHAPES)
+def test_search_filter_write_delete_parity(shape, store_for, clean_rows):
+    """FR-002: identical documents in, identical results out, on every shape."""
+    baseline_store = store_for("canonical")
+    clean_rows.append(baseline_store)
+    baseline_store.add_documents(DOCUMENTS, EMBEDDINGS)
+    baseline = presented(baseline_store.similarity_search_by_embedding(QUERY, 3))
+    assert baseline[0][0] == "parity-1", baseline
+
+    store = store_for(shape)
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+
+    assert presented(store.similarity_search_by_embedding(QUERY, 3)) == baseline
+
+    filtered = store.similarity_search_by_embedding(QUERY, 3, {"source": "two"})
+    assert presented(filtered) == [("parity-2", DOCUMENTS[1].page_content)]
+
+    assert store.delete_documents(["parity-1"]) is True
+    remaining = {
+        doc.id for doc in store.fetch_documents_by_ids([d.id for d in DOCUMENTS])
+    }
+    assert remaining == {"parity-2", "parity-3"}
+
+
+def test_scores_agree_across_shapes(store_for, clean_rows):
+    """A double-precision vector column must not change the ranking or the scores.
+
+    Compared relatively: a DOUBLE column keeps more of each component than a FLOAT
+    one, so the dot products differ in their last few digits -- about 1e-6 relative
+    on these vectors. That is the storage precision, not a difference in behaviour.
+    """
+    scores = {}
+    for shape in SEARCHABLE_SHAPES:
+        store = store_for(shape)
+        clean_rows.append(store)
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        scores[shape] = [
+            score for _, score in store.similarity_search_by_embedding(QUERY, 3)
+        ]
+
+    for shape in SEARCHABLE_SHAPES[1:]:
+        assert scores[shape] == pytest.approx(scores["canonical"], rel=1e-5), shape
+
+
+def test_a_generated_identifier_shape_refuses_a_caller_supplied_id(store_for):
+    """FR-008: the refusal names the real cause instead of failing at insert time."""
+    store = store_for("legacy_serial")
+    with pytest.raises(IdentifierNotWritable) as raised:
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+    assert SHAPE_TABLES["legacy_serial"] in str(raised.value)
+
+
+def test_a_table_without_an_embedding_column_round_trips_but_cannot_be_searched(
+    store_for, clean_rows
+):
+    """FR-011: the failure names the missing column family, not a dimension mismatch."""
+    store = store_for("legacy_id")
+    clean_rows.append(store)
+    # No embeddings: this shape has no column to hold them, and `_store_documents`
+    # is the write path `add_documents` delegates to once embedding is out of the way.
+    store._store_documents(DOCUMENTS)
+
+    fetched = {
+        doc.id: doc.page_content for doc in store.fetch_documents_by_ids(["parity-2"])
+    }
+    assert fetched == {"parity-2": DOCUMENTS[1].page_content}
+
+    with pytest.raises(NotVectorSearchable) as raised:
+        store.similarity_search_by_embedding(QUERY, 3)
+    assert SHAPE_TABLES["legacy_id"] in str(raised.value)
+
+
+def test_a_table_without_a_metadata_column_stores_and_searches(store_for, clean_rows):
+    """The write path drops the column it does not have, and ranking is unaffected.
+
+    Recorded as a real table rather than a snapshot with a column removed: the six
+    US1 shapes all carry `metadata`, so this case had no fixture of its own.
+    """
+    baseline_store = store_for("canonical")
+    clean_rows.append(baseline_store)
+    baseline_store.add_documents(DOCUMENTS, EMBEDDINGS)
+    baseline = presented(baseline_store.similarity_search_by_embedding(QUERY, 3))
+
+    store = store_for("no_metadata")
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+
+    assert presented(store.similarity_search_by_embedding(QUERY, 3)) == baseline
+    fetched = store.fetch_documents_by_ids(["parity-2"])
+    assert fetched[0].page_content == DOCUMENTS[1].page_content
+    # The metadata went nowhere: the table has no column for it, and the store does
+    # not invent one.
+    assert fetched[0].metadata.get("source") is None
+
+
+def test_filtering_a_table_that_stores_no_metadata_is_an_error(store_for, clean_rows):
+    """FR-016, and the change the pinned version of this test was written to await.
+
+    Until Phase 8 this asserted `== []`: a metadata filter against a table with no
+    metadata column matched nothing and said nothing, which is indistinguishable from
+    a filter that genuinely selects no rows. The caller asked a question the table
+    cannot answer, so the answer is an error naming the table -- not an empty page.
+    """
+    store = store_for("no_metadata")
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+
+    with pytest.raises(RoleNotPresent) as raised:
+        store.similarity_search_by_embedding(QUERY, 3, {"source": "two"})
+    message = str(raised.value)
+    assert SHAPE_TABLES["no_metadata"] in message
+    assert "metadata" in message.lower()
+
+    # An unfiltered search on the same table is untouched: the error is about the
+    # filter, not about the shape.
+    assert len(store.similarity_search_by_embedding(QUERY, 3)) == 3
+
+
+def test_writing_metadata_to_a_table_without_a_metadata_column_warns_once(
+    store_for, clean_rows, caplog
+):
+    """FR-016 on the write path: audible, but once per table rather than per document.
+
+    The drop itself stays -- a table with no metadata column has nowhere to put it,
+    and refusing the write would break every caller of the `no_metadata` shape. What
+    changes is that it is no longer silent. Once per table, because the alternative is
+    one line per document, which is how a real warning gets scrolled past during a
+    bulk ingest.
+    """
+    store = store_for("no_metadata")
+    clean_rows.append(store)
+
+    with caplog.at_level(logging.WARNING, logger="iris_vector_rag.storage"):
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        first = [
+            record
+            for record in caplog.records
+            if record.levelno >= logging.WARNING and "metadata" in record.getMessage()
+        ]
+        assert len(first) == 1, [record.getMessage() for record in first]
+        assert SHAPE_TABLES["no_metadata"] in first[0].getMessage()
+
+        caplog.clear()
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        assert [
+            record
+            for record in caplog.records
+            if record.levelno >= logging.WARNING and "metadata" in record.getMessage()
+        ] == []
+
+
+def test_a_table_without_a_title_column_still_round_trips(store_for, clean_rows):
+    """FR-002 on the other absent optional role: only the title has nowhere to go."""
+    store = store_for("no_title")
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+
+    assert presented(store.similarity_search_by_embedding(QUERY, 3))[0][0] == "parity-1"
+    filtered = store.similarity_search_by_embedding(QUERY, 3, {"source": "two"})
+    assert presented(filtered) == [("parity-2", DOCUMENTS[1].page_content)]
+
+
+# --- US2: one resolution per table, invalidated where the shape can change ----
+
+
+class CountingCursor:
+    """A cursor that records the SQL sent through it, and nothing else."""
+
+    def __init__(self, inner, statements: list[str]):
+        self._inner = inner
+        self._statements = statements
+
+    def execute(self, sql, params=None):
+        self._statements.append(sql)
+        if params is None:
+            return self._inner.execute(sql)
+        return self._inner.execute(sql, params)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class CountingConnection:
+    def __init__(self, inner, statements: list[str]):
+        self._inner = inner
+        self._statements = statements
+
+    def cursor(self):
+        return CountingCursor(self._inner.cursor(), self._statements)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class CountingConnections:
+    """The connection-manager seam, recording every statement the store sends.
+
+    Counting statements rather than trusting `resolver.reads` is the point: the
+    claim is that no catalog query reaches the database, however it was issued.
+    """
+
+    def __init__(self, inner: ConnectionManager):
+        self._inner = inner
+        self.statements: list[str] = []
+
+    def get_connection(self, *args, **kwargs):
+        return CountingConnection(
+            self._inner.get_connection(*args, **kwargs), self.statements
+        )
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+def catalog_statements(statements: list[str]) -> list[str]:
+    return [
+        sql
+        for sql in statements
+        if "INFORMATION_SCHEMA" in sql.upper() or "%DICTIONARY" in sql.upper()
+    ]
+
+
+def test_catalog_round_trips(monkeypatch, live_shapes, shape_connection):
+    """SC-002 / FR-005: a hundred searches, one catalog round trip.
+
+    The first search pays for the shape; the ninety-nine after it send only the
+    statements the search itself needs.
+    """
+    monkeypatch.setenv(
+        "RAG_STORAGE__IRIS__TABLE_NAME",
+        f"{SHAPE_SCHEMA}.{SHAPE_TABLES['canonical']}",
+    )
+    config = ConfigurationManager()
+    connections = CountingConnections(ConnectionManager(config))
+    store = IRISVectorStore(connections, config)
+    try:
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        store.similarity_search_by_embedding(QUERY, 3)
+        assert store.shapes.reads == 1
+
+        mark = len(connections.statements)
+        for _ in range(100):
+            store.similarity_search_by_embedding(QUERY, 3)
+        during = connections.statements[mark:]
+
+        assert store.shapes.reads == 1
+        assert catalog_statements(during) == []
+        # Two statements per search: rank the vectors, then fetch the metadata of
+        # the rows that ranked. A third would mean something is re-deriving what
+        # the shape already knows.
+        assert len(during) == 200, len(during)
+    finally:
+        try:
+            store.delete_documents([doc.id for doc in DOCUMENTS])
+        except Exception:  # noqa: BLE001 - cleanup is advisory
+            pass
+        shape_connection.commit()
+
+
+def test_a_table_the_library_creates_is_resolved_without_caller_action(
+    monkeypatch, shape_connection
+):
+    """FR-006: the store's own DDL invalidates the shape it just changed.
+
+    The library creates `SourceDocuments` in whatever schema it is configured for,
+    so pointing it at the scratch schema exercises the real creation path without
+    touching the shared RAG table.
+    """
+    monkeypatch.setenv("IRIS_SCHEMA_PREFIX", SHAPE_SCHEMA)
+    monkeypatch.setenv(
+        "RAG_STORAGE__IRIS__TABLE_NAME", f"{SHAPE_SCHEMA}.SourceDocuments"
+    )
+    cursor = shape_connection.cursor()
+    try:
+        cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.SourceDocuments")
+        shape_connection.commit()
+        cursor.close()
+
+        config = ConfigurationManager()
+        store = IRISVectorStore(ConnectionManager(config), config)
+
+        # A missing table is reported as missing on a read: nothing is created behind
+        # the caller's back by a search.
+        with pytest.raises(TableNotFound):
+            store.similarity_search_by_embedding(QUERY, 3)
+
+        # The write path creates it, and the shape of the new table is what the very
+        # next operation uses -- no refresh, no restart, no caller action. Which
+        # columns the created table has is the schema manager's business; that the
+        # store reads back what it wrote is this test's.
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        results = store.similarity_search_by_embedding(QUERY, 3)
+        assert presented(results)[0] == ("parity-1", DOCUMENTS[0].page_content)
+        assert store.shape().qualified_name == f"{SHAPE_SCHEMA}.SourceDocuments"
+        assert store.shapes.reads == 1, "the created table is resolved once"
+    finally:
+        cursor = shape_connection.cursor()
+        try:
+            cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.SourceDocuments")
+            shape_connection.commit()
+        except Exception:  # noqa: BLE001 - teardown is advisory
+            pass
+        cursor.close()
+
+
+def test_an_out_of_band_change_is_seen_after_an_explicit_refresh(
+    monkeypatch, shape_connection
+):
+    """FR-007: someone else's ALTER TABLE needs one call to become visible.
+
+    Until that call the cached shape stands, which is the whole reason the cache is
+    allowed to exist: a table does not change shape under a running session unless
+    something outside the library changes it.
+    """
+    table = "ShapeRefresh"
+    qualified = f"{SHAPE_SCHEMA}.{table}"
+    cursor = shape_connection.cursor()
+    cursor.execute(drop_statement("canonical", SHAPE_SCHEMA, table))
+    cursor.execute(create_statement("canonical", SHAPE_SCHEMA, table))
+    shape_connection.commit()
+    cursor.close()
+
+    monkeypatch.setenv("RAG_STORAGE__IRIS__TABLE_NAME", qualified)
+    config = ConfigurationManager()
+    store = IRISVectorStore(ConnectionManager(config), config)
+    try:
+        assert store.shape().legacy_column_for(ColumnRole.TEXT) is None
+
+        cursor = shape_connection.cursor()
+        cursor.execute(f"ALTER TABLE {qualified} ADD content VARCHAR(2000)")
+        shape_connection.commit()
+        cursor.close()
+
+        assert (
+            store.shape().legacy_column_for(ColumnRole.TEXT) is None
+        ), "the cached shape stands until the caller says otherwise"
+
+        refreshed = store.refresh_shape()
+        assert refreshed.legacy_column_for(ColumnRole.TEXT).name == "content"
+        assert store.shape().kind is ShapeKind.MIXED
+        assert store.shapes.reads == 2
+    finally:
+        cursor = shape_connection.cursor()
+        try:
+            cursor.execute(drop_statement("canonical", SHAPE_SCHEMA, table))
+            shape_connection.commit()
+        except Exception:  # noqa: BLE001 - teardown is advisory
+            pass
+        cursor.close()
+
+
+def test_mixed_table_round_trip(store_for, shape_connection, clean_rows):
+    """The defect US1 exists to remove, against a real table carrying both columns."""
+    store = store_for("mixed")
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS[:1], EMBEDDINGS[:1])
+
+    results = store.similarity_search_by_embedding(QUERY, 3)
+    assert presented(results)[0] == ("parity-1", DOCUMENTS[0].page_content)
+
+    # A row as an older release left it: text in `content`, nothing in `text_content`.
+    table = f"{SHAPE_SCHEMA}.{SHAPE_TABLES['mixed']}"
+    legacy_text = "written by 0.13"
+    cursor = shape_connection.cursor()
+    try:
+        cursor.execute(
+            f"INSERT INTO {table} (doc_id, content, embedding) "
+            f"VALUES (?, ?, TO_VECTOR(?, FLOAT, {VECTOR_DIMENSION}))",
+            ["parity-legacy", legacy_text, ",".join(str(v) for v in EMBEDDINGS[0])],
+        )
+        shape_connection.commit()
+        cursor.close()
+
+        presented_texts = {
+            document.id: document.page_content
+            for document, _ in store.similarity_search_by_embedding(QUERY, 3)
+        }
+        assert presented_texts["parity-legacy"] == legacy_text
+        assert presented_texts["parity-1"] == DOCUMENTS[0].page_content
+    finally:
+        cursor = shape_connection.cursor()
+        try:
+            cursor.execute(f"DELETE FROM {table} WHERE doc_id = ?", ["parity-legacy"])
+            shape_connection.commit()
+        except Exception:  # noqa: BLE001 - cleanup is advisory
+            pass
+        cursor.close()
+
+
+# --- US3: only one shape is ever created --------------------------------------
+
+
+def resolved(connection, schema: str, table: str) -> TableShape:
+    """The shape a table really has, read fresh."""
+    return TableShapeResolver(IRISCatalogReader(connection)).resolve(schema, table)
+
+
+@pytest.fixture
+def scratch_documents(monkeypatch, shape_connection):
+    """`SourceDocuments` in the scratch schema, dropped before and after.
+
+    The library creates `SourceDocuments` in the schema it is configured for, so this
+    exercises the real creation paths without touching the shared `RAG` table.
+    """
+    monkeypatch.setenv("IRIS_SCHEMA_PREFIX", SHAPE_SCHEMA)
+    monkeypatch.setenv(
+        "RAG_STORAGE__IRIS__TABLE_NAME", f"{SHAPE_SCHEMA}.SourceDocuments"
+    )
+
+    def drop():
+        cursor = shape_connection.cursor()
+        try:
+            cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.SourceDocuments")
+            shape_connection.commit()
+        except Exception:  # noqa: BLE001 - teardown is advisory
+            pass
+        cursor.close()
+
+    drop()
+    try:
+        yield "SourceDocuments"
+    finally:
+        drop()
+
+
+def test_every_creation_path_is_canonical(scratch_documents, shape_connection):
+    """SC-004: the two DDL emitters and the store's auto-create agree.
+
+    Two creation paths shipped two different tables under one name -- one with
+    `text_content`/`created_at`, one with `metadata VARCHAR(2000)` and
+    `created_timestamp` -- which is how a fresh instance came to have a shape the
+    library could not read back. Whatever created the table, its shape is the same.
+    """
+    from iris_vector_rag.storage.schema_manager import SchemaManager
+
+    config = ConfigurationManager()
+    manager = SchemaManager(ConnectionManager(config), config)
+
+    assert manager.ensure_table_schema(scratch_documents) is True
+    ensured = resolved(shape_connection, SHAPE_SCHEMA, scratch_documents)
+
+    cursor = shape_connection.cursor()
+    cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.{scratch_documents}")
+    shape_connection.commit()
+    cursor.close()
+
+    assert manager.migrate_table(scratch_documents) is True
+    migrated = resolved(shape_connection, SHAPE_SCHEMA, scratch_documents)
+
+    cursor = shape_connection.cursor()
+    cursor.execute(f"DROP TABLE IF EXISTS {SHAPE_SCHEMA}.{scratch_documents}")
+    shape_connection.commit()
+    cursor.close()
+
+    store = IRISVectorStore(ConnectionManager(config), config)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+    auto_created = resolved(shape_connection, SHAPE_SCHEMA, scratch_documents)
+
+    assert ensured.is_canonical, sorted(ensured.columns)
+    assert migrated.is_canonical, sorted(migrated.columns)
+    assert auto_created.is_canonical, sorted(auto_created.columns)
+    assert ensured.columns == migrated.columns
+    assert ensured.columns == auto_created.columns
+
+
+def test_pointing_the_library_at_a_legacy_shape_alters_nothing(
+    monkeypatch, live_shapes, shape_connection, clean_rows
+):
+    """FR-007: a table someone else created is used as it is, not repaired.
+
+    Counted rather than argued: every statement the store sends is recorded, and none
+    of them may be DDL. An `ALTER TABLE` here is how a reported `varchar` for a
+    VECTOR column turned into a destroyed embedding column in the field.
+    """
+    for shape in SEARCHABLE_SHAPES:
+        monkeypatch.setenv(
+            "RAG_STORAGE__IRIS__TABLE_NAME", f"{SHAPE_SCHEMA}.{SHAPE_TABLES[shape]}"
+        )
+        config = ConfigurationManager()
+        connections = CountingConnections(ConnectionManager(config))
+        store = IRISVectorStore(connections, config)
+        clean_rows.append(store)
+
+        store.add_documents(DOCUMENTS, EMBEDDINGS)
+        store.similarity_search_by_embedding(QUERY, 3)
+        store.fetch_documents_by_ids([doc.id for doc in DOCUMENTS])
+
+        ddl = [
+            sql
+            for sql in connections.statements
+            if sql.strip().upper().startswith(("ALTER", "DROP", "CREATE"))
+        ]
+        assert ddl == [], (shape, ddl)
+
+
+def test_creating_a_non_canonical_shape_is_refused(live_shapes):
+    """FR-006: the refusal names the table, on a shape read from the live catalog."""
+    for shape in ("fixture", "legacy_id", "legacy_serial", "mixed"):
+        with pytest.raises(NonCanonicalCreation) as raised:
+            create_table_statement(live_shapes[shape])
+        assert SHAPE_TABLES[shape] in str(raised.value), shape
+
+    # And the canonical shape renders, against the live table it describes.
+    statement = create_table_statement(
+        live_shapes["canonical"],
+        schema=SHAPE_SCHEMA,
+        table=SHAPE_TABLES["canonical"],
+    )
+    assert statement.startswith(
+        f"CREATE TABLE {SHAPE_SCHEMA}.{SHAPE_TABLES['canonical']} ("
+    )

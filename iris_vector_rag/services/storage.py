@@ -13,10 +13,35 @@ from typing import Any, Dict, List, Optional
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
 from ..core.models import Entity, Relationship
+from ..storage.catalog import IRISCatalogReader
 from ..storage.schema_manager import SchemaManager
+from ..storage.shape_resolver import TableShapeResolver
+from ..storage.table_shape import (
+    CatalogUnavailable,
+    ColumnRole,
+    TableNotFound,
+    TableShape,
+)
 from .batch_entity_processor import BatchEntityProcessor
 
 logger = logging.getLogger(__name__)
+
+#: How much of a stream metadata column a `LIKE` can be applied to. Same projection
+#: the vector store uses: `LIKE` against a LONGVARCHAR column matches nothing at all
+#: in IRIS, silently, so the text is narrowed to a searchable width first.
+_STREAM_METADATA_PROJECTION = 32000
+
+
+def _split_table(qualified: str) -> tuple[str, str]:
+    """`"RAG.Entities"` -> `("RAG", "Entities")`; an unqualified name gets `RAG`."""
+    if "." in qualified:
+        schema, _, table = qualified.partition(".")
+        return schema, table
+    return "RAG", qualified
+
+
+def _schema_of(qualified: str) -> str:
+    return _split_table(qualified)[0]
 
 
 class EntityStorageAdapter:
@@ -26,8 +51,21 @@ class EntityStorageAdapter:
     Follows ConnectionManager patterns used in the rest of the codebase.
     """
 
-    def __init__(self, connection_manager: ConnectionManager, config: Dict[str, Any]):
-        """Initialize storage adapter with connection manager and config."""
+    def __init__(
+        self,
+        connection_manager: ConnectionManager,
+        config: Dict[str, Any],
+        shapes: Optional[TableShapeResolver] = None,
+    ):
+        """Initialize storage adapter with connection manager and config.
+
+        Args:
+            connection_manager: Manager for database connections.
+            config: The `entity_extraction.storage` block is read from here.
+            shapes: Resolver for this session's table shapes (optional). One is built
+                from this adapter's own connection on first use when not supplied;
+                pass a resolver over a `RecordedCatalog` to describe a shape in a test.
+        """
         self.connection_manager = connection_manager
         self.config = config
 
@@ -40,6 +78,16 @@ class EntityStorageAdapter:
         self.embeddings_table = storage_config.get(
             "embeddings_table", "RAG.EntityEmbeddings"
         )
+        # The document table an entity's source_doc_id points into. Derived from the
+        # entities table's schema so a caller who moved the graph to another schema
+        # does not have to name the document table twice.
+        self.documents_table = storage_config.get(
+            "documents_table",
+            f"{_schema_of(self.entities_table)}.SourceDocuments",
+        )
+        # Feature 082: one answer to "which column identifies a document", read from
+        # the database once. Resolved lazily so the constructor stays pure.
+        self.shapes = shapes
 
         # Incremental ingestion controls
         self.incremental: bool = storage_config.get("incremental", True)
@@ -120,18 +168,16 @@ class EntityStorageAdapter:
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
-            if "." in self.entities_table:
-                schema, table = self.entities_table.split(".", 1)
-            else:
-                schema, table = "RAG", self.entities_table
+            schema, table = _split_table(self.entities_table)
 
             try:
-                cursor.execute(f"""
-                    SELECT COLUMN_NAME
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
-                    """)
-                columns = {row[0].lower() for row in cursor.fetchall()}
+                # The catalog is read through the one module that owns that SQL, so
+                # this file has no second account of what INFORMATION_SCHEMA means.
+                snapshot = IRISCatalogReader(conn).snapshot(schema, table)
+                columns = {
+                    str(column["COLUMN_NAME"]).lower()
+                    for column in (snapshot.columns if snapshot else ())
+                }
             except Exception as exc:
                 logger.warning(
                     f"Failed to inspect {schema}.{table} columns, attempting fallbacks: {exc}"
@@ -215,31 +261,72 @@ class EntityStorageAdapter:
             if cursor:
                 cursor.close()
 
-    def _resolve_source_document(self, cursor, src_id: str) -> str:
+    def _shape_resolver(self) -> TableShapeResolver:
+        if self.shapes is None:
+            self.shapes = TableShapeResolver(
+                IRISCatalogReader(self.connection_manager.get_connection())
+            )
+        return self.shapes
+
+    def _documents_shape(self) -> Optional[TableShape]:
+        """The document table's shape, or None if it cannot be described.
+
+        Resolution feeds a best-effort lookup, so an absent table or an unreachable
+        catalog leaves the caller's identifier alone rather than failing a write.
         """
-        Resolve a provided source document identifier to an existing RAG.SourceDocuments.id.
-        Tries:
-          1) Direct match on id
-          2) Match on doc_id
-          3) Match on metadata.parent_doc_id (for chunked storage)
-        Returns the best match or the original id if no mapping found.
-        """
+        schema, table = _split_table(self.documents_table)
         try:
-            # Direct match on id or doc_id
+            return self._shape_resolver().resolve(schema, table)
+        except (TableNotFound, CatalogUnavailable) as exc:
+            logger.debug(f"Could not describe {self.documents_table}: {exc}")
+            return None
+
+    def _resolve_source_document(self, cursor, src_id: str) -> str:
+        """Map a supplied identifier onto a row of the document table.
+
+        Two lookups at most, both against the one column the shape names as the
+        table's identifier:
+
+        1. The identifier itself.
+        2. `parent_doc_id` inside the metadata JSON, for an id that names a chunk.
+
+        What this replaces: `WHERE id = ? OR doc_id = ?`, which guessed at both
+        spellings and so scanned two columns on every call, matched the wrong one on
+        a table carrying both, and named a column that does not exist on a canonical
+        table at all. IRIS has no JSON_EXTRACT, so step 2 is still a text match --
+        against a projection of the column when the column is a stream, because
+        `LIKE` on a LONGVARCHAR matches nothing and reports no error.
+
+        Returns the resolved identifier, or `src_id` unchanged when nothing matches.
+        """
+        shape = self._documents_shape()
+        if shape is None:
+            return src_id
+
+        identifier = shape.column_for(ColumnRole.IDENTIFIER).name
+        table = shape.qualified_name
+        try:
             cursor.execute(
-                "SELECT id FROM RAG.SourceDocuments WHERE id = ? OR doc_id = ?",
-                [src_id, src_id],
+                f"SELECT {identifier} FROM {table} WHERE {identifier} = ?",
+                [src_id],
             )
             row = cursor.fetchone()
             if row:
                 return str(row[0])
 
-            # IRIS SQL has no JSON_EXTRACT; use LIKE on metadata JSON text as a best-effort
+            metadata = shape.optional_column_for(ColumnRole.METADATA)
+            if metadata is None:
+                return src_id
+
+            expression = (
+                metadata.name
+                if metadata.filterable_with_like
+                else f"SUBSTRING({metadata.name},1,{_STREAM_METADATA_PROJECTION})"
+            )
             try:
-                like_pattern = f'%"parent_doc_id":"{src_id}"%'
                 cursor.execute(
-                    "SELECT id FROM RAG.SourceDocuments WHERE metadata LIKE ? FETCH FIRST 1 ROWS ONLY",
-                    [like_pattern],
+                    f"SELECT TOP 1 {identifier} FROM {table} WHERE {expression} LIKE ?",
+                    [f'%"parent_doc_id":"{src_id}"%'],
                 )
                 row = cursor.fetchone()
                 if row:

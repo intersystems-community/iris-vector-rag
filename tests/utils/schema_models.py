@@ -6,8 +6,16 @@ Implements T011-T012 from Feature 028.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
 from enum import Enum
+from typing import List, Optional
+
+from iris_vector_rag.storage.table_shape import (
+    CANONICAL_CHUNK_SHAPE,
+    CANONICAL_DOCUMENT_SHAPE,
+    ColumnFact,
+    TableShape,
+    create_table_statement,
+)
 
 
 class ColumnType(str, Enum):
@@ -70,12 +78,17 @@ class SchemaDefinition:
         schema_name: Database schema (e.g., 'RAG')
         columns: List of column definitions
         primary_key: Name of primary key column
+        create_sql: The exact CREATE TABLE the library itself emits, when the table
+            is one the library owns. Set for the document and chunk tables so the
+            test infrastructure creates what the code under test creates rather than
+            rebuilding the statement from `columns` and hoping the two agree.
     """
 
     table_name: str
     schema_name: str
     columns: List[ColumnDefinition]
     primary_key: Optional[str] = None
+    create_sql: Optional[str] = None
 
     def get_column(self, column_name: str) -> Optional[ColumnDefinition]:
         """
@@ -182,6 +195,49 @@ class SchemaValidationResult:
         )
 
 
+def _column_type_of(column: ColumnFact) -> ColumnType:
+    """The `ColumnType` this test vocabulary uses for a catalog column fact."""
+    if column.vector is not None:
+        return ColumnType.VECTOR
+    if column.is_long_text:
+        return ColumnType.CLOB
+    if column.sql_type == "timestamp":
+        return ColumnType.DATETIME
+    if column.sql_type == "integer":
+        return ColumnType.INT
+    if column.sql_type == "bigint":
+        return ColumnType.BIGINT
+    return ColumnType.VARCHAR
+
+
+def _definition_from_shape(shape: TableShape) -> SchemaDefinition:
+    """Describe a library-owned table from the shape the library creates.
+
+    The document and chunk tables used to be described here a second time, by hand,
+    and the hand-written version had `id` where the library writes `doc_id` and no
+    embedding column at all. `SchemaValidator` therefore rejected a healthy table and
+    `SchemaResetter` replaced it with one that could not answer a vector search
+    (feature 082, FR-006).
+    """
+    ordered = sorted(shape.columns.values(), key=lambda column: column.position)
+    keys = [column.name for column in ordered if column.is_key]
+    return SchemaDefinition(
+        table_name=shape.table,
+        schema_name=shape.schema,
+        columns=[
+            ColumnDefinition(
+                column.name,
+                _column_type_of(column),
+                nullable=column.nullable,
+                max_length=column.max_length,
+            )
+            for column in ordered
+        ],
+        primary_key=keys[0] if len(keys) == 1 else None,
+        create_sql=create_table_statement(shape),
+    )
+
+
 # Expected RAG schema definitions
 def get_expected_rag_schema() -> List[SchemaDefinition]:
     """
@@ -191,45 +247,8 @@ def get_expected_rag_schema() -> List[SchemaDefinition]:
         List of SchemaDefinition for all RAG tables
     """
     return [
-        SchemaDefinition(
-            table_name="SourceDocuments",
-            schema_name="RAG",
-            columns=[
-                ColumnDefinition(
-                    "id", ColumnType.VARCHAR, nullable=False, max_length=255
-                ),
-                ColumnDefinition(
-                    "source", ColumnType.VARCHAR, nullable=False, max_length=500
-                ),
-                ColumnDefinition("content", ColumnType.CLOB, nullable=False),
-                ColumnDefinition("metadata", ColumnType.JSON, nullable=True),
-                ColumnDefinition("created_at", ColumnType.DATETIME, nullable=True),
-                ColumnDefinition(
-                    "test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255
-                ),
-            ],
-            primary_key="id",
-        ),
-        SchemaDefinition(
-            table_name="DocumentChunks",
-            schema_name="RAG",
-            columns=[
-                ColumnDefinition(
-                    "id", ColumnType.VARCHAR, nullable=False, max_length=255
-                ),
-                ColumnDefinition(
-                    "document_id", ColumnType.VARCHAR, nullable=False, max_length=255
-                ),
-                ColumnDefinition("chunk_text", ColumnType.CLOB, nullable=False),
-                ColumnDefinition("chunk_index", ColumnType.INT, nullable=False),
-                ColumnDefinition("embedding", ColumnType.VECTOR, nullable=True),
-                ColumnDefinition("created_at", ColumnType.DATETIME, nullable=True),
-                ColumnDefinition(
-                    "test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255
-                ),
-            ],
-            primary_key="id",
-        ),
+        _definition_from_shape(CANONICAL_DOCUMENT_SHAPE),
+        _definition_from_shape(CANONICAL_CHUNK_SHAPE),
         SchemaDefinition(
             table_name="Entities",
             schema_name="RAG",
