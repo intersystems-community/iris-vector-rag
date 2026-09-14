@@ -166,6 +166,12 @@ directory (`pyproject.toml:191 include = ["iris_vector_rag*"]`, and there is no
 
 ## 8. Every option in `pytest.ini` is inert
 
+Already tracked, not newly found: `scripts/gates/antipatterns.py` has an
+`inert-pytest-ini` detector for exactly this, and the instance is baselined at
+`scripts/gates/antipatterns-baseline.txt:20`. The baseline records the fact; this entry
+records the consequence, because the one thing that block was relied on for is cited as
+a guarantee elsewhere in the tree.
+
 The file's section header is `[tool:pytest]` (`pytest.ini:1`). That name is only
 recognised in `setup.cfg`; in a file called `pytest.ini` the section must be `[pytest]`.
 pytest still reports `configfile: pytest.ini`, so the file looks live, but nothing in it
