@@ -25,7 +25,7 @@
     "**/tests/fixtures/**",
     "*.egg-info/**",
     "build/**",
-    "dist/**"
+    "dist/**",
   ],
   "config": {
     "default": true,
@@ -48,6 +48,6 @@
     // to change it, so any other setting makes the two tools loop.
     "MD049": { "style": "underscore" },
     "MD050": { "style": "asterisk" },
-    "MD060": false
-  }
+    "MD060": false,
+  },
 }

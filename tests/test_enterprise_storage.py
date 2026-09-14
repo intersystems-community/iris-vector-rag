@@ -107,7 +107,7 @@ class TestIRISStorage(unittest.TestCase):
         self.assertEqual(connection, self.mock_connection)
         self.mock_connection_manager.get_connection.assert_called_with("iris")
 
-    @patch("iris_rag.storage.enterprise_storage.logger")
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
     def test_initialize_schema_success(self, mock_logger):
         """Test successful schema initialization."""
         # Mock successful table creation
@@ -116,7 +116,9 @@ class TestIRISStorage(unittest.TestCase):
             None,  # CREATE TABLE succeeds
         ]
 
-        with patch("common.iris_sql_utils.IRISSQLUtils") as mock_utils_class:
+        with patch(
+            "iris_vector_rag.common.iris_sql_utils.IRISSQLUtils"
+        ) as mock_utils_class:
             mock_utils = Mock()
             mock_utils_class.return_value = mock_utils
             mock_utils.optimize_vector_table.return_value = True
@@ -134,7 +136,7 @@ class TestIRISStorage(unittest.TestCase):
             self.mock_connection.commit.assert_called_once()
             mock_utils.optimize_vector_table.assert_called_once()
 
-    @patch("iris_rag.storage.enterprise_storage.logger")
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
     def test_initialize_schema_fallback(self, mock_logger):
         """Test schema initialization with fallback table name."""
         # Mock first table creation failure, second succeeds
@@ -144,7 +146,9 @@ class TestIRISStorage(unittest.TestCase):
             None,  # CREATE TABLE for fallback succeeds
         ]
 
-        with patch("common.iris_sql_utils.IRISSQLUtils") as mock_utils_class:
+        with patch(
+            "iris_vector_rag.common.iris_sql_utils.IRISSQLUtils"
+        ) as mock_utils_class:
             mock_utils = Mock()
             mock_utils_class.return_value = mock_utils
             mock_utils.optimize_vector_table.return_value = True
@@ -184,7 +188,7 @@ class TestIRISStorage(unittest.TestCase):
 
         self.assertIn("Number of embeddings must match", str(context.exception))
 
-    @patch("iris_rag.storage.enterprise_storage.logger")
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
     def test_store_documents_with_schema_init(self, mock_logger):
         """Test storing documents with automatic schema initialization."""
         documents = [
@@ -301,7 +305,7 @@ class TestIRISStorage(unittest.TestCase):
         # Should not execute any SQL
         self.mock_cursor.execute.assert_not_called()
 
-    @patch("iris_rag.storage.enterprise_storage.logger")
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
     def test_vector_search(self, mock_logger):
         """Test vector search functionality."""
         # Mock database response
@@ -340,7 +344,7 @@ class TestIRISStorage(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.storage.vector_search([], 5)
 
-    @patch("iris_rag.storage.enterprise_storage.logger")
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
     def test_error_handling_in_store_documents(self, mock_logger):
         """Test error handling in store_documents."""
         documents = [Document(id="test", page_content="content", metadata={})]
@@ -354,7 +358,7 @@ class TestIRISStorage(unittest.TestCase):
         # Verify rollback was called
         self.mock_connection.rollback.assert_called_once()
 
-    @patch("iris_rag.storage.enterprise_storage.logger")
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
     def test_error_handling_in_vector_search(self, mock_logger):
         """Test error handling in vector search."""
         query_vector = [0.1, 0.2, 0.3]

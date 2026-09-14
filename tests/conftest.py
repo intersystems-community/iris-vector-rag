@@ -10,9 +10,9 @@ random seeding (ValueError: Seed must be between 0 and 2**32 - 1).
 
 import importlib.util
 import os
+import subprocess
 import sys
 import tempfile
-import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Generator
@@ -49,7 +49,7 @@ if str(repo_root) not in sys.path:
 def coverage_instance():
     """Create a coverage instance for test coverage measurement."""
     cov = coverage.Coverage(
-        source=["iris_rag", "common"],
+        source=["iris_vector_rag"],
         omit=[
             "*/tests/*",
             "*/test_*",
@@ -586,11 +586,11 @@ def database_with_clean_schema(request):
 
     Implements FR-001, FR-004 from Feature 028.
     """
-    from tests.fixtures.database_state import TestDatabaseState, TestStateRegistry
-    from tests.fixtures.database_cleanup import DatabaseCleanupHandler
-    from tests.utils.schema_validator import SchemaValidator
-    from tests.fixtures.schema_reset import SchemaResetter
     from iris_vector_rag.common.iris_connection_manager import get_iris_connection
+    from tests.fixtures.database_cleanup import DatabaseCleanupHandler
+    from tests.fixtures.database_state import TestDatabaseState, TestStateRegistry
+    from tests.fixtures.schema_reset import SchemaResetter
+    from tests.utils.schema_validator import SchemaValidator
 
     # Validate schema
     validator = SchemaValidator()
@@ -670,7 +670,8 @@ def mock_iris_vector_graph_unavailable(mocker):
     # Mock the IRIS_GRAPH_CORE_AVAILABLE flag if it exists
     try:
         mocker.patch(
-            "iris_rag.pipelines.hybrid_graphrag.IRIS_GRAPH_CORE_AVAILABLE", False
+            "iris_vector_rag.pipelines.hybrid_graphrag.IRIS_GRAPH_CORE_AVAILABLE",
+            False,
         )
     except AttributeError:
         pass  # Flag doesn't exist, no need to mock
