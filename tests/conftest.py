@@ -49,7 +49,7 @@ if str(repo_root) not in sys.path:
 def coverage_instance():
     """Create a coverage instance for test coverage measurement."""
     cov = coverage.Coverage(
-        source=["iris_rag", "common"],
+        source=["iris_vector_rag"],
         omit=[
             "*/tests/*",
             "*/test_*",
@@ -670,7 +670,8 @@ def mock_iris_vector_graph_unavailable(mocker):
     # Mock the IRIS_GRAPH_CORE_AVAILABLE flag if it exists
     try:
         mocker.patch(
-            "iris_rag.pipelines.hybrid_graphrag.IRIS_GRAPH_CORE_AVAILABLE", False
+            "iris_vector_rag.pipelines.hybrid_graphrag.IRIS_GRAPH_CORE_AVAILABLE",
+            False,
         )
     except AttributeError:
         pass  # Flag doesn't exist, no need to mock

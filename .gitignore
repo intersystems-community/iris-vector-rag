@@ -251,3 +251,6 @@ node_modules/
 .specify/integrations/
 .specify/workflows/
 .specify/templates/constitution-template.md
+
+# Validation run artifacts (timestamped JSON, regenerated per run)
+validation_results/

@@ -7,6 +7,32 @@
 
 **Organization**: Tasks grouped by user story for independent implementation and testing.
 
+## Correction, 2026-09-14 (feature 085)
+
+Nine tasks below were marked `[X]` without the work existing. Feature 085
+(`specs/085-sdk-search-filter/`) found this while fixing two `Search.cls` defects that a
+`SearchTest` would have caught, and unchecked them:
+
+| Task | Claimed | Actually on disk |
+| ---- | ------- | ---------------- |
+| T004 | `enterprise_storage.py` reads `sql/schema.sql` | no reference to `sql/schema.sql` anywhere in it |
+| T014 | `Test/BridgeTest.cls` | absent |
+| T016 | `Test/EvaluateTest.cls` | absent |
+| T018 | `iris_src/src/RAG/SDK/README.md` | absent |
+| T019 | `make deploy-sdk` | no such target in the `Makefile` |
+| T020 | `make test-sdk` | no such target in the `Makefile` |
+| T020a | `Test/PerfTest.cls` | absent |
+| T021 | five test classes pass | three exist; no run could have happened without `make test-sdk` |
+| T022 | `tests/test_sdk_e2e.py` | absent |
+
+T011 (`SearchTest.cls`) is left checked because the class now exists — but feature 085 wrote
+it, including all seven methods 070 declared, so 070's phase gate ("DO NOT PROCEED TO PHASE 6
+UNTIL ALL SearchTest methods pass") could not have run.
+
+`RAG.SDK.Test.PipelineTest` remains unrunnable on this project's container: embedded Python
+does not compile there at all (`specs/085-sdk-search-filter/research.md` finding 6), which
+also blocks `EvaluateTest` and any fix to `Evaluate.cls`.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -21,7 +47,7 @@
 - [X] T001 Create directory `iris_src/src/RAG/SDK/` for ObjectScript class files
 - [X] T002 Create directory `tests/objectscript/RAG/SDK/Test/` for %UnitTest classes
 - [X] T003 Create `sql/schema.sql` with `CREATE TABLE IF NOT EXISTS` DDL for RAG.SourceDocuments (doc_id VARCHAR(64) PK, title VARCHAR(500), text_content LONGVARCHAR, metadata LONGVARCHAR, embedding VECTOR(DOUBLE, 384)), RAG.DocumentChunks (chunk_id VARCHAR(64) PK, source_doc_id VARCHAR(64) FK, chunk_text LONGVARCHAR, chunk_embedding VECTOR(DOUBLE, 384)), and RAG.Entities (entity_id VARCHAR(64) PK, entity_name VARCHAR(500), entity_type VARCHAR(100), source_doc_id VARCHAR(64) FK) — statements separated by GO delimiters, all IF NOT EXISTS
-- [X] T004 Refactor Python IVR's schema creation to read DDL from `sql/schema.sql` instead of hardcoded strings — update `iris_vector_rag/storage/enterprise_storage.py` and any other file with inline CREATE TABLE statements for RAG tables to use `open("sql/schema.sql").read()` and execute each GO-delimited statement
+- [ ] T004 Refactor Python IVR's schema creation to read DDL from `sql/schema.sql` instead of hardcoded strings — update `iris_vector_rag/storage/enterprise_storage.py` and any other file with inline CREATE TABLE statements for RAG tables to use `open("sql/schema.sql").read()` and execute each GO-delimited statement
 
 **Checkpoint**: Directory structure exists, sql/schema.sql is the single DDL source, Python IVR reads from it.
 
@@ -103,7 +129,7 @@
 
 ### Tests for US3
 
-- [X] T011 [US3] Write `tests/objectscript/RAG/SDK/Test/SearchTest.cls`. Tests must insert their own known data and verify exact results — not just "non-empty array":
+- [X] T011 [US3] Write `tests/objectscript/RAG/SDK/Test/SearchTest.cls` — delivered by feature 085, not by 070; the phase gate below never ran here. Tests must insert their own known data and verify exact results — not just "non-empty array":
   - `TestVectorSearchReturnsTopResult`: insert doc "diabetes-001" with vector V1 and doc "diabetes-002" with vector V2 where V1 is more similar to query Q. Call `VectorSearch(Q,5)`. Parse returned JSON array. Assert `results[0].id = "diabetes-001"` (top result is most similar). Assert `results[0].score > results[1].score` (sorted descending). Assert all returned scores are in range 0.0-1.0.
   - `TestVectorSearchDimensionDetection`: insert doc with 384-dim vector, call `VectorSearch` with 384-dim query — assert succeeds. Call with 128-dim query — assert returns JSON error, not an IRIS crash.
   - `TestVectorSearchTopKRespected`: insert 20 docs, call `VectorSearch(Q,5)` — assert returned array has exactly 5 elements.
@@ -137,7 +163,7 @@
 
 ### Tests for US4
 
-- [X] T014 [US4] Write `tests/objectscript/RAG/SDK/Test/BridgeTest.cls`. Must create a real custom table in IRIS and verify actual graph mapping AND overlay search:
+- [ ] T014 [US4] Write `tests/objectscript/RAG/SDK/Test/BridgeTest.cls`. Must create a real custom table in IRIS and verify actual graph mapping AND overlay search:
   - `Setup`: create `Test070.ClinicalNotes` with columns `note_id VARCHAR(50) PK, note_text VARCHAR(2000), embedding VECTOR(DOUBLE,384)`, insert 5 rows with known 384-dim vectors
   - `TestAttachTableSuccess`: call `##class(RAG.SDK.Bridge).AttachTable("Test070.ClinicalNotes","note_id","note_text","embedding","TestNote")`, parse returned JSON, assert `dimension=384`, assert `rowCount=5`, assert `label="TestNote"`
   - `TestAttachTableRegisteredInMappings`: after AttachTable, query `SELECT COUNT(*) FROM Graph_KG.table_mappings WHERE label='TestNote'` — assert =1
@@ -174,7 +200,7 @@
 
 ### Tests for US5
 
-- [X] T016 [US5] Write `tests/objectscript/RAG/SDK/Test/EvaluateTest.cls`:
+- [ ] T016 [US5] Write `tests/objectscript/RAG/SDK/Test/EvaluateTest.cls`:
   - `TestRunRAGASMissingPackage`: temporarily rename `ragas` import to `ragas_NOTINSTALLED` to simulate missing package (or use a try/except check) — assert returned JSON contains `"error"` key with installation instructions containing the string `$system.Python.Install`
   - `TestRunRAGASOutputShape`: with ragas+datasets installed, insert 5 documents with known content, call `RunRAGAS` with 3 questions and matching ground truths — parse returned JSON, assert all four keys present: `faithfulness`, `answer_relevancy`, `context_precision`, `context_recall`; assert each value is a float between 0.0 and 1.0 inclusive; assert `per_question` key is a JSON array with 3 elements
 
@@ -191,12 +217,12 @@
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [X] T018 [P] Write `iris_src/src/RAG/SDK/README.md` documenting all ClassMethods, prerequisites, and quickstart examples from `specs/070-objectscript-sdk/quickstart.md`
-- [X] T019 [P] Add `make deploy-sdk` target to `Makefile` that calls `scripts/deploy_sdk.sh` followed by `scripts/deploy_sdk_tests.sh`
-- [X] T020 [P] Add `make test-sdk` target to `Makefile` that runs `%UnitTest.Manager.RunTest("RAG.SDK.Test", "/noload")` against the IRIS container
-- [X] T020a [P] Write `tests/objectscript/RAG/SDK/Test/PerfTest.cls` — insert 10,000 documents via `AddDocumentBatch`, run `VectorSearch` 20 times, assert p50 latency < 100ms — satisfies SC-002
-- [X] T021 Run full %UnitTest suite via `make test-sdk` — all 5 test classes (SchemaTest, PipelineTest, SearchTest, BridgeTest, EvaluateTest) pass with 0 failures and 0 errors. A single failing method in any class is a hard stop.
-- [X] T022 Write and run `tests/test_sdk_e2e.py` — full cross-language E2E test in Python:
+- [ ] T018 [P] Write `iris_src/src/RAG/SDK/README.md` documenting all ClassMethods, prerequisites, and quickstart examples from `specs/070-objectscript-sdk/quickstart.md`
+- [ ] T019 [P] Add `make deploy-sdk` target to `Makefile` that calls `scripts/deploy_sdk.sh` followed by `scripts/deploy_sdk_tests.sh`
+- [ ] T020 [P] Add `make test-sdk` target to `Makefile` that runs `%UnitTest.Manager.RunTest("RAG.SDK.Test", "/noload")` against the IRIS container
+- [ ] T020a [P] Write `tests/objectscript/RAG/SDK/Test/PerfTest.cls` — insert 10,000 documents via `AddDocumentBatch`, run `VectorSearch` 20 times, assert p50 latency < 100ms — satisfies SC-002
+- [ ] T021 Run full %UnitTest suite via `make test-sdk` — all 5 test classes (SchemaTest, PipelineTest, SearchTest, BridgeTest, EvaluateTest) pass with 0 failures and 0 errors. A single failing method in any class is a hard stop.
+- [ ] T022 Write and run `tests/test_sdk_e2e.py` — full cross-language E2E test in Python:
   - Step 1: Call `##class(RAG.SDK.Schema).Drop()` then `Initialize(384)` — clean slate
   - Step 2: Insert 10 documents via `##class(RAG.SDK.Pipeline).AddDocument(...)` — known vectors
   - Step 3: Call Python IVR `pipeline.query("diabetes treatment", top_k=5)` — assert returns ObjectScript-inserted docs
