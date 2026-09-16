@@ -18,8 +18,9 @@ foundational phase — see the note under Phase 2.
 
 ## Phase 1: Setup
 
-- [ ] T001 Run `bash .specify/scripts/bash/check-container.sh` and confirm `iris-vector-rag-iris` on port `51972` is up; if it is stopped, `docker start iris-vector-rag-iris` — never substitute another container
-- [ ] T002 Capture the pre-change red baseline so later failures can be attributed: `./scripts/ci/run-tests.sh` on the branch point, deduped `FAILED`/`ERROR` node ids saved to `/tmp/086-baseline-before.txt`
+- [X] T001 Run `bash .specify/scripts/bash/check-container.sh` and confirm `iris-vector-rag-iris` on port `51972` is up; if it is stopped, `docker start iris-vector-rag-iris` — never substitute another container
+- [X] T002 Capture the pre-change red baseline so later failures can be attributed: `./scripts/ci/run-tests.sh` on the branch point, deduped `FAILED`/`ERROR` node ids saved to `/tmp/086-baseline-before.txt`
+- [X] T002a Give the worktree the project's `.env` (`IRIS_PORT=51972`). Without it `tests/conftest.py`'s `load_dotenv()` finds nothing and `auto_detect_iris_port()` falls back to `1972`, which is a **different project's container**. The first baseline attempt ran there and was discarded; the real baseline is captured in T047 from a pristine worktree at the branch point
 
 ---
 
@@ -45,18 +46,30 @@ store a document, count the rows.
 
 ### Tests first
 
-- [ ] T003 [P] [US1] Unit test in `tests/test_enterprise_storage.py`: `initialize_schema` calls `SchemaManager.ensure_table_schema` with the **unqualified** `"SourceDocuments"` when `self.table_name` is `"RAG.SourceDocuments"` (FR-012, FR-015)
-- [ ] T004 [P] [US1] Unit test in `tests/test_enterprise_storage.py`: no statement passed to `cursor.execute` during `initialize_schema` matches `CREATE TABLE`, `DROP TABLE` or `DELETE FROM` (FR-012, FR-013)
-- [ ] T005 [P] [US1] Unit test in `tests/test_enterprise_storage.py`: `ensure_table_schema` returning `False` makes `initialize_schema` raise, and `self.table_name` is unchanged afterwards (FR-014)
-- [ ] T006 [P] [US1] Unit test in `tests/test_enterprise_storage.py`: the HNSW index step still runs with the values from `config_manager.get_vector_index_config()`, and a failure there is still logged rather than raised (FR-016)
-- [ ] T007 [US1] Rewrite `test_initialize_schema_fallback` and `test_initialize_schema_success` in `tests/test_enterprise_storage.py` against the delegating behaviour — the fallback assertion (`table_name == "SourceDocuments"`) asserts the mutation FR-014 removes, so it is replaced, not repaired (FR-014, FR-018)
-- [ ] T008 [US1] Integration test in `tests/integration/test_enterprise_storage_no_data_loss.py`: create a table with N rows against `iris-vector-rag-iris`, make the first `SELECT COUNT(*) ... WHERE 1=0` probe raise, call `store_documents` with one document, assert the row count is N+1 and the table was never dropped (FR-013)
+- [X] T003 [P] [US1] Unit test in `tests/test_enterprise_storage.py`: `initialize_schema` calls `SchemaManager.ensure_table_schema` with the **unqualified** `"SourceDocuments"` when `self.table_name` is `"RAG.SourceDocuments"` (FR-012, FR-015)
+- [X] T004 [P] [US1] Unit test in `tests/test_enterprise_storage.py`: no statement passed to `cursor.execute` during `initialize_schema` matches `CREATE TABLE`, `DROP TABLE` or `DELETE FROM` (FR-012, FR-013)
+- [X] T005 [P] [US1] Unit test in `tests/test_enterprise_storage.py`: `ensure_table_schema` returning `False` makes `initialize_schema` raise, and `self.table_name` is unchanged afterwards (FR-014)
+- [X] T006 [P] [US1] Unit test in `tests/test_enterprise_storage.py`: the HNSW index step still runs with the values from `config_manager.get_vector_index_config()`, and a failure there is still logged rather than raised (FR-016)
+- [X] T007 [US1] Rewrite `test_initialize_schema_fallback` and `test_initialize_schema_success` in `tests/test_enterprise_storage.py` against the delegating behaviour — the fallback assertion (`table_name == "SourceDocuments"`) asserts the mutation FR-014 removes, so it is replaced, not repaired (FR-014, FR-018)
+- [X] T008 [US1] Integration test in `tests/integration/test_enterprise_storage_no_data_loss.py`: create a table with N rows against `iris-vector-rag-iris`, make the first `SELECT COUNT(*) ... WHERE 1=0` probe raise, call `store_documents` with one document, assert the row count is N+1 and the table was never dropped (FR-013)
 
 ### Implementation
 
-- [ ] T009 [US1] Rewrite `initialize_schema` in `iris_vector_rag/storage/enterprise_storage.py:99-205`: take the last dot-separated segment of `self.table_name`, call `SchemaManager(connection_manager=..., config_manager=...).ensure_table_schema(<unqualified>)`, raise a descriptive error when it returns `False`, keep the vector-index block at `:164-195` and the `commit`/`rollback`/`cursor.close` structure, and delete the two-name attempt loop, the inline `CREATE TABLE`, the unconditional `DROP TABLE`, the `DELETE FROM` fallback and the `self.table_name` assignment (FR-012, FR-013, FR-014, FR-015, FR-016, FR-017)
-- [ ] T010 [US1] Record in the method's docstring why it delegates rather than creating: the probe in `store_documents` (`:241-248`) cannot distinguish an absent table from an unavailable one, so anything destructive reached from there is reached by accident (FR-013)
-- [ ] T011 [US1] **Phase gate**: `pytest tests/test_enterprise_storage.py -q` and `IRIS_BACKEND_MODE=community pytest tests/integration/test_enterprise_storage_no_data_loss.py -q` both pass
+- [X] T009 [US1] Rewrite `initialize_schema` in `iris_vector_rag/storage/enterprise_storage.py:99-205`: take the last dot-separated segment of `self.table_name`, call `SchemaManager(connection_manager=..., config_manager=...).ensure_table_schema(<unqualified>)`, raise a descriptive error when it returns `False`, keep the vector-index block at `:164-195` and the `commit`/`rollback`/`cursor.close` structure, and delete the two-name attempt loop, the inline `CREATE TABLE`, the unconditional `DROP TABLE`, the `DELETE FROM` fallback and the `self.table_name` assignment (FR-012, FR-013, FR-014, FR-015, FR-016, FR-017)
+- [X] T010 [US1] Record in the method's docstring why it delegates rather than creating: the probe in `store_documents` (`:241-248`) cannot distinguish an absent table from an unavailable one, so anything destructive reached from there is reached by accident (FR-013)
+### Discovered while running the phase gate
+
+The index step FR-016 keeps could not survive its own catalog reads: `IRISSQLUtils`'
+`check_table_exists`, `check_index_exists` and `get_table_columns` each called
+`get_iris_dbapi_connection()` — which returns the process-wide **cached** connection, not a
+new one — and closed it in a `finally` block. Every `initialize_schema` against a real
+instance therefore ended in `<COMMUNICATION LINK ERROR> Connection closed`, and so did the
+`store_documents` call that triggered it. FR-013 is untestable until this is fixed.
+
+- [X] T011a [US1] Unit tests in `tests/test_iris_sql_utils_connection_ownership.py`: each of the three helpers leaves the connection from `get_iris_dbapi_connection` open, and still closes the cursors it opened (FR-013, FR-016)
+- [X] T011b [US1] Stop closing the cached connection in those three `finally` blocks in `iris_vector_rag/common/iris_sql_utils.py`, rename `temp_connection` to `shared_connection` so the variable stops claiming ownership, and record the rule in a comment (FR-013, FR-016)
+
+- [X] T011 [US1] **Phase gate**: `pytest tests/test_enterprise_storage.py -q` and `IRIS_BACKEND_MODE=community pytest tests/integration/test_enterprise_storage_no_data_loss.py -q` both pass
 
 ---
 

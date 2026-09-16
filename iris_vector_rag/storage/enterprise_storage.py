@@ -98,68 +98,51 @@ class IRISStorage:
 
     def initialize_schema(self) -> None:
         """
-        Initialize the database schema for document storage with IRIS-specific workarounds.
+        Make sure the document table exists by asking the schema owner for it.
 
-        Creates the necessary tables and indexes if they don't exist.
+        This method issues no DDL, deliberately. `store_documents` probes the table with
+        `SELECT COUNT(*) ... WHERE 1=0` and calls this on *any* exception, and that probe
+        cannot tell an absent table from a locked, licence-starved or momentarily
+        disconnected one. Anything destructive reachable from here is therefore reached by
+        accident: the previous version dropped the table and, when the drop failed,
+        emptied it, so a transient connection error could delete a user's documents.
+
+        `SchemaManager.ensure_table_schema` owns the DDL — it creates the table when it is
+        missing, leaves an existing document table alone, and declares the canonical
+        vector element type. It takes an unqualified name, so the schema part of
+        `self.table_name` is dropped for the call. `self.table_name` itself is never
+        reassigned: callers keep the table they configured.
         """
         connection = self._get_connection()
         cursor = connection.cursor()
 
         try:
-            # Try multiple table name approaches to work around IRIS schema issues
-            table_attempts = [
-                self.table_name,  # Original preference (e.g., RAG.SourceDocuments)
-                "SourceDocuments",  # Fallback to current user schema
-            ]
+            unqualified_name = self.table_name.split(".")[-1]
 
-            table_created = False
-            for table_name in table_attempts:
-                try:
-                    logger.info(f"Attempting to create/verify table {table_name}")
+            from iris_vector_rag.storage.schema_manager import SchemaManager
 
-                    # Create main documents table with consistent column names
-                    create_table_sql = f"""
-                    CREATE TABLE {table_name} (
-                        doc_id VARCHAR(255) PRIMARY KEY,
-                        title VARCHAR(1000),
-                        text_content VARCHAR(MAX),
-                        abstract VARCHAR(MAX),
-                        authors VARCHAR(MAX),
-                        keywords VARCHAR(MAX),
-                        metadata VARCHAR(MAX),
-                        embedding VECTOR(FLOAT, {self.vector_dimension}),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                    """
+            schema_manager = SchemaManager(
+                connection_manager=self.connection_manager,
+                config_manager=self.config_manager,
+            )
+            if not schema_manager.ensure_table_schema(unqualified_name):
+                raise RuntimeError(
+                    f"Schema owner could not ensure table '{unqualified_name}' "
+                    f"(configured here as {self.table_name}); no DDL is issued from "
+                    "storage, so this is not recoverable by retrying"
+                )
 
-                    # Try to drop first if exists (ignore errors)
-                    try:
-                        cursor.execute(f"DROP TABLE {table_name}")
-                        logger.info(f"Dropped existing {table_name} table")
-                        cursor.execute(create_table_sql)
-                        logger.info(f"✅ Successfully recreated {table_name} table")
-                    except Exception as drop_err:
-                        logger.warning(
-                            f"Could not drop {table_name} (foreign keys?): {drop_err}"
-                        )
-                        logger.info(f"Clearing all rows from {table_name} instead")
-                        cursor.execute(f"DELETE FROM {table_name}")
-
-                    # Update the table name for subsequent operations
-                    self.table_name = table_name
-                    table_created = True
-                    break
-
-                except Exception as table_error:
-                    logger.warning(
-                        f"Failed to create table {table_name}: {table_error}"
-                    )
-                    if table_name == table_attempts[-1]:  # Last attempt
-                        raise Exception("All table creation attempts failed")
-                    continue
-
-            if not table_created:
-                raise Exception("Could not create SourceDocuments table")
+            # ensure_table_schema qualifies the name with its own schema prefix, which is
+            # configured independently of self.table_name. Confirm the table this
+            # instance will write to is the one that was actually ensured.
+            try:
+                cursor.execute(f"SELECT COUNT(*) FROM {self.table_name} WHERE 1=0")
+            except Exception as unreachable:
+                raise RuntimeError(
+                    f"Ensured '{unqualified_name}' but {self.table_name} is still not "
+                    f"reachable: {unreachable}. Check that the schema prefix used by "
+                    "SchemaManager matches the configured table name."
+                ) from unreachable
 
             # Create vector index for similarity search with configurable HNSW parameters
             try:
@@ -195,7 +178,7 @@ class IRISStorage:
                 # Continue without vector index - basic functionality will still work
 
             connection.commit()
-            logger.info(f"Schema initialized for table: {self.table_name}")
+            logger.info(f"Schema ensured by the schema owner for: {self.table_name}")
 
         except Exception as e:
             connection.rollback()

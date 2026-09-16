@@ -107,61 +107,117 @@ class TestIRISStorage(unittest.TestCase):
         self.assertEqual(connection, self.mock_connection)
         self.mock_connection_manager.get_connection.assert_called_with("iris")
 
+    def _patch_schema_owner(self, ensure_result=True):
+        """
+        Patch the schema owner initialize_schema delegates to.
+
+        The import happens inside the method, so the patch target is the module
+        that defines SchemaManager, not this one.
+        """
+        patcher = patch("iris_vector_rag.storage.schema_manager.SchemaManager")
+        mock_class = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_class.return_value.ensure_table_schema.return_value = ensure_result
+        return mock_class.return_value
+
+    def _patch_vector_index(self, optimize_result=True):
+        """Patch the HNSW index helper and give the config manager index settings."""
+        patcher = patch("iris_vector_rag.common.iris_sql_utils.IRISSQLUtils")
+        mock_class = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_class.return_value.optimize_vector_table.return_value = optimize_result
+        self.vector_config = {"M": 16, "efConstruction": 200, "Distance": "Cosine"}
+        self.mock_config_manager.get_vector_index_config.return_value = (
+            self.vector_config
+        )
+        return mock_class.return_value
+
     @patch("iris_vector_rag.storage.enterprise_storage.logger")
     def test_initialize_schema_success(self, mock_logger):
-        """Test successful schema initialization."""
-        # Mock successful table creation
-        self.mock_cursor.execute.side_effect = [
-            None,  # DROP TABLE succeeds
-            None,  # CREATE TABLE succeeds
-        ]
+        """A successful initialization delegates, commits and indexes."""
+        schema_manager = self._patch_schema_owner()
+        utils = self._patch_vector_index()
 
-        with patch(
-            "iris_vector_rag.common.iris_sql_utils.IRISSQLUtils"
-        ) as mock_utils_class:
-            mock_utils = Mock()
-            mock_utils_class.return_value = mock_utils
-            mock_utils.optimize_vector_table.return_value = True
+        self.storage.initialize_schema()
 
-            # Mock vector config
-            vector_config = {"M": 16, "efConstruction": 200, "Distance": "Cosine"}
-            self.mock_config_manager.get_vector_index_config.return_value = (
-                vector_config
-            )
-
-            self.storage.initialize_schema()
-
-            # Verify table creation attempts
-            self.assertTrue(self.mock_cursor.execute.called)
-            self.mock_connection.commit.assert_called_once()
-            mock_utils.optimize_vector_table.assert_called_once()
+        schema_manager.ensure_table_schema.assert_called_once()
+        self.mock_connection.commit.assert_called_once()
+        utils.optimize_vector_table.assert_called_once()
 
     @patch("iris_vector_rag.storage.enterprise_storage.logger")
-    def test_initialize_schema_fallback(self, mock_logger):
-        """Test schema initialization with fallback table name."""
-        # Mock first table creation failure, second succeeds
-        self.mock_cursor.execute.side_effect = [
-            Exception("Schema error"),  # First table fails
-            None,  # DROP TABLE for fallback
-            None,  # CREATE TABLE for fallback succeeds
+    def test_initialize_schema_delegates_unqualified_name(self, mock_logger):
+        """The schema owner matches unqualified names, so the prefix is stripped."""
+        schema_manager = self._patch_schema_owner()
+        self._patch_vector_index()
+
+        self.storage.initialize_schema()
+
+        schema_manager.ensure_table_schema.assert_called_once_with("SourceDocuments")
+
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
+    def test_initialize_schema_issues_no_ddl(self, mock_logger):
+        """Nothing reachable from storing documents may create, drop or empty a table."""
+        self._patch_schema_owner()
+        self._patch_vector_index()
+
+        self.storage.initialize_schema()
+
+        statements = [
+            str(call.args[0]) if call.args else ""
+            for call in self.mock_cursor.execute.call_args_list
         ]
+        for statement in statements:
+            upper = statement.upper()
+            for forbidden in ("CREATE TABLE", "DROP TABLE", "DELETE FROM", "TRUNCATE"):
+                self.assertNotIn(
+                    forbidden, upper, f"initialize_schema issued: {statement}"
+                )
 
-        with patch(
-            "iris_vector_rag.common.iris_sql_utils.IRISSQLUtils"
-        ) as mock_utils_class:
-            mock_utils = Mock()
-            mock_utils_class.return_value = mock_utils
-            mock_utils.optimize_vector_table.return_value = True
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
+    def test_initialize_schema_raises_instead_of_falling_back(self, mock_logger):
+        """A table that cannot be ensured raises; it never re-points the instance."""
+        self._patch_schema_owner(ensure_result=False)
+        self._patch_vector_index()
 
-            vector_config = {"M": 16, "efConstruction": 200, "Distance": "Cosine"}
-            self.mock_config_manager.get_vector_index_config.return_value = (
-                vector_config
-            )
-
+        with self.assertRaises(Exception) as caught:
             self.storage.initialize_schema()
 
-            # Should have tried both table names
-            self.assertEqual(self.storage.table_name, "SourceDocuments")
+        self.assertIn("SourceDocuments", str(caught.exception))
+        self.assertEqual(self.storage.table_name, "RAG.SourceDocuments")
+        self.mock_connection.commit.assert_not_called()
+
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
+    def test_initialize_schema_does_not_repoint_table_name(self, mock_logger):
+        """A successful initialization leaves the configured table name alone."""
+        self._patch_schema_owner()
+        self._patch_vector_index()
+
+        self.storage.initialize_schema()
+
+        self.assertEqual(self.storage.table_name, "RAG.SourceDocuments")
+
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
+    def test_initialize_schema_keeps_configured_hnsw_parameters(self, mock_logger):
+        """The index step still passes the configured HNSW parameters through."""
+        self._patch_schema_owner()
+        utils = self._patch_vector_index()
+
+        self.storage.initialize_schema()
+
+        utils.optimize_vector_table.assert_called_once_with(
+            self.mock_connection, "RAG.SourceDocuments", "embedding", self.vector_config
+        )
+
+    @patch("iris_vector_rag.storage.enterprise_storage.logger")
+    def test_initialize_schema_tolerates_index_failure(self, mock_logger):
+        """An index failure is logged, not raised: the table itself is usable."""
+        self._patch_schema_owner()
+        utils = self._patch_vector_index()
+        utils.optimize_vector_table.side_effect = Exception("no HNSW here")
+
+        self.storage.initialize_schema()
+
+        self.mock_connection.commit.assert_called_once()
 
     def test_store_document_calls_store_documents(self):
         """Test that store_document delegates to store_documents."""
