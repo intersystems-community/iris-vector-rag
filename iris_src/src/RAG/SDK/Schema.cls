@@ -1,9 +1,19 @@
 Class RAG.SDK.Schema
 {
 
-ClassMethod Initialize(dim As %Integer = 384) As %String
+/// The element type every vector column created here is declared with. IRIS refuses to
+/// compare vectors of different element types (SQLCODE -259), so one type has to be
+/// canonical: FLOAT, the type this repo's Python paths create. Declared once so a second
+/// creation path cannot disagree with the first.
+Parameter VECTORTYPE = "FLOAT";
+
+/// Create the document, chunk and entity tables if they are not already there.
+///
+/// `schema` exists so an installation, or a test, can create the tables somewhere other
+/// than RAG without a second copy of the DDL to keep in step with this one.
+ClassMethod Initialize(dim As %Integer = 384, schema As %String = "RAG") As %String
 {
-    Set sql = ..GetDefaultDDL(dim)
+    Set sql = ..GetDefaultDDL(dim, schema)
     Set stmts = $ListFromString(sql, "GO")
     Set ptr = 0
     While $ListNext(stmts, ptr, stmt) {
@@ -17,11 +27,12 @@ ClassMethod Initialize(dim As %Integer = 384) As %String
     Return {"status":"ok","embeddingDimension":(dim)}.%ToJSON()
 }
 
-ClassMethod GetDefaultDDL(dim As %Integer) As %String [ Private ]
+ClassMethod GetDefaultDDL(dim As %Integer, schema As %String = "RAG") As %String [ Private ]
 {
-    Set d1 = "CREATE TABLE IF NOT EXISTS RAG.SourceDocuments (doc_id VARCHAR(64) NOT NULL, title VARCHAR(500), text_content LONGVARCHAR, metadata LONGVARCHAR, embedding VECTOR(DOUBLE, "_dim_"), PRIMARY KEY (doc_id))"
-    Set d2 = "CREATE TABLE IF NOT EXISTS RAG.DocumentChunks (chunk_id VARCHAR(64) NOT NULL, source_doc_id VARCHAR(64), chunk_text LONGVARCHAR, chunk_embedding VECTOR(DOUBLE, "_dim_"), PRIMARY KEY (chunk_id))"
-    Set d3 = "CREATE TABLE IF NOT EXISTS RAG.Entities (entity_id VARCHAR(64) NOT NULL, entity_name VARCHAR(500), entity_type VARCHAR(100), source_doc_id VARCHAR(64), PRIMARY KEY (entity_id))"
+    Set vec = "VECTOR("_..#VECTORTYPE_", "_dim_")"
+    Set d1 = "CREATE TABLE IF NOT EXISTS "_schema_".SourceDocuments (doc_id VARCHAR(64) NOT NULL, title VARCHAR(500), text_content LONGVARCHAR, metadata LONGVARCHAR, embedding "_vec_", PRIMARY KEY (doc_id))"
+    Set d2 = "CREATE TABLE IF NOT EXISTS "_schema_".DocumentChunks (chunk_id VARCHAR(64) NOT NULL, source_doc_id VARCHAR(64), chunk_text LONGVARCHAR, chunk_embedding "_vec_", PRIMARY KEY (chunk_id))"
+    Set d3 = "CREATE TABLE IF NOT EXISTS "_schema_".Entities (entity_id VARCHAR(64) NOT NULL, entity_name VARCHAR(500), entity_type VARCHAR(100), source_doc_id VARCHAR(64), PRIMARY KEY (entity_id))"
     Return d1_"GO"_d2_"GO"_d3
 }
 
@@ -36,9 +47,10 @@ ClassMethod Install() As %String
     Return {"status":"error","message":("pip exited with code "_rc)}.%ToJSON()
 }
 
-ClassMethod Drop() As %String
+/// Drop the three tables Initialize creates, in the schema it created them in.
+ClassMethod Drop(schema As %String = "RAG") As %String
 {
-    For tbl = "RAG.Entities", "RAG.DocumentChunks", "RAG.SourceDocuments" {
+    For tbl = schema_".Entities", schema_".DocumentChunks", schema_".SourceDocuments" {
         Set st = ##class(%SQL.Statement).%New()
         Do st.%Prepare("DROP TABLE "_tbl)
         Do st.%Execute()

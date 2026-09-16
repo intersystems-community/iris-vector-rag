@@ -46,8 +46,10 @@ ClassMethod VectorProperty(table As %String, column As %String) As %Dictionary.C
 
 /// The element type of a VECTOR column, "FLOAT" or "DOUBLE", or "" when it cannot be
 /// resolved. IRIS refuses to compare vectors of different element types (SQLCODE -259), so
-/// TO_VECTOR has to name the type the column actually has: this repo's Python paths create
-/// FLOAT columns, RAG.SDK.Schema creates DOUBLE ones, and the SDK has to search both.
+/// TO_VECTOR has to name the type the column actually has. Every creation path now declares
+/// the canonical FLOAT -- this repo's Python paths and RAG.SDK.Schema alike -- but the
+/// resolution stays: a table created by an earlier release is still DOUBLE, and the SDK has
+/// to search and write both.
 ClassMethod GetVectorType(table As %String, column As %String) As %String
 {
     Set prop = ..VectorProperty(table, column)

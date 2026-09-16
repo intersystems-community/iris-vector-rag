@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### Storing documents no longer risks the document table, and every creation path declares `FLOAT`
+
+Two things a user can observe.
+
+- **`IRISStorage.initialize_schema` no longer creates, drops or empties the document
+  table.** It asks `SchemaManager.ensure_table_schema` for the table and raises if that
+  fails. The probe that reached this code — a `SELECT COUNT(*) ... WHERE 1=0` in
+  `store_documents` — cannot tell an absent table from an unreachable one, so the
+  `DROP TABLE` and `DELETE FROM` it used to trigger could empty a populated table on
+  nothing worse than a closed connection. `initialize_schema` also no longer reassigns
+  `self.table_name` on failure, so a storage object cannot silently start writing to a
+  different table than the one it was configured with.
+- **New tables get `VECTOR(FLOAT, n)` from every creation path.** `RAG.SDK.Schema`,
+  `sql/schema.sql` and `iris_vector_rag/common/db_init_complete.sql` all declared
+  `DOUBLE` in places; IRIS refuses to compare vectors of different element types
+  (SQLCODE -259), so a `DOUBLE` table was unsearchable from a library that converts to
+  the canonical `FLOAT`. Tables created earlier are unaffected and stay searchable: the
+  SDK's write path resolves the element type from the column it is writing to, and only
+  falls back to `FLOAT` when the column cannot be read.
+
 ### Table shape: the database decides which column fills which role (0.15)
 
 `TableShape` reads a document or chunk table out of the IRIS catalog once and

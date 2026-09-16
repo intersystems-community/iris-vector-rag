@@ -72,9 +72,17 @@ Method TestVectorRoundtrip()
     Set ones = "1.0"
     For i = 2:1:384 { Set ones = ones_",0.0" }
     Do ##class(RAG.SDK.Pipeline).AddDocument("test-rt", "Roundtrip doc", "{}", ones)
+    // The element type comes from the column, exactly as AddDocument reads it. Naming a type
+    // here instead is how this test used to fail on an instance whose RAG.SourceDocuments was
+    // created as FLOAT: comparing it against a DOUBLE vector is SQLCODE -259, %Next() is false
+    // and the score reads as 0 -- a real failure, but not the one the assertion describes.
+    Set vecType = ##class(RAG.SDK.Search).GetVectorType("RAG.SourceDocuments", "embedding")
+    Do $$$AssertNotEquals(vecType, "", "embedding column reports an element type")
     Set st = ##class(%SQL.Statement).%New()
-    Do st.%Prepare("SELECT VECTOR_COSINE(embedding, TO_VECTOR(?, DOUBLE, 384)) AS score FROM RAG.SourceDocuments WHERE doc_id='test-rt'")
+    Set sc = st.%Prepare("SELECT VECTOR_COSINE(embedding, TO_VECTOR(?, "_vecType_", 384)) AS score FROM RAG.SourceDocuments WHERE doc_id='test-rt'")
+    Do $$$AssertStatusOK(sc, "self-cosine query prepares")
     Set rs = st.%Execute(ones)
+    Do $$$AssertEquals(rs.%SQLCODE, 0, "self-cosine query runs, SQLCODE: "_rs.%SQLCODE_" "_rs.%Message)
     Do rs.%Next()
     Set score = +rs.%Get("score")
     Do $$$AssertTrue(score > 0.99, "self-cosine > 0.99, got: "_score)
