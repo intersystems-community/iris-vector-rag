@@ -190,3 +190,37 @@ start collecting doctests across the package, `--strict-markers` would reject an
 not in the list, and `--cov=iris_rag` names the directory that no longer holds code
 (entry 7). Renaming the section is a one-character change with a suite-wide blast radius;
 it needs its own change, with each option turned on deliberately.
+
+## 9. A second, pre-4.0 `kg_NodeEmbeddings_optimized` in SQLUSER
+
+`SchemaManager` can still create `SQLUSER.kg_NodeEmbeddings_optimized` with the 2.x
+columns `(id, emb)` (`iris_vector_rag/storage/schema_manager.py:2080-2086`), describes it
+in its table config (`:663`), and `validation/requirements.py:382-429` lists it as an
+optional table. ivg 4.x owns `Graph_KG.kg_NodeEmbeddings_optimized`, keyed on
+`(graph_id, node_id)`, and never reads the SQLUSER copy. The layout check added with ivg
+4.1 (`pre_4_layout_tables`) looks only at `Graph_KG`, so this copy is neither migrated
+nor reported.
+
+**Why deferred:** removing the DDL path changes what `SchemaManager` creates for every
+pipeline that asks for the table, and the optional-table requirement is checked by
+validation tests of its own. It needs its own change, after confirming nothing still
+writes to the SQLUSER table.
+
+## 10. Upstream gaps in iris-vector-graph 4.1.0
+
+Found while moving to ivg 4.1.0 (`docs/IVG_4X_UPGRADE.md`). They belong to ivg; IVR works
+around each one and reports it rather than patching the package.
+
+- `engine.delete_node()` deletes only from `kg_NodeEmbeddings`. For a named-graph node the
+  FK from the routed `kg_emb_<hash>` table raises SQLCODE -124, which the method swallows
+  before returning `False`. Workaround: `delete_nodes_by_prefix(node_id, graph=...)`.
+- `upgrade_to_4_0_0(dry_run=True)` raises on a genuine pre-4.0 install for `docs` and
+  `kg_node_stores`. Its hint also says to run `initialize_schema()`, but a dry run must
+  not write DDL. IVR previews step by step and reports the failing steps.
+- The wheel ships no `.cls` files, so `kg_node_stores` needs the sdist's `iris_src/src`
+  staged at `/tmp/src` by hand. While it is staged, every `initialize_schema()` redeploys
+  (about 8 s).
+- The `Graph.KG` package compile includes `Language = python` classes. On a container
+  without working embedded Python (entry 1) they crash the callin process with signal 11.
+  `Graph.KG.MCPService` also needs `%AI.MCP.Service`, so the compile reports `#5373`.
+- `schema.py:1740-1749` has invalid escape sequences (`SyntaxWarning` on import).

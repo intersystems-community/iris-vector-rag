@@ -10,7 +10,10 @@ from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
 def _manager_without_init() -> SchemaManager:
-    return SchemaManager.__new__(SchemaManager)
+    manager = SchemaManager.__new__(SchemaManager)
+    # Graph_KG layout is `test_ivg_4x_layout.py`'s subject; here it is already 4.x.
+    manager._ivg_legacy_layout_tables = lambda: []
+    return manager
 
 
 def test_initialization_requires_package_for_graphrag():
@@ -45,7 +48,7 @@ def test_initialization_records_per_table_errors():
 
     with patch(
         "iris_vector_rag.storage.schema_manager.assert_ivg_compatible",
-        return_value="2.0.0",
+        return_value="4.1.0",
     ):
         result = manager.ensure_iris_vector_graph_tables(pipeline_type="graphrag")
         assert result.tables_attempted == list(IVG_REQUIRED_TABLES)
@@ -64,7 +67,7 @@ def test_initialization_records_timing():
     with (
         patch(
             "iris_vector_rag.storage.schema_manager.assert_ivg_compatible",
-            return_value="2.0.0",
+            return_value="4.1.0",
         ),
         patch.object(time, "time", side_effect=lambda: next(times)),
     ):

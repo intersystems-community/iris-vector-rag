@@ -1,9 +1,9 @@
 """
 Standardized DB Vector Utilities for IRIS.
 
-Tries to import from iris_vector_graph.dbapi_utils (IVG >=1.99.0 / 2.x).
-Falls back to pure-SQL implementations for IVG 1.x (<1.99.0) where that
-module was absent.
+Re-exports iris_vector_graph.dbapi_utils (present in every supported IVG, 4.x).
+The pure-SQL fallbacks below serve environments without iris-vector-graph
+installed; IVG 1.x (<1.99.0), which also lacked the module, is no longer supported.
 """
 
 import json
@@ -20,7 +20,7 @@ try:
     from iris_vector_graph.dbapi_utils import normalize_vector as _normalize_vector_data
     from iris_vector_graph.dbapi_utils import vector_similarity_search
 except ImportError:
-    # IVG 1.x (<1.99.0) — dbapi_utils did not exist; provide pure-SQL fallbacks.
+    # iris-vector-graph not installed — provide pure-SQL fallbacks.
 
     def _normalize_vector_data(v: Sequence[float]) -> List[float]:
         mag = math.sqrt(sum(x * x for x in v))

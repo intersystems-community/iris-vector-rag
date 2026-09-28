@@ -936,7 +936,14 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         - BM25 index: this pipeline does not own a BM25 index (text search goes
           through iris_vector_graph's kg_TXT over the KG tables), so there is nothing
           to delete here. Callers that build their own index can call
-          iris_engine.bm25_delete(name, node_id) (iris_vector_graph >= 2.18).
+          iris_engine.bm25_delete(name, node_id).
+
+        index_node() writes to ivg's default graph, which this reaches. A node
+        written to a named graph (``graph=`` in ivg 4.x) keeps its vector in a
+        routed ``kg_emb_<hash>`` table that ivg 4.1.0's ``delete_node`` does not
+        delete from; remove those with
+        ``iris_engine.delete_nodes_by_prefix(node_id, graph=...)``, which is a
+        prefix match and so also takes any ID that extends ``node_id``.
 
         Raises:
             ValueError: If node_id is empty string or None.

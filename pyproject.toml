@@ -55,9 +55,9 @@ dependencies = [
     # Unified top-level `iris` module (external dbapi + embedded); pinned explicitly so
     # install order cannot leave the bare driver's `iris` package in place.
     "iris-embedded-python-wrapper>=0.5.20",
-    # Graph engine for HybridGraphRAG; 2.18.2 fixes kg_TXT (SQLCODE -51) and makes a
-    # failing text leg raise instead of silently degrading hybrid search to vector-only.
-    "iris-vector-graph>=2.18.2",
+    # Graph engine for HybridGraphRAG. 4.x makes embeddings graph-scoped (storage layout
+    # break, migrated by `upgrade_to_4_0_0`); 5.0 removes what 4.x deprecates.
+    "iris-vector-graph>=4.1.0,<5",
     "langchain-openai>=0.3.24",
     "langchain>=0.3.25",
     "python-dotenv>=1.1.0",
@@ -76,10 +76,10 @@ embedding = [
     "torch>=2.0.0",
     "sentence-transformers>=5.2.0,<6.1.0",
     "transformers>=4.41.0,<5.17.0",
-    "iris-vector-graph>=2.18.2"
+    "iris-vector-graph>=4.1.0,<5"
 ]
 hybrid-graphrag = [
-    "iris-vector-graph>=2.18.2"
+    "iris-vector-graph>=4.1.0,<5"
 ]
 monitoring = [
     "opentelemetry-api>=1.20.0",
@@ -160,6 +160,8 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.12.0",
+    # Makefile `test-unit` and release.yml pass --timeout; undeclared, `uv sync` removes it.
+    "pytest-timeout>=2.2.0",
     "iris-devtester>=1.11.1",
     "black>=23.0.0",
     "isort>=5.12.0",

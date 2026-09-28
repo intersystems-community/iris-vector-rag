@@ -64,7 +64,7 @@ examples/                  # compare_pipelines.py and usage examples
 | Connection            | `core/connection.py::ConnectionManager`                  | DBAPI via `iris.dbapi.connect()`, cached + health-checked                           |
 | Configuration         | `config/manager.py::ConfigurationManager`                | Precedence: `RAG_` env vars > YAML > defaults                                       |
 | Embedding dims        | `storage/schema_manager.py`                              | Never hardcode; call `schema_manager.get_embedding_dimension()`                     |
-| GraphRAG              | `pipelines/hybrid_graphrag.py`                           | Requires `iris-vector-graph>=2.4.6`                                                 |
+| GraphRAG              | `pipelines/hybrid_graphrag.py`                           | Requires `iris-vector-graph>=4.1.0,<5`                                              |
 | Validation pre-flight | `validation/requirements.py` + `validation/validator.py` | `BasicRAGRequirements`, etc.                                                        |
 | Schema prefix         | `config/manager.py::get_schema_prefix()`                 | `IRIS_SCHEMA_PREFIX` env var; default `RAG`                                         |
 | Engine entry point    | `core/engine.py::IRISVectorEngine`                       | `from_config()` for one-line construction; replaces `(cm, cfg)` pair                |
@@ -319,7 +319,9 @@ Install separately — see the iris-agentic-dev repo for setup instructions.
 ### iris-vector-graph (ivg)
 
 Graph database layer for entity-relationship extraction and GraphRAG. IVR depends on
-`iris-vector-graph>=2.4.6` for `graphrag` and `pylate_colbert` pipeline modes.
+`iris-vector-graph>=4.1.0,<5` for `graphrag` and `pylate_colbert` pipeline modes. A
+Graph_KG created before ivg 4.0 must be migrated once: see
+`docs/IVG_4X_UPGRADE.md`.
 
 ```python
 from iris_vector_rag import create_pipeline
