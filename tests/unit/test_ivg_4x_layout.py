@@ -69,9 +69,9 @@ def test_a_2x_module_is_refused_with_the_floor_in_the_message():
 
 
 def test_a_4x_module_is_accepted():
-    module = types.SimpleNamespace(__version__="4.1.0")
+    module = types.SimpleNamespace(__version__="4.1.1")
 
-    assert assert_ivg_compatible(module) == "4.1.0"
+    assert assert_ivg_compatible(module) == "4.1.1"
 
 
 _SURFACE = (
@@ -173,7 +173,7 @@ def _manager(columns_by_table):
 def compatible():
     with patch(
         "iris_vector_rag.storage.schema_manager.assert_ivg_compatible",
-        return_value="4.1.0",
+        return_value="4.1.1",
     ):
         yield
 
@@ -299,64 +299,45 @@ def test_upgrade_initializes_schema_then_runs_the_ivg_migration():
     assert order == ["init", ("upgrade", connection, {"dry_run": False})]
 
 
-def test_upgrade_dry_run_writes_no_ddl_and_previews_step_by_step():
-    """A dry run writes nothing, and `initialize_schema` writes DDL.
+def test_upgrade_dry_run_is_ivgs_own_and_writes_no_ddl():
+    """A dry run writes nothing, and `initialize_schema` writes DDL, so it is not run.
 
-    Steps go one at a time so that one ivg cannot preview does not hide the others.
+    ivg 4.1.1 answers a step it cannot predict on a pre-4.0 install with
+    `blocked_because` on that step, so one call previews the whole sequence.
     """
-    from iris_vector_graph.migrations import UPGRADE_STEPS, StepResult, UpgradeReport
-
     manager, connection = _upgrade_manager()
-
-    def fake_upgrade(conn, *, steps, dry_run):
-        (name,) = steps
-        return UpgradeReport(steps=(StepResult(name, report=f"{name}-preview"),))
+    report = object()
 
     with (
         patch("iris_vector_rag.storage.schema_manager.create_graph_engine") as factory,
         patch(
-            "iris_vector_graph.migrations.upgrade_to_4_0_0", side_effect=fake_upgrade
+            "iris_vector_graph.migrations.upgrade_to_4_0_0", return_value=report
         ) as upgrade,
     ):
-        report = manager.upgrade_iris_vector_graph_storage(dry_run=True)
+        result = manager.upgrade_iris_vector_graph_storage(dry_run=True)
 
+    assert result is report
     factory.assert_not_called()
-    assert [c.kwargs for c in upgrade.call_args_list] == [
-        {"steps": [name], "dry_run": True} for name in UPGRADE_STEPS
-    ]
-    assert all(c.args == (connection,) for c in upgrade.call_args_list)
-    assert report.names == tuple(UPGRADE_STEPS)
-    assert report["docs"].report == "docs-preview"
+    upgrade.assert_called_once_with(connection, dry_run=True)
 
 
-def test_a_step_that_needs_an_earlier_one_is_reported_not_raised_on_dry_run():
-    """ivg 4.1.0: `docs` refuses to preview until `docs.graph_id` exists.
-
-    That column is written by the real run's own earlier work, so on a genuine
-    pre-4.0 install the preview has to say so for that step and carry on.
-    """
+def test_a_blocked_step_reaches_the_caller_unchanged():
+    """The reason a step cannot be previewed is ivg's to state; IVR passes it on."""
     from iris_vector_graph.migrations import StepResult, UpgradeReport
 
     manager, _ = _upgrade_manager()
-
-    def fake_upgrade(conn, *, steps, dry_run):
-        (name,) = steps
-        if name == "docs":
-            raise RuntimeError("Graph_KG.docs has no graph_id column")
-        return UpgradeReport(steps=(StepResult(name, report="ok"),))
-
-    with patch(
-        "iris_vector_graph.migrations.upgrade_to_4_0_0", side_effect=fake_upgrade
-    ):
-        report = manager.upgrade_iris_vector_graph_storage(
-            dry_run=True, steps=("embeddings", "docs")
+    blocked = UpgradeReport(
+        steps=(
+            StepResult("embeddings", report="ok"),
+            StepResult("docs", blocked_because="nodes has no graph_id column"),
         )
+    )
 
-    assert report.names == ("embeddings", "docs")
-    assert report["embeddings"].report == "ok"
-    assert report["docs"].report is None
-    assert "cannot be previewed" in report["docs"].skipped_because
-    assert "no graph_id column" in report["docs"].skipped_because
+    with patch("iris_vector_graph.migrations.upgrade_to_4_0_0", return_value=blocked):
+        report = manager.upgrade_iris_vector_graph_storage(dry_run=True)
+
+    assert report.blocked == ("docs",)
+    assert "no graph_id column" in report["docs"].blocked_because
 
 
 def test_a_real_run_does_not_swallow_a_step_failure():

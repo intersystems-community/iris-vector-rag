@@ -206,21 +206,40 @@ pipeline that asks for the table, and the optional-table requirement is checked 
 validation tests of its own. It needs its own change, after confirming nothing still
 writes to the SQLUSER table.
 
-## 10. Upstream gaps in iris-vector-graph 4.1.0
+## 10. ivg 4.1.1's class deploy kills the Native API process on the dev container
 
-Found while moving to ivg 4.1.0 (`docs/IVG_4X_UPGRADE.md`). They belong to ivg; IVR works
-around each one and reports it rather than patching the package.
+ivg 4.1.1 sends its packaged `.cls` files over the connection and compiles them
+(`iris_vector_graph/_engine/class_deploy.py`). On `iris-vector-rag-iris` (IRIS
+2026.1.0.234) the server process serving that connection dies with signal 11
+(`messages.log`: `Callin Connection ... caught signal 11`) and the client then waits
+until `Communication timed out`. The same crash comes from:
 
-- `engine.delete_node()` deletes only from `kg_NodeEmbeddings`. For a named-graph node the
-  FK from the routed `kg_emb_<hash>` table raises SQLCODE -124, which the method swallows
-  before returning `False`. Workaround: `delete_nodes_by_prefix(node_id, graph=...)`.
-- `upgrade_to_4_0_0(dry_run=True)` raises on a genuine pre-4.0 install for `docs` and
-  `kg_node_stores`. Its hint also says to run `initialize_schema()`, but a dry run must
-  not write DDL. IVR previews step by step and reports the failing steps.
-- The wheel ships no `.cls` files, so `kg_node_stores` needs the sdist's `iris_src/src`
-  staged at `/tmp/src` by hand. While it is staged, every `initialize_schema()` redeploys
-  (about 8 s).
-- The `Graph.KG` package compile includes `Language = python` classes. On a container
-  without working embedded Python (entry 1) they crash the callin process with signal 11.
-  `Graph.KG.MCPService` also needs `%AI.MCP.Service`, so the compile reports `#5373`.
-- `schema.py:1740-1749` has invalid escape sequences (`SyntaxWarning` on import).
+- the embedded-Python probe, `%SYS.Python.Import("sys")` (see entry 1);
+- `%SYSTEM.OBJ.CompileList` of the classes, and so from the `kg_node_stores`
+  migration step, which recompiles every shipped class the server defines;
+- the first Native API connection after the container starts.
+
+A dead job keeps its license and its dictionary locks until the instance cleans it up,
+which can take about ten minutes. Later connections then fail with `Unable to allocate
+a license` or hang on any `%Dictionary` query, and only a container restart clears it.
+
+What works here, and what `tests/conftest.py` does:
+
+- `IVG_EMBEDDED_PYTHON=0` (set by default in the tests) skips the probe and the
+  classes written in embedded Python.
+- Before the first `initialize_schema()`, delete from the server the classes ivg skips
+  (`Graph.KG.Service`, `Communities`, `PyOps`, `MCPService`, `MCPToolSet`,
+  `IVG.CypherEngine`), so the migration's recompile does not meet them.
+- The deploy is skipped once `^IVG.Deploy("fingerprint")` holds the fingerprint of the
+  compiled set (`class_deploy.fingerprint`). Compile the classes some other way, then
+  write that value; a deploy that dies leaves it unwritten and is retried next time.
+- After a restart, make one throwaway Native API connection before running tests.
+
+**Why deferred:** the crash is in the server or its callout libraries, not in IVR or
+ivg's logic, and ivg cannot tell a container that will crash from one that will not. It
+belongs in a report to whoever owns the IRIS build. Delete this entry when the
+container is rebuilt on a build that compiles from the Native API.
+
+ivg 4.1.1 fixed what 4.1.0 left open: the dry run no longer raises on a 2.x install,
+the wheel ships the `.cls` files, `delete_node` reaches routed vector tables, and the
+`SyntaxWarning` in `schema.py` is gone.

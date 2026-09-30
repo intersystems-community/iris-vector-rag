@@ -1,6 +1,6 @@
 # Upgrading to iris-vector-graph 4.x
 
-IVR requires `iris-vector-graph>=4.1.0,<5`. ivg 4.0 changed how `Graph_KG` is
+IVR requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 changed how `Graph_KG` is
 stored, so an install created under ivg 2.x has to be migrated once before
 `graphrag` or `pylate_colbert` can use it.
 
@@ -43,25 +43,26 @@ The real run calls ivg's `initialize_schema()` and then
 keyword arguments (`steps=`, `vector_resolver=`, ...) are passed through to
 `upgrade_to_4_0_0`. Running it again on a migrated install changes nothing.
 
-The dry run writes nothing, including DDL, so it previews one step at a time. On
-a genuine pre-4.0 install ivg 4.1.0 cannot preview `docs` or `kg_node_stores`
-until the earlier steps have created the columns they read. Those steps come back
-with `skipped_because="cannot be previewed until the earlier steps have run: ..."`
-instead of the whole preview failing.
+The dry run writes nothing, including DDL, so it does not run
+`initialize_schema()`. On a genuine pre-4.0 install some steps need a column that
+only the real run adds; ivg 4.1.1 reports those with `blocked_because` naming the
+call that adds it, and `report.blocked` lists them.
 
-## The ObjectScript prerequisite for `kg_node_stores`
+## ObjectScript classes
 
-The `kg_node_stores` step recompiles the `Graph.KG` package and rebuilds the
-`^KG` globals, so the ivg ObjectScript classes have to be on the server. The
-ivg 4.1.0 wheel does not ship them.
+The `kg_node_stores` step recompiles the shipped `Graph.KG` classes and rebuilds the
+`^KG` globals, so the ivg ObjectScript layer has to be on the server. Since ivg
+4.1.1 the wheel ships the `.cls` sources and `initialize_schema()` sends them over
+the connection; nothing has to be copied into the container. A class the server
+cannot compile (embedded Python missing, or `%AI.*` classes not installed) is
+skipped and listed under `objectscript_skipped` in the init status. Set
+`IVG_EMBEDDED_PYTHON=0` or `1` to override the embedded-Python check, and
+`IVG_FORCE_CLASS_DEPLOY=1` to reinstall an unchanged set.
 
-1. Take `iris_src/src` from the ivg 4.1.0 sdist and copy it into the container at
-   `/tmp/src`. `initialize_schema()` deploys from there.
-2. On a container that cannot compile embedded Python (see `docs/DEBT.md`,
-   entry 1), leave out the `Language = python` classes. Compiling them crashes the
-   callin process with signal 11.
-3. After the upgrade, move `/tmp/src` out of the way. While it exists every
-   `initialize_schema()` call redeploys the classes, which takes about 8 seconds.
+Some IRIS builds kill the calling process when the deploy compiles from the Native
+API, and the check for embedded Python can do the same. `docs/DEBT.md` entry 10
+describes what to do on such a container. IVR's own tests set
+`IVG_EMBEDDED_PYTHON=0`.
 
 ## Graph-scoped search
 
@@ -71,14 +72,13 @@ ivg 4.1.0 wheel does not ship them.
 to pick an embedding route. Without them, searches use the default graph, as
 before.
 
-## Deleting nodes in a named graph
+## Deleting nodes
 
-`index_node()` writes to the default graph, and `delete_node()` removes that
-node. ivg 4.1.0's `engine.delete_node()` only deletes from `kg_NodeEmbeddings`,
-though, so for a node in a named graph the foreign key from its routed
-`kg_emb_<hash>` table refuses the delete and the call returns `False`. Use
-`engine.delete_nodes_by_prefix(node_id, graph=...)` for those. It is a prefix
-match, so it also deletes any node whose ID starts with `node_id`.
+`engine.delete_node(node_id)` removes the node, its vectors and its edges from every
+graph that holds it. That reaches the routed `kg_emb_<hash>` table of a named graph
+only since ivg 4.1.1: 4.1.0 skipped it, the foreign key refused the delete, and the
+call returned `False`. Pass `graph=` to delete from one graph.
+`HybridGraphRAGPipeline.delete_node` calls it without `graph=`.
 
 ## PLAID
 

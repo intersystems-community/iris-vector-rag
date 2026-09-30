@@ -4,7 +4,7 @@
 
 ### iris-vector-graph 4.1
 
-IVR now requires `iris-vector-graph>=4.1.0,<5`. ivg 4.0 re-keyed `Graph_KG`
+IVR now requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 re-keyed `Graph_KG`
 storage on `(graph_id, node_id)`, so an install created under 2.x has to be
 migrated once. See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md).
 
@@ -14,17 +14,21 @@ migrated once. See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md).
   that fixes it.
 - **`SchemaManager.upgrade_iris_vector_graph_storage(dry_run=False, **options)`**
   runs ivg's `initialize_schema()` and then `upgrade_to_4_0_0`. The dry run writes
-  nothing, previews step by step, and reports a step ivg cannot preview yet instead
-  of failing the whole preview.
+  nothing and skips `initialize_schema()`; a step ivg cannot predict on a 2.x install
+  comes back with `blocked_because`.
 - **Graph-scoped search.** The RRF, text and HNSW retrieval methods accept
   `graph=`, and HNSW accepts `model_key=`. Both are passed to ivg only when given.
 - **PLAID fix.** `PLAIDSearcher` read `nCentroids` from `plaid_info()`, which ivg
   returns as `nlist`, so every search raised `PLAIDNotBuiltError`.
 - **CI pin.** `pr-integration.yml` installed ivg with an unquoted `>=`, which the
   shell treated as a redirect. The pins are now quoted.
-- **Known gap in ivg 4.1.0.** `engine.delete_node()` does not reach a named
-  graph's routed `kg_emb_<hash>` table. Use
-  `engine.delete_nodes_by_prefix(node_id, graph=...)` for named-graph nodes.
+- **`delete_node` reaches named graphs.** With ivg 4.1.1 the engine's `delete_node`
+  removes a node's vectors from routed `kg_emb_<hash>` tables too, so
+  `HybridGraphRAGPipeline.delete_node` deletes the node from every graph that holds it.
+- **No more staging ObjectScript by hand.** ivg 4.1.1 ships its `.cls` files in the
+  wheel and `initialize_schema()` deploys them over the connection. See
+  [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md) and `docs/DEBT.md` entry 10 for a
+  container whose server cannot compile them that way.
 - `MIN_IVG_VERSION` is `4.0.0`; an unversioned ivg checkout is accepted only if it
   ships `iris_vector_graph.migrations.upgrade_to_4_0_0`.
 

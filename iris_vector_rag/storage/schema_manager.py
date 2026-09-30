@@ -499,22 +499,16 @@ class SchemaManager:
         `iris_vector_graph.migrations.upgrade_to_4_0_0`. Re-runnable; a step whose work
         is done reports itself skipped.
 
-        A dry run writes nothing, DDL included, and previews one step at a time. On a
-        genuine pre-4.0 install ivg 4.1.0 cannot preview `docs` or `kg_node_stores`:
-        each needs a `graph_id` column that only a real run adds, and raises. Such a
-        step comes back with `report=None` and `skipped_because` saying why, rather
-        than aborting the preview of the others.
+        A dry run writes nothing, DDL included, so it skips `initialize_schema()`.
+        A step ivg cannot predict on a genuine pre-4.0 install (its input column is
+        one a real run adds) comes back with `blocked_because` saying which call
+        adds it; `UpgradeReport.blocked` names those steps.
 
         `options` go to `upgrade_to_4_0_0` unchanged (`steps`, `vector_resolver`,
         `document_resolver`, `edge_resolver`, `edge_dimension`, `dtype`). Returns its
         `UpgradeReport`.
         """
-        from iris_vector_graph.migrations import (
-            UPGRADE_STEPS,
-            StepResult,
-            UpgradeReport,
-            upgrade_to_4_0_0,
-        )
+        from iris_vector_graph.migrations import upgrade_to_4_0_0
 
         connection = self.connection_manager.get_connection()
         if not dry_run:
@@ -522,27 +516,7 @@ class SchemaManager:
             create_graph_engine(
                 connection, embedding_dimension=dimension
             ).initialize_schema()
-            return upgrade_to_4_0_0(connection, dry_run=False, **options)
-
-        steps = []
-        for name in list(options.pop("steps", None) or UPGRADE_STEPS):
-            try:
-                preview = upgrade_to_4_0_0(
-                    connection, steps=[name], dry_run=True, **options
-                )
-            except RuntimeError as exc:
-                steps.append(
-                    StepResult(
-                        name,
-                        skipped_because=(
-                            "cannot be previewed until the earlier steps have run: "
-                            f"{exc}"
-                        ),
-                    )
-                )
-            else:
-                steps.extend(preview.steps)
-        return UpgradeReport(steps=tuple(steps))
+        return upgrade_to_4_0_0(connection, dry_run=dry_run, **options)
 
     def _initialize_ivg_schema(self) -> Dict[str, Any]:
         """Delegate Graph_KG schema creation to iris-vector-graph."""

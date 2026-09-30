@@ -71,12 +71,14 @@ def test_the_old_layout_was_reported_with_the_call_that_fixes_it(upgraded):
 
 
 def test_the_dry_run_previews_every_step(upgraded):
-    """Every step is accounted for, previewed or with the reason it could not be."""
+    """Every step is accounted for: previewed, skipped as done, or blocked with a reason."""
     preview = upgraded["preview"]
 
     assert preview.names == upgraded["steps"]
     for step in preview.steps:
-        assert step.report is not None or step.skipped_because, step
+        assert (
+            step.report is not None or step.skipped_because or step.blocked_because
+        ), step
 
 
 def test_the_real_run_leaves_no_old_layout(upgraded, schema_manager):
@@ -147,12 +149,10 @@ def test_graph_scoped_search_roundtrip(upgraded, schema_manager):
             assert node_id in found(vector, graph=graph)
         assert node_id not in found(_unit(0), graph="ivr-e2e-no-such-graph")
     finally:
-        # A named graph's vectors live in a routed `kg_emb_<hash>` table, which
-        # ivg 4.1.0's `delete_node` does not reach (the FK refuses, it returns
-        # False). The graph-scoped eraser does; the ID is unique, so the prefix
-        # matches it alone.
+        # `graph=` reaches the routed `kg_emb_<hash>` table a named graph's vectors
+        # live in; ivg 4.1.0's `delete_node` did not, and returned False.
         for graph in graphs:
-            engine.delete_nodes_by_prefix(node_id, graph=graph)
+            assert engine.delete_node(node_id, graph=graph)
 
     for graph, vector in graphs.items():
         assert node_id not in found(vector, graph=graph)

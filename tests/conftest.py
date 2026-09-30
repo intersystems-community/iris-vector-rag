@@ -22,6 +22,12 @@ collect_ignore_glob = []
 if importlib.util.find_spec("redis") is None:
     collect_ignore_glob.append("**/api/test_*.py")
 
+# No IVR test needs the ivg classes written in embedded Python (Communities, PyOps,
+# CypherEngine). ivg 4.1.1 probes for embedded Python with `%SYS.Python.Import` over the
+# Native API, and on the dev container that probe kills the server process (DEBT entry
+# 1) and stalls the connection. A caller's own setting wins.
+os.environ.setdefault("IVG_EMBEDDED_PYTHON", "0")
+
 import coverage
 import pytest
 import pytest_asyncio
