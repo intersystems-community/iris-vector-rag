@@ -235,10 +235,23 @@ What works here, and what `tests/conftest.py` does:
   write that value; a deploy that dies leaves it unwritten and is retried next time.
 - After a restart, make one throwaway Native API connection before running tests.
 
-**Why deferred:** the crash is in the server or its callout libraries, not in IVR or
-ivg's logic, and ivg cannot tell a container that will crash from one that will not. It
-belongs in a report to whoever owns the IRIS build. Delete this entry when the
-container is rebuilt on a build that compiles from the Native API.
+**Where it belongs:** a signal 11 in a server process is an IRIS defect whatever the
+client sent, and the ivg maintainers have not seen it on their containers (irishealth
+2026.3.0AI.113.0 and community). ivg sends ordinary calls (the embedded-Python
+import, a stream `LoadStream`, `CompileList "ck-d"`). This container also fails to load
+`libarno_callout.so`, so its configuration is a suspect as well as the 2026.1.0.234
+build. Neither is established; the stack of the crash has not been captured. Report it
+with the `messages.log` signal-11 stack to IRIS/WRC once it is, and delete this entry
+when the container is rebuilt on a build that compiles from the Native API.
+
+ivg agrees on three hardening points, none filed or changed yet: a documented switch
+that skips the packaged deploy (so no hand-written marker is needed), and making the
+`kg_node_stores` recompile honor the deploy's skip list, which it does not today. A
+server kill shows up to any client as a hang or a code-60 timeout, so no guard inside
+ivg can turn it into an error. Writing `^IVG.Deploy("fingerprint")` by hand is not a
+supported interface: the value hashes the selected class names and text, so it changes
+with every ivg version and with `IVG_EMBEDDED_PYTHON`, and has to be rewritten on each
+bump (`class_deploy.fingerprint(sources)` over the selected set).
 
 ivg 4.1.1 fixed what 4.1.0 left open: the dry run no longer raises on a 2.x install,
 the wheel ships the `.cls` files, `delete_node` reaches routed vector tables, and the
