@@ -60,6 +60,10 @@ ticket is open. Executing the fixes is **not** part of this map.
   iris-devtester (`localhost:1972`, `_SYSTEM`/`SYS`) with a log line and a refusal hint; the
   password-fix helper is removed; one resolver with devtester's variable names, env beating
   file; announced under Unreleased 0.15. Feature: `connection-settings`.
+- [Decide the fake-embedding fallback policy](tickets/G6-fake-embedding-policy.md): fakes are
+  never substituted for a real model; configured real fallbacks, then raise; a test embedder
+  only by explicit setting; one dimension authority handed to ivg; wrong-sized vectors raise;
+  writes through ivg declare `model_key`. Feature: `embedding-integrity`.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -70,8 +74,6 @@ ticket is open. Executing the fixes is **not** part of this map.
 ## Frontier (open, unblocked, unclaimed)
 
 Maintained by hand; recompute after each close.
-
-- [Decide the fake-embedding fallback policy](tickets/G6-fake-embedding-policy.md) (grilling, HITL)
 
 Unblocked by [Gather support-status facts](tickets/R3-support-status-facts.md):
 
@@ -88,13 +90,18 @@ Unblocked by [Gather support-status facts](tickets/R3-support-status-facts.md):
   fate and policy tickets close.
 - **Base branch for the fixes.** `087-ivg-4.1` holds three unpushed commits and is not
   merged to `master`; fixes must know what they build on.
-- **Error-handling convention.** Roughly a third of the defects are a swallowed exception
-  or a fake success. Whether one project-wide rule (fail loudly; where "degraded" is
-  allowed; how it is reported) replaces fixing them one by one. May fall out of the two
-  policy tickets.
-- **Breaking-change and version policy.** Several fixes change behaviour callers may rely
-  on (defaults, removed auto-detection, raised errors). How they are versioned and
-  announced.
+- **Error-handling convention.** The two policy tickets settled the pattern: fail loudly,
+  no silent fakes, and anything degraded only on an explicit, visible opt-in. What remains
+  is applying it to the other swallowed-exception findings and deciding whether that is one
+  cross-cutting feature or part of each. Graduates with the grouping step.
+- **Breaking-change and version policy.** Settled for the two policy tickets (Unreleased
+  0.15, under Changed and Removed, no major bump). Open: whether the fate tickets' deletions
+  (removing `api/`, `mcp/` and so on) need a deprecation release first.
+- **Embedding identity for IVR's own tables.** Record model, dimension and dtype in
+  `SchemaMetadata` and check them on insert, as ivg does for its routes. A new mechanism,
+  deferred from the fake-embedding ticket.
+- **Tests and CI jobs that rely on the implicit stub embedder** by accident: an audit the
+  `embedding-integrity` plan needs before the stub is removed.
 - **How to verify fixes that need IRIS**, given the container caveat above, and whether a
   reproducible test container is itself a prerequisite feature.
 - **Auth model for whatever of `api/` and `mcp/` survives.** Depends on the two fate

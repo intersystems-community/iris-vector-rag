@@ -50,6 +50,16 @@ A Docker container named explicitly (`IRIS_CONTAINER_NAME`) whose published port
 to fill in the port. No container is ever chosen by scanning.
 _Avoid_: auto-detected container, discovered instance
 
+**Embedding identity**:
+The model key, mechanism, dimension and dtype a set of vectors was produced with. Vectors
+with different identities are never mixed, even at the same width.
+_Avoid_: embedding config, model signature
+
+**Test embedder**:
+A deterministic stand-in for a real embedding model, used only when asked for by name. It
+has its own embedding identity (`stub`) and is never substituted when a real model fails.
+_Avoid_: fallback embedder, mock embedder, stub model
+
 ### Querying
 
 **Query plan**:
