@@ -16,7 +16,7 @@ Reconcile report (closed): `060` and `065` are already in `master`; `001` is obs
 and `084` add no code. `086` and `083` are complete and local, and collide on
 `common/iris_sql_utils.py`. See [Reconcile the ledger with the unmerged branches](R4-reconcile-with-unmerged-branches.md).
 Recommended there: merge `086` first, then `083` once [the password-recovery conflict](G11-password-recovery-vs-connection-settings.md)
-is settled, then cut the features; abandon `060`, `065`, `001`, `067`; park `084`.
+is settled (it is: [closed, drop the recovery](G11-password-recovery-vs-connection-settings.md)), then cut the features; abandon `060`, `065`, `001`, `067`; park `084`.
 
 ## Question
 

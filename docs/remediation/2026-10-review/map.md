@@ -90,6 +90,10 @@ ticket is open. Executing the fixes is **not** part of this map.
   the document-table emptying (ST-01); `083` already fixes CM-04, CM-07, CM-10, CR-08 and AP-24
   but re-implements the password recovery the connection-settings decision removes.
   `060`, `065`, `001`, `067` are abandonable; `084` is spec only.
+- [Reconcile 083's password recovery with the connection-settings decision](tickets/G11-password-recovery-vs-connection-settings.md):
+  drop `recover_password` from 083 before it merges; keep `password_expired()` and raise with a
+  hint; no `docker exec` in library code. The connection-settings decision stands unamended.
+  `connection-settings` builds on the post-083 code, so 083 merges first.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -103,8 +107,6 @@ Maintained by hand; recompute after each close. All the fate and policy tickets 
 these graduated from the fog on 2026-10-02. 95 of 161 findings still have no Fate.
 
 - [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md) (grilling, HITL)
-- [Reconcile 083's password recovery with the connection-settings decision](tickets/G11-password-recovery-vs-connection-settings.md)
-  (grilling, HITL)
 - [Decide the base branch for the fixes](tickets/G8-base-branch-for-fixes.md) (grilling, HITL)
 - [Decide how fixes that need IRIS are verified](tickets/G9-verify-fixes-needing-iris.md)
   (grilling, HITL)
