@@ -1,16 +1,16 @@
 # Draft the feature grouping
 
 - type: research (AFK)
-- status: open
+- status: closed
 - blocked-by: none
-- claimed-by: research subagent (2026-10-02)
+- claimed-by: research subagent (2026-10-02, done)
 - output: [research/P1-draft-feature-grouping.md](../research/P1-draft-feature-grouping.md)
 
 ## Question
 
 Produce a draft for the maintainer to react to, not a decision. Every finding in
-[findings.md](../findings.md) whose Fate is still `—` (93 of 161 when this ticket was
-written) needs a proposed home. Propose:
+[findings.md](../findings.md) whose Fate is still `—` (95 of 161: the ticket said 93, but ST-21 and VM-16 were only partly bound
+by closed tickets and still have an empty Fate) needs a proposed home. Propose:
 
 - a grouping of those findings into spec-kit-sized features, by shared code and by shared
   decision, reusing the eight features already named in the ledger (`connection-settings`,
@@ -32,4 +32,13 @@ Read the resolutions of the closed tickets in `tickets/` first; they bind the dr
 
 ## Resolution
 
-(pending)
+The draft is in [research/P1-draft-feature-grouping.md](../research/P1-draft-feature-grouping.md)
+and covers all 95 remaining findings exactly once (the ticket said 93; ST-21 and VM-16 were
+only partly bound by closed tickets). It proposes the eight named features plus sixteen new
+ones, an order in three slices, two new DEBT entries for fourteen of the eighteen smells, a
+first position on the rest of `testing/` (move the backend-mode harness to `tests/support/`),
+and applying fail-loudly inside each owning feature with one new detector in
+`scripts/gates/antipatterns.py`. It is a draft for the maintainer, not a decision; four open
+questions (ST-04 migration policy, external use of the vendored `sp/*.cls` files, whether
+`iris_vector_rag.testing` is public API, and whether the corrected fusion scoring needs a
+flag) go to the grouping ticket.

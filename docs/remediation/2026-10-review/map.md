@@ -81,6 +81,10 @@ ticket is open. Executing the fixes is **not** part of this map.
   place, test-first, continuing past a failed document and reporting it; the dead regex
   extractor is deleted. Features: `dspy-experimental`, `ontology-retirement`,
   `entity-services-fix`, and `remove-dead-code`.
+- [Draft the feature grouping](tickets/P1-draft-feature-grouping.md): a draft covering all 95
+  remaining findings (not 93; two were only partly bound), sixteen new features plus additions
+  to the eight named ones, three ordering slices, smells to two new DEBT entries. For the
+  grouping ticket to react to.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -91,10 +95,8 @@ ticket is open. Executing the fixes is **not** part of this map.
 ## Frontier (open, unblocked, unclaimed)
 
 Maintained by hand; recompute after each close. All the fate and policy tickets are closed;
-these graduated from the fog on 2026-10-02. 93 of 161 findings still have no Fate.
+these graduated from the fog on 2026-10-02. 95 of 161 findings still have no Fate.
 
-- [Draft the feature grouping](tickets/P1-draft-feature-grouping.md) (research, AFK; in
-  progress)
 - [Reconcile the ledger with the unmerged branches](tickets/R4-reconcile-with-unmerged-branches.md)
   (research, AFK; in progress)
 - [Decide the base branch for the fixes](tickets/G8-base-branch-for-fixes.md) (grilling, HITL)
@@ -102,9 +104,8 @@ these graduated from the fog on 2026-10-02. 93 of 161 findings still have no Fat
   (grilling, HITL)
 - [Decide the CI repair scope](tickets/G10-ci-repair-scope.md) (grilling, HITL)
 
-Blocked until [Draft the feature grouping](tickets/P1-draft-feature-grouping.md) and
-[Reconcile the ledger with the unmerged branches](tickets/R4-reconcile-with-unmerged-branches.md)
-close:
+Blocked until [Reconcile the ledger with the unmerged branches](tickets/R4-reconcile-with-unmerged-branches.md)
+closes (the grouping draft is done):
 
 - [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md)
 
