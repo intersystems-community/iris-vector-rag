@@ -1,9 +1,9 @@
 # Verify the plausible findings
 
 - type: research (AFK)
-- status: open
+- status: closed
 - blocked-by: none
-- claimed-by: research subagent (2026-10-02)
+- claimed-by: research subagent (2026-10-02, done)
 - output: [research/R1-verify-plausible-findings.md](../research/R1-verify-plausible-findings.md)
 
 ## Question
@@ -18,4 +18,10 @@ Correct the severity if the evidence says it is wrong.
 
 ## Resolution
 
-(pending)
+17 of the 18 plausible findings are real (CM-11 and OE-14 each keep one sub-claim that
+cannot be decided without IRIS or `dspy`). ST-14 is refuted: its only caller regenerates
+embeddings on any count mismatch, so the branch is unreachable. Severity changes: OS-05 A
+to C, AP-14 C to B, CM-12 C to B, ST-15 B to C. OS-12 should be fixed by deleting or
+resyncing the vendored copy, not patching it. Three new findings were added to the ledger
+(ST-23, OS-22, OS-23) and OS-13 gained the fact that 8 of 14 vendored `sp/*.cls` files
+differ from ivg 4.1.1's. Evidence: [research/R1-verify-plausible-findings.md](../research/R1-verify-plausible-findings.md).

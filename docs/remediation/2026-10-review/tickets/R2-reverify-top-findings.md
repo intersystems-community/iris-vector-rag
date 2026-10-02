@@ -1,9 +1,9 @@
 # Re-verify the top-severity findings
 
 - type: research (AFK)
-- status: open
+- status: closed
 - blocked-by: none
-- claimed-by: research subagent (2026-10-02)
+- claimed-by: research subagent (2026-10-02, done)
 - output: [research/R2-reverify-top-findings.md](../research/R2-reverify-top-findings.md)
 
 ## Question
@@ -20,4 +20,12 @@ that changes how it should be fixed.
 
 ## Resolution
 
-(pending)
+All 24 severity-A findings re-verified: 15 confirmed, 9 partly true, none refuted. Thirteen
+drop out of class A (to B: ST-01, ST-03, AP-04, AP-08, CM-03, CM-09, CR-06, VM-01, VM-02,
+OE-03; to C: CM-08, VM-10, OS-14), mostly because nothing calls the code today. Still A:
+ST-04, AP-01, AP-05, AP-06, CM-01, CM-02, CR-01, CR-09, OE-01, OE-02, OS-02. The whole
+`api/` group (AP-01, AP-04, AP-05, AP-06) is dormant behind AP-01, and `IRISStorage`
+(ST-01, ST-03) and `MCPBridge` (VM-01) have no production caller, which feeds the fate
+tickets. Corrections and additions are in the ledger (ST-04 chunks migrator also drops;
+second injection site in ST-03; CR-01 fix must hydrate content by id; new AP-23, AP-24,
+CM-16). Evidence: [research/R2-reverify-top-findings.md](../research/R2-reverify-top-findings.md).

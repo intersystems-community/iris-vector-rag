@@ -2,8 +2,10 @@
 
 - type: grilling (HITL)
 - status: open
-- blocked-by: R3 (Gather support-status facts)
+- blocked-by: none (R3 closed)
 - claimed-by: none
+
+Facts: [research/R3-support-status-facts.md](../research/R3-support-status-facts.md).
 
 ## Question
 

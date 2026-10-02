@@ -1,9 +1,9 @@
 # Gather support-status facts
 
 - type: research (AFK)
-- status: open
+- status: closed
 - blocked-by: none
-- claimed-by: research subagent (2026-10-02)
+- claimed-by: research subagent (2026-10-02, done)
 - output: [research/R3-support-status-facts.md](../research/R3-support-status-facts.md)
 
 ## Question
@@ -30,4 +30,16 @@ and `services/batch_entity_processor.py`.
 
 ## Resolution
 
-(pending)
+Facts gathered for the four fate tickets; evidence in
+[research/R3-support-status-facts.md](../research/R3-support-status-facts.md). Headlines:
+nothing in `iris_vector_rag/` imports `api/`, `mcp/`, `dspy_modules/`, `IRISStorage` (beyond
+its re-export) or `iris_devtools_bridge`; no console script, Makefile target, workflow or
+working Dockerfile runs any of them; `ontology/` is imported only by `entity_extraction.py`,
+which never calls it. The only live path is `services/entity_extraction.py` and
+`services/batch_entity_processor.py`, via `GraphRAGPipeline.load_documents` and the
+registered GraphRAG pipelines, so they cannot be deleted without a replacement.
+Documentation claims several things the code cannot do (API upload, `make api-*` targets,
+a `[dspy]` extra, ontology reasoning removed in commit `92090bde`). CI runs only
+`tests/unit/` and `tests/contract/`, and `ci.yml` ends that step in `|| true`. Not
+established: test pass counts for `api/` and `mcp/`, and whether anyone outside this
+repository imports these modules. Ledger rows added: OS-24 to OS-27, VM-17, VM-18.

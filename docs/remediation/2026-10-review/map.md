@@ -4,11 +4,12 @@ Label: `wayfinder:map`. Tracker: local markdown (this directory). Started 2026-1
 
 ## Destination
 
-A decided, ordered remediation plan. Every one of the 149 findings in
+A decided, ordered remediation plan. Every one of the findings in
 [findings.md](findings.md) has a **Fate** (fixed in a named feature, deferred to
 `docs/DEBT.md` with a reason, deleted with its area, or rejected with a reason), every
 feature has a scope and a test-first task outline, and nothing is left to decide before
-someone runs `/speckit.implement`. The map is done when no finding has Fate `—` and no
+someone runs `/speckit.implement`. The ledger holds 161 findings as of 2026-10-02 and grows
+when a ticket surfaces more. The map is done when no finding has Fate `—` and no
 ticket is open. Executing the fixes is **not** part of this map.
 
 ## Notes
@@ -44,9 +45,19 @@ ticket is open. Executing the fixes is **not** part of this map.
 
 ## Decisions so far
 
+- [Verify the plausible findings](tickets/R1-verify-plausible-findings.md): 17 of 18 real,
+  one refuted (ST-14), four severities changed, three findings added.
+- [Re-verify the top-severity findings](tickets/R2-reverify-top-findings.md): 15 confirmed,
+  9 partly true; 13 fall out of class A, mostly because nothing calls the code today.
+  `api/` findings are dormant behind one import-time bug; `IRISStorage` and `MCPBridge`
+  have no production caller.
+- [Gather support-status facts](tickets/R3-support-status-facts.md): nothing in the package
+  imports or launches `api/`, `mcp/`, `dspy_modules/`, `IRISStorage` or the devtools bridge;
+  the only live path is the entity-extraction and batch-processor services; several docs
+  claim what the code cannot do.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
-  tracker committed on its own branch; all 149 findings recorded before any planning;
+  tracker committed on its own branch; all findings recorded before any planning;
   re-verify plausible and top-severity findings first; defects, security, standards
   violations and CI/packaging in scope, smells and refactors out of scope; decide the
   support status of suspect areas before planning fixes in them.
@@ -55,13 +66,10 @@ ticket is open. Executing the fixes is **not** part of this map.
 
 Maintained by hand; recompute after each close.
 
-- [Verify the plausible findings](tickets/R1-verify-plausible-findings.md) (research, AFK)
-- [Re-verify the top-severity findings](tickets/R2-reverify-top-findings.md) (research, AFK)
-- [Gather support-status facts](tickets/R3-support-status-facts.md) (research, AFK)
 - [Decide the connection defaults policy](tickets/G5-connection-defaults-policy.md) (grilling, HITL)
 - [Decide the fake-embedding fallback policy](tickets/G6-fake-embedding-policy.md) (grilling, HITL)
 
-Blocked until [Gather support-status facts](tickets/R3-support-status-facts.md) closes:
+Unblocked by [Gather support-status facts](tickets/R3-support-status-facts.md):
 
 - [Decide the fate of `api/`](tickets/G1-api-fate.md)
 - [Decide the fate of `mcp/`](tickets/G2-mcp-fate.md)
