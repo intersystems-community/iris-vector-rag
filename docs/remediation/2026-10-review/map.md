@@ -72,6 +72,9 @@ ticket is open. Executing the fixes is **not** part of this map.
   stdio with six tools, keeping handlers, schemas and validators; retire the Node server,
   `Dockerfile.mcp` and the HTTP bridge; no auth; one `iris-vector-rag-mcp` entry point.
   [ADR 0002](../../adr/0002-mcp-server-is-python-over-stdio.md). Feature: `mcp-stdio-server`.
+- [Decide the fate of enterprise storage and the devtools bridge](tickets/G3-storage-extras-fate.md):
+  delete both, directly, with no deprecation release (nobody uses either). Feature:
+  `remove-dead-code`. DEBT entries 3 and part of 4 go with it.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -85,7 +88,6 @@ Maintained by hand; recompute after each close.
 
 Unblocked by [Gather support-status facts](tickets/R3-support-status-facts.md):
 
-- [Decide the fate of enterprise storage and the devtools bridge](tickets/G3-storage-extras-fate.md)
 - [Decide the fate of `dspy_modules/`, `ontology/` and entity extraction](tickets/G4-dspy-ontology-fate.md)
 
 ## Not yet specified
@@ -110,6 +112,10 @@ Unblocked by [Gather support-status facts](tickets/R3-support-status-facts.md):
   `embedding-integrity` plan needs before the stub is removed.
 - **How to verify fixes that need IRIS**, given the container caveat above, and whether a
   reproducible test container is itself a prerequisite feature.
+- **The rest of `testing/`** (`backend_manager`, `connection_pool`, `validators`,
+  `exceptions`; nine test files use it) and the inverted dependency where production
+  `config/backend_modes.py` imports `testing.exceptions` (part of VM-16). Not covered by the
+  bridge deletion.
 - **A remote or HTTP MCP server and its auth model.** Deferred from the `mcp/` ticket; stdio
   needs none.
 - **CI repair scope.** Making CI run on `master` may surface failures hidden today
