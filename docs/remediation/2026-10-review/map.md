@@ -75,6 +75,12 @@ ticket is open. Executing the fixes is **not** part of this map.
 - [Decide the fate of enterprise storage and the devtools bridge](tickets/G3-storage-extras-fate.md):
   delete both, directly, with no deprecation release (nobody uses either). Feature:
   `remove-dead-code`. DEBT entries 3 and part of 4 go with it.
+- [Decide the fate of `dspy_modules/`, `ontology/` and entity extraction](tickets/G4-dspy-ontology-fate.md):
+  `dspy_modules/` stays as a properly declared experimental package (spec 073); `ontology/`
+  is decoupled now, deprecated, then removed with a tag; the entity services are fixed in
+  place, test-first, continuing past a failed document and reporting it; the dead regex
+  extractor is deleted. Features: `dspy-experimental`, `ontology-retirement`,
+  `entity-services-fix`, and `remove-dead-code`.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -84,42 +90,33 @@ ticket is open. Executing the fixes is **not** part of this map.
 
 ## Frontier (open, unblocked, unclaimed)
 
-Maintained by hand; recompute after each close.
+Maintained by hand; recompute after each close. All the fate and policy tickets are closed;
+these graduated from the fog on 2026-10-02. 93 of 161 findings still have no Fate.
 
-Unblocked by [Gather support-status facts](tickets/R3-support-status-facts.md):
+- [Draft the feature grouping](tickets/P1-draft-feature-grouping.md) (research, AFK; in
+  progress)
+- [Decide the base branch for the fixes](tickets/G8-base-branch-for-fixes.md) (grilling, HITL)
+- [Decide how fixes that need IRIS are verified](tickets/G9-verify-fixes-needing-iris.md)
+  (grilling, HITL)
+- [Decide the CI repair scope](tickets/G10-ci-repair-scope.md) (grilling, HITL)
 
-- [Decide the fate of `dspy_modules/`, `ontology/` and entity extraction](tickets/G4-dspy-ontology-fate.md)
+Blocked until [Draft the feature grouping](tickets/P1-draft-feature-grouping.md) closes:
+
+- [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md)
 
 ## Not yet specified
 
-- **Grouping and order.** Which findings travel together as spec-kit features (by shared
-  code, by shared decision), their order (severity first across slices, not slice by
-  slice), and dependencies between them. Graduates after the verification tickets and the
-  fate and policy tickets close.
-- **Base branch for the fixes.** `087-ivg-4.1` holds three unpushed commits and is not
-  merged to `master`; fixes must know what they build on.
-- **Error-handling convention.** The two policy tickets settled the pattern: fail loudly,
-  no silent fakes, and anything degraded only on an explicit, visible opt-in. What remains
-  is applying it to the other swallowed-exception findings and deciding whether that is one
-  cross-cutting feature or part of each. Graduates with the grouping step.
-- **Breaking-change and version policy.** Settled for the two policy tickets (Unreleased
-  0.15, under Changed and Removed, no major bump). Open: whether the fate tickets' deletions
-  (removing `api/`, `mcp/` and so on) need a deprecation release first.
-- **Embedding identity for IVR's own tables.** Record model, dimension and dtype in
-  `SchemaMetadata` and check them on insert, as ivg does for its routes. A new mechanism,
-  deferred from the fake-embedding ticket.
-- **Tests and CI jobs that rely on the implicit stub embedder** by accident: an audit the
-  `embedding-integrity` plan needs before the stub is removed.
-- **How to verify fixes that need IRIS**, given the container caveat above, and whether a
-  reproducible test container is itself a prerequisite feature.
 - **The rest of `testing/`** (`backend_manager`, `connection_pool`, `validators`,
   `exceptions`; nine test files use it) and the inverted dependency where production
   `config/backend_modes.py` imports `testing.exceptions` (part of VM-16). Not covered by the
-  bridge deletion.
-- **A remote or HTTP MCP server and its auth model.** Deferred from the `mcp/` ticket; stdio
-  needs none.
-- **CI repair scope.** Making CI run on `master` may surface failures hidden today
-  (`\|\| true`); whether that is one feature or part of each.
+  bridge deletion; the grouping draft will take a first position.
+- **The order and release shape of the whole plan**: which features ship together in which
+  release, given that `retire-rest-api` and `ontology-retirement` each span a deprecation
+  release and a removal release. Follows the grouping and base-branch tickets.
+- **The design-archive deliverable for the REST API** (`docs/archived/rest-api/`): its exact
+  contents are specified in the `api/` ticket, but the task that writes it has to be sized
+  and placed in the order.
+- **Anything the grouping draft surfaces** that no ticket covers.
 
 ## Out of scope
 
@@ -129,3 +126,9 @@ Unblocked by [Gather support-status facts](tickets/R3-support-status-facts.md):
 - Carrying out any fix. The map ends at a decided plan.
 - The IRIS server crash on this container (`docs/DEBT.md` entry 10) and the ivg hardening
   points: tracked there and with the ivg maintainers.
+- Parked ideas that are not findings: **embedding identity for IVR's own tables** (record
+  model, dimension and dtype in `SchemaMetadata` and check on insert, as ivg does for its
+  routes), and **a remote or HTTP MCP server with a real auth model**. Both are new features,
+  deferred by their tickets; neither belongs in this remediation plan.
+- Tests and CI jobs that rely on the implicit stub embedder by accident: an audit inside the
+  `embedding-integrity` feature, not a separate ticket.
