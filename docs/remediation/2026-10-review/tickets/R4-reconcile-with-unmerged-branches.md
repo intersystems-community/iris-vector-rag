@@ -1,9 +1,9 @@
 # Reconcile the ledger with the unmerged branches
 
 - type: research (AFK)
-- status: open
+- status: closed
 - blocked-by: none
-- claimed-by: research subagent (2026-10-02)
+- claimed-by: research subagent (2026-10-02, done)
 - output: [research/R4-reconcile-with-unmerged-branches.md](../research/R4-reconcile-with-unmerged-branches.md)
 
 ## Question
@@ -27,4 +27,24 @@ anything out.
 
 ## Resolution
 
-(pending)
+Report in [research/R4-reconcile-with-unmerged-branches.md](../research/R4-reconcile-with-unmerged-branches.md).
+Headlines:
+
+- `060` and `065` are already in `master` (squash-merged); `001` is obsolete; `067` is a
+  benchmark commit superseded by `068`; `084` is spec only. None adds code.
+- `086` (3 commits, complete, local) already fixes OS-01 and OS-02 and removes the destructive
+  path behind ST-01 and the second table shape behind ST-20. It edits `enterprise_storage.py`,
+  `tests/test_enterprise_storage.py`, DEBT entries 3 and 4, and adds a new test file
+  (`test_enterprise_storage_no_data_loss.py`) and baseline lines the deletion must also remove.
+- `083` (9 commits, complete, local) already fixes CM-04, CM-07, CM-10, CR-08, AP-24, half of
+  OS-18 and the duplicate `VectorStoreCLOBError` class. It also moves the connection code into
+  `session/`, where `recover_password` re-implements the password helper (with the CM-02
+  substring bug) and documents and tests it, which conflicts with the connection-settings
+  decision; it edits 14 `api/` files; and it sets pytest `filterwarnings = error`, which would
+  make the planned deprecation warnings fail tests.
+- `083` and `086` both rewrite the same `common/iris_sql_utils.py` helpers.
+- Recommendation in the report: merge `086` first, then `083` after the password-recovery
+  conflict is settled, then run the features; abandon `060`, `065`, `001`, `067`, park `084`.
+
+The ledger carries the corrections (notes on 20 findings, and a `fixed-on-branch` fate on six).
+A new ticket covers the password-recovery conflict.

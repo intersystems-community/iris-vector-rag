@@ -12,6 +12,12 @@ classes), `087-ivg-4.1` (3), `065-iris-llm-substrate` (4), plus a spec-only and 
 branch. The review read `master` plus the three `087` commits only. See
 [Reconcile the ledger with the unmerged branches](R4-reconcile-with-unmerged-branches.md).
 
+Reconcile report (closed): `060` and `065` are already in `master`; `001` is obsolete; `067`
+and `084` add no code. `086` and `083` are complete and local, and collide on
+`common/iris_sql_utils.py`. See [Reconcile the ledger with the unmerged branches](R4-reconcile-with-unmerged-branches.md).
+Recommended there: merge `086` first, then `083` once [the password-recovery conflict](G11-password-recovery-vs-connection-settings.md)
+is settled, then cut the features; abandon `060`, `065`, `001`, `067`; park `084`.
+
 ## Question
 
 What do the fixes build on? `master` lacks three local, unpushed commits on `087-ivg-4.1`

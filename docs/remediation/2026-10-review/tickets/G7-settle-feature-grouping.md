@@ -2,7 +2,7 @@
 
 - type: grilling (HITL)
 - status: open
-- blocked-by: R4 (Reconcile the ledger with the unmerged branches); P1 is closed
+- blocked-by: none (P1 and R4 are closed)
 - claimed-by: none
 
 Draft: [research/P1-draft-feature-grouping.md](../research/P1-draft-feature-grouping.md). Its
