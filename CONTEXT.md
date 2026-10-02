@@ -39,6 +39,17 @@ _Avoid_: connection manager, connection wrapper, external connection, engine con
 A set of sessions kept for concurrent callers. Exists only where callers are concurrent.
 _Avoid_: connection pool (when the thing meant is a single session)
 
+**Connection settings**:
+The host, port, namespace, credentials and optional pinned container that say which IRIS
+instance a session opens. Resolved in one place, in this order: explicit settings,
+environment, `.env`, the pinned container, defaults. The vocabulary matches iris-devtester.
+_Avoid_: connection config, connection parameters, db config
+
+**Pinned container**:
+A Docker container named explicitly (`IRIS_CONTAINER_NAME`) whose published port is read
+to fill in the port. No container is ever chosen by scanning.
+_Avoid_: auto-detected container, discovered instance
+
 ### Querying
 
 **Query plan**:

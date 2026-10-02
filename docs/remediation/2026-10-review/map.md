@@ -55,6 +55,11 @@ ticket is open. Executing the fixes is **not** part of this map.
   imports or launches `api/`, `mcp/`, `dspy_modules/`, `IRISStorage` or the devtools bridge;
   the only live path is the entity-extraction and batch-processor services; several docs
   claim what the code cannot do.
+- [Decide the connection defaults policy](tickets/G5-connection-defaults-policy.md): no
+  Docker scanning (only a container pinned by `IRIS_CONTAINER_NAME`); defaults follow
+  iris-devtester (`localhost:1972`, `_SYSTEM`/`SYS`) with a log line and a refusal hint; the
+  password-fix helper is removed; one resolver with devtester's variable names, env beating
+  file; announced under Unreleased 0.15. Feature: `connection-settings`.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -66,7 +71,6 @@ ticket is open. Executing the fixes is **not** part of this map.
 
 Maintained by hand; recompute after each close.
 
-- [Decide the connection defaults policy](tickets/G5-connection-defaults-policy.md) (grilling, HITL)
 - [Decide the fake-embedding fallback policy](tickets/G6-fake-embedding-policy.md) (grilling, HITL)
 
 Unblocked by [Gather support-status facts](tickets/R3-support-status-facts.md):
