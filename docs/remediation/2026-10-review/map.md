@@ -8,7 +8,7 @@ A decided, ordered remediation plan. Every one of the findings in
 [findings.md](findings.md) has a **Fate** (fixed in a named feature, deferred to
 `docs/DEBT.md` with a reason, deleted with its area, or rejected with a reason), every
 feature has a scope and a test-first task outline, and nothing is left to decide before
-someone runs `/speckit.implement`. The ledger holds 161 findings as of 2026-10-02 and grows
+someone runs `/speckit.implement`. The ledger holds 162 findings as of 2026-10-02 and grows
 when a ticket surfaces more. The map is done when no finding has Fate `—` and no
 ticket is open. Executing the fixes is **not** part of this map.
 
