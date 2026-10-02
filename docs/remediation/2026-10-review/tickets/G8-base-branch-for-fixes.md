@@ -5,6 +5,13 @@
 - blocked-by: none
 - claimed-by: none
 
+Facts (2026-10-02): local `master` is 26 commits ahead of `origin/master` and nothing is
+pushed. Branches ahead of `master`: `083-iris-session` (9; touches `api/`), `086-canonical-vector-type`
+(3; already fixes the document-table emptying in `enterprise_storage.py` and edits the `RAG.SDK`
+classes), `087-ivg-4.1` (3), `065-iris-llm-substrate` (4), plus a spec-only and a benchmark-only
+branch. The review read `master` plus the three `087` commits only. See
+[Reconcile the ledger with the unmerged branches](R4-reconcile-with-unmerged-branches.md).
+
 ## Question
 
 What do the fixes build on? `master` lacks three local, unpushed commits on `087-ivg-4.1`

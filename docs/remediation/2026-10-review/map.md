@@ -95,12 +95,16 @@ these graduated from the fog on 2026-10-02. 93 of 161 findings still have no Fat
 
 - [Draft the feature grouping](tickets/P1-draft-feature-grouping.md) (research, AFK; in
   progress)
+- [Reconcile the ledger with the unmerged branches](tickets/R4-reconcile-with-unmerged-branches.md)
+  (research, AFK; in progress)
 - [Decide the base branch for the fixes](tickets/G8-base-branch-for-fixes.md) (grilling, HITL)
 - [Decide how fixes that need IRIS are verified](tickets/G9-verify-fixes-needing-iris.md)
   (grilling, HITL)
 - [Decide the CI repair scope](tickets/G10-ci-repair-scope.md) (grilling, HITL)
 
-Blocked until [Draft the feature grouping](tickets/P1-draft-feature-grouping.md) closes:
+Blocked until [Draft the feature grouping](tickets/P1-draft-feature-grouping.md) and
+[Reconcile the ledger with the unmerged branches](tickets/R4-reconcile-with-unmerged-branches.md)
+close:
 
 - [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md)
 

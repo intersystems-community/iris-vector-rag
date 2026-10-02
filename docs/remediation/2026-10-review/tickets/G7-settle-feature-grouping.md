@@ -2,7 +2,7 @@
 
 - type: grilling (HITL)
 - status: open
-- blocked-by: P1 (Draft the feature grouping)
+- blocked-by: P1 (Draft the feature grouping), R4 (Reconcile the ledger with the unmerged branches)
 - claimed-by: none
 
 ## Question
