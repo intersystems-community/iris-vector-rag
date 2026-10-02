@@ -94,6 +94,11 @@ ticket is open. Executing the fixes is **not** part of this map.
   drop `recover_password` from 083 before it merges; keep `password_expired()` and raise with a
   hint; no `docker exec` in library code. The connection-settings decision stands unamended.
   `connection-settings` builds on the post-083 code, so 083 merges first.
+- [Decide the base branch for the fixes](tickets/G8-base-branch-for-fixes.md): a prerequisite
+  feature `integrate-branches` merges, locally and `--no-ff` in a clean worktree, the docs
+  branch, then `087`, `086`, `083` (after the password-recovery edit), with gates after each;
+  features then branch off the merged `master` as `remediation/<feature>`. `060`, `065`, `001`,
+  `067` abandoned, `084` parked, none deleted. Nothing is pushed.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -107,7 +112,6 @@ Maintained by hand; recompute after each close. All the fate and policy tickets 
 these graduated from the fog on 2026-10-02. 95 of 161 findings still have no Fate.
 
 - [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md) (grilling, HITL)
-- [Decide the base branch for the fixes](tickets/G8-base-branch-for-fixes.md) (grilling, HITL)
 - [Decide how fixes that need IRIS are verified](tickets/G9-verify-fixes-needing-iris.md)
   (grilling, HITL)
 - [Decide the CI repair scope](tickets/G10-ci-repair-scope.md) (grilling, HITL)
@@ -140,3 +144,7 @@ these graduated from the fog on 2026-10-02. 95 of 161 findings still have no Fat
   deferred by their tickets; neither belongs in this remediation plan.
 - Tests and CI jobs that rely on the implicit stub embedder by accident: an audit inside the
   `embedding-integrity` feature, not a separate ticket.
+- Local branches that are abandoned or parked, untouched and not deleted (the maintainer
+  decides): `060-fix-users-tdyar`, `065-iris-llm-substrate`, `001-fix-ci-security-failures`,
+  `067-colbert-plaid-sp` (abandoned); `084-query-plan` (parked, spec only); and
+  `backup/083-pre-rebase-20260911`.
