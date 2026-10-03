@@ -430,6 +430,20 @@ def iris_target():
             container.stop()
 
 
+IRIS_TEST_DIRECTORIES = ("integration", "e2e", "contract")
+
+
+@pytest.fixture(autouse=True)
+def _iris_environment(request):
+    """Point the code under test at `iris_target` in every test that may touch IRIS.
+
+    Without it a contract test run on its own connected to localhost:1972 unless an earlier
+    test had requested `iris_target`. Unit tests never start or need IRIS.
+    """
+    if any(part in IRIS_TEST_DIRECTORIES for part in Path(str(request.fspath)).parts):
+        request.getfixturevalue("iris_target")
+
+
 @pytest.fixture
 def iris_connection(iris_target):
     """A live DBAPI connection to `iris_target`, closed after the test.

@@ -270,3 +270,28 @@ class TestWarmUpCommand:
         )
         assert code == 1
         assert "make iris-reset" in capsys.readouterr().err
+
+
+class TestEnvironmentIsAutomaticWhereIrisIsNeeded:
+    """A contract/integration/e2e test file run on its own must see the same IRIS.
+
+    Without this, code under test fell back to localhost:1972 unless an earlier test
+    had happened to request iris_target.
+    """
+
+    def _conftest(self):
+        return (TESTS / "conftest.py").read_text()
+
+    def test_an_autouse_fixture_activates_iris_target_for_iris_directories(self):
+        source = self._conftest()
+        assert "def _iris_environment" in source
+        body = source.split("def _iris_environment", 1)[1].split("\n\n\n", 1)[0]
+        assert 'getfixturevalue("iris_target")' in body
+        for directory in ("integration", "e2e", "contract"):
+            assert f'"{directory}"' in body
+
+    def test_unit_tests_do_not_need_docker_or_iris(self):
+        body = (
+            self._conftest().split("def _iris_environment", 1)[1].split("\n\n\n", 1)[0]
+        )
+        assert '"unit"' not in body
