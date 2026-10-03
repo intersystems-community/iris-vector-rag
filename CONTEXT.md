@@ -39,6 +39,27 @@ _Avoid_: connection manager, connection wrapper, external connection, engine con
 A set of sessions kept for concurrent callers. Exists only where callers are concurrent.
 _Avoid_: connection pool (when the thing meant is a single session)
 
+**Connection settings**:
+The host, port, namespace, credentials and optional pinned container that say which IRIS
+instance a session opens. Resolved in one place, in this order: explicit settings,
+environment, `.env`, the pinned container, defaults. The vocabulary matches iris-devtester.
+_Avoid_: connection config, connection parameters, db config
+
+**Pinned container**:
+A Docker container named explicitly (`IRIS_CONTAINER_NAME`) whose published port is read
+to fill in the port. No container is ever chosen by scanning.
+_Avoid_: auto-detected container, discovered instance
+
+**Embedding identity**:
+The model key, mechanism, dimension and dtype a set of vectors was produced with. Vectors
+with different identities are never mixed, even at the same width.
+_Avoid_: embedding config, model signature
+
+**Test embedder**:
+A deterministic stand-in for a real embedding model, used only when asked for by name. It
+has its own embedding identity (`stub`) and is never substituted when a real model fails.
+_Avoid_: fallback embedder, mock embedder, stub model
+
 ### Querying
 
 **Query plan**:
