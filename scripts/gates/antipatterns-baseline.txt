@@ -36,9 +36,9 @@ hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:368
 hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:379
 hardcoded-vector-type	sql/schema.sql:18
 hardcoded-vector-type	sql/schema.sql:9
-inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:33
-inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:34
-inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:35
+inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:50
+inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:51
+inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:52
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:26
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:51
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:68

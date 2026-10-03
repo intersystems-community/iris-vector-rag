@@ -24,7 +24,7 @@ load_class() {
     return 1
 }
 
-for cls in Schema Pipeline Search Bridge Evaluate; do
+for cls in Identifier Schema Pipeline Search Bridge Evaluate; do
     if ! load_class "${cls}"; then
         echo "ERROR: Failed to load RAG.SDK.${cls}:" >&2
         echo "${LOAD_OUTPUT:-}" >&2; exit 1

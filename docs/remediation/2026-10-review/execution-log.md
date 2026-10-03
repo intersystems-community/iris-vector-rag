@@ -52,3 +52,24 @@ entry: feature, question, choice, why.
   deletion wins over its relocation. Every other conflict was additive
   (CHANGELOG, `pyproject.toml` `filterwarnings`, README,
   `ci_known_failures.txt`) and keeps both sides.
+- **objectscript-sdk-fix: SELECT TOP with ORDER BY.** `VectorSearch` needs both to be
+  correct. The workspace rule and OS-15 forbid the pair, so the SQL keeps `ORDER BY` and
+  the fetch loop stops at `topK` rows. Cost: no `TOP`-driven HNSW pushdown on that query.
+  Revisit if a consumer's table has an HNSW index and the latency shows.
+- **objectscript-sdk-fix: `Quit tSC` on string-returning methods.** The rule's "last line
+  `Quit tSC`" fits `%Status` methods. The SDK's methods return JSON strings (public API,
+  kept). They start with `Set tSC = $$$OK`, use `tSC` for every status, and end with
+  `Quit <result>`.
+- **objectscript-sdk-fix: Embed and Evaluate not converted.** Both are
+  `[ Language = python ]` methods that cannot be compiled in the test container (DEBT
+  entries 1 and 10), so renaming their parameters could not be verified.
+- **objectscript-sdk-fix: stream OIDs.** `%GetData` returns a `$LISTBUILD` OID in this
+  IRIS, not `id@class`; `ReadText` returned that raw OID as the "text". Both forms are now
+  opened.
+- **objectscript-sdk-fix: Install.** No version argument installs the latest release
+  (unpinned) rather than a version baked into the class; `Install(pVersion)` pins.
+- **objectscript-sdk-fix: `Schema.Status` on a missing table** reports dimension 0, not
+  384; an unknown dimension is not a default.
+- **objectscript-sdk-fix: test location.** `tests/contract/test_objectscript_sdk_fix.py`,
+  not `tests/e2e/`: `tests/e2e/conftest.py` has a session autouse fixture that starts a
+  second container.

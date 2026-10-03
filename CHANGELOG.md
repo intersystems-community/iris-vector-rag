@@ -86,6 +86,39 @@ iris-vector-rag[all]` no longer brings in `redis`, `bcrypt`, `python-jose`,
 - **Documentation corrected.** Removed false claims that DSPy integration is supported or
   production-ready from README, AGENTS, and Makefile. Updated all references to note spec
   073 as the tracking issue and direct users to the core entity services for production use.
+- **`RAG.SDK` (ObjectScript) reports real status and checks what it concatenates into
+  SQL** (review findings OS-03, OS-04, OS-05, OS-15, OS-16; OS-01 and OS-02 were fixed by
+  086 and are now covered by tests that compile the classes).
+  - A new class, `RAG.SDK.Identifier`, is the one place table and column names and row
+    counts are checked. `SetDefaultTable`, `AttachTable`, `AddDocument`,
+    `AddDocumentBatch`, `AddDocumentWithEmbed`, `BuildBM25Index` and every search refuse an
+    unsafe name; `topK` must be a positive integer (a numeric string is accepted). The
+    refusal is `{"status":"error","message":...}` (searches: `{"error":...}`), and
+    `SetDefaultTable` writes nothing when it refuses.
+  - Stream text columns are read to the end, not cut at 2,000 characters: search hits
+    carry the whole text and `BuildBM25Index` indexes whole documents. A value over
+    3,000,000 characters is cut, and the hit (or the `BuildBM25Index` result, as a
+    `truncated` count) says so. Stream columns are recognised in the current OID format;
+    the old code returned the raw OID as the text for them.
+  - `BuildBM25Index` indexes the configured text column by default (its `textCol` default
+    was the literal `text_content`), returns an error instead of `ok` with 0 documents when
+    its query does not prepare or run, and leaves the old index alone in that case.
+  - `TextSearch` returns `{"error":...}` when its query fails, scoped or not; unscoped it
+    used to return `[]`.
+  - `VectorSearch` no longer uses `SELECT TOP n ... ORDER BY`: it orders in SQL and stops
+    at `n` rows in the loop. An HNSW index can no longer be chosen by the optimizer for
+    this query.
+  - `Schema.Initialize` stops at and names the first failing statement (it used to return
+    `ok` whatever happened), no longer splits its DDL on the text "GO" (a schema named
+    `GOLD` broke), and refuses a non-positive dimension. `Schema.Drop` reports failures.
+    `Schema.Status` takes an optional schema and reads the dimension from the class
+    dictionary; a missing table reports dimension 0 instead of a made-up 384.
+  - `Schema.Install` (run by `zpm install`) installs the latest release instead of the
+    hardcoded `iris-vector-rag==0.11.4`; `Install("x.y.z")` pins one.
+  - Every ObjectScript method follows the workspace rules (`pName` parameters, `tName`
+    locals, `Set tSC = $$$OK` first, `Quit` last). Parameters were renamed; calls are
+    positional, so callers are unaffected. Return shapes are unchanged. `Embed` and
+    `Evaluate` (embedded Python) are not converted.
 
 ### iris-vector-graph 4.1
 
