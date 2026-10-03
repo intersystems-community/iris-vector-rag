@@ -252,6 +252,22 @@ def cleanup_environment():
 
 
 @pytest.fixture
+def use_test_embedder(monkeypatch):
+    """Ask for the test embedder by name, at 384 dimensions.
+
+    Production never substitutes it for a model that will not load; a test that wants
+    deterministic vectors says so, through the same setting a user would
+    (`embeddings.provider: stub`, read from the environment by ConfigurationManager).
+    """
+    from iris_vector_rag.embeddings import manager as embeddings_manager
+
+    monkeypatch.setenv("RAG_EMBEDDINGS__PROVIDER", "stub")
+    monkeypatch.setenv("RAG_EMBEDDINGS__DIMENSION", "384")
+    embeddings_manager._SENTENCE_TRANSFORMER_CACHE.clear()
+    yield 384
+
+
+@pytest.fixture
 def docker_services():
     """Wait for Docker services to be ready."""
     # This fixture can be used with pytest-docker to wait for services

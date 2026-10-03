@@ -122,6 +122,7 @@ class TestPipelineConformance:
     @pytest.mark.parametrize("pipeline_type", PIPELINE_TYPES)
     def test_load_documents_returns_ingestion_result(
         self,
+        use_test_embedder,
         pipeline_type,
         mock_config_manager,
         mock_connection_manager,

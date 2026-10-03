@@ -36,7 +36,9 @@ def test_module_is_not_in_the_package(module):
 
 def test_package_testing_directory_holds_no_harness():
     stray = sorted(
-        p.name for p in (PACKAGE / "testing").glob("*.py") if p.name != "__init__.py"
+        p.name
+        for p in (PACKAGE / "testing").glob("*.py")
+        if p.name not in ("__init__.py", "embedder.py")
     )
     assert stray == []
 
