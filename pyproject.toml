@@ -337,6 +337,9 @@ filterwarnings = [
     # tests/contract/test_iris_connection_contract.py is the contract for
     # get_iris_connection() itself, deprecated in 0.15 and removed in 0.16.
     "ignore:get_iris_connection\\(\\) is deprecated:DeprecationWarning",
+    # tests/test_ontology_*.py exercise the deprecated iris_vector_rag.ontology
+    # package until it is removed; its import warning is the deprecation itself.
+    "ignore:iris_vector_rag.ontology is deprecated:DeprecationWarning",
     # The only third-party entries, and they buy time rather than silence: ragas
     # 0.4 deprecated both halves of the API this repo calls -- the metric
     # singletons in ragas.metrics (now ragas.metrics.collections) and evaluate()

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Ontology retirement (deprecation)
+
+- **`iris_vector_rag.ontology` is deprecated.** Importing it emits one
+  `DeprecationWarning`. The package is removed in the next release; its last version
+  stays at the git tag `archive/ontology-v1`.
+- **Entity extraction no longer imports the ontology package.** The module-level
+  ontology imports and the dead ontology branch are gone from
+  `services/entity_extraction.py`. `extract_with_ontology()` and the
+  `ontology_sources` argument stay for compatibility and are ignored. The attributes
+  `ontology_config`, `ontology_enabled`, `reasoning_enabled`, `auto_detect_domain`,
+  `ontology_plugin` and `reasoner` on `OntologyAwareEntityExtractor` are removed.
+- **The `ontology:` config section is a no-op.** No code reads it. Existing config
+  files still load. See [docs/ontology_integration_guide.md](docs/ontology_integration_guide.md).
+
 ### iris-vector-graph 4.1
 
 IVR now requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 re-keyed `Graph_KG`
@@ -13,7 +27,7 @@ migrated once. See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md).
   layout in a new `legacy_layout_tables` field, and validation fails with the call
   that fixes it.
 - **`SchemaManager.upgrade_iris_vector_graph_storage(dry_run=False, **options)`**
-  runs ivg's `initialize_schema()` and then `upgrade_to_4_0_0`. The dry run writes
+  runs ivg's `initialize_schema()`and then`upgrade_to_4_0_0`. The dry run writes
   nothing and skips `initialize_schema()`; a step ivg cannot predict on a 2.x install
   comes back with `blocked_because`.
 - **Graph-scoped search.** The RRF, text and HNSW retrieval methods accept

@@ -183,29 +183,32 @@ entity_extraction:
     relationships_table: "RAG.EntityRelationships"  # Table for relationships
     embeddings_table: "RAG.EntityEmbeddings"        # Table for entity embeddings
 
-# General-purpose ontology configuration for ANY domain
+# DEPRECATED, NO-OP. Nothing reads this section any more: entity extraction no
+# longer consults the ontology package, and every key below is ignored. The
+# section is kept only so existing config files still load. The package
+# iris_vector_rag.ontology is removed in the next release (tag archive/ontology-v1).
 ontology:
   enabled: false                         # Enable/disable ontology support
   type: "general"                        # Single general-purpose type (replaces domain-specific plugins)
   auto_detect_domain: true               # Auto-detect domain from ontology metadata
-  
+
   # Ontology data sources - works with ANY valid ontology
   sources:
     - type: "owl"                        # Ontology format: owl, rdf, skos, xml, ttl, n3
       path: "path/to/any/ontology.owl"   # Path to ontology file (ANY domain)
       # Optional: override auto-detection
       # domain: "custom_domain_name"
-    
+
     # Examples for different domains:
     # - type: "owl"
     #   path: "ontologies/medical/umls.owl"        # Medical domain
-    # - type: "skos" 
+    # - type: "skos"
     #   path: "ontologies/legal/legal_terms.skos"  # Legal domain
     # - type: "rdf"
     #   path: "ontologies/financial/fibo.rdf"      # Financial domain
     # - type: "owl"
     #   path: "ontologies/scientific/research.owl" # Scientific domain
-  
+
   # Custom domain definitions (optional)
   custom_domains:
     enabled: false                       # Enable custom domain definitions
@@ -225,7 +228,7 @@ ontology:
     #     "protein": ["enzyme", "polypeptide"]
     #   }
     # }
-  
+
   # Reasoning engine configuration
   reasoning:
     enable_inference: true               # Enable ontology-based reasoning
@@ -235,14 +238,14 @@ ontology:
       - "subsumption"                    # Hierarchical concept reasoning
       - "property_based"                 # Property-based inference
       - "rule_based"                     # Custom rule application
-  
+
   # Entity mapping configuration
   entity_mapping:
     auto_map: true                       # Automatically map concepts to entity types
     auto_domain_detection: true          # Auto-detect relevant domains from text
     expansion_strategy: "synonyms"       # Query expansion: synonyms, hierarchical, semantic
     # Note: custom_mappings are now auto-generated from loaded ontologies
-    
+
   # Performance and optimization settings
   performance:
     max_concepts_per_domain: 10000       # Limit concepts loaded per domain
@@ -318,14 +321,14 @@ iris_graph_core:
     cache_text_queries: true             # Cache frequently used text queries
     max_cache_size: 1000                 # Maximum number of cached queries
     query_timeout_ms: 30000              # Query timeout in milliseconds
-  
+
   # General ontology integration for GraphRAG
   ontology_integration:
     query_expansion: true                # Expand queries using ontology concepts
     entity_enrichment: true              # Enrich extracted entities with ontology data
     relationship_inference: true         # Infer relationships using ontology reasoning
     semantic_similarity: true            # Use semantic similarity for entity matching
-    
+
   # Visualization settings
   visualization:
     enabled: true                        # Enable graph visualization
