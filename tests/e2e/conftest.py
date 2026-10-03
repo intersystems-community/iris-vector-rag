@@ -30,7 +30,6 @@ from iris_vector_rag.core.models import Document
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 logger = logging.getLogger(__name__)
-PROJECT_CONTAINER_NAME = "iris-vector-rag-tests"
 IRIS_ENV_KEYS = [
     "RAG_DATABASE__IRIS__HOST",
     "RAG_DATABASE__IRIS__PORT",
@@ -47,102 +46,37 @@ IRIS_ENV_KEYS = [
 # Load environment variables for E2E tests
 load_dotenv()
 
-# Try to import iris-devtester for automated infrastructure
-has_devtester = False
-try:
-    from iris_devtester import IRISContainer as _IRISContainer
-
-    has_devtester = True
-except ImportError:
-    _IRISContainer = None
-    has_devtester = False
-
 
 @pytest.fixture(scope="session", autouse=True)
-def iris_infrastructure():
+def iris_infrastructure(iris_target):
+    """Point the RAG_DATABASE__IRIS__* settings at the session's IRIS (`iris_target`).
+
+    The container is the one tests/conftest.py resolves: this project's pinned container or
+    an ephemeral one. Nothing here starts a container or skips.
     """
-    Ensure IRIS infrastructure is available for E2E tests.
-
-    If IRIS_HOST is not set, attempts to use iris-devtester to start
-    a named project-specific container.
-    """
-    if os.environ.get("IRIS_HOST"):
-        logger.info(
-            "Using existing IRIS infrastructure at %s",
-            os.environ.get("IRIS_HOST"),
-        )
-        yield
-        return
-
-    if not has_devtester:
-        pytest.skip(
-            "E2E tests require iris-devtester or IRIS_HOST. Install with: pip install 'iris-devtester[all]'"
-        )
-
-    logger.info("Starting IRIS container for E2E tests via iris-devtester")
     original_env = {key: os.environ.get(key) for key in IRIS_ENV_KEYS}
-
-    from iris_devtester import IRISContainer as RuntimeIRISContainer
-
-    with RuntimeIRISContainer.community(
-        name=PROJECT_CONTAINER_NAME
-    ).with_preconfigured_password("SYS") as iris:
-        # Trigger iris-devtester auto-remediation for password change required
-        try:
-            iris.get_connection()
-        except Exception as exc:
-            logger.debug("iris-devtester get_connection() failed: %s", exc)
-
-        config = iris.get_config()
-        try:
-            port = iris.get_exposed_port(1972)
-        except Exception:
-            port = config.port
-
-        os.environ["RAG_DATABASE__IRIS__HOST"] = config.host
-        os.environ["RAG_DATABASE__IRIS__PORT"] = str(port)
-        os.environ["RAG_DATABASE__IRIS__USERNAME"] = config.username
-        os.environ["RAG_DATABASE__IRIS__PASSWORD"] = config.password
-        os.environ["RAG_DATABASE__IRIS__NAMESPACE"] = config.namespace
-
-        # Also set legacy names for compatibility with older code
-        os.environ["IRIS_HOST"] = config.host
-        os.environ["IRIS_PORT"] = str(port)
-        os.environ["IRIS_USERNAME"] = config.username
-        os.environ["IRIS_PASSWORD"] = config.password
-        os.environ["IRIS_NAMESPACE"] = config.namespace
-
-        logger.info(
-            "IRIS container '%s' started at %s:%s",
-            PROJECT_CONTAINER_NAME,
-            config.host,
-            port,
-        )
-        try:
-            yield
-        finally:
-            for key, value in original_env.items():
-                if value is None:
-                    os.environ.pop(key, None)
-                else:
-                    os.environ[key] = value
+    os.environ["RAG_DATABASE__IRIS__HOST"] = iris_target.host
+    os.environ["RAG_DATABASE__IRIS__PORT"] = str(iris_target.port)
+    os.environ["RAG_DATABASE__IRIS__USERNAME"] = iris_target.username
+    os.environ["RAG_DATABASE__IRIS__PASSWORD"] = iris_target.password
+    os.environ["RAG_DATABASE__IRIS__NAMESPACE"] = iris_target.namespace
+    try:
+        yield
+    finally:
+        for key, value in original_env.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
 
 
 @pytest.fixture(scope="session", autouse=True)
-def e2e_reset_namespace():
-    """
-    Ensure a clean namespace for E2E runs using iris-devtester utilities.
-    """
-    if os.environ.get("SKIP_IRIS_TESTS", "false") != "false":
-        pytest.skip("E2E tests require live IRIS (SKIP_IRIS_TESTS=false)")
-
-    if not has_devtester:
-        return
-
-    from iris_devtester.connections import get_connection
+def e2e_reset_namespace(iris_target):
+    """Ensure a clean RAG schema before and after the E2E session."""
     from tests.fixtures.idt_cleanup import reset_rag_schema
+    from tests.support.iris_environment import connect
 
-    conn = get_connection()
+    conn = connect(iris_target)
     try:
         try:
             reset_rag_schema(conn, schema="RAG", strict=False)
@@ -359,11 +293,11 @@ def _get_biomedical_test_documents() -> List[Document]:
     return [
         Document(
             id="e2e_test_cardio_001",
-            page_content="""Cardiovascular disease remains the leading cause of mortality worldwide. 
-            Major risk factors include hypertension, dyslipidemia, diabetes mellitus, obesity, smoking, 
-            and sedentary lifestyle. Primary prevention strategies focus on lifestyle modifications 
-            including regular physical activity, dietary interventions with emphasis on Mediterranean 
-            diet patterns, smoking cessation, and weight management. Secondary prevention involves 
+            page_content="""Cardiovascular disease remains the leading cause of mortality worldwide.
+            Major risk factors include hypertension, dyslipidemia, diabetes mellitus, obesity, smoking,
+            and sedentary lifestyle. Primary prevention strategies focus on lifestyle modifications
+            including regular physical activity, dietary interventions with emphasis on Mediterranean
+            diet patterns, smoking cessation, and weight management. Secondary prevention involves
             optimal medical therapy with statins, ACE inhibitors, beta-blockers, and antiplatelet therapy.""",
             metadata={
                 "source": "e2e_test",
@@ -374,11 +308,11 @@ def _get_biomedical_test_documents() -> List[Document]:
         ),
         Document(
             id="e2e_test_diabetes_002",
-            page_content="""Type 2 diabetes mellitus affects over 400 million people worldwide and is 
-            characterized by insulin resistance and progressive beta-cell dysfunction. Management strategies 
-            include lifestyle modifications, oral antidiabetic agents, and insulin therapy. Metformin remains 
-            the first-line therapy for most patients due to its efficacy, safety profile, and cardiovascular 
-            benefits. Additional agents include sulfonylureas, DPP-4 inhibitors, SGLT2 inhibitors, and 
+            page_content="""Type 2 diabetes mellitus affects over 400 million people worldwide and is
+            characterized by insulin resistance and progressive beta-cell dysfunction. Management strategies
+            include lifestyle modifications, oral antidiabetic agents, and insulin therapy. Metformin remains
+            the first-line therapy for most patients due to its efficacy, safety profile, and cardiovascular
+            benefits. Additional agents include sulfonylureas, DPP-4 inhibitors, SGLT2 inhibitors, and
             GLP-1 receptor agonists.""",
             metadata={
                 "source": "e2e_test",
@@ -389,10 +323,10 @@ def _get_biomedical_test_documents() -> List[Document]:
         ),
         Document(
             id="e2e_test_oncology_003",
-            page_content="""Cancer immunotherapy has emerged as a revolutionary treatment approach that 
-            harnesses the immune system to fight malignant cells. Checkpoint inhibitors targeting PD-1, 
-            PD-L1, and CTLA-4 pathways have shown remarkable efficacy in various cancer types including 
-            melanoma, lung cancer, and renal cell carcinoma. CAR-T cell therapy represents a breakthrough 
+            page_content="""Cancer immunotherapy has emerged as a revolutionary treatment approach that
+            harnesses the immune system to fight malignant cells. Checkpoint inhibitors targeting PD-1,
+            PD-L1, and CTLA-4 pathways have shown remarkable efficacy in various cancer types including
+            melanoma, lung cancer, and renal cell carcinoma. CAR-T cell therapy represents a breakthrough
             in treating hematologic malignancies.""",
             metadata={
                 "source": "e2e_test",
@@ -403,10 +337,10 @@ def _get_biomedical_test_documents() -> List[Document]:
         ),
         Document(
             id="e2e_test_neurology_004",
-            page_content="""Alzheimer disease is the most common cause of dementia, characterized by 
-            progressive cognitive decline and neurodegeneration. Pathological hallmarks include amyloid-beta 
-            plaques, neurofibrillary tangles containing hyperphosphorylated tau protein, and neuronal loss. 
-            Current FDA-approved treatments include cholinesterase inhibitors and NMDA receptor antagonist 
+            page_content="""Alzheimer disease is the most common cause of dementia, characterized by
+            progressive cognitive decline and neurodegeneration. Pathological hallmarks include amyloid-beta
+            plaques, neurofibrillary tangles containing hyperphosphorylated tau protein, and neuronal loss.
+            Current FDA-approved treatments include cholinesterase inhibitors and NMDA receptor antagonist
             memantine.""",
             metadata={
                 "source": "e2e_test",
@@ -417,9 +351,9 @@ def _get_biomedical_test_documents() -> List[Document]:
         ),
         Document(
             id="e2e_test_respiratory_005",
-            page_content="""COVID-19, caused by SARS-CoV-2, presents with a wide spectrum of clinical 
-            manifestations from asymptomatic infection to severe acute respiratory distress syndrome. 
-            Treatment protocols include supportive care, oxygen therapy, and antiviral medications such 
+            page_content="""COVID-19, caused by SARS-CoV-2, presents with a wide spectrum of clinical
+            manifestations from asymptomatic infection to severe acute respiratory distress syndrome.
+            Treatment protocols include supportive care, oxygen therapy, and antiviral medications such
             as remdesivir and paxlovid. Corticosteroids like dexamethasone reduce mortality in severe cases.""",
             metadata={
                 "source": "e2e_test",
@@ -602,13 +536,7 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
-    """Setup for E2E tests - verify required environment."""
+    """Setup for E2E tests. IRIS comes from `iris_target`; an unreachable one fails there."""
     if "e2e" in item.keywords:
-        # Verify IRIS connection is available or can be provisioned
-        if not os.environ.get("IRIS_HOST") and not has_devtester:
-            pytest.skip(
-                "E2E tests require IRIS_HOST environment variable or iris-devtester"
-            )
-
         # Log that we're running a true E2E test
         logger.info(f"Running TRUE E2E test: {item.name}")

@@ -63,3 +63,14 @@ def test_there_is_exactly_one_iris_connection_fixture():
         if re.search(r"^def iris_connection\(", p.read_text(), re.MULTILINE)
     ]
     assert defs == ["tests/conftest.py"]
+
+
+def test_e2e_conftest_takes_its_iris_from_iris_target():
+    """It started its own 'iris-vector-rag-tests' container, skipped on SKIP_IRIS_TESTS and
+    used get_connection() auto-discovery, which can land on another project's IRIS."""
+    source = (TESTS / "e2e" / "conftest.py").read_text()
+    assert "iris_target" in source
+    assert ".community(" not in source
+    assert "pytest.skip" not in source
+    assert "iris_devtester.connections import get_connection" not in source
+    assert "SKIP_IRIS_TESTS" not in source

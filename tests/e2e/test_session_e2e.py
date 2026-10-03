@@ -96,7 +96,12 @@ class TestUserStory1OneWayIn:
 
         assert doomed.in_backoff is False
 
-    def test_the_engine_reports_the_dimension_the_project_configured(self):
+    def test_the_engine_reports_the_dimension_the_project_configured(self, monkeypatch):
+        # The dimension authority is the active backend. This test is about the
+        # engine agreeing with the configuration, not about a model download, so it
+        # injects the test embedder explicitly (G6 point 3).
+        monkeypatch.setenv("RAG_EMBEDDINGS__PROVIDER", "stub")
+        monkeypatch.setenv("RAG_EMBEDDINGS__DIMENSION", "384")
         engine = IRISVectorEngine.from_config()
 
         expected = int(ConfigurationManager().get_embedding_config()["dimension"])
@@ -197,7 +202,7 @@ class TestUserStory3StatementsSafeToRunAndRead:
         rows = session.execute(
             "SELECT TOP 3 TABLE_NAME FROM INFORMATION_SCHEMA.TABLES "
             "WHERE TABLE_SCHEMA = ?",
-            ("RAG",),
+            ("INFORMATION_SCHEMA",),
         )
         session.close()
 
