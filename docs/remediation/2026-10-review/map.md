@@ -1,6 +1,8 @@
 # Map: remediate the October 2026 code review
 
 Label: `wayfinder:map`. Tracker: local markdown (this directory). Started 2026-10-02.
+**Complete 2026-10-02:** every finding has a Fate, no ticket is open, and the hand-off is
+[plan.md](plan.md).
 
 ## Destination
 
@@ -111,6 +113,11 @@ ticket is open. Executing the fixes is **not** part of this map.
   PR). Stage 2, after `test-environment`: integration tests and the packaging and release items.
   Already-failing tests are quarantined with an owner feature, not fixed first; new failures
   block.
+- [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md): 18 features in
+  six phases; `storage-correctness` refuses destructive migrations unless flagged; `sp/*.cls`
+  ship only what exists nowhere else; `iris_vector_rag.testing` is internal except the test
+  embedder; the fusion correction ships with a CHANGELOG line and no flag. All 162 findings now
+  have a Fate. The result is [plan.md](plan.md).
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -120,24 +127,11 @@ ticket is open. Executing the fixes is **not** part of this map.
 
 ## Frontier (open, unblocked, unclaimed)
 
-Maintained by hand; recompute after each close. All the fate and policy tickets are closed;
-these graduated from the fog on 2026-10-02. 95 of 161 findings still have no Fate.
-
-- [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md) (grilling, HITL)
+None. Every ticket is closed.
 
 ## Not yet specified
 
-- **The rest of `testing/`** (`backend_manager`, `connection_pool`, `validators`,
-  `exceptions`; nine test files use it) and the inverted dependency where production
-  `config/backend_modes.py` imports `testing.exceptions` (part of VM-16). Not covered by the
-  bridge deletion; the grouping draft will take a first position.
-- **The order and release shape of the whole plan**: which features ship together in which
-  release, given that `retire-rest-api` and `ontology-retirement` each span a deprecation
-  release and a removal release. Follows the grouping and base-branch tickets.
-- **The design-archive deliverable for the REST API** (`docs/archived/rest-api/`): its exact
-  contents are specified in the `api/` ticket, but the task that writes it has to be sized
-  and placed in the order.
-- **Anything the grouping draft surfaces** that no ticket covers.
+Nothing. The fog cleared as the tickets closed; what remained became features in [plan.md](plan.md), parked ideas or DEBT entries.
 
 ## Out of scope
 
