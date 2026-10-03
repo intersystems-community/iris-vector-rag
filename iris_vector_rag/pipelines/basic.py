@@ -584,11 +584,16 @@ class BasicRAGPipeline(RAGPipeline):
 
         # Step 1: Retrieve relevant documents
         retrieval_error = None
+        engine_applied_threshold = False
         try:
             # FR-010: dispatch via RetrievalEngine when retrieval mode is explicitly set
+            # A threshold goes through the engine too: the plain store search returns
+            # documents without their scores, so only the engine can apply it.
             if (
-                opts.retrieval
-                and opts.retrieval != "vector"
+                (
+                    (opts.retrieval and opts.retrieval != "vector")
+                    or similarity_threshold > 0.0
+                )
                 and hasattr(self, "vector_store")
                 and self.vector_store
             ):
@@ -599,6 +604,7 @@ class BasicRAGPipeline(RAGPipeline):
                     connection=self._retrieval_connection(),
                 )
                 retrieved_documents = engine.retrieve(opts)
+                engine_applied_threshold = True
             elif hasattr(self, "vector_store") and self.vector_store:
                 # FR-016: native EMBEDDING path when configured and no explicit embedding_func
                 explicit_embed_func = kwargs.get("embedding_func")
@@ -637,7 +643,11 @@ class BasicRAGPipeline(RAGPipeline):
 
         # FR-002: apply similarity threshold post-retrieval. Scores are attached to
         # each Document's metadata by the vector store ("score"/"similarity").
-        if similarity_threshold and similarity_threshold > 0.0:
+        if (
+            similarity_threshold
+            and similarity_threshold > 0.0
+            and not engine_applied_threshold
+        ):
             before = len(retrieved_documents)
             retrieved_documents = [
                 doc

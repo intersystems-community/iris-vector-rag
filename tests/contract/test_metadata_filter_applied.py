@@ -9,8 +9,9 @@ injection safety is exercised at the integration layer (test_filtered_search.py)
 here we assert the pipeline forwards filter values verbatim to the store.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.exceptions import VectorStoreConfigurationError
@@ -46,6 +47,12 @@ class _FakeVectorStore:
     def search_by_text(self, query, top_k=5, metadata_filter=None, **kwargs):
         self.calls.append({"query": query, "top_k": top_k, "filter": metadata_filter})
         return self._filter_docs(top_k, metadata_filter)
+
+    def similarity_search_with_score(self, query, k=4, filter=None):
+        """Like the real store: (Document, score) pairs. Its `search_by_text` returns
+        documents without scores, so a threshold can only be applied to this."""
+        self.calls.append({"query": query, "k": k, "filter": filter})
+        return [(d, d.metadata["score"]) for d in self._filter_docs(k, filter)]
 
     def similarity_search(self, query, k=4, filter=None, **kwargs):
         self.calls.append({"query": query, "k": k, "filter": filter})
