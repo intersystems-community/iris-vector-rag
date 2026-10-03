@@ -262,37 +262,41 @@ entry: feature, question, choice, why.
 - **rag/llm: findings taken.** PL-01, PL-02, PL-11, PL-12, PL-13, OS-10, OS-23.
   GraphRAG, HybridGraphRAG and ColBERT findings (PL-03 to PL-10) are the sibling
   agent's.
-- **rag/llm: rerank failure.** The record allowed "raise, or an explicit opt-in".
-  Chose raise by default, with `allow_rerank_fallback=True` as the opt-in that sets
-  `reranked=False` and `metadata["rerank_error"]`.
-- **rag/llm: the key check, in basic and CRAG too.** PL-02 names `basic_rerank`, but
-  `BasicRAGPipeline` and `CRAGPipeline` carried the same check; fixed in all three
-  through one helper on the base pipeline. Three contract tests that cleared the key
-  and expected a failure had passed only because a stub `llm_func` was injected; they now
-  also set `llm_func` to `None`, which is the scenario they describe.
-- **rag/llm: embedder convention (PL-12).** List in, list of vectors out, the majority
-  convention and the one `get_embedding_func` returns. CRAG validates the result.
+- **rag/llm: rerank failure.** The record allowed "raise, or an explicit
+  opt-in". Chose raise by default, with `allow_rerank_fallback=True` as the
+  opt-in that sets `reranked=False` and `metadata["rerank_error"]`.
+- **rag/llm: the key check, in basic and CRAG too.** PL-02 names `basic_rerank`,
+  but `BasicRAGPipeline` and `CRAGPipeline` carried the same check; fixed in all
+  three through one helper on the base pipeline. Three contract tests that
+  cleared the key and expected a failure had passed only because a stub
+  `llm_func` was injected; they now also set `llm_func` to `None`, which is the
+  scenario they describe.
+- **rag/llm: embedder convention (PL-12).** List in, list of vectors out, the
+  majority convention and the one `get_embedding_func` returns. CRAG validates
+  the result.
 - **rag/llm: CRAG knowledge-base expansion.** Goes through
-  `_retrieve_documents_by_vector` (the vector store) rather than its own SQL; the chunk
-  search in `_enhance_retrieval` has to be SQL of its own (the store does not search the
-  chunk table) and takes its names from the chunk table's shape.
-- **rag/llm: `CANONICAL_CHUNK_SHAPE` has no EMBEDDING role.** `_canonical_shape` binds roles
-  by the canonical document column names, and the chunk table's vector column is
-  `chunk_embedding`. Shapes read from the catalog resolve it correctly, which is what CRAG
-  uses. Not changed (storage file).
-- **rag/llm: `metadata["sources"]`.** The contract tests ask for `sources` inside
-  `metadata`; `tests/unit/test_pipeline_conformance.py` asserts it is top level and not
-  in `metadata`. The two contradict; the unit test is newer and explicit, so the
-  contract tests stay failing (rerank and basic are quarantined already; the CRAG
-  contract files are `--ignore`d by the release workflow).
-- **rag/llm: known-failure entries.** None removed. `test_mcp_basic_rag` "Document
-  missing score": `search_by_text` returns documents without scores by design (FR-014),
-  the MCP serializer (`mcp/`, off limits here) copies the metadata, so the fix is a
-  store or MCP contract decision; the unit suite mocks `search_by_text` in a dozen
-  places. `test_hybridgraphrag_e2e` metadata is a HybridGraphRAG test, the sibling's.
+  `_retrieve_documents_by_vector` (the vector store) rather than its own SQL;
+  the chunk search in `_enhance_retrieval` has to be SQL of its own (the store
+  does not search the chunk table) and takes its names from the chunk table's
+  shape.
+- **rag/llm: `CANONICAL_CHUNK_SHAPE` has no EMBEDDING role.** `_canonical_shape`
+  binds roles by the canonical document column names, and the chunk table's
+  vector column is `chunk_embedding`. Shapes read from the catalog resolve it
+  correctly, which is what CRAG uses. Not changed (storage file).
+- **rag/llm: `metadata["sources"]`.** The contract tests ask for `sources`
+  inside `metadata`; `tests/unit/test_pipeline_conformance.py` asserts it is top
+  level and not in `metadata`. The two contradict; the unit test is newer and
+  explicit, so the contract tests stay failing (rerank and basic are quarantined
+  already; the CRAG contract files are `--ignore`d by the release workflow).
+- **rag/llm: known-failure entries.** None removed. `test_mcp_basic_rag`
+  "Document missing score": `search_by_text` returns documents without scores by
+  design (FR-014), the MCP serializer (`mcp/`, off limits here) copies the
+  metadata, so the fix is a store or MCP contract decision; the unit suite mocks
+  `search_by_text` in a dozen places. `test_hybridgraphrag_e2e` metadata is a
+  HybridGraphRAG test, the sibling's.
 - **rag/llm: left failing, not in the findings.** CRAG's dimension-mismatch and
-  fail-fast contract tests (the pipeline swallows retrieval and generation errors into
-  an `error` field; the basic equivalents are quarantined for the same reason).
-  `CRAGPipeline.load_documents` counts documents as loaded when the store raises.
-  `Document` refuses an empty id, so PL-13's fallback is reachable only for
-  document-like objects; fixed anyway.
+  fail-fast contract tests (the pipeline swallows retrieval and generation
+  errors into an `error` field; the basic equivalents are quarantined for the
+  same reason). `CRAGPipeline.load_documents` counts documents as loaded when
+  the store raises. `Document` refuses an empty id, so PL-13's fallback is
+  reachable only for document-like objects; fixed anyway.
