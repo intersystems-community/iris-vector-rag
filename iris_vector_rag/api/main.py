@@ -16,31 +16,31 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from iris_vector_rag.common.connection_pool import IRISConnectionPool
 from iris_vector_rag.api.middleware import (
     AuthenticationMiddleware,
     RateLimitMiddleware,
     RequestLoggingMiddleware,
 )
-from iris_vector_rag.api.services import PipelineManager, AuthService, DocumentService
-from iris_vector_rag.api.routes import (
-    create_query_router,
-    create_pipeline_router,
-    create_document_router,
-    create_health_router,
-)
-from iris_vector_rag.api.websocket import (
-    ConnectionManager,
-    QueryStreamingHandler,
-    DocumentUploadProgressHandler,
-    create_websocket_router,
-)
 from iris_vector_rag.api.models.errors import (
+    ErrorDetails,
+    ErrorInfo,
     ErrorResponse,
     ErrorType,
-    ErrorInfo,
-    ErrorDetails,
 )
+from iris_vector_rag.api.routes import (
+    create_document_router,
+    create_health_router,
+    create_pipeline_router,
+    create_query_router,
+)
+from iris_vector_rag.api.services import AuthService, DocumentService, PipelineManager
+from iris_vector_rag.api.websocket import (
+    ConnectionManager,
+    DocumentUploadProgressHandler,
+    QueryStreamingHandler,
+    create_websocket_router,
+)
+from iris_vector_rag.common.connection_pool import IRISConnectionPool, _session_pool
 
 # Configure logging
 logging.basicConfig(
@@ -164,7 +164,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # Initialize IRIS connection pool
         db_config = app_state.config.get("database", {})
 
-        app_state.connection_pool = IRISConnectionPool(
+        # `_session_pool` is the pool without the 0.15 deprecation warning: the API
+        # keeps the pool until 0.16 (FR-017) and cannot act on its own warning.
+        app_state.connection_pool = _session_pool(
             host=db_config.get("host", "localhost"),
             port=db_config.get("port", 1972),
             namespace=db_config.get("namespace", "USER"),
@@ -245,7 +247,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
         # Close connections
         if app_state.connection_pool:
-            app_state.connection_pool.dispose()
+            app_state.connection_pool.close_all()
             logger.info("IRIS connection pool closed")
 
         if app_state.redis_client:

@@ -8,10 +8,11 @@ Tests real IRIS database operations with CloudConfiguration API:
 """
 
 import os
-import pytest
 import tempfile
-import yaml
 from unittest.mock import patch
+
+import pytest
+import yaml
 
 
 @pytest.mark.integration
@@ -24,28 +25,31 @@ class TestConnectionManagerIntegration:
         WHEN ConnectionManager initializes with CloudConfiguration
         THEN connections use environment variable values
         """
-        with patch.dict(os.environ, {
-            'IRIS_HOST': 'localhost',
-            'IRIS_PORT': '1972',
-            'IRIS_USERNAME': '_SYSTEM',
-            'IRIS_PASSWORD': 'SYS',
-            'IRIS_NAMESPACE': 'USER'
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "IRIS_HOST": "localhost",
+                "IRIS_PORT": "1972",
+                "IRIS_USERNAME": "_SYSTEM",
+                "IRIS_PASSWORD": "SYS",
+                "IRIS_NAMESPACE": "USER",
+            },
+            clear=False,
+        ):
             from iris_vector_rag.config.manager import ConfigurationManager
-            from iris_vector_rag.common.connection_manager import ConnectionManager
 
             config_manager = ConfigurationManager()
             cloud_config = config_manager.get_cloud_config()
 
             # Verify cloud config reads environment variables
-            assert cloud_config.connection.host == 'localhost'
+            assert cloud_config.connection.host == "localhost"
             assert cloud_config.connection.port == 1972
-            assert cloud_config.connection.namespace == 'USER'
-            assert cloud_config.connection.username == '_SYSTEM'
+            assert cloud_config.connection.namespace == "USER"
+            assert cloud_config.connection.username == "_SYSTEM"
 
             # Verify sources tracked correctly
-            assert cloud_config.connection.source['host'].value == 'environment'
-            assert cloud_config.connection.source['port'].value == 'environment'
+            assert cloud_config.connection.source["host"].value == "environment"
+            assert cloud_config.connection.source["port"].value == "environment"
 
     def test_connection_to_real_iris_database(self):
         """
@@ -54,6 +58,7 @@ class TestConnectionManagerIntegration:
         THEN connection succeeds and can query database
         """
         import iris.dbapi as iris_dbapi
+
         from iris_vector_rag.config.manager import ConfigurationManager
 
         config_manager = ConfigurationManager()
@@ -65,7 +70,7 @@ class TestConnectionManagerIntegration:
             port=cloud_config.connection.port,
             namespace=cloud_config.connection.namespace,
             username=cloud_config.connection.username,
-            password=cloud_config.connection.password
+            password=cloud_config.connection.password,
         )
 
         try:
@@ -95,7 +100,7 @@ class TestSchemaManagerIntegration:
         THEN uses default 384 dimensions
         """
         # Clear VECTOR_DIMENSION if set
-        env_copy = {k: v for k, v in os.environ.items() if k != 'VECTOR_DIMENSION'}
+        env_copy = {k: v for k, v in os.environ.items() if k != "VECTOR_DIMENSION"}
 
         with patch.dict(os.environ, env_copy, clear=True):
             from iris_vector_rag.config.manager import ConfigurationManager
@@ -104,7 +109,10 @@ class TestSchemaManagerIntegration:
             cloud_config = config_manager.get_cloud_config()
 
             assert cloud_config.vector.vector_dimension == 384
-            assert cloud_config.vector.source['vector_dimension'].value in ('default', 'config_file')
+            assert cloud_config.vector.source["vector_dimension"].value in (
+                "default",
+                "config_file",
+            )
 
     def test_schema_manager_reads_env_var_dimension(self):
         """
@@ -112,14 +120,14 @@ class TestSchemaManagerIntegration:
         WHEN SchemaManager initializes
         THEN uses 1024 dimensions from environment
         """
-        with patch.dict(os.environ, {'VECTOR_DIMENSION': '1024'}, clear=False):
+        with patch.dict(os.environ, {"VECTOR_DIMENSION": "1024"}, clear=False):
             from iris_vector_rag.config.manager import ConfigurationManager
 
             config_manager = ConfigurationManager()
             cloud_config = config_manager.get_cloud_config()
 
             assert cloud_config.vector.vector_dimension == 1024
-            assert cloud_config.vector.source['vector_dimension'].value == 'environment'
+            assert cloud_config.vector.source["vector_dimension"].value == "environment"
 
     def test_schema_manager_creates_correct_vector_columns(self):
         """
@@ -127,8 +135,9 @@ class TestSchemaManagerIntegration:
         WHEN SchemaManager creates test table
         THEN table has VECTOR(DOUBLE, 512) column
         """
-        with patch.dict(os.environ, {'VECTOR_DIMENSION': '512'}, clear=False):
+        with patch.dict(os.environ, {"VECTOR_DIMENSION": "512"}, clear=False):
             import iris.dbapi as iris_dbapi
+
             from iris_vector_rag.config.manager import ConfigurationManager
 
             config_manager = ConfigurationManager()
@@ -139,11 +148,11 @@ class TestSchemaManagerIntegration:
 
             # Connect to database
             conn = iris_dbapi.connect(
-                hostname='localhost',
+                hostname="localhost",
                 port=1972,
-                namespace='USER',
-                username='_SYSTEM',
-                password='SYS'
+                namespace="USER",
+                username="_SYSTEM",
+                password="SYS",
             )
 
             try:
@@ -198,27 +207,26 @@ class TestConfigurationPriorityChain:
         THEN environment variable takes precedence
         """
         # Create temporary config file (must include required database config)
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump({
-                'database': {
-                    'iris': {
-                        'host': 'localhost',
-                        'port': 1972,
-                        'namespace': 'USER',
-                        'username': '_SYSTEM',
-                        'password': 'SYS'
-                    }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(
+                {
+                    "database": {
+                        "iris": {
+                            "host": "localhost",
+                            "port": 1972,
+                            "namespace": "USER",
+                            "username": "_SYSTEM",
+                            "password": "SYS",
+                        }
+                    },
+                    "storage": {"iris": {"vector_dimension": 768}},
                 },
-                'storage': {
-                    'iris': {
-                        'vector_dimension': 768
-                    }
-                }
-            }, f)
+                f,
+            )
             config_path = f.name
 
         try:
-            with patch.dict(os.environ, {'VECTOR_DIMENSION': '1536'}, clear=False):
+            with patch.dict(os.environ, {"VECTOR_DIMENSION": "1536"}, clear=False):
                 from iris_vector_rag.config.manager import ConfigurationManager
 
                 config_manager = ConfigurationManager(config_path=config_path)
@@ -226,7 +234,10 @@ class TestConfigurationPriorityChain:
 
                 # Environment should override config file
                 assert cloud_config.vector.vector_dimension == 1536
-                assert cloud_config.vector.source['vector_dimension'].value == 'environment'
+                assert (
+                    cloud_config.vector.source["vector_dimension"].value
+                    == "environment"
+                )
         finally:
             os.unlink(config_path)
 
@@ -238,26 +249,27 @@ class TestConfigurationPriorityChain:
         THEN config file value used
         """
         # Create temporary config file (must include required database config)
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump({
-                'database': {
-                    'iris': {
-                        'host': 'localhost',
-                        'port': 1972,
-                        'namespace': 'USER',
-                        'username': '_SYSTEM',
-                        'password': 'SYS'
-                    }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(
+                {
+                    "database": {
+                        "iris": {
+                            "host": "localhost",
+                            "port": 1972,
+                            "namespace": "USER",
+                            "username": "_SYSTEM",
+                            "password": "SYS",
+                        }
+                    },
+                    "storage": {"vector_dimension": 2048},
                 },
-                'storage': {
-                    'vector_dimension': 2048
-                }
-            }, f)
+                f,
+            )
             config_path = f.name
 
         try:
             # Clear VECTOR_DIMENSION env var
-            env_copy = {k: v for k, v in os.environ.items() if k != 'VECTOR_DIMENSION'}
+            env_copy = {k: v for k, v in os.environ.items() if k != "VECTOR_DIMENSION"}
 
             with patch.dict(os.environ, env_copy, clear=True):
                 from iris_vector_rag.config.manager import ConfigurationManager
@@ -267,7 +279,10 @@ class TestConfigurationPriorityChain:
 
                 # Config file should override defaults
                 assert cloud_config.vector.vector_dimension == 2048
-                assert cloud_config.vector.source['vector_dimension'].value == 'config_file'
+                assert (
+                    cloud_config.vector.source["vector_dimension"].value
+                    == "config_file"
+                )
         finally:
             os.unlink(config_path)
 
@@ -279,7 +294,7 @@ class TestConfigurationPriorityChain:
         THEN default 384 dimensions used
         """
         # Clear VECTOR_DIMENSION env var
-        env_copy = {k: v for k, v in os.environ.items() if k != 'VECTOR_DIMENSION'}
+        env_copy = {k: v for k, v in os.environ.items() if k != "VECTOR_DIMENSION"}
 
         with patch.dict(os.environ, env_copy, clear=True):
             from iris_vector_rag.config.manager import ConfigurationManager
@@ -289,7 +304,10 @@ class TestConfigurationPriorityChain:
 
             # Should use defaults
             assert cloud_config.vector.vector_dimension == 384
-            assert cloud_config.vector.source['vector_dimension'].value in ('default', 'config_file')
+            assert cloud_config.vector.source["vector_dimension"].value in (
+                "default",
+                "config_file",
+            )
 
 
 @pytest.mark.integration
@@ -303,17 +321,18 @@ class TestCompleteConfigurationFlow:
         THEN all configuration flows correctly to database
         """
         test_env = {
-            'IRIS_HOST': 'localhost',
-            'IRIS_PORT': '1972',
-            'IRIS_NAMESPACE': 'USER',
-            'IRIS_USERNAME': '_SYSTEM',
-            'IRIS_PASSWORD': 'SYS',
-            'VECTOR_DIMENSION': '256',
-            'TABLE_SCHEMA': 'RAG'
+            "IRIS_HOST": "localhost",
+            "IRIS_PORT": "1972",
+            "IRIS_NAMESPACE": "USER",
+            "IRIS_USERNAME": "_SYSTEM",
+            "IRIS_PASSWORD": "SYS",
+            "VECTOR_DIMENSION": "256",
+            "TABLE_SCHEMA": "RAG",
         }
 
         with patch.dict(os.environ, test_env, clear=False):
             import iris.dbapi as iris_dbapi
+
             from iris_vector_rag.config.manager import ConfigurationManager
 
             # Load configuration
@@ -321,17 +340,17 @@ class TestCompleteConfigurationFlow:
             cloud_config = config_manager.get_cloud_config()
 
             # Verify all configuration loaded from environment
-            assert cloud_config.connection.host == 'localhost'
+            assert cloud_config.connection.host == "localhost"
             assert cloud_config.connection.port == 1972
-            assert cloud_config.connection.namespace == 'USER'
+            assert cloud_config.connection.namespace == "USER"
             assert cloud_config.vector.vector_dimension == 256
-            assert cloud_config.tables.table_schema == 'RAG'
+            assert cloud_config.tables.table_schema == "RAG"
 
             # Verify all sources are environment
-            assert cloud_config.connection.source['host'].value == 'environment'
-            assert cloud_config.connection.source['port'].value == 'environment'
-            assert cloud_config.vector.source['vector_dimension'].value == 'environment'
-            assert cloud_config.tables.source['table_schema'].value == 'environment'
+            assert cloud_config.connection.source["host"].value == "environment"
+            assert cloud_config.connection.source["port"].value == "environment"
+            assert cloud_config.vector.source["vector_dimension"].value == "environment"
+            assert cloud_config.tables.source["table_schema"].value == "environment"
 
             # Test actual database connection
             conn = iris_dbapi.connect(
@@ -339,7 +358,7 @@ class TestCompleteConfigurationFlow:
                 port=cloud_config.connection.port,
                 namespace=cloud_config.connection.namespace,
                 username=cloud_config.connection.username,
-                password=cloud_config.connection.password
+                password=cloud_config.connection.password,
             )
 
             try:
@@ -371,7 +390,7 @@ class TestCompleteConfigurationFlow:
                 byte_length = result[1]
                 actual_dim = round(byte_length / 346)
 
-                assert schema == 'RAG'
+                assert schema == "RAG"
                 assert actual_dim == 256
 
                 # Cleanup
@@ -394,6 +413,6 @@ INTEGRATION_METADATA = {
         "ConnectionManager with environment variables",
         "SchemaManager dimension configuration",
         "Configuration priority chain",
-        "End-to-end configuration flow"
-    ]
+        "End-to-end configuration flow",
+    ],
 }

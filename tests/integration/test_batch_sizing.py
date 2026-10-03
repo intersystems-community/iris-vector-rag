@@ -6,11 +6,12 @@ Tests FR-006: Token budget enforcement (8,192 default).
 """
 
 import pytest
+
+from iris_vector_rag.common.batch_utils import BatchQueue
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.services.entity_extraction import EntityExtractionService
-from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
-from iris_vector_rag.common.batch_utils import BatchQueue
 from iris_vector_rag.utils.token_counter import estimate_tokens
 
 
@@ -23,7 +24,7 @@ class TestBatchSizing:
     def service(self):
         """Initialize EntityExtractionService."""
         config_manager = ConfigurationManager()
-        connection_manager = IRISConnectionManager()
+        connection_manager = ConnectionManager(config_manager)
         return EntityExtractionService(config_manager, connection_manager)
 
     def test_as4_variable_document_sizes_dynamic_batching(self, service):

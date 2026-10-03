@@ -133,13 +133,14 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             if None in (host, port, namespace, username, password):
                 raise ValueError("IRIS connection parameters are incomplete")
 
-            from iris_vector_rag.common.iris_connection import get_iris_connection
+            # The non-warning twin: this is the library calling itself (US5).
+            from iris_vector_rag.common.iris_connection import _session_connection
 
             logger.info(
                 f"Connecting to IRIS at {host}:{port}/{namespace} for iris_vector_graph"
             )
 
-            iris_connection = get_iris_connection(
+            iris_connection = _session_connection(
                 host=str(host),
                 port=int(port),
                 namespace=str(namespace),

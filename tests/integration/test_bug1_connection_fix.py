@@ -12,8 +12,13 @@ iris-related packages, we must use 'import intersystems_iris' explicitly.
 """
 
 import os
+
 import pytest
+
 from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+
+# `get_iris_dbapi_connection` is deprecated in 0.15 (083) and is this file's subject.
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 
 class TestBug1ConnectionAPIFix:
@@ -65,9 +70,11 @@ class TestBug1ConnectionAPIFix:
             with pytest.raises(ConnectionError) as exc_info:
                 get_iris_dbapi_connection()
 
-            # And: Error message is clear and actionable
+            # And: Error message is clear and actionable -- it names the instance it
+            # could not reach and what to check, which is what "actionable" meant.
             error_msg = str(exc_info.value)
-            assert "Failed to connect" in error_msg
+            assert "not reachable" in error_msg
+            assert "check IRIS is running" in error_msg
             assert "9999" in error_msg  # Port mentioned
             print(
                 f"✅ Bug 1 Fix: ConnectionError raised with clear message: {error_msg[:100]}..."
@@ -93,10 +100,10 @@ class TestBug1ConnectionAPIFix:
 
             # Then: Error message contains expected elements
             error_msg = str(exc_info.value)
-            assert (
-                "Failed to connect" in error_msg
-                or "connection failed" in error_msg.lower()
-            )
+            # The session prefixes every failure with the identity that failed, so a
+            # log line says which instance without the reader guessing.
+            assert error_msg.startswith("IRIS session localhost:9999/")
+            assert "not reachable" in error_msg
             assert "9999" in error_msg  # Port mentioned
 
             # And: No mention of AttributeError or iris.connect()
@@ -113,10 +120,13 @@ class TestBug1ConnectionAPIFix:
 
     def test_connection_manager_integration(self):
         """T022: Verify ConnectionManager works after line 210 fix"""
-        from iris_vector_rag.common.connection_manager import ConnectionManager
+        from iris_vector_rag.common.connection_manager import LegacyConnectionManager
 
-        # Given: ConnectionManager initialized with dbapi connection type
-        connection_manager = ConnectionManager(connection_type="dbapi")
+        # Given: the manager initialized with dbapi connection type. Since
+        # 083-iris-session it is `LegacyConnectionManager`, deprecated in 0.15, and
+        # every connection type it accepts resolves to the session.
+        with pytest.warns(DeprecationWarning):
+            connection_manager = LegacyConnectionManager(connection_type="dbapi")
 
         # When: Connection is established
         conn = connection_manager.connect()
@@ -140,7 +150,7 @@ class TestBug1ConnectionAPIFix:
 
         for i in range(3):
             conn = get_iris_dbapi_connection()
-            assert conn is not None, f"Connection {i+1} should not be None"
+            assert conn is not None, f"Connection {i + 1} should not be None"
 
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
@@ -148,7 +158,7 @@ class TestBug1ConnectionAPIFix:
             cursor.close()
             conn.close()
 
-            assert result is not None, f"Test query {i+1} should return result"
+            assert result is not None, f"Test query {i + 1} should return result"
 
         print("✅ Bug 1 Fix: Multiple sequential connections successful")
 

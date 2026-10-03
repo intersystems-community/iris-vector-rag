@@ -4,11 +4,12 @@ This plugin displays warnings when code coverage falls below configured threshol
 without failing the test run. Critical modules have higher thresholds.
 """
 
-import coverage
-from pathlib import Path
-from typing import List, Any
-from dataclasses import dataclass
 import configparser
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, List
+
+import coverage
 
 
 @dataclass
@@ -26,14 +27,28 @@ class CoverageWarning:
         return "CRITICAL" if self.is_critical else "WARNING"
 
 
+#: Modules held to the higher threshold when nothing else says otherwise.
+DEFAULT_CRITICAL_PATTERNS = [
+    "iris_vector_rag/pipelines/",
+    "iris_vector_rag/storage/",
+    "iris_vector_rag/validation/",
+]
+
+
 def load_critical_patterns() -> List[str]:
-    """Load critical module patterns from .coveragerc."""
-    config = configparser.ConfigParser()
+    """Load critical module patterns from .coveragerc, or fall back to defaults.
+
+    The defaults have to apply when there is no .coveragerc: this repo keeps its
+    coverage config in pyproject.toml, so returning an empty list for a missing
+    file measured every module against the plain 60% threshold and the critical
+    80% one never applied to anything.
+    """
     config_path = Path(".coveragerc")
 
     if not config_path.exists():
-        return []
+        return list(DEFAULT_CRITICAL_PATTERNS)
 
+    config = configparser.ConfigParser()
     config.read(config_path)
 
     # Look for custom section
@@ -41,10 +56,10 @@ def load_critical_patterns() -> List[str]:
         patterns_str = config.get("coverage:critical_modules", "patterns", fallback="")
         # Parse multiline patterns
         patterns = [p.strip() for p in patterns_str.strip().split("\n") if p.strip()]
-        return patterns
+        if patterns:
+            return patterns
 
-    # Default critical patterns
-    return ["iris_rag/pipelines/", "iris_rag/storage/", "iris_rag/validation/"]
+    return list(DEFAULT_CRITICAL_PATTERNS)
 
 
 def is_critical_module(module_path: str, patterns: List[str]) -> bool:

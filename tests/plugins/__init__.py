@@ -1,9 +1,6 @@
-"""Pytest plugins for testing framework compliance."""
+"""Pytest plugins for testing framework compliance.
 
-# Plugin modules to be discovered
-pytest_plugins = [
-    "tests.plugins.coverage_warnings",
-    "tests.plugins.error_message_validator",
-    "tests.plugins.tdd_compliance",
-    "tests.plugins.contract_test_marker",
-]
+Plugins load from the `pytest_plugins` list in tests/conftest.py. This file used
+to carry its own `pytest_plugins` list, which pytest never reads — a package
+__init__ is not a conftest — so naming a plugin here does nothing.
+"""

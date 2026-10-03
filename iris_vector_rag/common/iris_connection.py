@@ -1,39 +1,35 @@
 """
-Unified IRIS connection module - simplifies connection architecture from 6 components to 1.
+Deprecated IRIS connection entry point, kept callable for 0.15.
 
-This module provides a simple, production-ready API for IRIS database connections:
-- Single function call: get_iris_connection()
-- Automatic edition detection (Community vs Enterprise)
-- Module-level connection caching (singleton pattern)
-- Thread-safe operations
-- Preserves UV compatibility fix from iris_dbapi_connector.py
+Since 0.15 the session owns connections: `get_iris_connection()` resolves its
+arguments into a `SessionIdentity` and hands out the session's connection, so the
+socket precheck, the bounded handshake, the health cadence and the reconnect apply
+to callers that have not migrated yet. It keeps its signature and its validation
+errors, warns once per call site, and is removed in 0.16.
+
+    from iris_vector_rag.session import session_for
+    connection = session_for(config_manager).connection_for_adapter()
+
+`detect_iris_edition`, `auto_detect_iris_port` and `_get_iris_dbapi_module` are not
+deprecated: they answer questions about the environment, not about connections.
 
 Feature: 051-simplify-iris-connection
-Feature: 064-llm-cache-disk (Connection hardening bypass)
+Feature: 083-iris-session (deprecation)
 """
 
 import logging
 import os
 import re
 import subprocess
-import threading
-import time
-from typing import Any, Dict, List, Optional, Tuple
+import warnings
+from typing import Any, Dict, Optional, Tuple
 
 from iris_vector_rag.common.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
-# Module-level connection cache (singleton pattern)
-_connection_cache: Dict[Tuple[str, int, str, str], Any] = {}
-_cache_lock = threading.Lock()
-
 # Module-level edition cache (session-wide)
 _edition_cache: Optional[Tuple[str, int]] = None
-
-# Endpoints whose DBAPI handshake recently hung: cache_key -> monotonic expiry.
-# Lets callers fail fast instead of each waiting out IRIS_CONNECT_TIMEOUT.
-_handshake_backoff: Dict[Tuple[str, int, str, str], float] = {}
 
 
 def _get_iris_dbapi_module():
@@ -139,89 +135,6 @@ def detect_iris_edition() -> Tuple[str, int]:
     return _edition_cache
 
 
-def _hard_fix_iris_passwords(host: str, port: int):
-    """Bypasses 55s delay in Community containers."""
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}\\t{{.Ports}}"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        container_name = None
-        if result.returncode == 0:
-            for line in result.stdout.split("\n"):
-                if str(port) in line and "tcp" in line:
-                    container_name = line.split("\t")[0].strip()
-                    break
-        if not container_name:
-            return False
-        logger.info(f"Bypassing IRIS hardening for: {container_name}")
-        # UnExpireUserPasswords is the documented, version-stable way to clear the
-        # "Password change required" state a fresh Community container ships with.
-        cmds = [
-            'Do ##class(Security.Users).UnExpireUserPasswords("*")',
-            "Halt",
-        ]
-        subprocess.run(
-            [
-                "docker",
-                "exec",
-                "-i",
-                container_name,
-                "iris",
-                "session",
-                "IRIS",
-                "-U",
-                "%SYS",
-            ],
-            input="\n".join(cmds).encode(),
-            capture_output=True,
-            timeout=15,
-        )
-        return True
-    except Exception:
-        return False
-
-
-def _try_embedded_connection(namespace: str) -> Optional[Any]:
-    """
-    Attempt a connection via the embedded-python-wrapper runtime.
-
-    Returns a connection object if running in embedded-kernel or embedded-local
-    mode (IRISINSTALLDIR set), or None if neither condition applies.
-    """
-    try:
-        import iris
-
-        if not hasattr(iris, "runtime") or not hasattr(iris, "dbapi"):
-            return None
-
-        ctx = iris.runtime.get()
-
-        if ctx.state in ("embedded-kernel", "embedded-local"):
-            logger.debug(
-                "Embedded runtime detected (%s) — using iris.dbapi.connect(namespace=...)",
-                ctx.state,
-            )
-            return iris.dbapi.connect(namespace=namespace)
-
-        install_dir = os.environ.get("IRISINSTALLDIR") or os.environ.get(
-            "ISC_PACKAGE_INSTALLDIR"
-        )
-        if install_dir and ctx.state == "unavailable":
-            logger.debug(
-                "IRISINSTALLDIR=%s — configuring embedded-local runtime", install_dir
-            )
-            iris.runtime.configure(mode="embedded", install_dir=install_dir)
-            return iris.dbapi.connect(namespace=namespace)
-
-    except Exception as exc:
-        logger.debug("Embedded connection attempt failed: %s", exc)
-
-    return None
-
-
 def get_iris_connection(
     host: Optional[str] = None,
     port: Optional[int] = None,
@@ -229,196 +142,49 @@ def get_iris_connection(
     username: Optional[str] = None,
     password: Optional[str] = None,
 ) -> Any:
+    """The session's connection for these parameters. Deprecated since 0.15.
+
+    The socket precheck, the bounded handshake and
+    the module-level cache this function used to own are the session's now, so a
+    caller that has not migrated still gets all of them -- and shares one
+    connection with the callers that have, which a second cache would not.
+    """
+    warnings.warn(
+        "get_iris_connection() is deprecated and is removed in 0.16. Use "
+        "iris_vector_rag.session.session_for(...).connection_for_adapter(), or "
+        "session_for(...).execute(sql) to skip the cursor entirely.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return _session_connection(host, port, namespace, username, password)
+
+
+def _session_connection(
+    host: Optional[str],
+    port: Optional[int],
+    namespace: Optional[str],
+    username: Optional[str],
+    password: Optional[str],
+) -> Any:
+    """Resolve these parameters to a session and hand out its connection.
+
+    Kept separate from the deprecated name so the library's own remaining callers
+    do not raise a warning their users cannot act on.
+    """
+    from iris_vector_rag.session import SessionIdentity, session_for
+
     env = _get_connection_params_from_env()
     h = env["host"] if host is None else host
     p = env["port"] if port is None else port
     n = env["namespace"] if namespace is None else namespace
     u = env["username"] if username is None else username
     pwd = env["password"] if password is None else password
+
+    # Validated here rather than in the identity so that the parameter names in
+    # the error are the ones the caller passed (ValidationError.parameter_name).
     _validate_connection_params(h, p, n, u, pwd)
 
-    embedded_conn = _try_embedded_connection(n)
-    if embedded_conn is not None:
-        return embedded_conn
-
-    cache_key = (h, p, n, u)
-
-    import socket as _socket
-
-    with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as _s:
-        _s.settimeout(2.0)
-        try:
-            _s.connect((h, p))
-        except (ConnectionRefusedError, OSError, _socket.timeout):
-            raise ConnectionError(
-                f"IRIS connection failed to {h}:{p}/{n}: "
-                f"port {p} not reachable on {h} (check IRIS is running)"
-            )
-
-    with _cache_lock:
-        for attempt in range(2):
-            if cache_key in _connection_cache:
-                conn = _connection_cache[cache_key]
-                try:
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT 1")
-                    cursor.fetchone()
-                    cursor.close()
-                    return conn
-                except Exception:
-                    try:
-                        conn.close()
-                    except Exception:
-                        pass
-                    del _connection_cache[cache_key]
-
-            iris_mod = _get_iris_dbapi_module()
-            if iris_mod is None:
-                raise ConnectionError("Cannot import IRIS DBAPI module")
-
-            try:
-                connect_timeout = float(os.environ.get("IRIS_CONNECT_TIMEOUT", "10"))
-                backoff_secs = float(os.environ.get("IRIS_CONNECT_BACKOFF", "30"))
-
-                backoff_until = _handshake_backoff.get(cache_key, 0.0)
-                if time.monotonic() < backoff_until:
-                    raise ConnectionError(
-                        f"IRIS DBAPI handshake to {h}:{p}/{n} hung within the last "
-                        f"{backoff_secs:.0f}s; refusing to retry yet"
-                    )
-                _handshake_backoff.pop(cache_key, None)
-
-                def _do_connect():
-                    if hasattr(iris_mod, "dbapi") and hasattr(
-                        iris_mod.dbapi, "connect"
-                    ):
-                        return iris_mod.dbapi.connect(
-                            hostname=h,
-                            port=p,
-                            namespace=n,
-                            username=u,
-                            password=pwd,
-                            sharedmemory=False,
-                        )
-                    if hasattr(iris_mod, "createConnection"):
-                        return iris_mod.createConnection(h, p, n, u, pwd)
-                    return iris_mod.connect(
-                        hostname=h,
-                        port=p,
-                        namespace=n,
-                        username=u,
-                        password=pwd,
-                    )
-
-                # Run the driver handshake on a daemon thread: the native connect
-                # can block forever (no socket timeout on the IRIS protocol layer),
-                # and a daemon thread is abandoned rather than joined at exit.
-                _result: Dict[str, Any] = {}
-
-                def _runner():
-                    try:
-                        _result["conn"] = _do_connect()
-                    except BaseException as exc:  # noqa: BLE001
-                        _result["exc"] = exc
-
-                _t = threading.Thread(
-                    target=_runner, name="iris-dbapi-connect", daemon=True
-                )
-                _t.start()
-                _t.join(connect_timeout)
-                if _t.is_alive():
-                    _handshake_backoff[cache_key] = time.monotonic() + backoff_secs
-                    raise ConnectionError(
-                        f"IRIS connection timed out after {connect_timeout:.0f}s "
-                        f"connecting to {h}:{p}/{n} (DBAPI handshake hung)"
-                    )
-                if "exc" in _result:
-                    raise _result["exc"]
-                conn = _result["conn"]
-                _connection_cache[cache_key] = conn
-                logger.info(f"✅ Connected to IRIS at {h}:{p}/{n}")
-                return conn
-            except Exception as e:
-                msg = str(e).lower()
-                if (
-                    "password change required" in msg or "expired" in msg
-                ) and attempt == 0:
-                    if _hard_fix_iris_passwords(h, p):
-                        continue
-
-                # Always raise on final attempt or if not a password issue that we can fix
-                if attempt == 1 or not (
-                    "password change required" in msg or "expired" in msg
-                ):
-                    raise ConnectionError(
-                        f"IRIS connection failed to {h}:{p}/{n}: {e} (check configuration)"
-                    ) from e
-
-        # This part should theoretically not be reached if all paths raise or return
-        raise ConnectionError(f"IRIS connection failed to {h}:{p}/{n}")
-
-
-class IRISConnectionPool:
-    def __init__(self, max_connections: Optional[int] = None, **connection_params):
-        self._connection_params = connection_params
-        if max_connections is None:
-            edition, _ = detect_iris_edition()
-            max_connections = 1 if edition == "community" else 20
-        self.max_connections = max_connections
-        import queue
-
-        self._available_connections: queue.Queue = queue.Queue(maxsize=max_connections)
-        self._all_connections: List[Any] = []
-        self._lock = threading.Lock()
-
-    def acquire(self, timeout: float = 30.0):
-        import queue
-
-        try:
-            conn = self._available_connections.get(timeout=timeout)
-            return _PooledConnection(self, conn)
-        except queue.Empty:
-            with self._lock:
-                if len(self._all_connections) < self.max_connections:
-                    conn = get_iris_connection(**self._connection_params)
-                    self._all_connections.append(conn)
-                    return _PooledConnection(self, conn)
-            raise queue.Empty(f"Connection pool exhausted (timeout={timeout}s)")
-
-    def release(self, connection):
-        try:
-            self._available_connections.put_nowait(connection)
-        except Exception:
-            pass
-
-    def close_all(self):
-        with self._lock:
-            for conn in self._all_connections:
-                try:
-                    conn.close()
-                except Exception:
-                    pass
-            self._all_connections.clear()
-            while not self._available_connections.empty():
-                try:
-                    self._available_connections.get_nowait()
-                except Exception:
-                    break
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close_all()
-
-
-class _PooledConnection:
-    def __init__(self, pool: IRISConnectionPool, connection):
-        self._pool, self._connection = pool, connection
-
-    def __enter__(self):
-        return self._connection
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._pool.release(self._connection)
-        return False
+    identity = SessionIdentity(
+        host=h, port=int(p), namespace=n, username=u, password=pwd
+    )
+    return session_for(identity=identity).connection_for_adapter()

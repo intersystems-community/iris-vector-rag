@@ -8,15 +8,16 @@ Tests that all 6 pipelines conform to the unified interface specification:
 - create_pipeline() passes all standard dependencies correctly
 """
 
-import pytest
 from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
+from iris_vector_rag import create_pipeline
+from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
-from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag import create_pipeline
 
 
 # Mock vector store that returns empty results
@@ -142,7 +143,7 @@ class TestPipelineConformance:
             with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
                     with patch(
-                        "iris_vector_rag.common.iris_connection.get_iris_connection",
+                        "iris_vector_rag.common.iris_connection._session_connection",
                         side_effect=ConnectionError("no IRIS in CI"),
                     ):
                         pipeline = create_pipeline(
@@ -221,7 +222,7 @@ class TestPipelineConformance:
             with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
                     with patch(
-                        "iris_vector_rag.common.iris_connection.get_iris_connection",
+                        "iris_vector_rag.common.iris_connection._session_connection",
                         side_effect=ConnectionError("no IRIS in CI"),
                     ):
                         pipeline = create_pipeline(
@@ -304,7 +305,7 @@ class TestPipelineConformance:
             with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
                     with patch(
-                        "iris_vector_rag.common.iris_connection.get_iris_connection",
+                        "iris_vector_rag.common.iris_connection._session_connection",
                         side_effect=ConnectionError("no IRIS in CI"),
                     ):
                         pipeline = create_pipeline(
@@ -383,7 +384,7 @@ class TestPipelineConformance:
 
         for pipeline_type in PIPELINE_TYPES:
             with patch(
-                "iris_vector_rag.common.iris_connection.get_iris_connection",
+                "iris_vector_rag.common.iris_connection._session_connection",
                 side_effect=ConnectionError("no IRIS in CI"),
             ):
                 with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):

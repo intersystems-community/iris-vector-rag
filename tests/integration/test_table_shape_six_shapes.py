@@ -54,13 +54,11 @@ FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "shapes"
 @pytest.fixture(scope="module")
 def shape_connection():
     """A raw DBAPI connection: the catalog reader needs `cursor()`, not SQLAlchemy."""
-    from iris_vector_rag.common.iris_connection import get_iris_connection
+    from iris_vector_rag.session import session_for
 
-    conn = get_iris_connection()
-    try:
-        yield conn
-    finally:
-        conn.close()
+    # The connection is the session's, one per thread, and the session closes it at
+    # exit -- closing it here would take it away from the rest of this thread's tests.
+    yield session_for().connection_for_adapter()
 
 
 @pytest.fixture(scope="module")

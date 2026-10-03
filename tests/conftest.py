@@ -343,8 +343,16 @@ async def async_mock_mem0_client():
     return mock_mem0
 
 
-# Markers for different test categories
-pytest_plugins = ["pytest_asyncio"]
+# The only place plugins actually load from. The `plugins =` key in the old
+# pytest.ini was never a pytest ini option, and the `pytest_plugins` list in
+# tests/plugins/__init__.py is not read either — a package __init__ is not a
+# conftest — so the three below had never run.
+pytest_plugins = [
+    "pytest_asyncio",
+    "tests.plugins.coverage_warnings",
+    "tests.plugins.error_message_validator",
+    "tests.plugins.tdd_compliance",
+]
 
 
 # Configure test markers
@@ -592,7 +600,7 @@ def database_with_clean_schema(request):
 
     Implements FR-001, FR-004 from Feature 028.
     """
-    from iris_vector_rag.common.iris_connection_manager import get_iris_connection
+    from iris_vector_rag.session import session_for
     from tests.fixtures.database_cleanup import DatabaseCleanupHandler
     from tests.fixtures.database_state import TestDatabaseState, TestStateRegistry
     from tests.fixtures.schema_reset import SchemaResetter
@@ -616,7 +624,7 @@ def database_with_clean_schema(request):
     registry.register_state(test_state)
 
     # Get database connection
-    conn = get_iris_connection()
+    conn = session_for().connection_for_adapter()
 
     # Register cleanup handler - ALWAYS runs
     def cleanup():

@@ -1,19 +1,36 @@
 """
 Core exceptions for the IRIS RAG system.
 
-This module defines custom exceptions used throughout the IRIS RAG framework,
-particularly for pipeline configuration and loading operations.
+This module defines the pipeline configuration and loading exceptions.
+
+`RAGException` and the vector store errors are NOT defined here: they live in
+`iris_vector_rag/exceptions.py`, which is the module the storage layer raises
+them from. They were once declared in both places, which made
+`iris_vector_rag.core.VectorStoreConnectionError` a different class from the one
+`storage/vector_store_iris.py` raises, so `except` on either one silently missed
+half the failures. They are re-exported below so both import paths keep working
+and name the same class.
 """
 
+from ..exceptions import (
+    RAGException,
+    VectorStoreCLOBError,
+    VectorStoreConnectionError,
+    VectorStoreDataError,
+    VectorStoreError,
+)
 
-class RAGException(Exception):
-    """
-    Base exception for all IRIS RAG framework exceptions.
-
-    This is the base class for all custom exceptions in the IRIS RAG system.
-    It provides a common interface for error handling and allows for
-    centralized exception management.
-    """
+__all__ = [
+    "RAGException",
+    "PipelineConfigurationError",
+    "PipelineNotFoundError",
+    "PipelineCreationError",
+    "ModuleLoadingError",
+    "VectorStoreError",
+    "VectorStoreConnectionError",
+    "VectorStoreCLOBError",
+    "VectorStoreDataError",
+]
 
 
 class PipelineConfigurationError(Exception):
@@ -53,19 +70,3 @@ class PipelineCreationError(Exception):
 
 class ModuleLoadingError(Exception):
     """Raised when dynamic module loading fails."""
-
-
-class VectorStoreError(RAGException):
-    """Base exception for vector store operations."""
-
-
-class VectorStoreConnectionError(VectorStoreError):
-    """Raised when vector store connection fails."""
-
-
-class VectorStoreCLOBError(VectorStoreError):
-    """Raised when CLOB handling fails."""
-
-
-class VectorStoreDataError(VectorStoreError):
-    """Raised when vector store data operations fail."""

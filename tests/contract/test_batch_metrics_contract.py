@@ -17,8 +17,9 @@ class TestBatchMetricsContract:
 
     def test_processing_metrics_has_required_fields(self):
         """Validate ProcessingMetrics has all FR-007 required fields."""
-        from iris_vector_rag.core.models import ProcessingMetrics
         import inspect
+
+        from iris_vector_rag.core.models import ProcessingMetrics
 
         sig = inspect.signature(ProcessingMetrics.__init__)
         params = sig.parameters
@@ -37,8 +38,9 @@ class TestBatchMetricsContract:
 
     def test_processing_metrics_additional_fields(self):
         """Validate ProcessingMetrics has additional tracking fields."""
-        from iris_vector_rag.core.models import ProcessingMetrics
         import inspect
+
+        from iris_vector_rag.core.models import ProcessingMetrics
 
         sig = inspect.signature(ProcessingMetrics.__init__)
         params = sig.parameters
@@ -95,7 +97,7 @@ class TestBatchMetricsContract:
 
     def test_metrics_update_with_batch(self):
         """Validate metrics update incrementally with batch results."""
-        from iris_vector_rag.core.models import ProcessingMetrics, BatchExtractionResult
+        from iris_vector_rag.core.models import BatchExtractionResult, ProcessingMetrics
 
         metrics = ProcessingMetrics(
             total_batches_processed=0,
@@ -166,13 +168,13 @@ class TestBatchMetricsContract:
 
     def test_get_batch_metrics_returns_metrics(self):
         """Validate get_batch_metrics() returns ProcessingMetrics."""
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
         from iris_vector_rag.config.manager import ConfigurationManager
-        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.core.connection import ConnectionManager
         from iris_vector_rag.core.models import ProcessingMetrics
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         config_manager = ConfigurationManager()
-        connection_manager = IRISConnectionManager()
+        connection_manager = ConnectionManager(config_manager)
         service = EntityExtractionService(config_manager, connection_manager)
 
         metrics = service.get_batch_metrics()
@@ -183,7 +185,7 @@ class TestBatchMetricsContract:
 
     def test_metrics_track_zero_entity_documents(self):
         """Validate metrics correctly track zero-entity documents."""
-        from iris_vector_rag.core.models import ProcessingMetrics, BatchExtractionResult
+        from iris_vector_rag.core.models import BatchExtractionResult, ProcessingMetrics
 
         metrics = ProcessingMetrics(
             total_batches_processed=0,
@@ -215,7 +217,7 @@ class TestBatchMetricsContract:
 
     def test_metrics_track_failed_batches(self):
         """Validate metrics track failed batches and retry attempts."""
-        from iris_vector_rag.core.models import ProcessingMetrics, BatchExtractionResult
+        from iris_vector_rag.core.models import BatchExtractionResult, ProcessingMetrics
 
         metrics = ProcessingMetrics(
             total_batches_processed=0,

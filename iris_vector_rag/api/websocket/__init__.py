@@ -4,15 +4,15 @@ WebSocket connection handlers and event streaming.
 Provides real-time streaming for query execution and document upload progress.
 """
 
-from iris_vector_rag.api.websocket.connection import ConnectionManager
+from iris_vector_rag.api.websocket.connection import WebSocketConnectionManager
 from iris_vector_rag.api.websocket.handlers import (
-    QueryStreamingHandler,
     DocumentUploadProgressHandler,
+    QueryStreamingHandler,
 )
 from iris_vector_rag.api.websocket.routes import create_websocket_router
 
 __all__ = [
-    "ConnectionManager",
+    "WebSocketConnectionManager",
     "QueryStreamingHandler",
     "DocumentUploadProgressHandler",
     "create_websocket_router",

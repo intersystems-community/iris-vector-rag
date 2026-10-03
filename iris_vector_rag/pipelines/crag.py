@@ -9,8 +9,8 @@ This pipeline implements Corrective Retrieval-Augmented Generation:
 """
 
 import logging
-import time
 import os
+import time
 from typing import Any, Callable, Dict, List, Literal, Optional, cast
 
 from ..core.base import RAGPipeline
@@ -56,15 +56,17 @@ class CRAGPipeline(RAGPipeline):
         """
         # Handle new architecture first, then backward compatibility
         if connection_manager is None and iris_connector is not None:
-            # Legacy mode - create a simple connection manager wrapper
-            class LegacyConnectionManager:
+            # Legacy mode: the caller brought its own connection. Named for what
+            # it is rather than "LegacyConnectionManager", which is a real class in
+            # common/connection_manager.py (SC-001: one name, one class).
+            class _CallerConnectionManager:
                 def __init__(self, connection):
                     self._connection = connection
 
                 def get_connection(self):
                     return self._connection
 
-            connection_manager = LegacyConnectionManager(iris_connector)
+            connection_manager = _CallerConnectionManager(iris_connector)
 
         if config_manager is None:
             # Create a minimal config manager

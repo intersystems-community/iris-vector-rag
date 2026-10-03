@@ -10,6 +10,7 @@ Requirements: FR-009, FR-010, FR-011, FR-012, FR-013, FR-014
 
 import logging
 import os
+
 import pytest
 
 
@@ -139,7 +140,7 @@ class TestPyLateColBERTErrorHandling:
         from iris_vector_rag import create_pipeline
 
         mocker.patch(
-            "iris_vector_rag.common.iris_connection.get_iris_connection",
+            "iris_vector_rag.common.iris_connection._session_connection",
             side_effect=ConnectionError(
                 "IRIS connection failed (simulated missing config)"
             ),

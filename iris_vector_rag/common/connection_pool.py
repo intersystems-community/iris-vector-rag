@@ -1,37 +1,35 @@
 """
-IRIS Database Connection Pool Manager.
+Connection pool for the HTTP API, now a thin layer over one session.
 
-Provides connection pooling for concurrent REST API requests to prevent
-connection pool exhaustion and ensure efficient resource management.
+The pool this replaces kept its own free list and called `iris.dbapi.connect` itself,
+so none of the connections it handed out had the socket precheck, the bounded
+handshake, and `pool_pre_ping` meant a `SELECT 1`
+before *every* request. The session already gives each thread its own connection,
+probes it on a cadence rather than per use, and replaces it when it dies -- which is
+what the free list, the pre-ping and the recycle timer were each approximating.
 
-Based on research.md findings:
-- 20 base connections, 10 overflow (adaptive under load)
-- 1-hour connection recycle to prevent stale connections
-- Pre-ping validation before each use
-- Thread-safe pool management
+What is left here is the API's own concern: a cap on how many requests may hold a
+connection at once, and the statistics the health route reports.
+
+Deprecated in 0.15, removed in 0.16: use `session_for(...)` directly. The API keeps
+using it until then (FR-017).
+
+Feature: 083-iris-session (FR-017, FR-018)
 """
 
 import logging
-import os
+import threading
+import warnings
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator
+
+from iris_vector_rag.session import SessionIdentity, session_for
 
 logger = logging.getLogger(__name__)
 
 
 class IRISConnectionPool:
-    """
-    Thread-safe connection pool for IRIS database.
-
-    This class implements connection pooling to support concurrent RAG API requests
-    without exhausting the IRIS connection limit.
-
-    Features:
-    - Configurable pool size with overflow capacity
-    - Connection recycling to prevent stale connections
-    - Pre-ping validation for connection health
-    - Thread-safe acquire/release operations
-    """
+    """Bounded concurrent access to one session's per-thread connections."""
 
     def __init__(
         self,
@@ -47,20 +45,23 @@ class IRISConnectionPool:
         pool_timeout: int = 30,
     ):
         """
-        Initialize IRIS connection pool.
-
         Args:
-            host: IRIS server hostname
-            port: IRIS server port
-            namespace: IRIS namespace
-            username: Database username
-            password: Database password
-            pool_size: Number of base connections (default: 20)
-            max_overflow: Additional connections under load (default: 10)
-            pool_recycle: Seconds before recycling connection (default: 3600)
-            pool_pre_ping: Validate connection before use (default: True)
-            pool_timeout: Seconds to wait for connection (default: 30)
+            host, port, namespace, username, password: the instance to reach.
+            pool_size: base number of concurrent connection holders.
+            max_overflow: additional holders permitted under load.
+            pool_recycle: seconds a connection is trusted; becomes the session's
+                health interval, which is checked on a cadence rather than per use.
+            pool_pre_ping: kept for compatibility. The session's health deadline
+                replaces the per-request probe this used to mean.
+            pool_timeout: seconds `acquire()` waits for a free slot.
         """
+        warnings.warn(
+            "IRISConnectionPool is deprecated and is removed in 0.16. Use "
+            "iris_vector_rag.session.session_for(...), which already gives each "
+            "thread its own health-checked connection.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.host = host
         self.port = port
         self.namespace = namespace
@@ -72,239 +73,80 @@ class IRISConnectionPool:
         self.pool_pre_ping = pool_pre_ping
         self.pool_timeout = pool_timeout
 
-        # Connection tracking
-        self._available_connections: list[Any] = []
-        self._in_use_connections: set[Any] = set()
-        self._connection_timestamps: Dict[Any, float] = {}
-
-        # Thread safety
-        import threading
-
+        self._identity = SessionIdentity(
+            host=host,
+            port=int(port),
+            namespace=namespace,
+            username=username,
+            password=password,
+        )
+        # One slot per permitted concurrent holder. The connections themselves are
+        # the session's, one per thread; this only bounds how many are in flight.
+        self._slots = threading.BoundedSemaphore(pool_size + max_overflow)
         self._lock = threading.Lock()
-
-        # Metrics
-        self._total_connections_created = 0
-        self._total_connections_recycled = 0
+        self._in_use = 0
         self._total_acquisitions = 0
 
         logger.info(
-            f"Initialized IRIS connection pool: "
-            f"pool_size={pool_size}, max_overflow={max_overflow}, "
-            f"recycle={pool_recycle}s, pre_ping={pool_pre_ping}"
+            "IRIS connection pool over a session for %s: capacity=%d, health=%ds",
+            self._identity.label,
+            pool_size + max_overflow,
+            pool_recycle,
         )
 
-    def _create_connection(self) -> Any:
-        """
-        Create a new IRIS database connection.
-
-        Returns:
-            IRIS connection object
-
-        Raises:
-            Exception: If connection creation fails
-        """
-        try:
-            import iris
-
-            connection = iris.dbapi.connect(
-                hostname=self.host,
-                port=self.port,
-                namespace=self.namespace,
-                username=self.username,
-                password=self.password,
-            )
-
-            import time
-
-            self._connection_timestamps[connection] = time.time()
-            self._total_connections_created += 1
-
-            logger.debug(
-                f"Created new IRIS connection "
-                f"(total created: {self._total_connections_created})"
-            )
-
-            return connection
-
-        except Exception as e:
-            logger.error(f"Failed to create IRIS connection: {e}")
-            raise
-
-    def _validate_connection(self, connection: Any) -> bool:
-        """
-        Validate that a connection is still alive.
-
-        Args:
-            connection: Connection to validate
-
-        Returns:
-            True if connection is valid, False otherwise
-        """
-        if not self.pool_pre_ping:
-            return True
-
-        try:
-            cursor = connection.cursor()
-            cursor.execute("SELECT 1")
-            cursor.close()
-            return True
-
-        except Exception as e:
-            logger.warning(f"Connection validation failed: {e}")
-            return False
-
-    def _should_recycle_connection(self, connection: Any) -> bool:
-        """
-        Check if connection should be recycled based on age.
-
-        Args:
-            connection: Connection to check
-
-        Returns:
-            True if connection should be recycled, False otherwise
-        """
-        if connection not in self._connection_timestamps:
-            return False
-
-        import time
-
-        age = time.time() - self._connection_timestamps[connection]
-        return age >= self.pool_recycle
-
-    def _recycle_connection(self, connection: Any) -> None:
-        """
-        Close and remove a connection from the pool.
-
-        Args:
-            connection: Connection to recycle
-        """
-        try:
-            connection.close()
-            self._total_connections_recycled += 1
-
-            if connection in self._connection_timestamps:
-                del self._connection_timestamps[connection]
-
-            logger.debug(
-                f"Recycled IRIS connection "
-                f"(total recycled: {self._total_connections_recycled})"
-            )
-
-        except Exception as e:
-            logger.warning(f"Error recycling connection: {e}")
+    @property
+    def session(self):
+        """The session every connection in this pool comes from."""
+        return session_for(
+            identity=self._identity, health_interval=float(self.pool_recycle)
+        )
 
     def acquire(self) -> Any:
-        """
-        Acquire a connection from the pool.
-
-        This method will:
-        1. Try to get an available connection from the pool
-        2. Validate the connection if pre_ping is enabled
-        3. Recycle connections that are too old
-        4. Create new connections if pool is not full
-
-        Returns:
-            Active IRIS connection
-
-        Raises:
-            Exception: If unable to acquire connection within timeout
-        """
-        import time
-
-        start_time = time.time()
-
-        while (time.time() - start_time) < self.pool_timeout:
-            with self._lock:
-                # Try to get existing connection
-                if self._available_connections:
-                    connection = self._available_connections.pop()
-
-                    # Check if connection should be recycled
-                    if self._should_recycle_connection(connection):
-                        self._recycle_connection(connection)
-                        continue
-
-                    # Validate connection health
-                    if not self._validate_connection(connection):
-                        self._recycle_connection(connection)
-                        continue
-
-                    # Connection is good - mark as in use
-                    self._in_use_connections.add(connection)
-                    self._total_acquisitions += 1
-
-                    logger.debug(
-                        f"Acquired connection from pool "
-                        f"(available: {len(self._available_connections)}, "
-                        f"in_use: {len(self._in_use_connections)})"
-                    )
-
-                    return connection
-
-                # No available connections - check if we can create new one
-                total_connections = len(self._available_connections) + len(
-                    self._in_use_connections
-                )
-
-                if total_connections < (self.pool_size + self.max_overflow):
-                    # Create new connection
-                    connection = self._create_connection()
-                    self._in_use_connections.add(connection)
-                    self._total_acquisitions += 1
-
-                    logger.debug(
-                        f"Created new connection "
-                        f"(total: {total_connections + 1}/{self.pool_size + self.max_overflow})"
-                    )
-
-                    return connection
-
-            # Pool is full - wait briefly and retry
-            time.sleep(0.1)
-
-        # Timeout exceeded
-        raise Exception(
-            f"Timeout acquiring connection from pool after {self.pool_timeout}s "
-            f"(pool_size: {self.pool_size}, max_overflow: {self.max_overflow}, "
-            f"in_use: {len(self._in_use_connections)})"
-        )
+        """A connection for this thread, once a slot is free."""
+        if not self._slots.acquire(timeout=self.pool_timeout):
+            raise TimeoutError(
+                f"Timeout acquiring connection from pool after {self.pool_timeout}s "
+                f"(pool_size: {self.pool_size}, max_overflow: {self.max_overflow}, "
+                f"in_use: {self._in_use})"
+            )
+        try:
+            connection = self.session.connection_for_adapter()
+        except BaseException:
+            self._slots.release()
+            raise
+        with self._lock:
+            self._in_use += 1
+            self._total_acquisitions += 1
+        return connection
 
     def release(self, connection: Any) -> None:
-        """
-        Release a connection back to the pool.
+        """Give the slot back, and the connection too if the pool is over capacity.
 
-        Args:
-            connection: Connection to release
+        A connection normally stays with its thread -- that is what makes the second
+        request on a worker thread free. But a server that starts a thread per
+        request would then open one connection per request, and a licence counts
+        connections: Community Edition refuses the sixth. So once the session holds
+        more than this pool advertises, the finishing request gives its connection
+        back rather than leaving it parked on a thread that may never return.
         """
         with self._lock:
-            if connection in self._in_use_connections:
-                self._in_use_connections.remove(connection)
-
-                # Check if we should recycle instead of returning to pool
-                if self._should_recycle_connection(connection):
-                    self._recycle_connection(connection)
-                else:
-                    self._available_connections.append(connection)
-
-                logger.debug(
-                    f"Released connection to pool "
-                    f"(available: {len(self._available_connections)}, "
-                    f"in_use: {len(self._in_use_connections)})"
-                )
+            if self._in_use == 0:
+                return
+            self._in_use -= 1
+        try:
+            self._slots.release()
+        except ValueError:  # pragma: no cover - released more often than acquired
+            pass
+        session = self.session
+        if session.open_connection_count > self.pool_size + self.max_overflow:
+            session.close()
 
     @contextmanager
     def get_connection(self) -> Generator[Any, None, None]:
         """
-        Context manager for acquiring and releasing connections.
-
         Usage:
-            >>> pool = IRISConnectionPool(...)
             >>> with pool.get_connection() as conn:
             ...     cursor = conn.cursor()
-            ...     cursor.execute("SELECT * FROM table")
-
-        Yields:
-            IRIS connection
         """
         connection = self.acquire()
         try:
@@ -313,132 +155,54 @@ class IRISConnectionPool:
             self.release(connection)
 
     def close_all(self) -> None:
-        """
-        Close all connections in the pool.
-
-        This should be called on application shutdown.
-        """
+        """Close every connection the session opened. For application shutdown."""
+        self.session.close_all()
         with self._lock:
-            # Close available connections
-            for connection in self._available_connections:
-                self._recycle_connection(connection)
-            self._available_connections.clear()
-
-            # Close in-use connections (should be empty at shutdown)
-            for connection in self._in_use_connections:
-                self._recycle_connection(connection)
-            self._in_use_connections.clear()
-
-            logger.info(
-                f"Closed all connections in pool "
-                f"(total created: {self._total_connections_created}, "
-                f"recycled: {self._total_connections_recycled}, "
-                f"acquisitions: {self._total_acquisitions})"
-            )
+            self._in_use = 0
+        logger.info(
+            "Closed all connections for %s (acquisitions: %d)",
+            self._identity.label,
+            self._total_acquisitions,
+        )
 
     def get_stats(self) -> Dict[str, Any]:
-        """
-        Get connection pool statistics.
-
-        Returns:
-            Dictionary with pool metrics
-        """
+        """Pool metrics, as the health route reports them."""
         with self._lock:
-            return {
-                "pool_size": self.pool_size,
-                "max_overflow": self.max_overflow,
-                "available_connections": len(self._available_connections),
-                "in_use_connections": len(self._in_use_connections),
-                "total_connections": len(self._available_connections)
-                + len(self._in_use_connections),
-                "total_created": self._total_connections_created,
-                "total_recycled": self._total_connections_recycled,
-                "total_acquisitions": self._total_acquisitions,
-            }
+            in_use = self._in_use
+            acquisitions = self._total_acquisitions
+        return {
+            "pool_size": self.pool_size,
+            "max_overflow": self.max_overflow,
+            "in_use_connections": in_use,
+            "open_connections": self.session.open_connection_count,
+            "capacity": self.pool_size + self.max_overflow,
+            "total_acquisitions": acquisitions,
+            "driver": self.session.driver_name,
+            # Not `session.is_connected`: that is the asking thread's own state, and
+            # the thread that reads the health route is never one that served a
+            # request. For a pool, connected means some thread holds a connection
+            # right now -- which is false for an idle pool, because a request thread
+            # gives its connection back when it ends.
+            "connected": self.session.open_connection_count > 0,
+            "identity": self._identity.label,
+        }
+
+    def __enter__(self) -> "IRISConnectionPool":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        self.close_all()
+        return False
 
 
-# Global connection pool instance (initialized by FastAPI app)
-_global_pool: Optional[IRISConnectionPool] = None
+def _session_pool(**parameters: Any) -> IRISConnectionPool:
+    """The same pool, without the warning, for the HTTP API that still needs it.
 
-
-def get_pool() -> IRISConnectionPool:
+    The deprecation is aimed at callers who can move to `session_for()`. The API
+    adapter cannot until 0.16 (FR-017), and a warning it raises against itself is
+    one no user can act on. Called once at application startup, so borrowing the
+    global filter for the length of the constructor costs nothing.
     """
-    Get the global connection pool instance.
-
-    Returns:
-        Global IRISConnectionPool instance
-
-    Raises:
-        RuntimeError: If pool has not been initialized
-    """
-    if _global_pool is None:
-        raise RuntimeError(
-            "Connection pool not initialized. "
-            "Call initialize_pool() during application startup."
-        )
-    return _global_pool
-
-
-def initialize_pool(
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    namespace: Optional[str] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    **kwargs: Any,
-) -> IRISConnectionPool:
-    """
-    Initialize the global connection pool.
-
-    This should be called during FastAPI application startup.
-
-    Args:
-        host: IRIS server hostname (default: from IRIS_HOST env)
-        port: IRIS server port (default: from IRIS_PORT env)
-        namespace: IRIS namespace (default: from IRIS_NAMESPACE env)
-        username: Database username (default: from IRIS_USERNAME env)
-        password: Database password (default: from IRIS_PASSWORD env)
-        **kwargs: Additional IRISConnectionPool arguments
-
-    Returns:
-        Initialized global connection pool
-    """
-    global _global_pool
-
-    # Get connection parameters from environment if not provided
-    host = host or os.getenv("IRIS_HOST", "localhost")
-    port = port or int(os.getenv("IRIS_PORT", "1972"))
-    namespace = namespace or os.getenv("IRIS_NAMESPACE", "USER")
-    username = username or os.getenv("IRIS_USERNAME", "_SYSTEM")
-    password = password or os.getenv("IRIS_PASSWORD", "SYS")
-
-    _global_pool = IRISConnectionPool(
-        host=host,
-        port=port,
-        namespace=namespace,
-        username=username,
-        password=password,
-        **kwargs,
-    )
-
-    logger.info(
-        f"Initialized global connection pool: {host}:{port}/{namespace} "
-        f"(pool_size={_global_pool.pool_size}, "
-        f"max_overflow={_global_pool.max_overflow})"
-    )
-
-    return _global_pool
-
-
-def close_pool() -> None:
-    """
-    Close the global connection pool.
-
-    This should be called during FastAPI application shutdown.
-    """
-    global _global_pool
-
-    if _global_pool is not None:
-        _global_pool.close_all()
-        _global_pool = None
-        logger.info("Closed global connection pool")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        return IRISConnectionPool(**parameters)

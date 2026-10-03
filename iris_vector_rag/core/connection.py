@@ -18,82 +18,55 @@ except ImportError:
 class ConnectionManager:
     """
     Manages database connections for different backends.
+
+    Since 0.15 this is a thin adapter over `iris_vector_rag.session`: the session owns
+    the connection, its health cadence and its connect back-off, so `get_connection`
+    no longer opens or probes anything itself. Callers that only need to run SQL should
+    use the session directly (`session_for(config_manager).execute(...)`).
     """
 
     def __init__(self, config_manager: Optional[ConfigurationManager] = None):
         """
         Initializes the ConnectionManager.
         """
-        self._connections = {}  # Initialize as instance variable
-        self._connection_times = {}  # Track connection creation time
-        self._connection_use_counts = {}  # Track number of times connection used
         if config_manager is None:
             self.config_manager = ConfigurationManager()
         else:
             self.config_manager = config_manager
 
-    def _is_connection_healthy(self, connection) -> bool:
-        """Check if a connection is still healthy."""
-        try:
-            cursor = connection.cursor()
-            cursor.execute("SELECT 1")
-            cursor.fetchone()
-            cursor.close()
-            return True
-        except Exception:
-            return False
+    @property
+    def session(self):
+        """The session for the configured identity. Acquiring it does not connect."""
+        from iris_vector_rag.session import session_for
 
-    def invalidate_connection(self, backend_name: str = "iris"):
-        """Invalidate a cached connection."""
-        if backend_name in self._connections:
-            try:
-                self._connections[backend_name].close()
-            except Exception:
-                pass
-            del self._connections[backend_name]
+        return session_for(self.config_manager)
 
     def get_connection(self, backend_name: str = "iris"):
         """
-        Retrieves or creates a database connection for the specified backend.
+        Retrieves a database connection for the specified backend.
 
-        Uses ConfigurationManager as the single authority for connection params (AUD-005).
+        Uses ConfigurationManager as the single authority for connection params
+        (AUD-005), resolved into the session's identity.
         """
         if backend_name != "iris":
             raise ValueError(f"Unsupported database backend: {backend_name}")
 
-        from iris_vector_rag.common.iris_connection import get_iris_connection
-
-        # Get resolved config from ConfigurationManager (env > YAML > defaults)
-        db_config = self.config_manager.get_database_config()
-
-        return get_iris_connection(
-            host=db_config.get("host"),
-            port=db_config.get("port"),
-            namespace=db_config.get("namespace"),
-            username=db_config.get("username"),
-            password=db_config.get("password"),
-        )
+        return self.session.connection_for_adapter()
 
     def create_connection(self, backend_name: str = "iris"):
         """Create a database connection (alias for get_connection)."""
         return self.get_connection(backend_name)
 
-    def _create_dbapi_connection(self):
-        """Create a native IRIS DBAPI connection."""
-        from iris_vector_rag.common.iris_connection import get_iris_connection
-
-        return get_iris_connection()
+    def invalidate_connection(self, backend_name: str = "iris"):
+        """Discard this thread's connection so the next call opens a fresh one."""
+        if backend_name != "iris":
+            return
+        self.session.close()
 
     def close_connection(self, backend_name: str):
         """Closes a specific database connection."""
-        if backend_name in self._connections:
-            connection = self._connections.pop(backend_name)
-            try:
-                connection.close()
-            except Exception as e:
-                logger.error(f"Error closing connection for {backend_name}: {e}")
+        self.invalidate_connection(backend_name)
 
     def close_all_connections(self):
-        """Closes all active database connections."""
-        for backend_name in list(self._connections.keys()):
-            self.close_connection(backend_name)
+        """Closes every connection the session opened, in any thread."""
+        self.session.close_all()

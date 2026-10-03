@@ -5,11 +5,12 @@ Pydantic models for WebSocket Session entity (Entity 7 from data-model.md).
 Implements JSON-based event streaming protocol.
 """
 
-from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
-from enum import Enum
-from uuid import UUID
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SubscriptionType(str, Enum):
@@ -79,10 +80,8 @@ class WebSocketSession(BaseModel):
         examples=["reconnect_d4e5f6a7-8901-2345-6789-abcdef012345"],
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "session_id": "c1d2e3f4-5678-90ab-cdef-123456789abc",
                 "api_key_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
@@ -94,7 +93,8 @@ class WebSocketSession(BaseModel):
                 "message_count": 23,
                 "reconnection_token": "reconnect_d4e5f6a7-8901-2345-6789-abcdef012345",
             }
-        }
+        },
+    )
 
 
 class EventType(str, Enum):
@@ -144,10 +144,8 @@ class WebSocketEvent(BaseModel):
         description="Associated request identifier",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "event": "document_upload_progress",
                 "data": {
@@ -159,7 +157,8 @@ class WebSocketEvent(BaseModel):
                 "timestamp": "2025-10-16T12:30:15.000Z",
                 "request_id": "550e8400-e29b-41d4-a716-446655440000",
             }
-        }
+        },
+    )
 
 
 class DocumentUploadProgressEvent(BaseModel):
@@ -193,17 +192,16 @@ class DocumentUploadProgressEvent(BaseModel):
         description="Completion percentage (0.0-100.0)",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "operation_id": "b1c2d3e4-5678-90ab-cdef-fedcba987654",
                 "processed_documents": 47,
                 "total_documents": 100,
                 "progress_percentage": 47.0,
             }
-        }
+        },
+    )
 
 
 class QueryProgressEvent(BaseModel):
@@ -238,10 +236,8 @@ class QueryProgressEvent(BaseModel):
         description="Whether this is the final chunk",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "What is diabetes?",
                 "pipeline": "graphrag",
@@ -249,7 +245,8 @@ class QueryProgressEvent(BaseModel):
                 "generation_chunk": "Diabetes is a chronic metabolic disorder...",
                 "is_final": False,
             }
-        }
+        },
+    )
 
 
 class WebSocketAuthMessage(BaseModel):
@@ -269,12 +266,11 @@ class WebSocketAuthMessage(BaseModel):
         description="Which events to subscribe to",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "api_key": "N2M5ZTY2NzktNzQyNS00MGRlLTk0NGItZTA3ZmMxZjkwYWU3Om15X3NlY3JldF9rZXlfMTIzNDU=",
                 "subscription_type": "query_streaming",
             }
-        }
+        },
+    )

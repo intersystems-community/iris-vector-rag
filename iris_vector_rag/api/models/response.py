@@ -5,10 +5,11 @@ Pydantic models for Query Response entity (Entity 5 from data-model.md).
 100% LangChain & RAGAS compatible response format.
 """
 
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, computed_field
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 class DocumentMetadata(BaseModel):
@@ -41,17 +42,16 @@ class DocumentMetadata(BaseModel):
         description="Document creation timestamp (ISO8601)",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "source": "medical_textbook_ch5.pdf",
                 "chunk_index": 3,
                 "page_number": 127,
                 "created_at": "2025-01-10T00:00:00Z",
             }
-        }
+        },
+    )
 
 
 class Document(BaseModel):
@@ -85,10 +85,8 @@ class Document(BaseModel):
         description="Document metadata including source",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "doc_id": "1a2b3c4d-5678-90ab-cdef-1234567890ab",
                 "content": "Diabetes mellitus is a group of metabolic diseases...",
@@ -99,7 +97,8 @@ class Document(BaseModel):
                     "page_number": 127,
                 },
             }
-        }
+        },
+    )
 
 
 class QueryResponse(BaseModel):
@@ -197,10 +196,8 @@ class QueryResponse(BaseModel):
         """
         return [doc.content for doc in self.retrieved_documents]
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "response_id": "9a8b7c6d-5e4f-3210-9876-543210fedcba",
                 "request_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -230,4 +227,5 @@ class QueryResponse(BaseModel):
                     "graph_relationships_traversed": 12,
                 },
             }
-        }
+        },
+    )

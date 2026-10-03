@@ -10,8 +10,9 @@ import hashlib
 import json
 import logging
 import time
-from typing import Any, Dict, Optional, Union, List
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Union
+
 from langchain_core.outputs import Generation
 
 from iris_vector_rag.common.llm_cache_config import CacheConfig, load_cache_config
@@ -177,11 +178,12 @@ class LangchainCacheManager:
         """
         # Always use DBAPI for cache to avoid JDBC compatibility issues
         try:
-            from iris_vector_rag.common.iris_dbapi_connector import (
-                get_iris_dbapi_connection,
-            )
+            # The non-warning twin of `get_iris_dbapi_connection`: the cache is a
+            # library internal, so a deprecation warning here would name nothing
+            # its caller can change.
+            from iris_vector_rag.common.iris_dbapi_connector import _session_connection
 
-            iris_connector = get_iris_dbapi_connection()
+            iris_connector = _session_connection()
 
             # Validate the connection handle
             if iris_connector is None:
@@ -320,8 +322,8 @@ class LangchainIRISCacheWrapper:
         """
         try:
             # Import Generation and load here to avoid circular imports
-            from langchain_core.outputs import Generation
             from langchain_core.load import load
+            from langchain_core.outputs import Generation
 
             cache_key = self._generate_langchain_key(prompt, llm_string)
             result = self.backend.get(cache_key)
@@ -433,6 +435,7 @@ class LangchainIRISCacheWrapper:
         """
         try:
             import json
+
             from langchain_core.load import dumpd
             from langchain_core.messages import BaseMessage
 
@@ -636,6 +639,7 @@ class LangchainIRISCacheWrapper:
         """
         try:
             import json
+
             from langchain_core.load import dumpd
             from langchain_core.messages import BaseMessage
 

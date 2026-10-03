@@ -5,18 +5,18 @@ Implements FR-026 to FR-027: Query streaming and document upload progress.
 Provides real-time event streaming for long-running operations.
 """
 
-import logging
 import asyncio
+import logging
 from uuid import UUID, uuid4
 
 from iris_vector_rag.api.models.websocket import (
+    DocumentUploadProgressEvent,
     EventType,
     QueryProgressEvent,
-    DocumentUploadProgressEvent,
 )
-from iris_vector_rag.api.websocket.connection import ConnectionManager
-from iris_vector_rag.api.services.pipeline_manager import PipelineManager
 from iris_vector_rag.api.services.document_service import DocumentService
+from iris_vector_rag.api.services.pipeline_manager import PipelineManager
+from iris_vector_rag.api.websocket.connection import WebSocketConnectionManager
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,9 @@ class QueryStreamingHandler:
     """
 
     def __init__(
-        self, connection_manager: ConnectionManager, pipeline_manager: PipelineManager
+        self,
+        connection_manager: WebSocketConnectionManager,
+        pipeline_manager: PipelineManager,
     ):
         """
         Initialize query streaming handler.
@@ -191,7 +193,9 @@ class DocumentUploadProgressHandler:
     """
 
     def __init__(
-        self, connection_manager: ConnectionManager, document_service: DocumentService
+        self,
+        connection_manager: WebSocketConnectionManager,
+        document_service: DocumentService,
     ):
         """
         Initialize document upload progress handler.

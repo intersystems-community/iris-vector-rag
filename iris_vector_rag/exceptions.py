@@ -33,6 +33,20 @@ Example:
 from typing import Any, Dict, List, Optional
 
 
+class RAGException(Exception):
+    """
+    Base exception for all IRIS RAG framework exceptions.
+
+    This is the base class for all custom exceptions in the IRIS RAG system.
+    It provides a common interface for error handling and allows for
+    centralized exception management.
+
+    Defined here rather than in `core/exceptions.py` so that both modules name
+    one class: `core/exceptions.py` re-exports it, and this module stays a leaf
+    (it imports nothing from the package, so there is no cycle).
+    """
+
+
 class VectorStoreConfigurationError(Exception):
     """
     Exception raised when vector store configuration is invalid.
@@ -311,49 +325,36 @@ class GenerationError(Exception):
         return " | ".join(parts)
 
 
-class VectorStoreConnectionError(Exception):
+class VectorStoreError(RAGException):
+    """
+    Base exception for vector store operations.
+
+    Carries a message plus arbitrary keyword details, which every vector store
+    error inherits, so `except VectorStoreError` catches the whole family.
+    """
+
+    def __init__(self, message: str, **details: Any):
+        super().__init__(message)
+        self.message = message
+        self.details = details
+
+    def __str__(self) -> str:
+        parts = [self.message]
+        if self.details:
+            parts.append(", ".join(f"{k}={v}" for k, v in self.details.items()))
+        return " | ".join(parts)
+
+
+class VectorStoreConnectionError(VectorStoreError):
     """Raised when a connection to IRIS cannot be established or is lost."""
 
-    def __init__(self, message: str, **details: Any):
-        super().__init__(message)
-        self.message = message
-        self.details = details
 
-    def __str__(self) -> str:
-        parts = [self.message]
-        if self.details:
-            parts.append(", ".join(f"{k}={v}" for k, v in self.details.items()))
-        return " | ".join(parts)
-
-
-class VectorStoreDataError(Exception):
+class VectorStoreDataError(VectorStoreError):
     """Raised when document data is malformed or a filter value has an invalid type."""
 
-    def __init__(self, message: str, **details: Any):
-        super().__init__(message)
-        self.message = message
-        self.details = details
 
-    def __str__(self) -> str:
-        parts = [self.message]
-        if self.details:
-            parts.append(", ".join(f"{k}={v}" for k, v in self.details.items()))
-        return " | ".join(parts)
-
-
-class VectorStoreCLOBError(Exception):
+class VectorStoreCLOBError(VectorStoreError):
     """Raised when CLOB-to-string conversion fails for a retrieved document."""
-
-    def __init__(self, message: str, **details: Any):
-        super().__init__(message)
-        self.message = message
-        self.details = details
-
-    def __str__(self) -> str:
-        parts = [self.message]
-        if self.details:
-            parts.append(", ".join(f"{k}={v}" for k, v in self.details.items()))
-        return " | ".join(parts)
 
 
 class IngestionError(Exception):
@@ -409,8 +410,7 @@ class IngestionError(Exception):
         """Format error message with context."""
         parts = [self.message]
         parts.append(
-            f"Documents: {self.documents_loaded} loaded, "
-            f"{self.documents_failed} failed"
+            f"Documents: {self.documents_loaded} loaded, {self.documents_failed} failed"
         )
 
         if self.original_error:

@@ -5,29 +5,29 @@ Implements FR-025 to FR-028: WebSocket streaming with connection management.
 Manages active WebSocket sessions with heartbeat and reconnection support.
 """
 
-import logging
 import asyncio
+import logging
+from datetime import datetime
 from typing import Dict, Optional, Set
 from uuid import UUID, uuid4
-from datetime import datetime
 
 from fastapi import WebSocket, WebSocketDisconnect
 from websockets.exceptions import ConnectionClosed
 
+from iris_vector_rag.api.middleware.auth import ApiKeyAuth
+from iris_vector_rag.api.models.auth import ApiKey
 from iris_vector_rag.api.models.websocket import (
-    WebSocketSession,
-    WebSocketEvent,
-    WebSocketAuthMessage,
     EventType,
     SubscriptionType,
+    WebSocketAuthMessage,
+    WebSocketEvent,
+    WebSocketSession,
 )
-from iris_vector_rag.api.models.auth import ApiKey
-from iris_vector_rag.api.middleware.auth import ApiKeyAuth
 
 logger = logging.getLogger(__name__)
 
 
-class ConnectionManager:
+class WebSocketConnectionManager:
     """
     Manages active WebSocket connections.
 

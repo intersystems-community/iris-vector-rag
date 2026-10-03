@@ -10,14 +10,17 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Import the DBAPI connector for self-managed connections
+# The session's connection, for the checks below that are given no connection of
+# their own. This is the non-warning twin of `get_iris_dbapi_connection`, which is
+# deprecated in 0.15: a warning raised from inside the library names nothing its
+# caller can change.
 try:
-    from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+    from iris_vector_rag.common.iris_dbapi_connector import _session_connection
 except ImportError:
     logger.warning(
-        "Could not import get_iris_dbapi_connection. Self-managed connections will not be available."
+        "Could not import the session connector. Self-managed connections will not be available."
     )
-    get_iris_dbapi_connection = None
+    _session_connection = None
 
 
 class IRISSQLUtils:
@@ -120,9 +123,8 @@ class IRISSQLUtils:
     @staticmethod
     def check_table_exists(connection: Any, table_name: str) -> bool:
         """Check if a table exists using IRIS-compatible syntax."""
-        # Read the catalog on the cached connection: this helper does not own it, so
-        # it must not be closed here (the caller may be mid-transaction on it).
-        if get_iris_dbapi_connection is None:
+        # Use self-managed connection to avoid interference with other operations
+        if _session_connection is None:
             logger.warning(
                 "Self-managed connections not available, falling back to provided connection"
             )
@@ -133,9 +135,11 @@ class IRISSQLUtils:
         shared_connection = None
         cursor = None
         try:
-            shared_connection = get_iris_dbapi_connection()
+            shared_connection = _session_connection()
             if not shared_connection:
-                logger.error("No cached connection available for table existence check")
+                logger.error(
+                    "Failed to obtain temporary connection for table existence check"
+                )
                 return False
 
             # Split schema and table name
@@ -163,9 +167,8 @@ class IRISSQLUtils:
             logger.error(f"Failed to check table existence for {table_name}: {e}")
             return False
         finally:
-            # Close the cursor, never the connection: get_iris_dbapi_connection returns
-            # the process-wide cached connection, so closing it here closed the caller's
-            # own connection mid-statement.
+            # The cursor is ours to close; the connection is the session's, and it
+            # stays open for the rest of this thread's work.
             if cursor:
                 try:
                     cursor.close()
@@ -207,9 +210,8 @@ class IRISSQLUtils:
         connection: Any, index_name: str, table_name: Optional[str] = None
     ) -> bool:
         """Check if an index exists using IRIS-compatible syntax."""
-        # Read the catalog on the cached connection: this helper does not own it, so
-        # it must not be closed here (the caller may be mid-transaction on it).
-        if get_iris_dbapi_connection is None:
+        # Use self-managed connection to avoid interference with other operations
+        if _session_connection is None:
             logger.warning(
                 "Self-managed connections not available, falling back to provided connection"
             )
@@ -220,9 +222,11 @@ class IRISSQLUtils:
         shared_connection = None
         cursor = None
         try:
-            shared_connection = get_iris_dbapi_connection()
+            shared_connection = _session_connection()
             if not shared_connection:
-                logger.error("No cached connection available for index existence check")
+                logger.error(
+                    "Failed to obtain temporary connection for index existence check"
+                )
                 return False
 
             cursor = shared_connection.cursor()
@@ -264,9 +268,8 @@ class IRISSQLUtils:
             # Fallback: assume index doesn't exist
             return False
         finally:
-            # Close the cursor, never the connection: get_iris_dbapi_connection returns
-            # the process-wide cached connection, so closing it here closed the caller's
-            # own connection mid-statement.
+            # The cursor is ours to close; the connection is the session's, and it
+            # stays open for the rest of this thread's work.
             if cursor:
                 try:
                     cursor.close()
@@ -322,9 +325,8 @@ class IRISSQLUtils:
     @staticmethod
     def get_table_columns(connection: Any, table_name: str) -> List[Dict[str, Any]]:
         """Get column information for a table using IRIS-compatible syntax."""
-        # Read the catalog on the cached connection: this helper does not own it, so
-        # it must not be closed here (the caller may be mid-transaction on it).
-        if get_iris_dbapi_connection is None:
+        # Use self-managed connection to avoid interference with other operations
+        if _session_connection is None:
             logger.warning(
                 "Self-managed connections not available, falling back to provided connection"
             )
@@ -335,9 +337,11 @@ class IRISSQLUtils:
         shared_connection = None
         cursor = None
         try:
-            shared_connection = get_iris_dbapi_connection()
+            shared_connection = _session_connection()
             if not shared_connection:
-                logger.error("No cached connection available for table columns check")
+                logger.error(
+                    "Failed to obtain temporary connection for table columns check"
+                )
                 return []
 
             # Split schema and table name
@@ -375,9 +379,8 @@ class IRISSQLUtils:
             logger.error(f"Failed to get columns for {table_name}: {e}")
             return []
         finally:
-            # Close the cursor, never the connection: get_iris_dbapi_connection returns
-            # the process-wide cached connection, so closing it here closed the caller's
-            # own connection mid-statement.
+            # The cursor is ours to close; the connection is the session's, and it
+            # stays open for the rest of this thread's work.
             if cursor:
                 try:
                     cursor.close()
@@ -561,8 +564,8 @@ def test_iris_sql_utils():
         print(f"✓ Index existence check: {index_exists}")
 
         # For index creation, we still need a connection since it performs DDL operations
-        if get_iris_dbapi_connection:
-            connection = get_iris_dbapi_connection()
+        if _session_connection:
+            connection = _session_connection()
             if connection:
                 # Test vector index creation (this should work with proper syntax)
                 print("Testing vector index creation...")

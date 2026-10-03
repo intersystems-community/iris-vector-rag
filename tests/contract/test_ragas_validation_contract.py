@@ -6,10 +6,10 @@ Requires: OPENAI_API_KEY set, IRIS running with documents loaded.
 """
 
 import os
-import pytest
-
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -17,8 +17,8 @@ sys.path.insert(0, str(project_root))
 
 def _can_run_ragas():
     try:
-        import ragas  # noqa: F401
         import numpy  # noqa: F401
+        import ragas  # noqa: F401
 
         return True
     except ImportError:
@@ -63,20 +63,22 @@ class TestRAGASEvaluation:
 
     @pytest.fixture(scope="class")
     def ragas_scores(self):
-        from iris_vector_rag import create_pipeline
-        from ragas import evaluate, EvaluationDataset, SingleTurnSample
+        import iris
+        from ragas import EvaluationDataset, SingleTurnSample, evaluate
         from ragas.metrics import (
-            faithfulness,
             answer_relevancy,
             context_precision,
             context_recall,
+            faithfulness,
         )
 
-        import iris
+        from iris_vector_rag import create_pipeline
 
         conn = iris.connect(
             os.environ.get("IRIS_HOST", "localhost"),
-            int(os.environ.get("IRIS_PORT", "31972")),
+            # 51972 is this project's container (see CLAUDE.md); the old default
+            # of 31972 belongs to nothing here.
+            int(os.environ.get("IRIS_PORT", "51972")),
             "USER",
             "_SYSTEM",
             os.environ.get("IRIS_PASSWORD", "SYS"),
@@ -97,6 +99,25 @@ class TestRAGASEvaluation:
             pipeline = create_pipeline("graphrag", validate_requirements=False)
         except Exception:
             pipeline = create_pipeline("basic", validate_requirements=False)
+
+        # RAGAS thresholds mean nothing if retrieval ran on stub embeddings.
+        # iris_vector_rag.embeddings.manager falls back to hash-seeded random
+        # vectors when SentenceTransformer cannot load the model (no local cache,
+        # no network), and random vectors retrieve random documents. Warm the
+        # embedder, then see what it resolved to.
+        from iris_vector_rag.embeddings import manager as embedding_manager
+
+        pipeline.embedding_manager.embed_text("warm the embedding backend")
+        if any(
+            "Stub" in type(model).__name__
+            for model in embedding_manager._SENTENCE_TRANSFORMER_CACHE.values()
+        ):
+            pytest.skip(
+                "Embeddings fell back to the stub embedder, so retrieval is "
+                "random — scoring it says nothing about the pipeline. Make the "
+                "sentence-transformers model available (network or a warm "
+                "HuggingFace cache) and re-run."
+            )
 
         samples = []
         for item in EVAL_QUERIES:

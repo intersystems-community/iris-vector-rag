@@ -5,11 +5,12 @@ Pydantic models for Pipeline Instance entity (Entity 2 from data-model.md).
 Represents initialized RAG pipeline with health status and performance stats.
 """
 
-from typing import List, Dict, Any
-from pydantic import BaseModel, Field
-from enum import Enum
-from uuid import UUID
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PipelineStatus(str, Enum):
@@ -113,10 +114,8 @@ class PipelineInstance(BaseModel):
         examples=[["vector_search", "graph_traversal", "entity_extraction"]],
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "pipeline_id": "a3c4e5f6-7890-4b2d-9e1f-234567890abc",
                 "pipeline_type": "graphrag",
@@ -139,7 +138,8 @@ class PipelineInstance(BaseModel):
                     "entity_extraction",
                 ],
             }
-        }
+        },
+    )
 
 
 class PipelineListResponse(BaseModel):
@@ -155,10 +155,8 @@ class PipelineListResponse(BaseModel):
         description="List of configured pipelines",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "pipelines": [
                     {
@@ -181,4 +179,5 @@ class PipelineListResponse(BaseModel):
                     },
                 ]
             }
-        }
+        },
+    )

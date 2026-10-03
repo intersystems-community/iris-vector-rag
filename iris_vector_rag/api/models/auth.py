@@ -5,11 +5,12 @@ Pydantic models for Authentication Token entity (Entity 3 from data-model.md).
 Implements API key authentication with permissions and rate limits.
 """
 
-from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator, EmailStr
-from enum import Enum
-from uuid import UUID
 from datetime import datetime
+from enum import Enum
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class Permission(str, Enum):
@@ -125,10 +126,8 @@ class ApiKey(BaseModel):
             raise ValueError("Expiration must be in the future")
         return v
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "key_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
                 "key_secret_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYk3H.olfm",
@@ -143,7 +142,8 @@ class ApiKey(BaseModel):
                 "is_active": True,
                 "owner_email": "developer@example.com",
             }
-        }
+        },
+    )
 
 
 class ApiKeyCreateRequest(BaseModel):
@@ -236,10 +236,8 @@ class ApiKeyResponse(BaseModel):
         description="Key expiration",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "key_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
                 "secret": "my_secret_key_12345_do_not_share",
@@ -251,4 +249,5 @@ class ApiKeyResponse(BaseModel):
                 "created_at": "2025-01-15T08:00:00.000Z",
                 "expires_at": "2026-01-15T08:00:00.000Z",
             }
-        }
+        },
+    )

@@ -7,12 +7,12 @@ Tests confidence-based retrieval, corrective actions, and knowledge refinement.
 
 import pytest
 
-from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 from iris_vector_rag.common.utils import get_embedding_func, get_llm_func
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.session import session_for
 from iris_vector_rag.storage.schema_manager import SchemaManager
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
@@ -32,7 +32,7 @@ def clean_database_once():
     connection_manager = ConnectionManager(config_manager)
     schema_manager = SchemaManager(connection_manager, config_manager)
 
-    conn = get_iris_connection()
+    conn = session_for().connection_for_adapter()
     cursor = conn.cursor()
     cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks CASCADE")
     cursor.execute("DROP TABLE IF EXISTS RAG.SourceDocuments CASCADE")

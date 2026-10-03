@@ -10,15 +10,24 @@ Use pytest -m "not slow" to skip these tests in normal development.
 """
 
 import pytest
+
+from iris_vector_rag.common.utils import get_llm_func
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
-from iris_vector_rag.pipelines.graphrag import (
-    GraphRAGPipeline,
-    KnowledgeGraphNotPopulatedException,
-)
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
-from iris_vector_rag.common.utils import get_llm_func
+
+# GraphRAG pulls in optional graph dependencies. Without them this module must
+# skip, not raise a collection error (test_graphrag_contract.py holds us to it).
+try:
+    from iris_vector_rag.pipelines.graphrag import (
+        GraphRAGPipeline,
+        KnowledgeGraphNotPopulatedException,
+    )
+except ImportError as exc:  # pragma: no cover - depends on the install extras
+    pytest.skip(
+        f"GraphRAG dependencies are not installed: {exc}", allow_module_level=True
+    )
 
 # Mark all tests in this module as slow since they make real LLM API calls
 pytestmark = [pytest.mark.slow, pytest.mark.requires_llm_api]
@@ -611,7 +620,7 @@ class TestGraphRAGPipelineIntegration:
         docs = [
             Document(
                 id=f"graphrag_large{i}",
-                page_content=f"Entity{i} is related to Entity{i+1}. Entity{i} has property{i}.",
+                page_content=f"Entity{i} is related to Entity{i + 1}. Entity{i} has property{i}.",
             )
             for i in range(10)
         ]
@@ -657,7 +666,7 @@ class TestGraphRAGPipelinePerformance:
         docs = [
             Document(
                 id=f"graphrag_perf{i}",
-                page_content=f"Performance test entity {i} connects to entity {(i+1)%15}.",
+                page_content=f"Performance test entity {i} connects to entity {(i + 1) % 15}.",
             )
             for i in range(15)
         ]

@@ -6,11 +6,11 @@ Handles lazy initialization, configuration management, and connection lifecycle.
 
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
-    from iris_vector_rag.core.connection import ConnectionManager
     from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
     from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 
@@ -96,7 +96,8 @@ class IRISVectorEngine:
         # Store schema prefix
         self._schema_prefix = schema_prefix
 
-        # Lazy-loaded connection and vector store
+        # Lazy-loaded session, connection and vector store
+        self._session: Optional[Any] = None
         self._connection: Optional[Any] = None
         self._vector_store: "Optional[IRISVectorStore]" = None
 
@@ -150,9 +151,28 @@ class IRISVectorEngine:
     def _ensure_connected(self) -> None:
         """Ensure a connection is established (lazy initialization)."""
         if self._connection is None:
-            self._connection = self._cm.get_connection("iris")
+            self._connection = self.session.connection_for_adapter()
 
     # Properties
+
+    @property
+    def session(self) -> Any:
+        """The one session this engine and everything it builds share.
+
+        A ConnectionManager already owns a session; a caller-supplied connection is
+        borrowed, so the session uses it and never closes what it does not own.
+        """
+        if self._session is None:
+            from iris_vector_rag.session import IRISSession
+
+            existing = getattr(self._cm, "session", None)
+            if isinstance(existing, IRISSession):
+                self._session = existing
+            else:
+                self._session = IRISSession.from_connection(
+                    self._cm.get_connection("iris")
+                )
+        return self._session
 
     @property
     def connection(self) -> Any:
@@ -211,13 +231,26 @@ class IRISVectorEngine:
     def embedding_dimension(self) -> int:
         """Get the embedding dimension.
 
-        Attempts to read from vector store's schema manager, falls back to config.
+        The schema is asked first, then the configuration. There is no invented
+        default: a project configured for 384 that reported 1536 built a table it
+        could not query (Feature 083, FR-014).
 
         Returns:
-            Embedding dimension (default 1536 for OpenAI embeddings).
+            Embedding dimension for the configured embedding model.
         """
         try:
             dim = self.vector_store.schema_manager.get_embedding_dimension()
             return int(dim)
         except (AttributeError, Exception):
-            return int(self._config.get("embeddings.dimension", 1536))
+            return self._configured_dimension()
+
+    def _configured_dimension(self) -> int:
+        """The dimension the configuration determines, from the model if need be."""
+        for key in ("embeddings.dimension", "embedding_model.dimension"):
+            try:
+                value = self._config.get(key, None)
+            except Exception:
+                continue
+            if isinstance(value, (int, str)) and str(value).isdigit():
+                return int(value)
+        return int(self._config.get_embedding_config()["dimension"])

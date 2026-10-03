@@ -1,14 +1,14 @@
 # antipatterns baseline: findings that existed when each detector was written.
 # A line here silences ONE known instance. Remove lines as instances are fixed;
 # the gate fails on stale entries so this list only shrinks. Format: <check>\t<path:line>
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:153
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:191
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:243
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:253
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:297
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:307
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:354
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:404
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:157
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:194
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:247
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:257
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:300
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:310
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:358
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:407
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:194
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:211
 catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:153
@@ -41,7 +41,6 @@ hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:368
 hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:379
 hardcoded-vector-type	sql/schema.sql:18
 hardcoded-vector-type	sql/schema.sql:9
-inert-pytest-ini	pytest.ini:1
 inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:33
 inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:34
 inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:35
@@ -59,4 +58,3 @@ inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:347
 inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:360
 inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:385
 inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:397
-unguarded-dbapi-connect	iris_vector_rag/common/connection_pool.py:109

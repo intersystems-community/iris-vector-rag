@@ -93,9 +93,10 @@ def test_graphrag_test_errors_are_skips():
             or "@pytest.mark.skip" in content
         )
 
-        if not has_skip_logic:
-            import warnings
-
-            warnings.warn(
-                f"{test_file.name} should handle missing GraphRAG dependencies"
-            )
+        assert has_skip_logic, (
+            f"{test_file.name} imports GraphRAG at module level with no skip "
+            f"path, so an install without the graph extras turns the whole file "
+            f"into a collection error instead of skipped tests. Wrap the import "
+            f"in try/except ImportError and call "
+            f"pytest.skip(..., allow_module_level=True)."
+        )
