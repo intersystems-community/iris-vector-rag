@@ -99,7 +99,7 @@ def create_pipeline(
             llm_provider = config_manager.get("llm.provider", default_provider)
             llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
             effective_llm_func = get_llm_func(
-                provider=llm_provider, model_name=llm_model_name, **kwargs
+                provider=llm_provider, model_name=llm_model_name
             )
         return _create_pipeline_legacy(
             pipeline_type,
@@ -150,7 +150,7 @@ def create_pipeline(
         llm_provider = config_manager.get("llm.provider", default_provider)
         llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
         effective_llm_func = get_llm_func(
-            provider=llm_provider, model_name=llm_model_name, **kwargs
+            provider=llm_provider, model_name=llm_model_name
         )
 
     return _create_pipeline_legacy(

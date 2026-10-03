@@ -75,8 +75,9 @@ class Document:
 
 # --- Model and Connector Wrappers ---
 
-_llm_instance = None
-_current_llm_key = None  # For caching LLM instance
+# One client per distinct (provider, model, cache flag, kwargs): a call with other
+# arguments must get its own client, never reuse another call's.
+_llm_instances: Dict[Any, Any] = {}
 
 DEFAULT_EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_EMBEDDING_DIMENSION = 384
@@ -281,12 +282,15 @@ def get_llm_func(
     Returns:
         LLM function (automatically cached if enabled)
     """
-    global _llm_instance, _current_llm_key
-
     # Setup caching if enabled
     cache_enabled = _setup_caching_if_needed(enable_cache)
 
-    llm_key = f"{provider}_{model_name}_{cache_enabled}"
+    llm_key = (
+        provider,
+        model_name,
+        cache_enabled,
+        tuple(sorted((k, repr(v)) for k, v in kwargs.items())),
+    )
 
     if provider == "openai" and not os.getenv("OPENAI_API_KEY"):
         try:
@@ -323,7 +327,8 @@ def get_llm_func(
                 logging.basicConfig(level=logging.INFO)
             logger.warning(f"Error loading .env file in get_llm_func: {e_dotenv}")
 
-    if _llm_instance is None or _current_llm_key != llm_key:
+    llm_instance = _llm_instances.get(llm_key)
+    if llm_instance is None:
         print(f"Initializing LLM: {provider} - {model_name}")
         if provider == "openai":
             try:
@@ -339,10 +344,9 @@ def get_llm_func(
                     "OPENAI_API_KEY environment variable not set or found in .env file."
                 )
 
-            _llm_instance = ChatOpenAI(
+            llm_instance = ChatOpenAI(
                 model_name=model_name, openai_api_key=api_key, **kwargs
             )
-            _current_llm_key = llm_key
 
         elif provider == "stub":
 
@@ -361,8 +365,7 @@ def get_llm_func(
 
                     return AIMessage(content=response_content)
 
-            _llm_instance = StubLLM(model_name=model_name, **kwargs)
-            _current_llm_key = llm_key
+            llm_instance = StubLLM(model_name=model_name, **kwargs)
 
         elif provider == "iris_llm":
             try:
@@ -386,23 +389,26 @@ def get_llm_func(
                     )
                 iris_provider = Provider.new_openai(api_key=api_key)
 
-            chat = ChatIris(provider=iris_provider, model=model_name)
-            _llm_instance = chat
-            _current_llm_key = llm_key
-
-            def query_iris_llm(prompt: str) -> str:
-                from langchain_core.messages import HumanMessage
-
-                response = chat.invoke([HumanMessage(content=prompt)])
-                return str(response.content)
-
-            return query_iris_llm
+            llm_instance = ChatIris(provider=iris_provider, model=model_name)
 
         else:
             raise ValueError(f"Unsupported LLM provider: {provider}")
 
+        _llm_instances[llm_key] = llm_instance
+
+    if provider == "iris_llm":
+        chat = llm_instance
+
+        def query_iris_llm(prompt: str) -> str:
+            from langchain_core.messages import HumanMessage
+
+            response = chat.invoke([HumanMessage(content=prompt)])
+            return str(response.content)
+
+        return query_iris_llm
+
     def query_llm(prompt: str) -> str:
-        response = _llm_instance.invoke(prompt)
+        response = llm_instance.invoke(prompt)
         # Ensure the response is always a string
         if hasattr(response, "content"):
             return str(response.content)
