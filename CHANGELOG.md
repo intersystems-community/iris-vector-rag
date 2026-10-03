@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### CI gates for the first time
+
+- **Changed:** `ci.yml` now triggers on pushes to `master` and on every pull
+  request (it listed `main` and `develop`, so it never ran). The unit step no
+  longer ends in `|| true` with `continue-on-error`; a unit failure turns the
+  job red. The matrix is Python 3.11 and 3.12 (3.10 is below `requires-python`).
+  Failures listed in `tests/contract/ci_known_failures.txt` are deselected; any
+  other failure blocks. (OS-07, OS-08, OS-26 for the unit tests)
+- **Removed:** the Docker job (no `Dockerfile` exists), the coverage jobs and
+  Codecov upload, and the duplicate Trivy job (`security.yml` scans).
+
 ### iris-vector-graph 4.1
 
 IVR now requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 re-keyed `Graph_KG`
@@ -13,7 +24,7 @@ migrated once. See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md).
   layout in a new `legacy_layout_tables` field, and validation fails with the call
   that fixes it.
 - **`SchemaManager.upgrade_iris_vector_graph_storage(dry_run=False, **options)`**
-  runs ivg's `initialize_schema()` and then `upgrade_to_4_0_0`. The dry run writes
+  runs ivg's `initialize_schema()`and then`upgrade_to_4_0_0`. The dry run writes
   nothing and skips `initialize_schema()`; a step ivg cannot predict on a 2.x install
   comes back with `blocked_because`.
 - **Graph-scoped search.** The RRF, text and HNSW retrieval methods accept
