@@ -14,21 +14,22 @@ Requirements: Database must have at least 100 entities for tests to run.
 """
 
 import pytest
+
 from iris_vector_rag import create_pipeline
 
 
 @pytest.fixture(scope="function")
-def graphrag_with_existing_data(iris_connection):
+def graphrag_with_existing_data(iris_sql_connection):
     """
     Create GraphRAG pipeline if database has sufficient entities.
 
     Skips if database has <10 entities (not enough for meaningful testing).
     """
     try:
-        # Check entity count using the test's iris_connection (same port as fixture loading)
+        # Check entity count using the test's iris_sql_connection (same port as fixture loading)
         from sqlalchemy import text
 
-        result = iris_connection.execute(text("SELECT COUNT(*) FROM RAG.Entities"))
+        result = iris_sql_connection.execute(text("SELECT COUNT(*) FROM RAG.Entities"))
         entity_count = result.scalar()
 
         if entity_count < 10:
@@ -45,12 +46,13 @@ def graphrag_with_existing_data(iris_connection):
         )
 
         # Inject the test's connection manager so pipeline uses same database
-        from iris_vector_rag.core.connection import ConnectionManager
         from unittest.mock import Mock
+
+        from iris_vector_rag.core.connection import ConnectionManager
 
         # Create a mock connection manager that returns the test's connection
         mock_conn_manager = Mock(spec=ConnectionManager)
-        mock_conn_manager.get_connection.return_value = iris_connection.connection
+        mock_conn_manager.get_connection.return_value = iris_sql_connection.connection
 
         # Replace the pipeline's connection manager
         pipeline.connection_manager = mock_conn_manager
@@ -78,7 +80,7 @@ class TestGraphRAGRealistic:
         pipeline, entity_count = graphrag_with_existing_data
 
         # Get an entity that HAS relationships (not just any entity)
-        # Use the iris_connection fixture directly (already a SQLAlchemy connection)
+        # Use the iris_sql_connection fixture directly (already a SQLAlchemy connection)
 
         # Get the actual connection from the fixture (it's passed via graphrag_with_existing_data)
         # We stored it in the pipeline's connection manager mock

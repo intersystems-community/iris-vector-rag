@@ -38,3 +38,28 @@ def test_conftest_never_yields_a_mock_in_place_of_a_database():
     source = (TESTS / "conftest.py").read_text()
     assert "los-iris" not in source
     assert '"mock": True' not in source
+
+
+def test_conftest_does_not_probe_other_projects_ports():
+    """pytest_sessionstart used to log in to 11972 (los-iris) and 21972 (aihub)."""
+    source = (TESTS / "conftest.py").read_text()
+    assert "11972" not in source
+    assert "21972" not in source
+    assert "def pytest_sessionstart" not in source
+
+
+def test_integration_conftest_has_no_port_probe_and_no_skip_on_unavailable_iris():
+    """tests/integration/conftest.py probed 11972 (los-iris) and 21972 (aihub) and skipped."""
+    source = (TESTS / "integration" / "conftest.py").read_text()
+    for port in ("11972", "21972", "31972"):
+        assert port not in source
+    assert "pytest.skip" not in source
+
+
+def test_there_is_exactly_one_iris_connection_fixture():
+    defs = [
+        str(p.relative_to(REPO))
+        for p in TESTS.rglob("*.py")
+        if re.search(r"^def iris_connection\(", p.read_text(), re.MULTILINE)
+    ]
+    assert defs == ["tests/conftest.py"]

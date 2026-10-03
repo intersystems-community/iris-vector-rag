@@ -14,10 +14,14 @@ See specs/051-simplify-iris-connection/quickstart.md for migration guide.
 import threading
 import warnings
 from contextlib import contextmanager
-from typing import Any, Dict, Generator
+from typing import Any, Callable, Dict, Generator, Optional
 
 from tests.support.backend_manager import BackendMode
 from tests.support.exceptions import ConnectionPoolTimeout
+
+
+class PoolSlot:
+    """An acquired slot in a pool that has no connector. It is not a database connection."""
 
 
 class ConnectionPool:
@@ -30,12 +34,15 @@ class ConnectionPool:
     DEPRECATED: Use IRISConnectionPool from iris_vector_rag.common instead.
     """
 
-    def __init__(self, mode: BackendMode):
+    def __init__(
+        self, mode: BackendMode, connector: Optional[Callable[[], Any]] = None
+    ):
         """
         Initialize connection pool for specified backend mode.
 
         Args:
             mode: Backend mode (COMMUNITY or ENTERPRISE)
+            connector: Optional factory for a real connection per acquired slot
 
         DEPRECATED: Use IRISConnectionPool for production pooling:
             from iris_vector_rag.common import IRISConnectionPool
@@ -49,6 +56,7 @@ class ConnectionPool:
             stacklevel=2,
         )
         self.mode = mode
+        self._connector = connector
         self._max_connections = 1 if mode == BackendMode.COMMUNITY else 999
         self._semaphore = threading.Semaphore(self._max_connections)
         self._active_connections: Dict[int, Any] = {}
@@ -96,7 +104,7 @@ class ConnectionPool:
             timeout: Maximum seconds to wait for connection slot
 
         Yields:
-            Mock connection object (actual connection would come from iris_config)
+            The connector's connection, or a `PoolSlot` when the pool has no connector
 
         Raises:
             ConnectionPoolTimeout: If timeout exceeded waiting for slot
@@ -117,8 +125,9 @@ class ConnectionPool:
                 "Possible cause: Test parallelism exceeds connection limit"
             )
 
-        # Create mock connection (in real implementation, would get from iris_config)
-        conn = MockConnection()
+        # The pool enforces the mode's connection limit. It does not fabricate a database:
+        # with no connector it hands out a slot, with one it hands out the real connection.
+        conn = self._connector() if self._connector else PoolSlot()
 
         try:
             # Track active connection
@@ -134,92 +143,3 @@ class ConnectionPool:
 
             # Release semaphore slot
             self._semaphore.release()
-
-
-class MockConnection:
-    """Mock connection for testing purposes."""
-
-    def __init__(self):
-        self._closed = False
-        self.connection_string = "mock://connection"
-        self._source_documents = []
-        self._entities = []
-
-    def close(self):
-        """Close connection."""
-        self._closed = True
-
-    def cursor(self):
-        """Return mock cursor."""
-        return MockCursor(self)
-
-    def commit(self):
-        """Commit mock transaction."""
-        return None
-
-
-class MockCursor:
-    """Mock cursor for testing purposes."""
-
-    def __init__(self, connection):
-        self._connection = connection
-        self._results = []
-
-    def execute(self, query: str, params=None):
-        """Execute mock query."""
-        sql = query.strip().lower()
-        params = params or []
-
-        if "insert into rag.sourcedocuments" in sql and params:
-            doc_id = params[0]
-            self._connection._source_documents.append(doc_id)
-            self._results = []
-            return None
-
-        if "insert into rag.entities" in sql and params:
-            self._connection._entities.append(
-                {
-                    "entity_id": params[0],
-                    "entity_name": params[1],
-                    "source_doc_id": params[3],
-                }
-            )
-            self._results = []
-            return None
-
-        if sql.startswith("select doc_id from rag.sourcedocuments"):
-            self._results = [(doc_id,) for doc_id in self._connection._source_documents]
-            return None
-
-        if sql.startswith("select count(*) from rag.entities"):
-            self._results = [(len(self._connection._entities),)]
-            return None
-
-        if "from rag.entities e" in sql and "join rag.sourcedocuments" in sql:
-            joined = []
-            for entity in self._connection._entities:
-                if entity["source_doc_id"] in self._connection._source_documents:
-                    joined.append(
-                        (
-                            entity["entity_name"],
-                            entity["source_doc_id"],
-                            entity["source_doc_id"],
-                        )
-                    )
-            self._results = joined
-            return None
-
-        self._results = []
-        return None
-
-    def fetchone(self):
-        """Fetch one mock result."""
-        if not self._results:
-            return None
-        return self._results.pop(0)
-
-    def fetchall(self):
-        """Fetch all mock results."""
-        results = list(self._results)
-        self._results = []
-        return results

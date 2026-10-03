@@ -5,90 +5,41 @@ for integration tests. Integration tests use real IRIS connections but may
 mock external APIs (LLM, embeddings).
 """
 
-import pytest
-import subprocess
 import sys
-from typing import Dict, Any
+from typing import Any, Dict
 from unittest.mock import Mock
+
+import pytest
 
 
 @pytest.fixture(scope="session")
-def iris_connection_config():
-    """IRIS database connection configuration for integration tests.
-
-    Uses port discovery to find available IRIS instance:
-    - 51972: iris-vector-rag-iris container (this project)
-    - 31972: Test database (docker-compose.test.yml)
-    - 1972: System/production database
-    - Other configured ports
-    """
-    test_ports = [51972, 31972, 1972, 11972, 21972]
-
-    for port in test_ports:
-        try:
-            # Test connection
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "-c",
-                    f"""
-import sqlalchemy_iris
-from sqlalchemy import create_engine, text
-try:
-    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
-    with engine.connect() as conn:
-        conn.execute(text('SELECT 1'))
-    print('SUCCESS')
-except Exception:
-    print('FAILED')
-""",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-
-            if "SUCCESS" in result.stdout:
-                return {
-                    "host": "localhost",
-                    "port": port,
-                    "username": "_SYSTEM",
-                    "password": "SYS",
-                    "namespace": "USER",
-                    "connection_string": f"iris://_SYSTEM:SYS@localhost:{port}/USER",
-                }
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-            continue
-
-    # No IRIS instance found - skip integration tests
-    pytest.skip("No IRIS database available for integration tests")
+def iris_connection_config(iris_target):
+    """Connection settings for the IRIS the session runs against (see tests/conftest.py)."""
+    return {
+        "host": iris_target.host,
+        "port": iris_target.port,
+        "username": iris_target.username,
+        "password": iris_target.password,
+        "namespace": iris_target.namespace,
+        "connection_string": iris_target.connection_string,
+    }
 
 
 @pytest.fixture(scope="session")
 def iris_engine(iris_connection_config):
-    """Create SQLAlchemy engine for IRIS database."""
-    try:
-        from sqlalchemy import create_engine
+    """SQLAlchemy engine for the same IRIS as `iris_connection`. Fails loudly, never skips."""
+    from sqlalchemy import create_engine, text
 
-        engine = create_engine(iris_connection_config["connection_string"])
-
-        # Test connection
-        with engine.connect() as conn:
-            from sqlalchemy import text
-
-            conn.execute(text("SELECT 1"))
-
-        yield engine
-
-        # Cleanup
-        engine.dispose()
-    except Exception as e:
-        pytest.skip(f"Could not create IRIS engine: {e}")
+    engine = create_engine(iris_connection_config["connection_string"])
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
+    yield engine
+    engine.dispose()
 
 
 @pytest.fixture
-def iris_connection(iris_engine):
-    """Provide IRIS database connection for integration tests."""
+def iris_sql_connection(iris_engine):
+    """SQLAlchemy connection for integration tests that use `text()` SQL."""
     conn = iris_engine.connect()
 
     try:
@@ -103,7 +54,7 @@ def iris_connection(iris_engine):
 
 
 @pytest.fixture
-def iris_test_table(iris_connection):
+def iris_test_table(iris_sql_connection):
     """Create and cleanup test table for integration tests."""
     from sqlalchemy import text
 
@@ -111,7 +62,7 @@ def iris_test_table(iris_connection):
 
     # Create test table
     try:
-        iris_connection.execute(text(f"""
+        iris_sql_connection.execute(text(f"""
             CREATE TABLE IF NOT EXISTS {table_name} (
                 id VARCHAR(255) PRIMARY KEY,
                 content CLOB,
@@ -119,7 +70,7 @@ def iris_test_table(iris_connection):
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """))
-        iris_connection.commit()
+        iris_sql_connection.commit()
     except Exception as e:
         print(f"Warning: Could not create test table: {e}")
 
@@ -127,8 +78,8 @@ def iris_test_table(iris_connection):
 
     # Cleanup: Drop test table
     try:
-        iris_connection.execute(text(f"DROP TABLE IF EXISTS {table_name}"))
-        iris_connection.commit()
+        iris_sql_connection.execute(text(f"DROP TABLE IF EXISTS {table_name}"))
+        iris_sql_connection.commit()
     except Exception as e:
         print(f"Warning: Could not drop test table: {e}")
 
@@ -215,16 +166,17 @@ def sample_documents_for_integration():
 
 
 @pytest.fixture
-def loaded_test_documents(iris_connection):
+def loaded_test_documents(iris_sql_connection):
     """Load test documents into RAG.SourceDocuments for integration testing.
 
     This fixture ensures MCP and pipeline integration tests have data to query.
     """
     import sys
+
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
     from iris_vector_rag.core.models import Document
     from iris_vector_rag.pipelines.basic import BasicRAGPipeline
-    from iris_vector_rag.core.connection import ConnectionManager
-    from iris_vector_rag.config.manager import ConfigurationManager
 
     print("\n🔧 [FIXTURE] loaded_test_documents starting...", file=sys.stderr)
 
@@ -259,6 +211,7 @@ def loaded_test_documents(iris_connection):
     try:
         # CRITICAL: Drop and recreate table with correct VECTOR schema
         from sqlalchemy import text
+
         from iris_vector_rag.storage.schema_manager import SchemaManager
 
         # Create managers
@@ -292,8 +245,8 @@ def loaded_test_documents(iris_connection):
         # Clean existing data
         print("🧹 [FIXTURE] Cleaning existing data...", file=sys.stderr)
         try:
-            iris_connection.execute(text("DELETE FROM RAG.SourceDocuments"))
-            iris_connection.commit()
+            iris_sql_connection.execute(text("DELETE FROM RAG.SourceDocuments"))
+            iris_sql_connection.commit()
             print("✅ [FIXTURE] Cleaned", file=sys.stderr)
         except Exception as clean_err:
             print(f"⚠️  [FIXTURE] Clean failed: {clean_err}", file=sys.stderr)
@@ -307,15 +260,13 @@ def loaded_test_documents(iris_connection):
 
         yield documents
 
-    except Exception as e:
-        pytest.skip(f"Could not load test documents: {e}")
     finally:
         # Cleanup is handled by cleanup_test_data autouse fixture
         pass
 
 
 @pytest.fixture(autouse=True)
-def cleanup_test_data(iris_connection):
+def cleanup_test_data(iris_sql_connection):
     """Cleanup test data after each integration test."""
     yield
 
@@ -331,70 +282,29 @@ def cleanup_test_data(iris_connection):
 
     for table in test_tables:
         try:
-            iris_connection.execute(text(f"DROP TABLE IF EXISTS {table}"))
-            iris_connection.commit()
+            iris_sql_connection.execute(text(f"DROP TABLE IF EXISTS {table}"))
+            iris_sql_connection.commit()
         except Exception:
             pass  # Ignore cleanup errors
 
 
 @pytest.fixture
-def iris_schema_manager(iris_connection):
+def iris_schema_manager(iris_sql_connection, iris_connection_config):
     """Schema manager for integration tests."""
     from iris_vector_rag.storage.schema_manager import SchemaManager
-    from unittest.mock import Mock
 
-    # Create schema manager with real connection
+    settings = {
+        "database.iris.host": iris_connection_config["host"],
+        "database.iris.port": iris_connection_config["port"],
+        "database.iris.username": iris_connection_config["username"],
+        "database.iris.password": iris_connection_config["password"],
+        "database.iris.namespace": iris_connection_config["namespace"],
+    }
     mock_config = Mock()
     mock_config.get = Mock(
-        side_effect=lambda key, default=None: {
-            "database.iris.host": "localhost",
-            "database.iris.port": 31972,
-            "database.iris.username": "_SYSTEM",
-            "database.iris.password": "SYS",
-            "database.iris.namespace": "USER",
-        }.get(key, default)
+        side_effect=lambda key, default=None: settings.get(key, default)
     )
 
-    try:
-        manager = SchemaManager(config=mock_config)
-        manager.connection = iris_connection  # Use test connection
-        yield manager
-    except Exception as e:
-        pytest.skip(f"Could not create SchemaManager: {e}")
-
-
-@pytest.fixture(scope="session", autouse=True)
-def verify_iris_available():
-    """Verify IRIS is available before running integration tests."""
-    test_ports = [51972, 31972, 1972, 11972]
-
-    for port in test_ports:
-        try:
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "-c",
-                    f"""
-import sqlalchemy_iris
-from sqlalchemy import create_engine, text
-try:
-    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
-    with engine.connect() as conn:
-        conn.execute(text('SELECT 1'))
-    print('AVAILABLE')
-except Exception:
-    pass
-""",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-
-            if "AVAILABLE" in result.stdout:
-                return  # IRIS is available
-        except Exception:
-            continue
-
-    # No IRIS available - warn but don't fail session
-    print("\nWARNING: No IRIS database available. Integration tests will be skipped.\n")
+    manager = SchemaManager(config=mock_config)
+    manager.connection = iris_sql_connection  # Use test connection
+    yield manager

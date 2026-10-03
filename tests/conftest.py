@@ -320,61 +320,6 @@ def pytest_configure(config):
     )
 
 
-def pytest_sessionstart(session):
-    """Verify IRIS database is available before running tests."""
-    # Skip health check if only running unit tests
-    if session.config.getoption("markexpr") == "unit":
-        return
-
-    # Skip if running specific unit test files
-    test_paths = [str(item.fspath) for item in session.items]
-    if all("unit" in path for path in test_paths):
-        return
-
-    # Try to find IRIS on common ports
-    iris_ports = [11972, 21972, 1972]
-    iris_available = False
-
-    for port in iris_ports:
-        try:
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "-c",
-                    f"""
-import sqlalchemy_iris
-from sqlalchemy import create_engine, text
-try:
-    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
-    with engine.connect() as conn:
-        conn.execute(text('SELECT 1'))
-    print('SUCCESS')
-except Exception:
-    print('FAILED')
-""",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-
-            if "SUCCESS" in result.stdout:
-                iris_available = True
-                break
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-            continue
-
-    if not iris_available and any(
-        "e2e" in path or "integration" in path for path in test_paths
-    ):
-        pytest.exit(
-            "IRIS database not running. E2E and integration tests require IRIS.\n"
-            "Start IRIS with: docker-compose up -d\n"
-            "Verify with: docker logs iris-pgwire-db --tail 50",
-            returncode=1,
-        )
-
-
 # ============================================================================
 # Feature 035: Backend Mode Fixtures
 # ============================================================================
@@ -447,22 +392,61 @@ def iris_devtools_bridge(backend_configuration):
     )
 
 
+@pytest.fixture(scope="session")
+def iris_target():
+    """The IRIS every test runs against.
+
+    `IRIS_CONTAINER_NAME` pins this project's container (or CI's throwaway one); without
+    it an ephemeral container is started and removed at session end. The target is also
+    exported as IRIS_HOST/PORT/USERNAME/PASSWORD/NAMESPACE, so the code under test connects
+    to the same IRIS as `iris_connection`. See tests/support/iris_environment.py.
+    Never a mock, never a skip.
+    """
+    from tests.support.iris_environment import (
+        connect,
+        declared_container,
+        resolve_pinned,
+        start_ephemeral,
+    )
+
+    repo_root = Path(__file__).resolve().parents[1]
+    target = resolve_pinned(os.environ, declared=declared_container(repo_root))
+    container = None
+    if target is None:
+        container, target = start_ephemeral()
+
+    saved = {key: os.environ.get(key) for key in target.environment()}
+    try:
+        connect(target).close()  # warm-up: fail here, loudly, once
+        os.environ.update(target.environment())
+        yield target
+    finally:
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        if container is not None:
+            container.stop()
+
+
 @pytest.fixture
-def iris_connection(connection_pool):
+def iris_connection(iris_target):
+    """A live DBAPI connection to `iris_target`, closed after the test.
+
+    Raises IrisUnreachable (with the `make iris-reset` hint for a pinned container) when
+    IRIS cannot be reached. It does not fall back to a mock.
     """
-    Function-scoped IRIS connection fixture.
+    from tests.support.iris_environment import connect
 
-    Acquires connection from pool, yields to test, then releases.
-    Enforces mode-specific connection limits.
-
-    Yields:
-        Active IRIS database connection
-
-    Raises:
-        ConnectionPoolTimeout: If pool limit exceeded
-    """
-    with connection_pool.acquire(timeout=30.0) as conn:
+    conn = connect(iris_target)
+    try:
         yield conn
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def pytest_collection_modifyitems(config, items):
