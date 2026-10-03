@@ -118,7 +118,6 @@ scores = evaluate(EvaluationDataset(samples=[sample]),
 
 ```bash
 pip install iris-vector-rag[colbert]     # ColBERT/PyLate support
-pip install iris-vector-rag[dspy]        # DSPy prompt optimization
 pip install iris-vector-rag[evaluation]  # RAGAS evaluation framework
 pip install iris-vector-rag[api]         # DEPRECATED: REST API, removed in 0.16
 ```
@@ -132,6 +131,11 @@ release but is no longer part of `all`. Use the MCP server below, or call the
 pipelines from Python. The code and tests stay at the git tag `archive/rest-api-v1`;
 the design is kept in [docs/archived/rest-api/](docs/archived/rest-api/README.md)
 ([ADR 0001](docs/adr/0001-retire-the-rest-api.md)).
+
+> **Experimental:** `pip install iris-vector-rag[dspy]` provides DSPy prompt optimization
+> modules, currently under development. See
+> [spec 073](specs/073-dspy-optimization-layer/spec.md) for details. Not recommended for
+> production.
 
 ## MCP Server
 
@@ -152,9 +156,15 @@ python -m iris_vector_rag.mcp status      # server status
 ## Development
 
 ```bash
-pip install -e ".[dspy,evaluation]"
+pip install -e ".[evaluation]"
 pytest tests/unit/                    # Fast, no IRIS needed
 pytest tests/unit/ tests/contract/    # Full suite, needs IRIS running
+```
+
+To use experimental DSPy modules:
+
+```bash
+pip install -e ".[dspy,evaluation]"  # Installs experimental dspy_modules
 ```
 
 ## Architecture

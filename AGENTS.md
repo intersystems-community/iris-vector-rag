@@ -93,8 +93,9 @@ examples/                  # compare_pipelines.py and usage examples
 
 ```bash
 # Install
-pip install -e ".[dev]"                     # Dev; add ,evaluation,colbert,dspy,mcp,api as needed
+pip install -e ".[dev]"                     # Dev; add ,evaluation,colbert,mcp,api as needed
 pip install -e ".[mcp]"                     # With MCP server
+pip install -e ".[dspy]"                    # Experimental DSPy modules (spec 073)
 
 # IRIS lifecycle
 docker compose up -d                        # Start IRIS container (iris-vector-rag-iris, port 51972)

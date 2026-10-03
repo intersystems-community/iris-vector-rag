@@ -9,7 +9,7 @@ help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 
-install: ## Install package and dev dependencies
+install: ## Install package and dev dependencies (includes experimental dspy)
 	pip install -e ".[dev,dspy]"
 
 iris-up: ## Start IRIS container via docker compose

@@ -127,6 +127,9 @@ api = [
     "python-jose[cryptography]>=3.3.0",
     "email-validator>=2.0.0"
 ]
+dspy = [
+    "dspy-ai>=2.4.0"
+]
 all = [
     "uv>=0.1.0",
     "pytest>=7.0.0",
@@ -342,6 +345,9 @@ filterwarnings = [
     # tests/test_ontology_*.py exercise the deprecated iris_vector_rag.ontology
     # package until it is removed; its import warning is the deprecation itself.
     "ignore:iris_vector_rag.ontology is deprecated:DeprecationWarning",
+    # iris_vector_rag.dspy_modules announces that it is experimental (spec 073) on
+    # import; the tests that exercise the DSPy adapters import it deliberately.
+    "ignore:The dspy_modules package is experimental:FutureWarning",
     # The only third-party entries, and they buy time rather than silence: ragas
     # 0.4 deprecated both halves of the API this repo calls -- the metric
     # singletons in ragas.metrics (now ragas.metrics.collections) and evaluate()

@@ -58,7 +58,7 @@ iris-vector-rag[all]` no longer brings in `redis`, `bcrypt`, `python-jose`,
 - `tests/contract/test_mcp_bridge_contract.py::TestMCPBridgeIntegration::test_bridge_imports_pipeline_manager`
   needs `bcrypt`, which CI no longer installs, so it joins `ci_known_failures.txt`. It
   is settled with the fate of `mcp/` (its import of `api.services` is dead).
-  \=======
+  \
 
 ### Ontology retirement (deprecation)
 
@@ -75,6 +75,17 @@ iris-vector-rag[all]` no longer brings in `redis`, `bcrypt`, `python-jose`,
   files still load. See [docs/ontology_integration_guide.md](docs/ontology_integration_guide.md).
 
 > > > > > > > remediation/ontology-retirement
+> > > > > > > \=======
+
+### Changed
+
+- **DSPy support marked experimental.** The `dspy_modules` package is now available via
+  the optional `dspy` extra (`pip install iris-vector-rag[dspy]`), with its experimental
+  status clearly documented. This module is under active development (spec 073) and not
+  recommended for production. A `FutureWarning` is issued on import.
+- **Documentation corrected.** Removed false claims that DSPy integration is supported or
+  production-ready from README, AGENTS, and Makefile. Updated all references to note spec
+  073 as the tracking issue and direct users to the core entity services for production use.
 
 ### iris-vector-graph 4.1
 
