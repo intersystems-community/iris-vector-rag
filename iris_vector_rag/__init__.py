@@ -1,16 +1,6 @@
 # iris_vector_rag package
 
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
-
-try:
-    from dotenv import load_dotenv
-
-    _env_file = Path(__file__).resolve().parent.parent / ".env"
-    if _env_file.exists():
-        load_dotenv(_env_file)
-except ImportError:
-    pass
 
 from iris_vector_rag.common.utils import get_llm_func
 from iris_vector_rag.executor import SqlExecutor
@@ -28,9 +18,16 @@ from .validation.orchestrator import SetupOrchestrator
 from .validation.requirements import get_pipeline_requirements
 from .validation.validator import PreConditionValidator
 
+# Importing the package reads no .env and changes no environment variable. The
+# connection settings resolver reads a .env in the working directory when it is asked
+# (iris_vector_rag.config.connection_settings); a script that wants other variables
+# from a file calls dotenv.load_dotenv() itself.
+
+
 # Package version
 try:
-    from importlib.metadata import version as _meta_version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _meta_version
 
     __version__ = _meta_version("iris-vector-rag")
 except PackageNotFoundError:

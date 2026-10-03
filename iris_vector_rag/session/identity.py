@@ -9,31 +9,17 @@ Feature: 083-iris-session
 
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Tuple
 
 from iris_vector_rag.common.exceptions import ValidationError
+from iris_vector_rag.config.connection_settings import (
+    ConnectionSettings,
+    resolve_connection_settings,
+)
 
 _NAMESPACE = re.compile(r"^[A-Za-z0-9_]+$")
-
-
-def _env_defaults() -> Dict[str, Any]:
-    """Connection parameters as the environment describes them."""
-    from iris_vector_rag.common.iris_connection import auto_detect_iris_port
-
-    port_env = os.environ.get("IRIS_PORT")
-    port = int(port_env) if port_env else (auto_detect_iris_port() or 1972)
-    return {
-        "host": os.environ.get("IRIS_HOST", "localhost"),
-        "port": port,
-        "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
-        "username": os.environ.get(
-            "IRIS_USER", os.environ.get("IRIS_USERNAME", "_SYSTEM")
-        ),
-        "password": os.environ.get("IRIS_PASSWORD", "SYS"),
-    }
 
 
 @dataclass(frozen=True)
@@ -45,6 +31,9 @@ class SessionIdentity:
     namespace: str
     username: str
     password: str = field(default="SYS", compare=False, repr=False)
+    # True when every value came from a default: nothing was configured. Errors use
+    # it to say so; it is not part of what makes two requests the same session.
+    from_defaults: bool = field(default=False, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.host, str) or not self.host.strip():
@@ -85,30 +74,31 @@ class SessionIdentity:
         return f"{self.host}:{self.port}/{self.namespace}"
 
     @classmethod
+    def from_settings(cls, settings: ConnectionSettings) -> "SessionIdentity":
+        return cls(
+            host=settings.host,
+            port=settings.port,
+            namespace=settings.namespace,
+            username=settings.username,
+            password=settings.password,
+            from_defaults=settings.all_defaults,
+        )
+
+    @classmethod
     def from_env(cls) -> "SessionIdentity":
-        return cls(**_env_defaults())
+        return cls.from_settings(resolve_connection_settings())
 
     @classmethod
     def from_mapping(cls, values: Optional[Dict[str, Any]] = None) -> "SessionIdentity":
-        """Resolve from plain connection parameters, the environment filling gaps."""
-        resolved = _env_defaults()
-        given = values or {}
-        for name in ("host", "port", "namespace", "username", "password"):
-            value = given.get(name)
-            if value is None and name == "host":
-                value = given.get("hostname")  # the driver's own spelling
-            if value is not None:
-                resolved[name] = value
-        if not isinstance(resolved["port"], int):
-            try:
-                resolved["port"] = int(resolved["port"])
-            except (TypeError, ValueError):
-                pass
-        return cls(**resolved)
+        """Resolve from plain connection parameters, the resolver filling gaps."""
+        return cls.from_settings(resolve_connection_settings(values or {}))
 
     @classmethod
     def from_config(cls, config_manager: Any) -> "SessionIdentity":
-        """Resolve from a ConfigurationManager, filling gaps from the environment."""
+        """Resolve from a ConfigurationManager, the resolver filling gaps."""
+        get_settings = getattr(config_manager, "get_connection_settings", None)
+        if get_settings is not None:
+            return cls.from_settings(get_settings())
         try:
             configured = config_manager.get_database_config() or {}
         except Exception:  # pragma: no cover - a config manager that cannot answer

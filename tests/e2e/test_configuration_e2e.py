@@ -22,7 +22,7 @@ import pytest
 import yaml
 
 # Real framework imports (NO MOCKS)
-from iris_vector_rag.config.manager import ConfigurationManager, ConfigValidationError
+from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 
 logger = logging.getLogger(__name__)
@@ -218,38 +218,36 @@ class TestConfigurationManagerCore:
         """
         logger.info("=== STARTING CONFIGURATION VALIDATION E2E TEST ===")
 
-        # Test missing required configuration
+        # A file with no connection section still loads: the connection settings
+        # resolve to the documented defaults (localhost:1972) rather than raising, and
+        # a value that is present but wrong (a port that is not a port) is refused.
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
 
-            # Invalid configuration missing required fields
-            invalid_config = {
-                "embeddings": {"model": "test-model"}
-                # Missing required database:iris:host
+            minimal_config_file = temp_path / "minimal.yaml"
+            with open(minimal_config_file, "w") as f:
+                yaml.dump({"embeddings": {"model": "test-model"}}, f)
+
+            bad_port_file = temp_path / "bad_port.yaml"
+            with open(bad_port_file, "w") as f:
+                yaml.dump({"database": {"iris": {"port": "not-a-port"}}}, f)
+
+            saved = {
+                name: os.environ.pop(name)
+                for name in list(os.environ)
+                if name.startswith("IRIS_")
             }
-
-            invalid_config_file = temp_path / "invalid.yaml"
-            with open(invalid_config_file, "w") as f:
-                yaml.dump(invalid_config, f)
-
-            # Remove IRIS_HOST environment variable if present
-            original_iris_host = os.environ.get("IRIS_HOST")
-            if "IRIS_HOST" in os.environ:
-                del os.environ["IRIS_HOST"]
-
             try:
-                # This should raise ConfigValidationError due to missing required config
-                with pytest.raises(ConfigValidationError):
-                    ConfigurationManager(config_path=str(invalid_config_file))
+                manager = ConfigurationManager(config_path=str(minimal_config_file))
+                database = manager.get_database_config()
+                assert (database["host"], database["port"]) == ("localhost", 1972)
 
-                logger.info(
-                    "Configuration validation correctly caught missing required config"
-                )
-
+                with pytest.raises(ValueError, match="port"):
+                    ConfigurationManager(
+                        config_path=str(bad_port_file)
+                    ).get_database_config()
             finally:
-                # Restore environment variable
-                if original_iris_host:
-                    os.environ["IRIS_HOST"] = original_iris_host
+                os.environ.update(saved)
 
         logger.info("=== CONFIGURATION VALIDATION E2E TEST COMPLETED ===")
 

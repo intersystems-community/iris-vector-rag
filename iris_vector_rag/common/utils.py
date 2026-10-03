@@ -408,16 +408,10 @@ def get_iris_connector(db_url: Optional[str] = None):
                 "IRIS_CONNECTION_URL environment variable not set and db_url not provided."
             )
 
-    print(f"Connecting to IRIS at: {db_url}")
-    try:
-        import sqlalchemy
+    import sqlalchemy
 
-        engine = sqlalchemy.create_engine(db_url)
-        connection = engine.connect()
-        return connection
-    except Exception as e:
-        print(f"Failed to connect to IRIS: {e}")
-        raise
+    engine = sqlalchemy.create_engine(db_url)
+    return engine.connect()
 
 
 def timing_decorator(func: Callable) -> Callable:

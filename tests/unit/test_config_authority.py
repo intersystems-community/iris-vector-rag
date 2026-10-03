@@ -23,17 +23,18 @@ from iris_vector_rag.core.connection import ConnectionManager
 class TestDefaultPortIs1972:
     """Test that default IRIS port is 1972 everywhere."""
 
-    def test_default_config_yaml_port_is_1972(self):
-        """default_config.yaml must have port 1972 (not 1974)."""
+    def test_default_port_is_1972_and_lives_in_the_resolver_only(self):
+        """The default port is 1972 (not 1974), defined once, not restated in YAML."""
+        from iris_vector_rag.config.connection_settings import DEFAULT_PORT
+
+        assert DEFAULT_PORT == 1972
         default_yaml_path = (
             Path(__file__).parent.parent.parent
             / "iris_vector_rag/config/default_config.yaml"
         )
         with open(default_yaml_path) as f:
             config = yaml.safe_load(f)
-        assert (
-            config["database"]["iris"]["port"] == 1972
-        ), "default_config.yaml port should be 1972"
+        assert "port" not in config["database"]["iris"]
 
     def test_config_manager_default_port_is_1972(self):
         """ConfigurationManager.get_database_config() default port is 1972."""
@@ -298,7 +299,8 @@ class TestIRISUsernameFallback:
         with patch.dict(os.environ, env_clean, clear=True):
             with patch.dict(os.environ, {"IRIS_USER": "alice"}):
                 cm = ConfigurationManager()
-                db_config = cm.get_database_config()
+                with pytest.warns(DeprecationWarning, match="IRIS_USERNAME"):
+                    db_config = cm.get_database_config()
                 assert (
                     db_config["username"] == "alice"
                 ), "IRIS_USER should be used when IRIS_USERNAME is not set"

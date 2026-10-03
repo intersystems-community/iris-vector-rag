@@ -2,11 +2,10 @@
 database:
   iris:
     driver: "intersystems_iris.dbapi._DBAPI"
-    host: "localhost"
-    port: 1972
-    namespace: "USER"
-    username: "_SYSTEM"
-    password: "SYS"
+    # No host, port, namespace, username or password here on purpose. Their defaults
+    # (localhost:1972, USER, _SYSTEM/SYS) live in config/connection_settings.py; a copy
+    # in this file would outrank the pinned container (IRIS_CONTAINER_NAME) and hide
+    # that nothing was configured. Set them in your own file or with IRIS_* variables.
 
 storage:
   iris:
@@ -57,6 +56,10 @@ rerank:
 embeddings:
   mode: "sentence_transformers" # sentence_transformers | iris_native
   text_in: false               # Enable text-side (BM25) retrieval (requires iris-vector-graph)
+  default_provider: "sentence_transformers"
+  sentence_transformers:
+    model_name: "all-MiniLM-L6-v2"
+    device: "cpu"
 
 # Pipeline validation configuration (Feature 047)
 validation:
@@ -84,12 +87,6 @@ validation:
       - "processing_time"
       - "retrieval_method"
       - "context_count"
-
-embeddings:
-  default_provider: "sentence_transformers"
-  sentence_transformers:
-    model_name: "all-MiniLM-L6-v2"
-    device: "cpu"
 
 # IRIS EMBEDDING Configuration (Feature 051)
 iris_embedding:

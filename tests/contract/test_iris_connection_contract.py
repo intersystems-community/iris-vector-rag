@@ -46,7 +46,7 @@ class TestGetIRISConnectionBasic:
             host=os.environ.get("IRIS_HOST", "localhost"),
             port=int(os.environ.get("IRIS_PORT", "1972")),
             namespace=os.environ.get("IRIS_NAMESPACE", "USER"),
-            username=os.environ.get("IRIS_USER", "_SYSTEM"),
+            username=os.environ.get("IRIS_USERNAME", "_SYSTEM"),
             password=os.environ.get("IRIS_PASSWORD", "SYS"),
         )
 
@@ -110,7 +110,7 @@ class TestGetIRISConnectionBasic:
             host=os.environ.get("IRIS_HOST", "localhost"),
             port=int(os.environ.get("IRIS_PORT", "1972")),
             namespace=os.environ.get("IRIS_NAMESPACE", "USER"),
-            username=os.environ.get("IRIS_USER", "_SYSTEM"),
+            username=os.environ.get("IRIS_USERNAME", "_SYSTEM"),
             password=os.environ.get("IRIS_PASSWORD", "SYS"),
         )
 
@@ -118,7 +118,7 @@ class TestGetIRISConnectionBasic:
             host=os.environ.get("IRIS_HOST", "localhost"),
             port=int(os.environ.get("IRIS_PORT", "1972")),
             namespace=os.environ.get("IRIS_NAMESPACE", "USER"),
-            username=os.environ.get("IRIS_USER", "_SYSTEM"),
+            username=os.environ.get("IRIS_USERNAME", "_SYSTEM"),
             password=os.environ.get("IRIS_PASSWORD", "SYS"),
         )
 
