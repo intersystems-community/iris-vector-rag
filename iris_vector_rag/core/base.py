@@ -77,16 +77,20 @@ class RAGPipeline(abc.ABC):
             )
 
     @abc.abstractmethod
-    def load_documents(self, documents_path: str, **kwargs) -> Dict[str, Any]:
+    def load_documents(
+        self, documents_path: Optional[str] = None, **kwargs
+    ) -> Dict[str, Any]:
         """
-        Loads and processes documents into the RAG pipeline&#x27;s knowledge base.
+        Loads and processes documents into the RAG pipeline's knowledge base.
 
         This method handles the ingestion, chunking, embedding, and indexing
-        of documents.
+        of documents. Give either a path or, through ``documents=``, a list of
+        Document objects (which is what ``ingest()`` passes).
 
         Args:
             documents_path: Path to the documents or directory of documents.
-            **kwargs: Additional keyword arguments for document loading.
+            **kwargs: Additional keyword arguments for document loading,
+                including ``documents`` (a list of Document objects).
 
         Returns:
             Dict with ingestion status containing keys:
@@ -97,7 +101,7 @@ class RAGPipeline(abc.ABC):
 
     @abc.abstractmethod
     def query(
-        self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs
+        self, query: str, top_k: int = 5, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Unified query method that returns standardized response format.
@@ -112,7 +116,7 @@ class RAGPipeline(abc.ABC):
         - metadata: Dict
 
         Args:
-            query_text: The input query string.
+            query: The input query string.
             top_k: The number of top relevant documents to retrieve.
             generate_answer: Whether to generate an answer (default: True)
             **kwargs: Additional keyword arguments for the query process.
@@ -175,8 +179,7 @@ class RAGPipeline(abc.ABC):
         """
         Ingest documents into the pipeline's knowledge base.
 
-        This is an alias for load_documents() to maintain compatibility
-        with existing test expectations.
+        This is an alias for ``load_documents(documents=...)``.
 
         Args:
             documents: List of Document objects to ingest
@@ -191,11 +194,13 @@ class RAGPipeline(abc.ABC):
         This method removes all stored documents and embeddings from
         the vector store.
         """
-        if hasattr(self.vector_store, "clear"):
-            self.vector_store.clear()
-        else:
-            # Fallback for vector stores without clear method
-            logger.warning("Vector store does not support clear operation")
+        clear_documents = getattr(self.vector_store, "clear_documents", None)
+        if clear_documents is None:
+            raise NotImplementedError(
+                f"{type(self.vector_store).__name__} does not implement "
+                "clear_documents(), so the pipeline cannot be cleared"
+            )
+        clear_documents()
 
     def get_documents(self) -> List[Document]:
         """
@@ -240,13 +245,5 @@ class RAGPipeline(abc.ABC):
         Returns:
             List of relevant Document objects
         """
-        # This is typically implemented by calling the query() method
-        # but we provide a default implementation for compatibility
-        try:
-            return self.query(query, top_k, **kwargs)
-        except NotImplementedError:
-            # If query() is not implemented, return empty list
-            logger.warning(
-                f"Query method not implemented for {self.__class__.__name__}"
-            )
-            return []
+        result = self.query(query, top_k=top_k, generate_answer=False, **kwargs)
+        return result["retrieved_documents"]
