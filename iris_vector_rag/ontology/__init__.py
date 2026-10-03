@@ -20,6 +20,17 @@ Components:
 - plugins: Domain-specific ontology implementations
 """
 
+import warnings
+
+warnings.warn(
+    "iris_vector_rag.ontology is deprecated and will be removed in the next "
+    "release. Entity extraction no longer uses it and the `ontology:` config "
+    "section is ignored. The last version of the package is kept at the git "
+    "tag archive/ontology-v1.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 from .loader import OntologyLoader, OWLLoader, RDFLoader, SKOSLoader
 from .models import (
     Concept,

@@ -58,6 +58,23 @@ iris-vector-rag[all]` no longer brings in `redis`, `bcrypt`, `python-jose`,
 - `tests/contract/test_mcp_bridge_contract.py::TestMCPBridgeIntegration::test_bridge_imports_pipeline_manager`
   needs `bcrypt`, which CI no longer installs, so it joins `ci_known_failures.txt`. It
   is settled with the fate of `mcp/` (its import of `api.services` is dead).
+  \=======
+
+### Ontology retirement (deprecation)
+
+- **`iris_vector_rag.ontology` is deprecated.** Importing it emits one
+  `DeprecationWarning`. The package is removed in the next release; its last version
+  stays at the git tag `archive/ontology-v1`.
+- **Entity extraction no longer imports the ontology package.** The module-level
+  ontology imports and the dead ontology branch are gone from
+  `services/entity_extraction.py`. `extract_with_ontology()` and the
+  `ontology_sources` argument stay for compatibility and are ignored. The attributes
+  `ontology_config`, `ontology_enabled`, `reasoning_enabled`, `auto_detect_domain`,
+  `ontology_plugin` and `reasoner` on `OntologyAwareEntityExtractor` are removed.
+- **The `ontology:` config section is a no-op.** No code reads it. Existing config
+  files still load. See [docs/ontology_integration_guide.md](docs/ontology_integration_guide.md).
+
+> > > > > > > remediation/ontology-retirement
 
 ### iris-vector-graph 4.1
 

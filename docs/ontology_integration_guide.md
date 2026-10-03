@@ -1,5 +1,13 @@
 # General-Purpose Ontology Integration Guide for IRIS RAG
 
+> **Deprecated.** `iris_vector_rag.ontology` is deprecated and is removed in the next
+> release (last version at git tag `archive/ontology-v1`). Importing it emits a
+> `DeprecationWarning`. Entity extraction no longer uses it, and the `ontology:`
+> configuration section is a no-op: it is accepted so existing config files load,
+> but no code reads it and no key in it changes behaviour. `OntologyAwareEntityExtractor`
+> ignores `ontology_sources`. Use the ontology classes directly only if you must,
+> and plan to vendor them from the tag.
+
 ## Overview
 
 The IRIS RAG framework includes advanced general-purpose ontology support that works with **ANY domain**. This system automatically adapts to different ontology formats and domains without requiring hardcoded domain-specific implementations.

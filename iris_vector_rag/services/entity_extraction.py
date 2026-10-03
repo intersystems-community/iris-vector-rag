@@ -3,25 +3,18 @@ import logging
 import time
 from typing import Any, Callable, Dict, List, Optional
 
+from ..common.batch_utils import BatchMetricsTracker
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
 from ..core.models import (
+    BatchExtractionResult,
     Document,
     Entity,
     EntityTypes,
-    Relationship,
-    BatchExtractionResult,
     ProcessingMetrics,
+    Relationship,
 )
 from ..embeddings.manager import EmbeddingManager
-from ..common.batch_utils import BatchMetricsTracker
-
-# Import general-purpose ontology components
-from ..ontology.plugins import (
-    GeneralOntologyPlugin,
-    create_plugin_from_config,
-)
-from ..ontology.reasoner import OntologyReasoner
 from .storage import EntityStorageAdapter
 
 logger = logging.getLogger(__name__)
@@ -45,7 +38,8 @@ class OntologyAwareEntityExtractor:
             config_manager: Configuration manager instance
             connection_manager: Optional connection manager for storage integration
             embedding_manager: Optional embedding manager
-            ontology_sources: Optional ontology source definitions
+            ontology_sources: Ignored. The ontology package is deprecated and
+                no longer consulted; kept for signature compatibility
             optimized_program_path: Optional path to an optimized program file
             llm_func: Optional LLM function override
         """
@@ -56,23 +50,12 @@ class OntologyAwareEntityExtractor:
         self.llm_func_override = llm_func
 
         self.config = self.config_manager.get("entity_extraction", {})
-        self.ontology_config = self.config_manager.get("ontology", {})
         self.method = self.config.get("method", "llm_basic")
         self.confidence_threshold = self.config.get("confidence_threshold", 0.7)
         self.enabled_types = set(
             self.config.get("entity_types", ["ENTITY", "CONCEPT", "PROCESS"])
         )
         self.max_entities_per_doc = self.config.get("max_entities", 100)
-        self.ontology_enabled = self.ontology_config.get("enabled", True)
-        self.reasoning_enabled = self.ontology_config.get("reasoning", {}).get(
-            "enable_inference", True
-        )
-        self.auto_detect_domain = self.ontology_config.get("auto_detect_domain", True)
-
-        self.ontology_plugin = None
-        self.reasoner = None
-        if self.ontology_enabled:
-            self._init_ontology_plugin(ontology_sources)
 
         self.storage_adapter = None
         if self.connection_manager:
@@ -82,37 +65,14 @@ class OntologyAwareEntityExtractor:
 
         self._init_patterns()
 
-    def _init_ontology_plugin(self, ontology_sources=None):
-        try:
-            if ontology_sources:
-                self.ontology_plugin = create_plugin_from_config(
-                    {
-                        "auto_detect_domain": self.auto_detect_domain,
-                        "sources": ontology_sources,
-                    }
-                )
-            elif self.ontology_config.get("sources"):
-                self.ontology_plugin = create_plugin_from_config(self.ontology_config)
-            else:
-                self.ontology_plugin = GeneralOntologyPlugin()
-                self.ontology_plugin.auto_detect_domain = self.auto_detect_domain
-
-            if (
-                self.reasoning_enabled
-                and self.ontology_plugin
-                and self.ontology_plugin.concepts
-            ):
-                self.reasoner = OntologyReasoner(self.ontology_plugin.hierarchy)
-        except Exception as e:
-            logger.error(f"Failed to initialize ontology plugin: {e}")
-
     def extract_with_ontology(
         self, text: str, document: Optional[Document] = None
     ) -> List[Entity]:
-        if not self.ontology_enabled or not self.ontology_plugin:
-            return self.extract_entities_basic(text, document)
+        """Extract entities. The ontology is retired; this is basic extraction.
 
-        # Simple extraction for now
+        Kept so existing callers keep working. The ``ontology:`` config section
+        and ``ontology_sources`` are ignored (see CHANGELOG, Unreleased).
+        """
         return self.extract_entities_basic(text, document)
 
     def _convert_to_entity(

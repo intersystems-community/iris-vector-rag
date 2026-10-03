@@ -339,6 +339,9 @@ filterwarnings = [
     # api tests and tests/contract/test_mcp_bridge_contract.py import it on purpose.
     # Delete this entry with the package.
     "ignore:iris_vector_rag\\.api \\(the REST API\\) is deprecated:DeprecationWarning",
+    # tests/test_ontology_*.py exercise the deprecated iris_vector_rag.ontology
+    # package until it is removed; its import warning is the deprecation itself.
+    "ignore:iris_vector_rag.ontology is deprecated:DeprecationWarning",
     # The only third-party entries, and they buy time rather than silence: ragas
     # 0.4 deprecated both halves of the API this repo calls -- the metric
     # singletons in ragas.metrics (now ragas.metrics.collections) and evaluate()
