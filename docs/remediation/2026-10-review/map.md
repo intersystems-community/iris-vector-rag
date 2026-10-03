@@ -99,6 +99,12 @@ ticket is open. Executing the fixes is **not** part of this map.
   branch, then `087`, `086`, `083` (after the password-recovery edit), with gates after each;
   features then branch off the merged `master` as `remediation/<feature>`. `060`, `065`, `001`,
   `067` abandoned, `084` parked, none deleted. Nothing is pushed.
+- [Decide how fixes that need IRIS are verified](tickets/G9-verify-fixes-needing-iris.md): a
+  prerequisite feature `test-environment` after `integrate-branches`: one `iris_connection`
+  fixture (pinned project container or an ephemeral iris-devtester one), no mock fallback and no
+  skipping, a scripted `make iris-reset`, and the `los-iris` fixtures removed as the first task.
+  Logic-only fixes need unit tests alone; storage, schema, migrations, ObjectScript, connections
+  and ingestion need the IRIS gate.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -112,8 +118,6 @@ Maintained by hand; recompute after each close. All the fate and policy tickets 
 these graduated from the fog on 2026-10-02. 95 of 161 findings still have no Fate.
 
 - [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md) (grilling, HITL)
-- [Decide how fixes that need IRIS are verified](tickets/G9-verify-fixes-needing-iris.md)
-  (grilling, HITL)
 - [Decide the CI repair scope](tickets/G10-ci-repair-scope.md) (grilling, HITL)
 
 ## Not yet specified
