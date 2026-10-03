@@ -105,18 +105,6 @@ class TestBatchEntityExtractionConfiguration:
         assert "MODULE" in entity_types_arg
         assert "ERROR" in entity_types_arg
 
-    def test_entity_extraction_service_passes_entity_types(self):
-        """Test that EntityExtractionService passes entity_types to BatchEntityExtractionModule."""
-        import inspect
-
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
-
-        # Verify extract_batch_with_dspy has entity_types parameter
-        sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
-        assert (
-            "entity_types" in sig.parameters
-        ), "extract_batch_with_dspy() must accept entity_types parameter"
-
     def test_domain_presets_available(self):
         """Test that DOMAIN_PRESETS constant is defined with expected domains."""
         from iris_vector_rag.dspy_modules.batch_entity_extraction import DOMAIN_PRESETS
@@ -183,27 +171,6 @@ class TestBatchEntityExtractionConfiguration:
             f"entity_types field description should indicate it's configurable. "
             f"Description: {json_extra.get('desc', '')}"
         )
-
-
-class TestBackwardCompatibility:
-    """Test that existing code continues to work without changes."""
-
-    def test_extract_batch_with_dspy_works_without_entity_types(self):
-        """Test that extract_batch_with_dspy() works when entity_types is not provided."""
-        # This test verifies backward compatibility - existing code should continue to work
-        # Implementation would require a full service setup, so we just verify the signature
-        import inspect
-
-        from iris_vector_rag.services.entity_extraction import EntityExtractionService
-
-        sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
-        entity_types_param = sig.parameters.get("entity_types")
-
-        # Verify entity_types is optional
-        assert entity_types_param is not None, "entity_types parameter must exist"
-        assert (
-            entity_types_param.default is not inspect.Parameter.empty
-        ), "entity_types must be optional for backward compatibility"
 
 
 class TestConfigurationResolution:

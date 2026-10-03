@@ -26,9 +26,6 @@ hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:142
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:70
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:63
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:71
-hardcoded-vector-type	iris_vector_rag/services/batch_entity_processor.py:176
-hardcoded-vector-type	iris_vector_rag/services/storage.py:439
-hardcoded-vector-type	iris_vector_rag/services/storage.py:478
 hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:15
 hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:24
 hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:1281
@@ -44,9 +41,6 @@ inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:51
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:68
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:9
 inline-standard-ddl	iris_vector_rag/common/llm_cache_iris.py:143
-inline-standard-ddl	iris_vector_rag/services/storage.py:1038
-inline-standard-ddl	iris_vector_rag/services/storage.py:1053
-inline-standard-ddl	iris_vector_rag/services/storage.py:1069
 inline-standard-ddl	iris_vector_rag/storage/table_shape.py:600
 inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:1276
 inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:347

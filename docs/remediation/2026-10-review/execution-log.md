@@ -364,3 +364,73 @@ entry: feature, question, choice, why.
   counting documents as loaded when the store raises,
   `_get_documents_from_entities` swallowing a database error, and the CRAG
   dimension-mismatch and fail-fast contract tests.
+- **entity-services-fix: `extract_with_ontology`.** Made it work on
+  `EntityExtractionService` only, as a deprecated alias (`DeprecationWarning`)
+  of `extract_entities_basic`; removed it from the base
+  `OntologyAwareEntityExtractor`, where it could never work
+  (`extract_entities_basic` was never defined there). The `ontology/` package is
+  untouched (phase 5). `tests/unit/test_ontology_retirement.py` now calls
+  `extract_entities_basic` (its subject is the no-op config section, and the
+  suite turns warnings into errors).
+- **entity-services-fix: no LLM configured.** `_call_llm` raises
+  `EntityExtractionError` instead of returning `"[]"`. A GraphRAG pipeline built
+  without `llm_func` now fails every document in `load_documents` and raises,
+  where it used to load and silently extract nothing. Fail-loudly convention.
+- **entity-services-fix: edit outside the service files.**
+  `GraphRAGPipeline.load_documents` (`pipelines/graphrag.py`) was the only
+  caller of `extract_batch_with_dspy` and the place the `failed` list surfaces,
+  so it changed too (the loop only; one `EntityStorageAdapter` per call instead
+  of per document). `pipelines-fix` edits the same file: expect a textual
+  conflict in that method.
+- **entity-services-fix: `failed` vs `documents_failed`.** `load_documents`
+  keeps `documents_failed` as documents that failed to load (the documents are
+  stored before extraction runs) and adds `failed` for extraction or
+  entity-storage failures. It raises only when every document is in `failed`.
+- **entity-services-fix: CR-10 stubs.** Implemented, not raised:
+  `get_entities_by_document`, `get_entities_by_type`,
+  `get_relationships_by_document`, `get_storage_stats` (real queries, errors
+  propagate) and `create_tables_if_not_exist` (ensures the tables in the
+  entities table's schema). P1 defaulted the three with no caller to raising;
+  the E2E story needs read-back by document and type, and the SQL is three lines
+  each. `search_entities` keeps its Python Levenshtein pass (edit distance has
+  no SQL form) and its docstring now says so; the alternative, a SQL `LIKE`,
+  would change which rows match.
+- **entity-services-fix: batch storage is no longer all-or-nothing.** Chunks of
+  `batch_size` each commit; a failing chunk is retried in halves and only rows
+  that fail alone are reported. The "retry with smaller batch" claim is
+  implemented, the "atomic" claim withdrawn.
+  `EntityStorageAdapter.store_*_batch` now raise `EntityStorageError` instead of
+  returning a short count.
+- **entity-services-fix: entity embeddings.** The canonical `Entities` table has
+  no vector column, so an entity with `metadata["embedding"]` cannot be stored
+  there; it is reported in `failed` (it used to fail the whole batch,
+  swallowed). The width in `TO_VECTOR` comes from the embedding (no constant
+  384), which fails loudly on a column of another width. Not moved to the
+  dimension authority: nothing in the repo produces entity embeddings.
+- **entity-services-fix: `token_budget`.** Advisory and logged; extraction is
+  one prompt per document, so there is no batch prompt to size.
+- **entity-services-fix: deleted tests and examples.** Tests whose only subject
+  was `extract_batch_with_dspy` (`tests/contract/test_entity_types_config.py`,
+  two tests in `test_entity_types_batch_extraction.py`, one in
+  `test_optimized_program_loading.py`, two in
+  `tests/integration/test_entity_extraction_logging.py`) and the three example
+  scripts built on it. Their subject is removed by the G4 decision, not
+  weakened.
+- **entity-services-fix: query time without an LLM.**
+  `GraphRAGPipeline._find_seed_entities` runs the extraction service on the
+  query. With the no-LLM raise it would have crashed every query on a pipeline
+  without `llm_func`, which used to fall back to vector search. It now catches
+  `EntityExtractionError`, logs a warning and returns no seeds, so the fallback
+  and its `retrieval_method` stand. (Second edit in `pipelines/graphrag.py`.)
+- **entity-services-fix: tests that passed on a lie.** The 22
+  `test_fuzzy_entity_search_contracts.py` tests passed only because
+  `store_entity` cached the entity before the write and search merged the cache
+  back, while the write itself failed on a `RAG.Entities` left by the test
+  schema reset (`tests/utils/schema_models.py` describes an `Entities` without
+  `confidence`). The fixture now drops that table when it is not canonical and
+  lets the adapter create it. The batch tests that built the service with no
+  `llm_func` and only checked result structure now pass a stub `llm_func`.
+  Separate defect, not fixed here: `SchemaManager.migrate_table("Entities")`
+  (schema_manager.py around line 1708) emits an `Entities` DDL with no
+  `confidence` column, unlike the ensure path. Owner: `storage-correctness`
+  follow-up or `validation-truthfulness`.

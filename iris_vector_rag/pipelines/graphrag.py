@@ -88,6 +88,10 @@ class GraphRAGPipeline(RAGPipeline):
                 - documents_loaded: Number of documents successfully loaded
                 - embeddings_generated: Number of embeddings generated
                 - documents_failed: Number of documents that failed to load
+                - failed: ``[{"document_id", "reason"}]`` for documents whose entity
+                  extraction or entity storage failed (the documents themselves are
+                  stored); the other documents are unaffected. Raises
+                  ``EntityExtractionError`` if every document failed.
         """
         start_time = time.time()
 
@@ -104,6 +108,7 @@ class GraphRAGPipeline(RAGPipeline):
                 "documents_loaded": 0,
                 "embeddings_generated": 0,
                 "documents_failed": 0,
+                "failed": [],
             }
 
         # Store documents first
@@ -121,6 +126,7 @@ class GraphRAGPipeline(RAGPipeline):
                 "documents_loaded": documents_loaded,
                 "embeddings_generated": embeddings_generated,
                 "documents_failed": 0,
+                "failed": [],
             }
 
         # Ensure knowledge graph tables exist
@@ -133,64 +139,78 @@ class GraphRAGPipeline(RAGPipeline):
 
         total_entities = 0
         total_relationships = 0
+        failed: List[Dict[str, str]] = []
 
         batch_size = 5
-        total_batches = (len(documents) + batch_size - 1) // batch_size
-
         extraction_start_time = time.time()
+
+        from ..core.models import Relationship
+        from ..services.entity_extraction import EntityExtractionError
+        from ..services.storage import EntityStorageAdapter
+
+        storage_service = EntityStorageAdapter(
+            connection_manager=self.connection_manager,
+            config=self.config_manager._config,
+        )
 
         for i in range(0, len(documents), batch_size):
             batch_docs = documents[i : i + batch_size]
             batch_num = i // batch_size + 1
 
             try:
-                # Batch extract entities
-                batch_results = self.entity_extraction_service.extract_batch_with_dspy(
-                    batch_docs, batch_size=batch_size
+                result = self.entity_extraction_service.extract_batch(batch_docs)
+            except EntityExtractionError as batch_error:
+                logger.error(f"Batch {batch_num}: every document failed: {batch_error}")
+                failed.extend(
+                    {"document_id": d.id, "reason": str(batch_error)}
+                    for d in batch_docs
                 )
+                continue
+            failed.extend(result.failed)
 
-                for doc in batch_docs:
-                    entities = batch_results.get(doc.id, [])
-                    if entities:
-                        # Extract and store relationships from entity pairs
-                        from ..core.models import Relationship
-
-                        relationships = []
-                        for idx1, entity1 in enumerate(entities):
-                            for entity2 in entities[idx1 + 1 :]:
-                                rel = Relationship(
-                                    source_entity_id=entity1.id,
-                                    target_entity_id=entity2.id,
-                                    relationship_type="co_occurs_with",
-                                    confidence=1.0,
-                                    source_document_id=doc.id,
-                                )
-                                relationships.append(rel)
-
-                        from ..services.storage import EntityStorageAdapter
-
-                        storage_service = EntityStorageAdapter(
-                            connection_manager=self.connection_manager,
-                            config=self.config_manager._config,
+            for doc in batch_docs:
+                entities = result.per_document_entities.get(doc.id, [])
+                if not entities:
+                    continue
+                relationships = [
+                    Relationship(
+                        source_entity_id=entity1.id,
+                        target_entity_id=entity2.id,
+                        relationship_type="co_occurs_with",
+                        confidence=1.0,
+                        source_document_id=doc.id,
+                    )
+                    for idx1, entity1 in enumerate(entities)
+                    for entity2 in entities[idx1 + 1 :]
+                ]
+                try:
+                    total_entities += storage_service.store_entities_batch(entities)
+                    if relationships:
+                        total_relationships += (
+                            storage_service.store_relationships_batch(relationships)
                         )
-                        total_entities += storage_service.store_entities_batch(entities)
-                        if relationships:
-                            total_relationships += (
-                                storage_service.store_relationships_batch(relationships)
-                            )
-
-            except Exception as batch_error:
-                logger.error(f"❌ Batch {batch_num} FAILED: {batch_error}")
+                except Exception as storage_error:
+                    logger.error(
+                        f"Storing entities of {doc.id} failed: {storage_error}"
+                    )
+                    failed.append({"document_id": doc.id, "reason": str(storage_error)})
 
         extraction_elapsed = time.time() - extraction_start_time
         logger.info(
-            f"Entity Extraction Complete: {total_entities} entities, {total_relationships} relationships in {extraction_elapsed:.2f}s"
+            f"Entity Extraction Complete: {total_entities} entities, {total_relationships} relationships, {len(failed)} documents failed, in {extraction_elapsed:.2f}s"
         )
+
+        if len(failed) == len(documents):
+            raise EntityExtractionError(
+                f"Entity extraction failed for every one of {len(documents)} documents "
+                f"(first: {failed[0]['document_id']}: {failed[0]['reason']})"
+            )
 
         return {
             "documents_loaded": documents_loaded,
             "embeddings_generated": embeddings_generated,
             "documents_failed": 0,
+            "failed": failed,
         }
 
     def query(
@@ -273,9 +293,16 @@ class GraphRAGPipeline(RAGPipeline):
     def _find_seed_entities(self, query_text: str) -> List[str]:
         """Find entity IDs in the graph matching extracted query entities."""
         from ..core.models import Document as CoreDoc
+        from ..services.entity_extraction import EntityExtractionError
 
         doc_wrapper = CoreDoc(page_content=query_text, id="query")
-        entities = self.entity_extraction_service.extract_entities(doc_wrapper)
+        try:
+            entities = self.entity_extraction_service.extract_entities(doc_wrapper)
+        except EntityExtractionError as exc:
+            # Without an LLM (or when it fails) the query has no entities to look up;
+            # the caller falls back to vector search and says so in `retrieval_method`.
+            logger.warning(f"Seed entity extraction failed for the query: {exc}")
+            return []
 
         entity_ids: List[str] = []
         for entity in entities:

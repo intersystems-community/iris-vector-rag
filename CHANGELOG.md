@@ -32,6 +32,16 @@ cycle.
   `IRISVectorStore.similarity_search`. A model that will not load, or every backend
   failing, used to produce random or hash-derived vectors that were stored and searched
   as if real (OE-01, OE-02, CR-09).
+- **`EntityExtractionService.extract_batch_with_dspy`.** It loaded a DSPy module and
+  never used it; it was `extract_entities` in a loop. The GraphRAG pipeline now calls
+  `extract_batch`. Spec 073 may add a real opt-in. The `entity_types` and batch-logging
+  tests that only exercised this method are deleted with it, and so are the example
+  scripts built on it (`examples/optimized_dspy_entity_extraction.py`,
+  `examples/scripts/test_batch_extraction.py`, `examples/scripts/test_quality_comparison.py`).
+- **`OntologyAwareEntityExtractor.extract_with_ontology`.** On the base class it called an
+  `extract_entities_basic` that was never defined, so it raised `AttributeError`. It
+  remains on `EntityExtractionService` as a deprecated alias of LLM extraction and emits
+  a `DeprecationWarning`.
 - **`HybridGraphRAGPipeline._ivg_embedding_dimension()`** and the `cloud_config`
   vector-dimension default as the source of the schema's width. See the dimension entry
   below.
@@ -77,6 +87,46 @@ VM-13, VM-16 (the `mcp/` items), VM-17, OS-25).
   the bridge).
 - **Fixed: `docs/MCP_INTEGRATION.md`** is rewritten with a working Claude Desktop
   configuration and uses `IRIS_USERNAME`, not `IRIS_USER`.
+
+### Changed: the entity services stop reporting success they did not have
+
+Feature `entity-services-fix` of the 2026-10 review (CR-06, CR-10, CR-11, CR-13, CR-17).
+
+- **A failed document is reported, the batch continues.** `EntityExtractionService.extract_batch`
+  returns a `ServiceBatchResult` whose `failed` lists `{"document_id", "reason"}` for each
+  document whose extraction raised; `success_status` is `False` and `error_message` names
+  them. It raises `EntityExtractionError` only if every document failed.
+  `GraphRAGPipeline.load_documents` returns the same `failed` list (extraction or entity
+  storage failures; the documents themselves are stored) and raises
+  `EntityExtractionError` if every document failed. `documents_failed` still counts
+  documents that failed to load.
+- **No swallowed errors in extraction.** `_call_llm` raises when no `llm_func` is set or
+  the LLM raises; `_parse_llm_response` raises on a reply it cannot parse instead of
+  returning `[]`. `confidence_threshold` (default 0.3 for the service), a configured
+  `entity_types` and `max_entities` are now applied. `process_document` reports
+  `stored: False` without a storage adapter and raises if the adapter refuses a write.
+  `token_budget` on `extract_batch` is advisory (a batch over it is logged).
+- **`BatchEntityProcessor.store_entities_batch` is correct.** One tuple width per
+  statement (a mix of entities with and without embeddings no longer fails the batch; an
+  empty embedding counts as none), `confidence` is written, existing entity ids are
+  updated and new ones inserted, the source document is resolved as `store_entity` does,
+  and the vector width is the embedding's own, not a constant 384. `batch_size` chunks the
+  work; a failing chunk is rolled back and retried in halves, and rows that still fail are
+  returned in `failed`. `validate_count` re-counts the table. Storage is no longer
+  all-or-nothing across a call (each chunk commits), and the "atomic" claim is withdrawn.
+- **`EntityStorageAdapter`.** `store_entities_batch` and `store_relationships_batch` raise
+  `EntityStorageError` (with `stored` and `failed`) when anything was not stored; they
+  used to log and return a smaller count. `get_entities_by_document`,
+  `get_entities_by_type`, `get_relationships_by_document` and `get_storage_stats` run
+  real queries and let errors propagate (they returned `[]` or zeros). `create_tables_if_not_exist`
+  ensures the tables in the entities table's schema and raises on failure (it logged DDL
+  and returned `True`). `store_entity` caches only after the commit, so a failed write no
+  longer appears in `search_entities`; the catalog is no longer re-read on every call.
+  `search_entities` documents what it does: type and confidence filters run in SQL, the
+  name match runs in Python over the remaining rows.
+- **Entity embeddings need a column.** The standard `Entities` table has no vector column.
+  An entity carrying `metadata["embedding"]` written to such a table is reported in
+  `failed` rather than stored without its vector.
 
 ### Changed: storage stops losing data and reporting what did not happen
 

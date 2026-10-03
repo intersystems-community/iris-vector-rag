@@ -76,8 +76,8 @@ def _extractor(ontology_section):
 )
 def test_ontology_config_section_does_not_change_behaviour(section):
     text = "Alice Smith works at Acme Corp in Boston."
-    baseline = _extractor({}).extract_with_ontology(text)
-    got = _extractor(section).extract_with_ontology(text)
+    baseline = _extractor({}).extract_entities_basic(text)
+    got = _extractor(section).extract_entities_basic(text)
     assert [(e.text, e.entity_type, e.confidence) for e in got] == [
         (e.text, e.entity_type, e.confidence) for e in baseline
     ]

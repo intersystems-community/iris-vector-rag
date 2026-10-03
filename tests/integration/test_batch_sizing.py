@@ -25,7 +25,11 @@ class TestBatchSizing:
         """Initialize EntityExtractionService."""
         config_manager = ConfigurationManager()
         connection_manager = ConnectionManager(config_manager)
-        return EntityExtractionService(config_manager, connection_manager)
+        return EntityExtractionService(
+            config_manager,
+            connection_manager,
+            llm_func=lambda prompt: '[{"text": "Test", "type": "PERSON"}]',
+        )
 
     def test_as4_variable_document_sizes_dynamic_batching(self, service):
         """

@@ -117,23 +117,6 @@ class TestBackwardCompatibility:
 class TestImplementationDetails:
     """Verify implementation details of the feature."""
 
-    def test_loading_logic_exists_in_extract_batch_with_dspy(self):
-        """Verify that load() logic exists in extract_batch_with_dspy method."""
-        import inspect
-
-        # Get the source of the entire entity_extraction module
-        import iris_vector_rag.services.entity_extraction as ee_module
-
-        module_source = inspect.getsource(ee_module)
-
-        # Verify the loading logic is present in the module
-        assert (
-            "optimized_program_path" in module_source
-        ), "Module should reference optimized_program_path"
-        assert (
-            "self._batch_dspy_module.load(" in module_source
-        ), "Module should call .load() on batch DSPy module"
-
     def test_instance_variable_stored(self):
         """Verify that optimized_program_path is stored as instance variable."""
         import inspect
