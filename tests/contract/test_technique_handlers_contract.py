@@ -10,6 +10,7 @@ Branch: 043-complete-mcp-tools
 """
 
 import importlib.util
+
 import pytest
 
 
@@ -56,8 +57,8 @@ class TestTechniqueHandlerRegistry:
         registry = TechniqueHandlerRegistry()
         assert registry is not None
 
-    def test_registry_list_techniques_returns_6_pipelines(self):
-        """Verify registry lists all 6 RAG pipelines."""
+    def test_registry_list_techniques_returns_5_pipelines(self):
+        """Verify registry lists the 5 RAG pipelines."""
         from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
@@ -69,11 +70,10 @@ class TestTechniqueHandlerRegistry:
             "crag",
             "graphrag",
             "pylate_colbert",
-            "iris_global_graphrag",
         ]
 
         assert isinstance(techniques, list), "list_techniques must return list"
-        assert len(techniques) == 6, f"Expected 6 techniques, got {len(techniques)}"
+        assert len(techniques) == 5, f"Expected 5 techniques, got {len(techniques)}"
 
         for pipeline in expected_pipelines:
             assert (
@@ -313,7 +313,7 @@ class TestPyLateColBERTHandler:
 
 
 class TestAllHandlersCommon:
-    """Common contract tests for all 6 technique handlers."""
+    """Common contract tests for all 5 technique handlers."""
 
     @pytest.mark.parametrize(
         "technique",
@@ -323,7 +323,6 @@ class TestAllHandlersCommon:
             "crag",
             "graphrag",
             "pylate_colbert",
-            "iris_global_graphrag",
         ],
     )
     def test_handler_has_required_interface_methods(self, technique):
@@ -357,7 +356,6 @@ class TestAllHandlersCommon:
             "crag",
             "graphrag",
             "pylate_colbert",
-            "iris_global_graphrag",
         ],
     )
     def test_handler_validate_params_returns_dict(self, technique):
@@ -380,7 +378,6 @@ class TestAllHandlersCommon:
             "crag",
             "graphrag",
             "pylate_colbert",
-            "iris_global_graphrag",
         ],
     )
     @pytest.mark.asyncio

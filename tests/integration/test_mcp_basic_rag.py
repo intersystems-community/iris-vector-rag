@@ -8,8 +8,9 @@ Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
-import pytest
 import time
+
+import pytest
 
 
 @pytest.mark.integration
@@ -20,9 +21,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_query_execution(self, loaded_test_documents):
         """Verify rag_basic tool executes query and returns complete response."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="basic",
@@ -67,9 +68,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_performance_metrics(self, loaded_test_documents):
         """Verify response includes performance metrics."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="basic", query="What is diabetes?", params={"top_k": 3}
@@ -98,9 +99,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_query_latency_p95(self, loaded_test_documents):
         """Verify query execution time meets p95 latency requirement (<10s)."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         start_time = time.time()
         result = await bridge.invoke_technique(
@@ -122,9 +123,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_with_minimal_parameters(self, loaded_test_documents):
         """Verify rag_basic works with only required parameters."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Only provide query (top_k should use default)
         result = await bridge.invoke_technique(
@@ -141,9 +142,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_with_custom_top_k(self, loaded_test_documents):
         """Verify rag_basic respects custom top_k parameter."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Test with top_k=3
         result = await bridge.invoke_technique(
@@ -166,9 +167,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_with_include_sources(self, loaded_test_documents):
         """Verify include_sources parameter controls source inclusion."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # With sources
         result_with = await bridge.invoke_technique(
@@ -193,9 +194,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_with_include_metadata(self, loaded_test_documents):
         """Verify include_metadata parameter controls metadata inclusion."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # With metadata
         result_with = await bridge.invoke_technique(
@@ -220,9 +221,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_invalid_top_k_out_of_range(self, loaded_test_documents):
         """Verify rag_basic rejects top_k values outside valid range."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # top_k too low (< 1)
         result = await bridge.invoke_technique(
@@ -244,9 +245,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_empty_query_handling(self, loaded_test_documents):
         """Verify rag_basic handles empty query appropriately."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(technique="basic", query="", params={})
 
@@ -258,9 +259,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_response_format_consistency(self, loaded_test_documents):
         """Verify response format matches REST API response format (FR-025)."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="basic", query="What is diabetes?", params={"top_k": 5}
@@ -289,9 +290,9 @@ class TestMCPBasicRAG:
     @pytest.mark.asyncio
     async def test_basic_rag_multiple_queries_sequential(self, loaded_test_documents):
         """Verify multiple sequential queries work correctly."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         queries = [
             "What is diabetes?",

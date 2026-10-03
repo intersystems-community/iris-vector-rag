@@ -1,8 +1,8 @@
 """
 Integration test: List available MCP tools (Scenario 1 from quickstart.md).
 
-This test verifies that the MCP server can list all 8 available tools
-(6 RAG pipelines + 2 utility tools) with complete schemas.
+This test verifies that the MCP server can list all 6 available tools
+(5 RAG pipelines + the health check) with complete schemas.
 
 Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
@@ -18,15 +18,15 @@ class TestMCPListTools:
 
     @pytest.mark.asyncio
     async def test_list_tools_returns_8_tools(self):
-        """Verify MCP server returns all 8 tools."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        """Verify MCP server returns all 6 tools."""
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
         tools = await bridge.list_tools()
 
         # Verify count
         assert isinstance(tools, list), "list_tools must return list"
-        assert len(tools) == 8, f"Expected 8 tools, got {len(tools)}"
+        assert len(tools) == 6, f"Expected 6 tools, got {len(tools)}"
 
         # Verify all expected tools present
         expected_tools = [
@@ -35,9 +35,7 @@ class TestMCPListTools:
             "rag_crag",
             "rag_graphrag",
             "rag_pylate_colbert",
-            "rag_iris_global_graphrag",
             "rag_health_check",
-            "rag_metrics",
         ]
 
         tool_names = [tool["name"] for tool in tools]
@@ -49,9 +47,9 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_list_tools_includes_schemas(self):
         """Verify each tool includes complete schema with parameter descriptions."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
         tools = await bridge.list_tools()
 
         for tool in tools:
@@ -84,9 +82,9 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_list_tools_parameter_descriptions(self):
         """Verify all parameters include descriptions."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
         tools = await bridge.list_tools()
 
         for tool in tools:
@@ -104,16 +102,15 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_rag_tools_require_query_parameter(self):
         """Verify all RAG tools (not utility tools) require 'query' parameter."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
         tools = await bridge.list_tools()
 
         rag_tools = [
             t
             for t in tools
-            if t["name"].startswith("rag_")
-            and t["name"] not in ["rag_health_check", "rag_metrics"]
+            if t["name"].startswith("rag_") and t["name"] not in ["rag_health_check"]
         ]
 
         for tool in rag_tools:
@@ -134,15 +131,13 @@ class TestMCPListTools:
 
     @pytest.mark.asyncio
     async def test_utility_tools_no_required_parameters(self):
-        """Verify utility tools (health_check, metrics) have no required parameters."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        """Verify utility tools (health_check) have no required parameters."""
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
         tools = await bridge.list_tools()
 
-        utility_tools = [
-            t for t in tools if t["name"] in ["rag_health_check", "rag_metrics"]
-        ]
+        utility_tools = [t for t in tools if t["name"] in ["rag_health_check"]]
 
         for tool in utility_tools:
             schema = tool["inputSchema"]
@@ -150,7 +145,6 @@ class TestMCPListTools:
             # Health check and metrics should have optional parameters only
             # (or required list should be empty)
             required_params = schema.get("required", [])
-            # Metrics doesn't require any params, health_check doesn't either
             assert (
                 len(required_params) == 0
             ), f"Utility tool {tool['name']} should not have required parameters"
@@ -158,9 +152,9 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_tool_schemas_include_defaults(self):
         """Verify tool parameters include default values where applicable."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
         tools = await bridge.list_tools()
 
         # Check basic RAG tool has defaults
@@ -180,9 +174,9 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_tool_schemas_include_validation_constraints(self):
         """Verify tool parameters include validation constraints (min, max, enum)."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
         tools = await bridge.list_tools()
 
         # Check basic RAG tool has constraints
@@ -210,9 +204,10 @@ class TestMCPListTools:
     async def test_list_tools_performance(self):
         """Verify list_tools completes within reasonable time."""
         import time
-        from iris_vector_rag.mcp.bridge import MCPBridge
 
-        bridge = MCPBridge()
+        from tests.support.mcp_tools import McpTools
+
+        bridge = McpTools()
 
         start_time = time.time()
         await bridge.list_tools()
@@ -226,9 +221,9 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_list_tools_idempotent(self):
         """Verify list_tools returns consistent results on multiple calls."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Call list_tools three times
         tools1 = await bridge.list_tools()

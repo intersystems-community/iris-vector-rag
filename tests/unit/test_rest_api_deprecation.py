@@ -14,7 +14,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 TAG = "archive/rest-api-v1"
-# Requirements only the REST API needs; `mcp` owns fastapi/uvicorn/websockets.
+# Requirements only the REST API needs; the `mcp` extra is the official SDK only.
 API_ONLY = {"redis", "bcrypt", "python-jose", "email-validator", "python-multipart"}
 
 

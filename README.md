@@ -139,16 +139,18 @@ the design is kept in [docs/archived/rest-api/](docs/archived/rest-api/README.md
 
 ## MCP Server
 
-The MCP server is implemented and available at `iris_vector_rag/mcp/`. It exposes 8 tools
-(`rag_basic`, `rag_basic_rerank`, `rag_crag`, `rag_graphrag`, `rag_pylate_colbert`,
-`rag_iris_global_graphrag`, `rag_health_check`, `rag_metrics`) over the Model Context Protocol.
+A stdio MCP server built on the official Python SDK exposes six tools: `rag_basic`,
+`rag_basic_rerank`, `rag_crag`, `rag_graphrag`, `rag_pylate_colbert` and
+`rag_health_check`. It connects to IRIS through the same settings as the library
+(`IRIS_HOST`, `IRIS_PORT`, `IRIS_NAMESPACE`, `IRIS_USERNAME`, `IRIS_PASSWORD`).
 
 ```bash
-pip install iris-vector-rag[mcp]
-python -m iris_vector_rag.mcp start       # start server
-python -m iris_vector_rag.mcp list-tools  # list available tools
-python -m iris_vector_rag.mcp status      # server status
+pip install "iris-vector-rag[mcp]"
+iris-vector-rag-mcp            # or: python -m iris_vector_rag.mcp
 ```
+
+An MCP client starts the command itself; see
+[docs/MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) for the Claude Desktop configuration.
 
 > For MCP tool orchestration across IRIS packages, use
 > [iris-agentic-dev](https://github.com/intersystems-community/iris-agentic-dev).

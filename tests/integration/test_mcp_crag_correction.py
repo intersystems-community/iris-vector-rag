@@ -19,9 +19,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_basic_query_execution(self):
         """Verify rag_crag executes basic query successfully."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag",
@@ -40,9 +40,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_includes_confidence_score(self):
         """Verify CRAG response includes retrieval status in metadata."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag",
@@ -60,9 +60,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_correction_applied_metadata(self):
         """Verify CRAG metadata indicates when correction was applied."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Query with low confidence threshold to potentially trigger correction
         result = await bridge.invoke_technique(
@@ -90,9 +90,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_rewrite_correction_strategy(self):
         """Verify CRAG with rewrite correction strategy."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag",
@@ -115,9 +115,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_web_search_correction_strategy(self):
         """Verify CRAG with web_search correction strategy."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag",
@@ -142,9 +142,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_both_correction_strategy(self):
         """Verify CRAG with 'both' correction strategy."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag",
@@ -159,9 +159,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_confidence_threshold_validation(self):
         """Verify CRAG validates confidence_threshold parameter."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Valid confidence threshold
         result = await bridge.invoke_technique(
@@ -191,9 +191,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_correction_strategy_validation(self):
         """Verify CRAG validates correction_strategy parameter."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Valid strategies
         valid_strategies = ["rewrite", "web_search", "both"]
@@ -218,9 +218,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_default_parameters(self):
         """Verify CRAG uses default parameters when not specified."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Only provide query
         result = await bridge.invoke_technique(
@@ -237,9 +237,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_with_low_confidence_threshold(self):
         """Verify CRAG with very low confidence threshold (likely no correction)."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag",
@@ -261,9 +261,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_with_high_confidence_threshold(self):
         """Verify CRAG with very high confidence threshold (likely correction)."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag",
@@ -285,9 +285,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_performance_metrics(self):
         """Verify CRAG includes performance metrics."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag",
@@ -308,9 +308,9 @@ class TestMCPCRAGCorrection:
     @pytest.mark.asyncio
     async def test_crag_response_format_consistency(self):
         """Verify CRAG response format matches standard RAG format."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         result = await bridge.invoke_technique(
             technique="crag", query="What is diabetes?", params={}

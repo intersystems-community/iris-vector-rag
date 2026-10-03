@@ -1,30 +1,30 @@
 """
 Technique Handler Registry.
 
-Manages technique handlers for each of the 6 RAG pipelines,
-implementing the ITechniqueHandler interface.
+Manages technique handlers for the five RAG pipelines the MCP server exposes.
+Pipelines are built on first use, so an unimportable pipeline fails its own
+tool call and the health check instead of the whole server.
 
 Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
+import asyncio
 import logging
-from typing import Dict, Any, List, Optional, Type
+import threading
 from datetime import datetime
-from iris_vector_rag.core.models import Document
+from typing import Any, Dict, List, Optional, Type
+
 from iris_vector_rag.core.base import RAGPipeline
-from iris_vector_rag.mcp.validation import ValidationError
+from iris_vector_rag.core.models import Document
 from iris_vector_rag.mcp import tool_schemas
+from iris_vector_rag.mcp.validation import ValidationError
 
 logger = logging.getLogger(__name__)
 
 
 def _serialize_document(doc: Any) -> Dict[str, Any]:
     """Convert a Document object to a dictionary for JSON serialization."""
-    import logging
-
-    logger = logging.getLogger(__name__)
-
     logger.debug(f"Serializing document type: {type(doc)}, value: {repr(doc)[:200]}")
 
     if isinstance(doc, Document):
@@ -63,17 +63,30 @@ class TechniqueHandler:
         self._error_count = 0
         self._query_count = 0
 
+    # One IRIS session serves every pipeline; queries run one at a time, off the
+    # event loop so the stdio transport keeps answering pings and cancellations.
+    _run_lock = threading.Lock()
+
     def _get_pipeline(self):
-        """Get or create pipeline instance."""
+        """Get or create pipeline instance. Raises if it cannot be built."""
         if self._pipeline_instance is None:
             self._pipeline_instance = self.pipeline_factory()
         return self._pipeline_instance
 
+    def _run_query(self, query: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        with self._run_lock:
+            pipeline = self._get_pipeline()
+            return pipeline.query(query=query, **params)
+
+    def construct(self) -> None:
+        """Build the pipeline now (health check). Raises if it cannot be built."""
+        with self._run_lock:
+            self._get_pipeline()
+
     async def execute(self, query: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the technique with given query and parameters."""
         try:
-            pipeline = self._get_pipeline()
-            result = pipeline.query(query=query, **params)
+            result = await asyncio.to_thread(self._run_query, query, params)
 
             self._last_success = datetime.now()
             self._query_count += 1
@@ -158,53 +171,43 @@ class TechniqueHandlerRegistry:
         self._register_default_handlers()
 
     def _register_default_handlers(self):
-        """Register handlers for all 6 RAG pipelines."""
-        from iris_vector_rag.pipelines.basic import BasicRAGPipeline
-        from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-        from iris_vector_rag.pipelines.crag import CRAGPipeline
-        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+        """Register the five RAG techniques. Imports happen when a pipeline is built."""
 
-        # Register basic
-        self._handlers["basic"] = TechniqueHandler("basic", BasicRAGPipeline)
+        def basic():
+            from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 
-        # Register basic_rerank
-        self._handlers["basic_rerank"] = TechniqueHandler(
-            "basic_rerank", BasicRAGRerankingPipeline
-        )
+            return BasicRAGPipeline()
 
-        # Register crag
-        self._handlers["crag"] = TechniqueHandler("crag", CRAGPipeline)
+        def basic_rerank():
+            from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
 
-        # Register graphrag (HybridGraphRAG)
-        self._handlers["graphrag"] = TechniqueHandler(
-            "graphrag", HybridGraphRAGPipeline
-        )
+            return BasicRAGRerankingPipeline()
 
-        # Register pylate_colbert
-        try:
+        def crag():
+            from iris_vector_rag.pipelines.crag import CRAGPipeline
+
+            return CRAGPipeline()
+
+        def graphrag():
+            from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+
+            return HybridGraphRAGPipeline()
+
+        def pylate_colbert():
             from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
                 PyLateColBERTPipeline,
             )
 
-            self._handlers["pylate_colbert"] = TechniqueHandler(
-                "pylate_colbert", PyLateColBERTPipeline
-            )
-        except ImportError:
-            # PyLateColBERT may not be available
-            pass
+            return PyLateColBERTPipeline()
 
-        # Register iris_global_graphrag
-        try:
-            from iris_vector_rag.pipelines.iris_global_graphrag import (
-                IRISGlobalGraphRAGPipeline,
-            )
-
-            self._handlers["iris_global_graphrag"] = TechniqueHandler(
-                "iris_global_graphrag", IRISGlobalGraphRAGPipeline
-            )
-        except ImportError:
-            # IRIS Global GraphRAG may not be available
-            pass
+        for name, factory in (
+            ("basic", basic),
+            ("basic_rerank", basic_rerank),
+            ("crag", crag),
+            ("graphrag", graphrag),
+            ("pylate_colbert", pylate_colbert),
+        ):
+            self._handlers[name] = TechniqueHandler(name, factory)
 
     def register_handler(
         self,

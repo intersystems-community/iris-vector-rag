@@ -109,10 +109,7 @@ dev = [
     "twine>=4.0.0"
 ]
 mcp = [
-    "mcp>=0.1.0",
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "websockets>=11.0.0"
+    "mcp>=1.9.0,<2"
 ]
 # DEPRECATED in 0.15, removed in 0.16: the REST API (iris_vector_rag.api) is retired.
 # No longer part of `all` or the CI install. Code and tests stay at git tag
@@ -144,10 +141,7 @@ all = [
     "pre-commit>=3.0.0",
     "build>=0.10.0",
     "twine>=4.0.0",
-    "mcp>=0.1.0",
-    "fastapi>=0.104.0",
-    "uvicorn[standard]>=0.24.0",
-    "websockets>=12.0",
+    "mcp>=1.9.0,<2",
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
     "opentelemetry-exporter-otlp>=1.20.0",
@@ -174,10 +168,7 @@ dev = [
     "gitpython==3.1.61",
 ]
 mcp = [
-    "mcp>=0.1.0",
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "websockets>=11.0.0"
+    "mcp>=1.9.0,<2"
 ]
 
 [project.urls]
@@ -189,6 +180,7 @@ Changelog = "https://github.com/intersystems-community/iris-vector-rag/blob/main
 
 [project.scripts]
 rag-templates = "iris_vector_rag.cli:main"
+iris-vector-rag-mcp = "iris_vector_rag.mcp.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["iris_vector_rag*"]
@@ -198,7 +190,8 @@ iris_vector_rag = [
     "config/*.yaml",
     "config/*.json",
     "templates/*.yaml",
-    "templates/*.json"
+    "templates/*.json",
+    "mcp/*.json"
 ]
 
 [tool.black]
@@ -344,7 +337,7 @@ filterwarnings = [
     # get_iris_connection() itself, deprecated in 0.15 and removed in 0.16.
     "ignore:get_iris_connection\\(\\) is deprecated:DeprecationWarning",
     # Importing iris_vector_rag.api warns (deprecated 0.15, removed 0.16); the
-    # api tests and tests/contract/test_mcp_bridge_contract.py import it on purpose.
+    # api tests import it on purpose.
     # Delete this entry with the package.
     "ignore:iris_vector_rag\\.api \\(the REST API\\) is deprecated:DeprecationWarning",
     # tests/test_ontology_*.py exercise the deprecated iris_vector_rag.ontology

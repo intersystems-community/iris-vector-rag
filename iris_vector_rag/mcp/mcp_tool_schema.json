@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MCP RAG Tools Schema",
-  "description": "MCP tool definitions for 6 RAG pipelines (BasicRAG, BasicRAGReranking, CRAG, HybridGraphRAG, PyLateColBERT, IRIS-Global-GraphRAG)",
+  "description": "MCP tool definitions for 5 RAG pipelines (BasicRAG, BasicRAGReranking, CRAG, HybridGraphRAG, PyLateColBERT) and a health check",
   "version": "1.0.0",
   "tools": [
     {
@@ -34,7 +34,8 @@
             "default": true
           }
         },
-        "required": ["query"]
+        "required": ["query"],
+        "additionalProperties": false
       }
     },
     {
@@ -79,7 +80,8 @@
             "default": true
           }
         },
-        "required": ["query"]
+        "required": ["query"],
+        "additionalProperties": false
       }
     },
     {
@@ -130,7 +132,8 @@
             "default": true
           }
         },
-        "required": ["query"]
+        "required": ["query"],
+        "additionalProperties": false
       }
     },
     {
@@ -183,7 +186,8 @@
             "description": "Include document metadata (page numbers, etc.)"
           }
         },
-        "required": ["query"]
+        "required": ["query"],
+        "additionalProperties": false
       }
     },
     {
@@ -237,116 +241,31 @@
             "description": "Include document metadata (page numbers, etc.)"
           }
         },
-        "required": ["query"]
-      }
-    },
-    {
-      "name": "rag_iris_global_graphrag",
-      "description": "IRIS Global GraphRAG for academic papers with 3D visualization and global communities. Best for research papers and citation networks.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "type": "string",
-            "description": "Research question or topic",
-            "minLength": 1,
-            "maxLength": 8000
-          },
-          "top_k": {
-            "type": "integer",
-            "description": "Number of most relevant papers to retrieve",
-            "default": 10,
-            "minimum": 1,
-            "maximum": 100
-          },
-          "community_level": {
-            "type": "integer",
-            "description": "Community detection level (0=fine-grained, higher=broader)",
-            "default": 1,
-            "minimum": 0,
-            "maximum": 5
-          },
-          "include_citations": {
-            "type": "boolean",
-            "description": "Include citation network in response",
-            "default": false
-          },
-          "include_sources": {
-            "type": "boolean",
-            "default": true,
-            "description": "Include source file names in response"
-          },
-          "include_metadata": {
-            "type": "boolean",
-            "default": true,
-            "description": "Include document metadata (page numbers, etc.)"
-          }
-        },
-        "required": ["query"]
+        "required": ["query"],
+        "additionalProperties": false
       }
     },
     {
       "name": "rag_health_check",
-      "description": "Check health status of all RAG pipelines, database connectivity, and performance metrics. No query parameter required.",
+      "description": "Health check of the server: IRIS reachable, each RAG pipeline constructible, embedder loadable. Reports measured values only; no query parameter required.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "include_details": {
             "type": "boolean",
-            "description": "Include detailed metrics for each pipeline",
-            "default": false
-          },
-          "include_performance_metrics": {
-            "type": "boolean",
-            "description": "Include recent performance statistics (latency, throughput, error rates)",
-            "default": true
-          }
-        }
-      }
-    },
-    {
-      "name": "rag_metrics",
-      "description": "Retrieve performance metrics and usage statistics for RAG pipelines over a specified time range.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "time_range": {
-            "type": "string",
-            "description": "Time range for metrics",
-            "enum": ["5m", "15m", "1h", "6h", "24h", "7d"],
-            "default": "1h"
-          },
-          "technique_filter": {
-            "type": "array",
-            "description": "Filter metrics by specific techniques (empty = all techniques)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "rag_basic",
-                "rag_basic_rerank",
-                "rag_crag",
-                "rag_graphrag",
-                "rag_pylate_colbert",
-                "rag_iris_global_graphrag"
-              ]
-            },
-            "default": []
-          },
-          "include_error_details": {
-            "type": "boolean",
-            "description": "Include detailed error information",
+            "description": "Include per-pipeline construction results",
             "default": false
           }
-        }
+        },
+        "additionalProperties": false
       }
     }
   ],
   "metadata": {
     "mcp_version": "1.0",
-    "server_name": "iris-rag-server",
-    "server_version": "1.0.0",
-    "total_tools": 8,
-    "rag_pipelines": 6,
-    "utility_tools": 2
+    "server_name": "iris-vector-rag",
+    "total_tools": 6,
+    "rag_pipelines": 5,
+    "utility_tools": 1
   }
 }
