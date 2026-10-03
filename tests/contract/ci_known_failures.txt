@@ -38,3 +38,4 @@ tests/contract/test_text_search_contract.py::TestTextSearchContract::test_text_s
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_returns_documents
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_returns_relevant_documents
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_works_with_384d_embeddings
+tests/contract/test_mcp_bridge_contract.py::TestMCPBridgeIntegration::test_bridge_imports_pipeline_manager
