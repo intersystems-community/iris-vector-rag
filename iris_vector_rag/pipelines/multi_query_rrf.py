@@ -21,6 +21,7 @@ Example:
     >>> # ranked by RRF score
 """
 
+import hashlib
 import logging
 import time
 from collections import defaultdict
@@ -30,6 +31,18 @@ from iris_vector_rag.common.utils import get_llm_func
 from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
+
+
+def fallback_document_id(doc: Document) -> str:
+    """Identity for a document that carries no id, stable across processes.
+
+    Built from a digest of the full content: `hash()` is salted per process, so an
+    id made from it changes between runs, and a prefix of the content would merge
+    two different documents that start alike.
+    """
+    digest = hashlib.sha256(doc.page_content.encode("utf-8")).hexdigest()
+    return f"content:{digest[:32]}"
+
 
 try:
     from iris_vector_graph import RRFFusion as _IVGRRFFusion
@@ -235,7 +248,7 @@ Return only the alternative queries, one per line, without numbering.
 
         for result_set in result_sets:
             for doc in result_set:
-                doc_id = doc.id if doc.id else str(hash(doc.page_content[:100]))
+                doc_id = doc.id if doc.id else fallback_document_id(doc)
                 if doc_id not in doc_map:
                     doc_map[doc_id] = doc
                 if hasattr(doc, "metadata") and "source_query" in doc.metadata:
@@ -244,7 +257,7 @@ Return only the alternative queries, one per line, without numbering.
         if _HAS_IVG_RRF:
             ranked_lists = [
                 [
-                    (doc.id if doc.id else str(hash(doc.page_content[:100])), float(i))
+                    (doc.id if doc.id else fallback_document_id(doc), float(i))
                     for i, doc in enumerate(rs)
                 ]
                 for rs in result_sets
@@ -255,7 +268,7 @@ Return only the alternative queries, one per line, without numbering.
             rrf_scores: Dict[str, float] = defaultdict(float)
             for result_set in result_sets:
                 for rank, doc in enumerate(result_set, start=1):
-                    doc_id = doc.id if doc.id else str(hash(doc.page_content[:100]))
+                    doc_id = doc.id if doc.id else fallback_document_id(doc)
                     rrf_scores[doc_id] += 1.0 / (rank + self.rrf_k)
             sorted_ids = sorted(rrf_scores, key=rrf_scores.get, reverse=True)[:top_k]
 
