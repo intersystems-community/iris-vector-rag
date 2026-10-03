@@ -25,6 +25,17 @@ cycle.
   only re-exports `iris_vector_graph.dbapi_utils`, which is a hard dependency; the
   fallback `insert_vector` took different arguments than its call sites passed.
 
+### CI gates for the first time
+
+- **Changed:** `ci.yml` now triggers on pushes to `master` and on every pull
+  request (it listed `main` and `develop`, so it never ran). The unit step no
+  longer ends in `|| true` with `continue-on-error`; a unit failure turns the
+  job red. The matrix is Python 3.11 and 3.12 (3.10 is below `requires-python`).
+  Failures listed in `tests/contract/ci_known_failures.txt` are deselected; any
+  other failure blocks. (OS-07, OS-08, OS-26 for the unit tests)
+- **Removed:** the Docker job (no `Dockerfile` exists), the coverage jobs and
+  Codecov upload, and the duplicate Trivy job (`security.yml` scans).
+
 ### iris-vector-graph 4.1
 
 IVR now requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 re-keyed `Graph_KG`
