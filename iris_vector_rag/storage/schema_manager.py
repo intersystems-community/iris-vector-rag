@@ -12,16 +12,18 @@ import os
 import re
 import time
 import warnings
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from iris_vector_rag.integrations.ivg import (
     IVG_REQUIRED_TABLES,
     IVG_SCHEMA,
+    IVG_UPGRADE_HINT,
     InitializationResult,
     ValidationResult,
     assert_ivg_compatible,
     create_graph_engine,
     get_ivg_version,
+    pre_4_layout_tables,
 )
 from iris_vector_rag.storage.catalog import IRISCatalogReader
 from iris_vector_rag.storage.table_shape import (
@@ -345,6 +347,25 @@ class SchemaManager:
                 installed_version=installed_version,
             )
 
+        legacy_tables = self._ivg_legacy_layout_tables()
+        if legacy_tables:
+            error_message = (
+                f"Pre-4.0 layout in {IVG_SCHEMA}: {', '.join(legacy_tables)}. "
+                f"{IVG_UPGRADE_HINT}"
+            )
+            logger.warning(
+                "PPR unavailable: graph prerequisites not satisfied. %s",
+                error_message,
+            )
+            return ValidationResult(
+                is_valid=False,
+                package_installed=True,
+                missing_tables=[],
+                error_message=error_message,
+                installed_version=installed_version,
+                legacy_layout_tables=legacy_tables,
+            )
+
         logger.info("PPR available: graph prerequisites satisfied")
 
         return ValidationResult(
@@ -385,6 +406,7 @@ class SchemaManager:
         error_messages: Dict[str, str] = {}
         ivg_status: Dict[str, Any] = {}
         installed_version: Optional[str] = None
+        legacy_tables: List[str] = []
 
         try:
             import iris_vector_graph as ivg_module
@@ -415,6 +437,22 @@ class SchemaManager:
                     tables_created[table] = False
                     error_messages[table] = f"{type(exc).__name__}: {exc}"
 
+            # initialize_schema adds 4.x DDL but does not move rows; an install that
+            # predates 4.0 stays in the old layout until the operator migrates it.
+            try:
+                legacy_tables = self._ivg_legacy_layout_tables()
+            except Exception as exc:
+                error_messages[IVG_SCHEMA] = (
+                    f"Could not read the {IVG_SCHEMA} layout: "
+                    f"{type(exc).__name__}: {exc}"
+                )
+            else:
+                if legacy_tables:
+                    error_messages[IVG_SCHEMA] = (
+                        f"Pre-4.0 layout in {IVG_SCHEMA}: "
+                        f"{', '.join(legacy_tables)}. {IVG_UPGRADE_HINT}"
+                    )
+
         if error_messages:
             logger.error(
                 "IVG table initialization failed for %s",
@@ -432,11 +470,53 @@ class SchemaManager:
             error_messages=error_messages,
             installed_version=installed_version,
             ivg_status=ivg_status or {},
+            legacy_layout_tables=legacy_tables,
         )
 
     def _ivg_table_exists(self, table_name: str) -> bool:
         """Check for an IVG-owned table in Graph_KG."""
         return self.table_exists(f"{IVG_SCHEMA}.{table_name}")
+
+    def _ivg_columns(self, table_name: str) -> set:
+        """Lower-cased column names of a Graph_KG table; empty if it does not exist."""
+        snapshot = self._snapshot(table_name, schema=IVG_SCHEMA)
+        if snapshot is None:
+            return set()
+        return {str(row["COLUMN_NAME"]).lower() for row in snapshot.columns}
+
+    def _ivg_legacy_layout_tables(self) -> List[str]:
+        """Required Graph_KG tables still in the layout ivg used before 4.0."""
+        return pre_4_layout_tables(
+            {table: self._ivg_columns(table) for table in IVG_REQUIRED_TABLES}
+        )
+
+    def upgrade_iris_vector_graph_storage(self, dry_run: bool = False, **options):
+        """Migrate a pre-4.0 Graph_KG install to the iris-vector-graph 4.x layout.
+
+        Never called implicitly: the migration moves rows and quarantines the ones it
+        cannot place, which is an operator's decision. Runs ivg's own sequence --
+        `initialize_schema()` for the 4.x DDL, then
+        `iris_vector_graph.migrations.upgrade_to_4_0_0`. Re-runnable; a step whose work
+        is done reports itself skipped.
+
+        A dry run writes nothing, DDL included, so it skips `initialize_schema()`.
+        A step ivg cannot predict on a genuine pre-4.0 install (its input column is
+        one a real run adds) comes back with `blocked_because` saying which call
+        adds it; `UpgradeReport.blocked` names those steps.
+
+        `options` go to `upgrade_to_4_0_0` unchanged (`steps`, `vector_resolver`,
+        `document_resolver`, `edge_resolver`, `edge_dimension`, `dtype`). Returns its
+        `UpgradeReport`.
+        """
+        from iris_vector_graph.migrations import upgrade_to_4_0_0
+
+        connection = self.connection_manager.get_connection()
+        if not dry_run:
+            dimension = int(getattr(self, "base_embedding_dimension", 384) or 384)
+            create_graph_engine(
+                connection, embedding_dimension=dimension
+            ).initialize_schema()
+        return upgrade_to_4_0_0(connection, dry_run=dry_run, **options)
 
     def _initialize_ivg_schema(self) -> Dict[str, Any]:
         """Delegate Graph_KG schema creation to iris-vector-graph."""

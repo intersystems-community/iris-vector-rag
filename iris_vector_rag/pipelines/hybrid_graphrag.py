@@ -936,7 +936,12 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         - BM25 index: this pipeline does not own a BM25 index (text search goes
           through iris_vector_graph's kg_TXT over the KG tables), so there is nothing
           to delete here. Callers that build their own index can call
-          iris_engine.bm25_delete(name, node_id) (iris_vector_graph >= 2.18).
+          iris_engine.bm25_delete(name, node_id).
+
+        Since iris-vector-graph 4.1.1 the engine's ``delete_node`` removes the node
+        from every graph that holds it, named graphs (``graph=`` in ivg 4.x) and their
+        routed ``kg_emb_<hash>`` vector tables included. To delete from one graph
+        only, call ``iris_engine.delete_node(node_id, graph=...)`` directly.
 
         Raises:
             ValueError: If node_id is empty string or None.

@@ -123,7 +123,9 @@ class PLAIDSearcher:
 
     def _centroids_built(self) -> bool:
         try:
-            return self._engine.plaid_info(self._index_name).get("nCentroids", 0) > 0
+            # Info's JSON names the centroid count `nlist`; `nCentroids` is only the
+            # ^PLAID subscript it is read from.
+            return self._engine.plaid_info(self._index_name).get("nlist", 0) > 0
         except Exception:
             return False
 

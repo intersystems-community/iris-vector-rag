@@ -190,3 +190,69 @@ start collecting doctests across the package, `--strict-markers` would reject an
 not in the list, and `--cov=iris_rag` names the directory that no longer holds code
 (entry 7). Renaming the section is a one-character change with a suite-wide blast radius;
 it needs its own change, with each option turned on deliberately.
+
+## 9. A second, pre-4.0 `kg_NodeEmbeddings_optimized` in SQLUSER
+
+`SchemaManager` can still create `SQLUSER.kg_NodeEmbeddings_optimized` with the 2.x
+columns `(id, emb)` (`iris_vector_rag/storage/schema_manager.py:2080-2086`), describes it
+in its table config (`:663`), and `validation/requirements.py:382-429` lists it as an
+optional table. ivg 4.x owns `Graph_KG.kg_NodeEmbeddings_optimized`, keyed on
+`(graph_id, node_id)`, and never reads the SQLUSER copy. The layout check added with ivg
+4.1 (`pre_4_layout_tables`) looks only at `Graph_KG`, so this copy is neither migrated
+nor reported.
+
+**Why deferred:** removing the DDL path changes what `SchemaManager` creates for every
+pipeline that asks for the table, and the optional-table requirement is checked by
+validation tests of its own. It needs its own change, after confirming nothing still
+writes to the SQLUSER table.
+
+## 10. ivg 4.1.1's class deploy kills the Native API process on the dev container
+
+ivg 4.1.1 sends its packaged `.cls` files over the connection and compiles them
+(`iris_vector_graph/_engine/class_deploy.py`). On `iris-vector-rag-iris` (IRIS
+2026.1.0.234) the server process serving that connection dies with signal 11
+(`messages.log`: `Callin Connection ... caught signal 11`) and the client then waits
+until `Communication timed out`. The same crash comes from:
+
+- the embedded-Python probe, `%SYS.Python.Import("sys")` (see entry 1);
+- `%SYSTEM.OBJ.CompileList` of the classes, and so from the `kg_node_stores`
+  migration step, which recompiles every shipped class the server defines;
+- the first Native API connection after the container starts.
+
+A dead job keeps its license and its dictionary locks until the instance cleans it up,
+which can take about ten minutes. Later connections then fail with `Unable to allocate
+a license` or hang on any `%Dictionary` query, and only a container restart clears it.
+
+What works here, and what `tests/conftest.py` does:
+
+- `IVG_EMBEDDED_PYTHON=0` (set by default in the tests) skips the probe and the
+  classes written in embedded Python.
+- Before the first `initialize_schema()`, delete from the server the classes ivg skips
+  (`Graph.KG.Service`, `Communities`, `PyOps`, `MCPService`, `MCPToolSet`,
+  `IVG.CypherEngine`), so the migration's recompile does not meet them.
+- The deploy is skipped once `^IVG.Deploy("fingerprint")` holds the fingerprint of the
+  compiled set (`class_deploy.fingerprint`). Compile the classes some other way, then
+  write that value; a deploy that dies leaves it unwritten and is retried next time.
+- After a restart, make one throwaway Native API connection before running tests.
+
+**Where it belongs:** a signal 11 in a server process is an IRIS defect whatever the
+client sent, and the ivg maintainers have not seen it on their containers (irishealth
+2026.3.0AI.113.0 and community). ivg sends ordinary calls (the embedded-Python
+import, a stream `LoadStream`, `CompileList "ck-d"`). This container also fails to load
+`libarno_callout.so`, so its configuration is a suspect as well as the 2026.1.0.234
+build. Neither is established; the stack of the crash has not been captured. Report it
+with the `messages.log` signal-11 stack to IRIS/WRC once it is, and delete this entry
+when the container is rebuilt on a build that compiles from the Native API.
+
+ivg agrees on three hardening points, none filed or changed yet: a documented switch
+that skips the packaged deploy (so no hand-written marker is needed), and making the
+`kg_node_stores` recompile honor the deploy's skip list, which it does not today. A
+server kill shows up to any client as a hang or a code-60 timeout, so no guard inside
+ivg can turn it into an error. Writing `^IVG.Deploy("fingerprint")` by hand is not a
+supported interface: the value hashes the selected class names and text, so it changes
+with every ivg version and with `IVG_EMBEDDED_PYTHON`, and has to be rewritten on each
+bump (`class_deploy.fingerprint(sources)` over the selected set).
+
+ivg 4.1.1 fixed what 4.1.0 left open: the dry run no longer raises on a 2.x install,
+the wheel ships the `.cls` files, `delete_node` reaches routed vector tables, and the
+`SyntaxWarning` in `schema.py` is gone.

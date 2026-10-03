@@ -20,6 +20,16 @@ from ._hybrid_utils import (
 logger = logging.getLogger(__name__)
 
 
+def _ivg_scope(kwargs: Dict[str, Any], *names: str) -> Dict[str, Any]:
+    """The ivg 4.x scoping keywords the caller set; unset ones are not sent.
+
+    `graph` selects a named graph (ivg's default graph is ''), `model_key` an
+    embedding route. Omitting them keeps the 4.x default and any engine that
+    predates the keyword working.
+    """
+    return {name: kwargs[name] for name in names if kwargs.get(name) is not None}
+
+
 class HybridRetrievalMethods:
     """Core retrieval methods for HybridGraphRAG pipeline."""
 
@@ -116,6 +126,7 @@ class HybridRetrievalMethods:
                 c=c,
                 query_vector=query_vector,
                 query_text=query_text,
+                **_ivg_scope(kwargs, "graph"),
             )
 
             # Convert RRF results to documents
@@ -148,7 +159,10 @@ class HybridRetrievalMethods:
                 )
             else:
                 text_results = self.iris_engine.kg_TXT(
-                    query_text=query_text, k=top_k, min_confidence=min_confidence
+                    query_text=query_text,
+                    k=top_k,
+                    min_confidence=min_confidence,
+                    **_ivg_scope(kwargs, "graph"),
                 )
 
             documents = convert_text_results_to_documents(
@@ -184,7 +198,10 @@ class HybridRetrievalMethods:
             # Use HNSW-optimized vector search
             label_filter = kwargs.get("label_filter")
             vector_results = self.iris_engine.kg_KNN_VEC(
-                query_vector=query_vector, k=top_k, label_filter=label_filter
+                query_vector=query_vector,
+                k=top_k,
+                label_filter=label_filter,
+                **_ivg_scope(kwargs, "graph", "model_key"),
             )
 
             # Convert vector results to documents

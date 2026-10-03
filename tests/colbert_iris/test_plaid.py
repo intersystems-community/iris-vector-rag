@@ -113,11 +113,11 @@ class TestPLAIDSchema:
 
     def test_centroid_count_matches_k(self, built_db, shared_engine):
         info = shared_engine.plaid_info("colbert_plaid")
-        assert info["nCentroids"] == N_CLUSTERS
+        assert info["nlist"] == N_CLUSTERS
 
     def test_doc_centroid_rows_populated(self, built_db, shared_engine):
         info = shared_engine.plaid_info("colbert_plaid")
-        assert info["nDocs"] > 0
+        assert info["indexed"] > 0
 
     def test_all_tokens_have_centroid_id(self, built_db, shared_engine):
         info = shared_engine.plaid_info("colbert_plaid")
@@ -125,7 +125,7 @@ class TestPLAIDSchema:
 
     def test_doc_centroids_covers_all_docs(self, built_db, shared_engine):
         info = shared_engine.plaid_info("colbert_plaid")
-        assert info["nDocs"] == N_DOCS
+        assert info["indexed"] == N_DOCS
 
 
 @pytest.mark.integration
@@ -141,7 +141,7 @@ class TestPLAIDBuild:
         b = _builder(populated_db, shared_engine)
         s1 = b.build(n_clusters=N_CLUSTERS)
         s2 = b.build(n_clusters=N_CLUSTERS)
-        assert shared_engine.plaid_info("colbert_plaid")["nCentroids"] == N_CLUSTERS
+        assert shared_engine.plaid_info("colbert_plaid")["nlist"] == N_CLUSTERS
         assert s1["n_clusters"] == s2["n_clusters"]
 
     def test_build_invalid_k_raises(self, populated_db, shared_engine):
