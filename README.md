@@ -120,8 +120,18 @@ scores = evaluate(EvaluationDataset(samples=[sample]),
 pip install iris-vector-rag[colbert]     # ColBERT/PyLate support
 pip install iris-vector-rag[dspy]        # DSPy prompt optimization
 pip install iris-vector-rag[evaluation]  # RAGAS evaluation framework
-pip install iris-vector-rag[api]         # REST API server (FastAPI + Redis)
+pip install iris-vector-rag[api]         # DEPRECATED: REST API, removed in 0.16
 ```
+
+## Deprecated: the REST API
+
+`iris_vector_rag.api` (the FastAPI service) is deprecated in 0.15 and is removed in
+0.16. It cannot serve a request as built and its document upload stores nothing.
+Importing it emits a `DeprecationWarning`. The `api` extra still installs for this
+release but is no longer part of `all`. Use the MCP server below, or call the
+pipelines from Python. The code and tests stay at the git tag `archive/rest-api-v1`;
+the design is kept in [docs/archived/rest-api/](docs/archived/rest-api/README.md)
+([ADR 0001](docs/adr/0001-retire-the-rest-api.md)).
 
 ## MCP Server
 
@@ -158,7 +168,7 @@ iris_vector_rag/
 ├── services/       # Entity extraction, storage adapters
 ├── config/         # Configuration management
 ├── mcp/            # MCP server implementation
-└── api/            # Optional REST API (FastAPI)
+└── api/            # DEPRECATED REST API (FastAPI), removed in 0.16
 ```
 
 ## License

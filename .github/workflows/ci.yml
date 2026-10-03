@@ -77,7 +77,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --extra dev --extra mcp --extra api
+          uv sync --extra dev --extra mcp
 
       # A failure listed in tests/contract/ci_known_failures.txt is quarantined.
       # Any other failure turns this job red.

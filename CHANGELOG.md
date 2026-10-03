@@ -36,6 +36,29 @@ cycle.
 - **Removed:** the Docker job (no `Dockerfile` exists), the coverage jobs and
   Codecov upload, and the duplicate Trivy job (`security.yml` scans).
 
+### Changed: the REST API is deprecated (0.15), removed in 0.16
+
+`iris_vector_rag.api` (the FastAPI service) is deprecated and will be removed in 0.16
+([ADR 0001](docs/adr/0001-retire-the-rest-api.md)). It cannot serve a request as built,
+its upload endpoint stores nothing, and no code or CI job runs it. Nothing is patched in
+this release.
+
+- **Importing `iris_vector_rag.api` emits one `DeprecationWarning`** that names the
+  removal release and the archive tag.
+- **The `api` extra is deprecated and no longer part of `all`.** `pip install
+iris-vector-rag[all]` no longer brings in `redis`, `bcrypt`, `python-jose`,
+  `email-validator` or `python-multipart`; `fastapi`, `uvicorn` and `websockets` stay
+  because the `mcp` extra needs them. `pip install iris-vector-rag[api]` still works
+  for this release. CI (`ci.yml`, `security.yml`) no longer installs `--extra api`.
+- **Code and design are kept.** The last commit containing the code and its tests is
+  the git tag `archive/rest-api-v1`. The architecture, routes, auth and rate-limit
+  model, WebSocket protocol, data model, configuration and a list of what a second
+  version must do differently are in [docs/archived/rest-api/](docs/archived/rest-api/README.md).
+- **If you use `[api]`:** pin `iris-vector-rag<0.16`, or take the code from the tag.
+- `tests/contract/test_mcp_bridge_contract.py::TestMCPBridgeIntegration::test_bridge_imports_pipeline_manager`
+  needs `bcrypt`, which CI no longer installs, so it joins `ci_known_failures.txt`. It
+  is settled with the fate of `mcp/` (its import of `api.services` is dead).
+
 ### iris-vector-graph 4.1
 
 IVR now requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 re-keyed `Graph_KG`

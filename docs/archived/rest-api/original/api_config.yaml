@@ -1,0 +1,157 @@
+# REST API Configuration for RAG Pipelines
+# Feature 042: Production-Grade REST API
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false  # Set to true for development
+  workers: 4     # Number of uvicorn workers (production)
+
+  # CORS settings
+  cors:
+    enabled: true
+    allow_origins:
+      - "http://localhost:3000"
+      - "http://localhost:8080"
+    allow_credentials: true
+    allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers: ["*"]
+
+# IRIS database connection pool settings
+# Based on research.md findings
+database:
+  connection_pool:
+    pool_size: 20           # Base connections
+    max_overflow: 10        # Additional connections under load
+    pool_recycle: 3600      # Recycle connections after 1 hour
+    pool_pre_ping: true     # Validate connections before use
+    pool_timeout: 30        # Seconds to wait for connection
+    echo_pool: false        # Log pool events (debug only)
+
+# Rate limiting configuration
+# Elasticsearch-inspired adaptive concurrency
+rate_limiting:
+  enabled: true
+  redis_url: "${REDIS_URL:-redis://localhost:6379/0}"
+  fallback_to_memory: true  # Use in-memory if Redis unavailable
+
+  # Default tier quotas
+  tiers:
+    basic:
+      requests_per_minute: 60
+      requests_per_hour: 1000
+      concurrent_requests: 10
+    premium:
+      requests_per_minute: 100
+      requests_per_hour: 5000
+      concurrent_requests: 50
+    enterprise:
+      requests_per_minute: 1000
+      requests_per_hour: 50000
+      concurrent_requests: 100
+
+# API key authentication
+authentication:
+  # bcrypt cost factor for password hashing
+  bcrypt_rounds: 12
+
+  # API key expiration (optional, in days)
+  default_expiration_days: 365
+
+  # Session settings for WebSocket
+  session_timeout_minutes: 5
+  heartbeat_interval_seconds: 30
+
+# Logging configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "json"  # json or text
+
+  # Request logging
+  log_requests: true
+  log_response_bodies: false  # Privacy - don't log response content
+
+  # Log retention (FR-036)
+  retention_days: 30
+  cleanup_schedule: "0 0 * * *"  # Daily at midnight (cron format)
+
+# Pipeline configuration
+pipelines:
+  # Which pipelines to initialize on startup
+  enabled:
+    - basic
+    - basic_rerank
+    - crag
+    - graphrag
+    - pylate_colbert
+
+  # Health check settings
+  health_check_interval_seconds: 30
+  health_check_timeout_seconds: 5
+
+  # Pipeline-specific timeouts (seconds)
+  timeouts:
+    basic: 60
+    basic_rerank: 90
+    crag: 120
+    graphrag: 180
+    pylate_colbert: 90
+
+# WebSocket configuration
+websocket:
+  # Maximum connections per API key
+  max_connections_per_key: 10
+
+  # Message queue settings
+  max_queue_size: 1000
+
+  # Ping/pong settings
+  ping_interval: 30
+  ping_timeout: 10
+
+  # Reconnection settings
+  allow_reconnection: true
+  reconnection_token_ttl_minutes: 10
+
+# Document upload configuration
+document_upload:
+  # File size limits (FR-022)
+  max_file_size_bytes: 104857600  # 100 MB
+
+  # Allowed MIME types
+  allowed_content_types:
+    - "text/plain"
+    - "application/pdf"
+    - "application/json"
+    - "text/markdown"
+
+  # Upload concurrency limits
+  max_concurrent_uploads: 5
+
+  # Retention for completed operations
+  operation_retention_days: 7
+
+# Performance settings
+performance:
+  # Request timeout (FR-FR-001)
+  request_timeout_seconds: 60
+
+  # Target latency (p95)
+  target_p95_latency_ms: 2000
+
+  # Metrics collection
+  collect_metrics: true
+  metrics_interval_seconds: 60
+
+# Development settings
+development:
+  # Enable detailed error messages in responses
+  debug_mode: false
+
+  # Enable API documentation
+  docs_enabled: true
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+
+  # Enable OpenAPI JSON endpoint
+  openapi_url: "/openapi.json"
