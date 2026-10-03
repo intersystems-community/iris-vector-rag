@@ -100,6 +100,38 @@ CR-02, CR-03, CR-09)
   `mix` with a filter skips the relation leg (relations carry no document metadata) and
   reports `degraded` with the reason in the result metadata.
 
+### Changed: RAG pipelines and the LLM factory
+
+Feature `pipelines-fix` of the 2026-10 review, the basic, rerank and CRAG pipelines and
+`get_llm_func` (PL-01, PL-02, PL-11, PL-12, PL-13, OS-10, OS-23).
+
+- **`get_llm_func` caches one client per argument set.** It kept a single client and
+  ignored its keyword arguments, so a second call with other arguments reused the first
+  client, and a function returned earlier called whichever client was built last. The
+  cache key is now provider, model, cache flag and the keyword arguments; each returned
+  function keeps its own client.
+- **`create_pipeline` passes `get_llm_func` only LLM arguments** (provider and model
+  name). `create_pipeline("basic", embedding_func=f)` with `OPENAI_API_KEY` set used to
+  hand `embedding_func` to the OpenAI client and fail.
+- **A failed rerank raises.** `BasicRAGRerankingPipeline._rerank_documents` swallowed its
+  error and returned the input order while the caller reported `reranked=True`. Pass
+  `allow_rerank_fallback=True` to keep the retrieval order instead; the result then
+  carries `reranked=False` and the error in `metadata["rerank_error"]`.
+- **`OPENAI_API_KEY` is required only without an `llm_func`.** Basic, rerank and CRAG
+  demanded the key whenever an answer was asked for, even with a local model injected.
+  With neither a key nor an `llm_func` the query still raises `ValueError`.
+- **CRAG reads its tables through the table shape.** The chunk search takes the table,
+  identifier, text and embedding column names, and the vector width, from the catalog, so
+  a legacy-shaped chunk table works and a query of the wrong width raises
+  `DimensionMismatchError`. The knowledge-base expansion goes through the vector store
+  instead of its own `RAG.SourceDocuments` SQL; the debug `SELECT TOP 3 ... text_content`
+  that ran on every call is gone, and so is the fallback that returned any rows with a
+  made-up score of 0.5 when embedding failed.
+- **CRAG calls the embedding function one way**: a list of texts in, a list of vectors
+  out. A function that answers otherwise raises `TypeError` naming it.
+- **`multi_query_rrf` ids of id-less documents are stable** across processes (a SHA-256 of
+  the content, not the salted `hash()` of its first 100 characters).
+
 ### Changed: no fake vectors, and one embedding dimension
 
 Failures that used to produce fake vectors now raise. This follows the connection-settings

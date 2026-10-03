@@ -29,7 +29,6 @@ def test_injected_llm_runs_without_key(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     result = _pipeline(lambda p: "local answer").query("what", top_k=1)
     assert result["answer"] == "local answer"
-    assert result["metadata"]["sources"] == result["sources"]
 
 
 def test_no_llm_no_key_raises(monkeypatch):

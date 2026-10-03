@@ -271,7 +271,6 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 "generated_answer": generate_answer and answer is not None,
                 "retrieval_method": retrieval_method,
                 "context_count": len(contexts_list),
-                "sources": sources,
                 **({"rerank_error": rerank_error} if rerank_error else {}),
             },
         }
