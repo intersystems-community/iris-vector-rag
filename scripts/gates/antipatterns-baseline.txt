@@ -9,8 +9,8 @@ catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:273
 catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:322
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:194
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:211
-catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:153
-catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:165
+catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:173
+catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:185
 catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:111
 catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:122
 catalog-read-outside-shape	iris_vector_rag/validation/orchestrator.py:1269
@@ -20,12 +20,12 @@ hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:134
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:31
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:57
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:75
-hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/ingest.py:150
+hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/ingest.py:180
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:117
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:142
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:70
-hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:52
-hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:60
+hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:63
+hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:71
 hardcoded-vector-type	iris_vector_rag/services/batch_entity_processor.py:176
 hardcoded-vector-type	iris_vector_rag/services/storage.py:439
 hardcoded-vector-type	iris_vector_rag/services/storage.py:478

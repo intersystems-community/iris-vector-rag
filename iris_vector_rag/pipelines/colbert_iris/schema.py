@@ -15,11 +15,22 @@ Index strategy:
 """
 
 import logging
-from typing import Optional
+import re
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
 TOKEN_DIM = 128
+
+
+def _is_missing_table(error: Exception) -> bool:
+    """True when `error` says the table does not exist (SQLCODE -30)."""
+    text = str(error).lower()
+    return (
+        bool(re.search(r"-30\b", text))
+        or "not found" in text
+        or "does not exist" in text
+    )
 
 
 class ColBERTSchema:
@@ -85,7 +96,6 @@ class ColBERTSchema:
         self,
         m: int = 16,
         ef_construction: int = 200,
-        token_dim: int = TOKEN_DIM,
     ) -> None:
         """Create HNSW index on token vectors.
 
@@ -124,22 +134,32 @@ class ColBERTSchema:
             cur.close()
 
     def drop_tables(self) -> None:
+        """Drop every ColBERT table.
+
+        A table that is already gone is fine; any other failure is collected and
+        raised after the rest were attempted, so a half-dropped schema is reported
+        rather than passed off as clean (PL-08).
+        """
+        failures: List[str] = []
         cur = self._conn.cursor()
-        for tbl in [
-            "RAG.DocumentTokenEmbeddings",
-            "RAG.ColBERTDocCentroids",
-            "RAG.ColBERTCentroids",
-            "RAG.ColBERTDocuments",
-        ]:
-            try:
-                cur.execute(f"DROP TABLE {tbl}")
-            except Exception:
-                pass
         try:
+            for tbl in [
+                "RAG.DocumentTokenEmbeddings",
+                "RAG.ColBERTDocCentroids",
+                "RAG.ColBERTCentroids",
+                "RAG.ColBERTDocuments",
+            ]:
+                try:
+                    cur.execute(f"DROP TABLE {tbl}")
+                except Exception as e:
+                    if _is_missing_table(e):
+                        continue
+                    failures.append(f"{tbl}: {e}")
             self._conn.commit()
-        except Exception:
-            pass
-        cur.close()
+        finally:
+            cur.close()
+        if failures:
+            raise RuntimeError("drop_tables failed for: " + "; ".join(failures))
 
     # ------------------------------------------------------------------
     # Inspection helpers used by tests / benchmarks

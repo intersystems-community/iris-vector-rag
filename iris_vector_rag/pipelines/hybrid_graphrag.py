@@ -837,41 +837,28 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         """
         Get document content associated with an entity ID.
 
-        Robust implementation with proper cursor cleanup and error handling.
+        Returns None when no document holds the entity, which callers skip. A database
+        error propagates; it is never turned into a made-up `"Entity: <id>"` string
+        that looks like content (PL-10). The table and its columns come from the
+        vector store's shape, the same source that wrote the rows.
         """
-        connection = None
-        cursor = None
-        try:
-            connection = self.connection_manager.get_connection()
-            cursor = connection.cursor()
+        shape = self.vector_store.shape()
+        identifier = shape.column_for(ColumnRole.IDENTIFIER).name
+        text = shape.column_for(ColumnRole.TEXT).name
 
-            # Try to find document content via entity relationships
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        try:
             cursor.execute(
-                """
-                SELECT s.text_content
-                FROM RAG.SourceDocuments s
-                JOIN RAG.Entities e ON e.source_doc_id = s.id
-                WHERE e.entity_id = ?
-                LIMIT 1
-            """,
+                f"SELECT TOP 1 s.{text} FROM {shape.qualified_name} s "
+                f"JOIN {shape.schema}.Entities e ON e.source_doc_id = s.{identifier} "
+                f"WHERE e.entity_id = ?",
                 [entity_id],
             )
-
             result = cursor.fetchone()
-            return result[0] if result else f"Entity: {entity_id}"
-
-        except Exception as e:
-            logger.warning(
-                f"Could not get document content for entity {entity_id}: {e}"
-            )
-            return f"Entity: {entity_id}"
+            return self._read_iris_data(result[0]) if result else None
         finally:
-            # Robust cursor cleanup - cursor is initialized to None, so this is safe
-            if cursor:
-                try:
-                    cursor.close()
-                except Exception as e:
-                    logger.warning(f"Error closing cursor: {e}")
+            cursor.close()
 
     def get_performance_statistics(self) -> Dict[str, Any]:
         """Get performance statistics for hybrid search components"""
@@ -942,22 +929,24 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
 
         graph_deleted = False
         vector_deleted = False
-        graph_error: Optional[Exception] = None
-        vector_error: Optional[Exception] = None
 
         if self.iris_engine is not None:
             try:
                 graph_deleted = bool(self.iris_engine.delete_node(node_id))
             except Exception as exc:
-                graph_error = exc
                 logger.warning(
                     "delete_node(%s): partial failure in graph store: %s", node_id, exc
                 )
                 if self.vector_store is not None:
                     try:
                         self.vector_store.delete_documents([node_id])
-                    except Exception:
-                        pass
+                    except Exception as vector_exc:
+                        # Both stores failed: surface both, the graph error first.
+                        raise RuntimeError(
+                            f"delete_node({node_id!r}) failed in the graph store "
+                            f"({exc}) and the vector delete that followed also "
+                            f"failed ({vector_exc})"
+                        ) from exc
                 raise
 
         if self.vector_store is not None:
@@ -965,7 +954,6 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 self.vector_store.delete_documents([node_id])
                 vector_deleted = True
             except Exception as exc:
-                vector_error = exc
                 logger.warning(
                     "delete_node(%s): partial failure in vector store: %s", node_id, exc
                 )

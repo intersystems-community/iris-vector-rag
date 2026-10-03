@@ -138,7 +138,7 @@ class TestPyLateColBERTPipeline:
 
         # Mock parent class load_documents to avoid path validation
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(
@@ -165,7 +165,7 @@ class TestPyLateColBERTPipeline:
 
         # Load documents first
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(
@@ -174,9 +174,7 @@ class TestPyLateColBERTPipeline:
             pipeline.load_documents(sample_documents)
 
         # Mock vector store similarity_search to return documents
-        pipeline.vector_store.similarity_search = Mock(
-            return_value=sample_documents[:4]
-        )
+        pipeline.vector_store.search_by_text = Mock(return_value=sample_documents[:4])
 
         # Call query - in fallback mode it behaves like BasicRAG
         result = pipeline.query("What is machine learning?", top_k=2)
@@ -238,7 +236,7 @@ class TestPyLateColBERTPipeline:
         # Should not crash with memory issues when processing documents
         try:
             with patch(
-                "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+                "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
             ) as mock_parent_load:
                 mock_parent_load.return_value = {"status": "success"}
                 pipeline.vector_store.add_documents = Mock(
@@ -286,7 +284,7 @@ class TestPyLateColBERTPipeline:
 
         # Load documents
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(
@@ -367,16 +365,14 @@ class TestPyLateColBERTPipeline:
 
         # Load documents
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(return_value=["id1", "id2"])
             pipeline.load_documents(sample_documents[:2])
 
         # Mock similarity search
-        pipeline.vector_store.similarity_search = Mock(
-            return_value=sample_documents[:2]
-        )
+        pipeline.vector_store.search_by_text = Mock(return_value=sample_documents[:2])
 
         # Query should work in fallback mode
         result = pipeline.query("test query", top_k=2)
@@ -418,14 +414,12 @@ class TestPyLateColBERTPipeline:
         )
 
         # Test with top_k=1
-        pipeline.vector_store.similarity_search = Mock(
-            return_value=sample_documents[:1]
-        )
+        pipeline.vector_store.search_by_text = Mock(return_value=sample_documents[:1])
         result1 = pipeline.query("query 1", top_k=1)
         assert "query" in result1
 
         # Test with top_k=10
-        pipeline.vector_store.similarity_search = Mock(return_value=sample_documents)
+        pipeline.vector_store.search_by_text = Mock(return_value=sample_documents)
         result10 = pipeline.query("query 2", top_k=10)
         assert "query" in result10
 
@@ -441,12 +435,14 @@ class TestPyLateColBERTPipeline:
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(return_value=[])
-            pipeline.load_documents(documents=[])
+            with pytest.raises(ValueError, match="Empty documents list"):
+                pipeline.load_documents(documents=[])
 
+        mock_parent_load.assert_not_called()
         assert pipeline.stats["documents_indexed"] == 0
 
     def test_load_documents_with_single_document(
@@ -463,7 +459,7 @@ class TestPyLateColBERTPipeline:
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(return_value=["id1"])
@@ -485,15 +481,13 @@ class TestPyLateColBERTPipeline:
 
         # Load docs and query
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(return_value=["id1"])
             pipeline.load_documents(sample_documents[:1])
 
-        pipeline.vector_store.similarity_search = Mock(
-            return_value=sample_documents[:2]
-        )
+        pipeline.vector_store.search_by_text = Mock(return_value=sample_documents[:2])
         result = pipeline.query("test", top_k=2)
 
         assert "metadata" in result
@@ -512,9 +506,7 @@ class TestPyLateColBERTPipeline:
             vector_store=mock_dependencies["vector_store"],
         )
 
-        pipeline.vector_store.similarity_search = Mock(
-            return_value=sample_documents[:2]
-        )
+        pipeline.vector_store.search_by_text = Mock(return_value=sample_documents[:2])
 
         # Execute multiple queries
         initial_count = pipeline.stats["queries_processed"]
@@ -539,7 +531,7 @@ class TestPyLateColBERTPipeline:
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(return_value=["id1", "id2"])
@@ -584,7 +576,7 @@ class TestPyLateColBERTPipeline:
         )
 
         # Mock empty search results
-        pipeline.vector_store.similarity_search = Mock(return_value=[])
+        pipeline.vector_store.search_by_text = Mock(return_value=[])
 
         result = pipeline.query("test query", top_k=5)
 
@@ -607,7 +599,7 @@ class TestPyLateColBERTPipeline:
         initial_count = len(pipeline._document_store)
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(
@@ -654,9 +646,7 @@ class TestPyLateColBERTPipeline:
             vector_store=mock_dependencies["vector_store"],
         )
 
-        pipeline.vector_store.similarity_search = Mock(
-            return_value=sample_documents[:2]
-        )
+        pipeline.vector_store.search_by_text = Mock(return_value=sample_documents[:2])
 
         # Reset mock to track calls
         mock_dependencies["llm_func"].reset_mock()
@@ -684,7 +674,7 @@ class TestPyLateColBERTPipeline:
         ]
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             mock_parent_load.return_value = {"status": "success"}
             pipeline.vector_store.add_documents = Mock(
@@ -698,7 +688,7 @@ class TestPyLateColBERTPipeline:
     def test_load_documents_with_file_path(self, test_pipeline):
         """Test loading documents from file path (delegates to parent)."""
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.load_documents"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.load_documents"
         ) as mock_parent_load:
             sample_docs = [
                 Document(page_content="Doc 1", metadata={"source": "file.txt"}),
@@ -712,19 +702,21 @@ class TestPyLateColBERTPipeline:
 
             result = test_pipeline.load_documents("/path/to/documents.txt")
 
-            mock_parent_load.assert_called_once_with("/path/to/documents.txt")
+            mock_parent_load.assert_called_once_with(
+                documents_path="/path/to/documents.txt"
+            )
             assert result["status"] == "success"
             assert test_pipeline.stats["documents_indexed"] == 2
             assert len(test_pipeline._document_store) == 2
 
     def test_query_generate_answer_false(self, test_pipeline, sample_documents):
         """Test query with generate_answer=False returns no answer."""
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:3]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:3],
@@ -743,7 +735,7 @@ class TestPyLateColBERTPipeline:
         test_pipeline.llm_func = None
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:3],
@@ -762,7 +754,7 @@ class TestPyLateColBERTPipeline:
     def test_query_no_relevant_documents(self, test_pipeline):
         """Test query when no documents are retrieved."""
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": [],
@@ -780,12 +772,12 @@ class TestPyLateColBERTPipeline:
 
     def test_query_with_custom_prompt(self, test_pipeline, sample_documents):
         """Test query with custom prompt."""
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:2]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:2],
@@ -804,12 +796,12 @@ class TestPyLateColBERTPipeline:
 
     def test_query_answer_generation_error(self, test_pipeline, sample_documents):
         """Test query handles answer generation errors gracefully."""
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:2]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:2],
@@ -825,12 +817,12 @@ class TestPyLateColBERTPipeline:
 
     def test_query_include_sources_false(self, test_pipeline, sample_documents):
         """Test query with include_sources=False omits sources."""
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:2]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:2],
@@ -839,16 +831,17 @@ class TestPyLateColBERTPipeline:
 
             result = test_pipeline.query("Test query", include_sources=False)
 
-            assert "sources" not in result
+            # The response shape is the same with or without sources (FR-006).
+            assert result["sources"] == []
 
     def test_query_include_sources_true(self, test_pipeline, sample_documents):
         """Test query with include_sources=True includes sources."""
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:2]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:2],
@@ -866,12 +859,12 @@ class TestPyLateColBERTPipeline:
 
     def test_query_response_format_consistency(self, test_pipeline, sample_documents):
         """Test query response has all expected fields."""
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:3]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:3],
@@ -945,12 +938,12 @@ class TestPyLateColBERTPipeline:
 
     def test_contexts_field_matches_documents(self, test_pipeline, sample_documents):
         """Test contexts field contains page_content from retrieved documents."""
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:3]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:3],
@@ -968,12 +961,12 @@ class TestPyLateColBERTPipeline:
         """Test stats are incremented correctly on query."""
         initial_count = test_pipeline.stats["queries_processed"]
 
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:2]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:2],
@@ -990,12 +983,12 @@ class TestPyLateColBERTPipeline:
         self, test_pipeline, sample_documents
     ):
         """Test reranking_operations stat remains 0 in fallback mode."""
-        test_pipeline.vector_store.similarity_search = Mock(
+        test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:5]
         )
 
         with patch(
-            "iris_rag.pipelines.basic.BasicRAGPipeline.query"
+            "iris_vector_rag.pipelines.basic.BasicRAGPipeline.query"
         ) as mock_parent_query:
             mock_parent_query.return_value = {
                 "retrieved_documents": sample_documents[:5],
