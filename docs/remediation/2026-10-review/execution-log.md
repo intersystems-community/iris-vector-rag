@@ -331,3 +331,36 @@ entry: feature, question, choice, why.
   versus the top-level `sources` key, and a patch target that no longer exists):
   they turn on `BasicRAGPipeline`'s input and response shape, which the sibling
   half owns.
+
+## Phase 4 (part 1)
+
+- **core-contracts.** CR-04: the base `query` parameter is renamed to `query`
+  (every pipeline and the validator already use it); `ingest()` passes
+  `documents=`, so the abstract `load_documents` makes the path optional; the
+  `Document` hash covers id and content only, so metadata mutation by fusion
+  cannot change it; a store without `clear_documents` makes `clear()` raise
+  `NotImplementedError`. CR-15 (the comment block in `Document`) is debt and
+  left alone. Not fixed, for later: `graphrag.load_documents(documents_path)`
+  requires a path and `iris_global_graphrag.load_documents` has a different
+  shape, so `ingest()` still fails on both; `basic.py`'s `retrieve` names its
+  parameter `query_text`.
+- **mcp-stdio-server.** `mcp/iris_llm_handler.py`, the unused range validators
+  and `MCPError` are deleted with the bridge; the `mcp/` tests run against a
+  thin in-process adapter over the real server; argument validation is ours, not
+  the SDK's, so messages name the field; the schema-file contract tests point at
+  the packaged JSON because `specs/043-complete-mcp-tools` does not exist. Tag
+  `archive/mcp-node-v1` is local, on `cba0986d`. Every query tool checks IRIS
+  first because `BasicRAGPipeline` logs a retrieval failure and still returns an
+  answer; revisit that guard now that `pipelines-fix` has landed. The console
+  script test skips in a venv without an editable install of the worktree.
+  `release.yml` still ignores `test_mcp_tool_schemas.py`, which passes now:
+  owner `ci-honesty` stage 2.
+- **pipelines-fix** was split into two agents by story (GraphRAG and ColBERT:
+  PL-03 to PL-10; RAG and LLM factory: PL-01, PL-02, PL-11, PL-12, PL-13, OS-10,
+  OS-23). The GraphRAG half also fixed `PyLateColBERTPipeline.load_documents`
+  iterating a path string character by character. Still open after both halves:
+  `test_mcp_basic_rag` "Document missing score" (`search_by_text` returns no
+  scores by design; the serializer is in `mcp/`), `CRAGPipeline.load_documents`
+  counting documents as loaded when the store raises,
+  `_get_documents_from_entities` swallowing a database error, and the CRAG
+  dimension-mismatch and fail-fast contract tests.
