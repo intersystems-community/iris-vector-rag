@@ -117,14 +117,7 @@ class CRAGPipeline(RAGPipeline):
             try:
                 from iris_vector_rag.common.utils import get_embedding_func
 
-                try:
-                    self.embedding_func = get_embedding_func()
-                except Exception as exc:
-                    logger.warning(
-                        "Embedding initialization failed; falling back to stub embedder: %s",
-                        exc,
-                    )
-                    self.embedding_func = get_embedding_func(provider="stub")
+                self.embedding_func = get_embedding_func()
             except ImportError:
                 logger.warning(
                     "Could not import get_embedding_func from iris_vector_rag.common.utils"

@@ -59,17 +59,14 @@ class HybridRetrievalMethods:
             # Generate query vector if not provided
             query_vector = kwargs.get("vector_query")
             if not query_vector and self.embedding_manager:
-                try:
-                    # Generate embedding for the query
-                    embedding = self.embedding_manager.get_embeddings([query_text])[0]
-                    query_vector = (
-                        str(embedding.tolist())
-                        if hasattr(embedding, "tolist")
-                        else str(list(embedding))
-                    )
-                except Exception as e:
-                    logger.warning(f"Could not generate query embedding: {e}")
-                    query_vector = None
+                # A failure propagates: searching on text alone would answer a vector
+                # question with a different kind of result and say nothing about it.
+                embedding = self.embedding_manager.get_embeddings([query_text])[0]
+                query_vector = (
+                    str(embedding.tolist())
+                    if hasattr(embedding, "tolist")
+                    else str(list(embedding))
+                )
 
             # Use fusion engine for multi-modal search
             fusion_results = self.fusion_engine.multi_modal_search(
@@ -103,16 +100,12 @@ class HybridRetrievalMethods:
             # Generate query vector if not provided
             query_vector = kwargs.get("vector_query")
             if not query_vector and self.embedding_manager:
-                try:
-                    embedding = self.embedding_manager.get_embeddings([query_text])[0]
-                    query_vector = (
-                        str(embedding.tolist())
-                        if hasattr(embedding, "tolist")
-                        else str(list(embedding))
-                    )
-                except Exception as e:
-                    logger.warning(f"Could not generate query embedding: {e}")
-                    raise ValueError("No query vector available for RRF search")
+                embedding = self.embedding_manager.get_embeddings([query_text])[0]
+                query_vector = (
+                    str(embedding.tolist())
+                    if hasattr(embedding, "tolist")
+                    else str(list(embedding))
+                )
 
             # Use RRF fusion
             k1 = kwargs.get("vector_k", top_k * 2)  # Get more vector candidates

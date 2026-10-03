@@ -8,12 +8,14 @@ Extended for Feature 051: IRIS EMBEDDING support with cache statistics tracking.
 """
 
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, cast
 
 from ..config.manager import ConfigurationManager
+from ..exceptions import EmbeddingError
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,7 @@ class CachedModelInstance:
     cache_misses: int = 0
     total_embeddings_generated: int = 0
     total_embedding_time_ms: float = 0.0  # Cumulative embedding time for averaging
+    embedding_calls: int = 0  # Timed embedding calls: the divisor for the average
 
 
 @dataclass
@@ -75,6 +78,9 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
 
     Performance improvement: 10-20x faster for repeated model access.
 
+    Raises whatever the load raises (`ImportError`, `OSError`, ...). Nothing stands in for
+    a model that would not load, and nothing failed is cached.
+
     Args:
         model_name: Name of the sentence-transformers model
         device: Device to load model on ('cpu', 'cuda', etc.)
@@ -84,15 +90,9 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
     """
     cache_key = f"{model_name}:{device}"
 
-    if cache_key in _SENTENCE_TRANSFORMER_CACHE:
-        cached = _SENTENCE_TRANSFORMER_CACHE[cache_key]
-        if (
-            type(cached).__module__.startswith("unittest.mock")
-            or "Mock" in type(cached).__name__
-        ):
-            del _SENTENCE_TRANSFORMER_CACHE[cache_key]
-        else:
-            return cached
+    cached = _SENTENCE_TRANSFORMER_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
 
     # Slow path: Load model with lock (only on cache miss)
     with _CACHE_LOCK:
@@ -100,61 +100,66 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
         if cache_key in _SENTENCE_TRANSFORMER_CACHE:
             return _SENTENCE_TRANSFORMER_CACHE[cache_key]
 
-        import hashlib
-        import random
+        from sentence_transformers import SentenceTransformer
 
-        class StubSentenceTransformer:
-            def __init__(self, dim: int = 384):
-                self.dim = dim
-
-            def encode(self, texts, convert_to_tensor=False, show_progress_bar=False):
-                if isinstance(texts, str):
-                    texts_list = [texts]
-                else:
-                    texts_list = list(texts)
-                embeddings = []
-                for text in texts_list:
-                    seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (
-                        2**32
-                    )
-                    rng = random.Random(seed)
-                    embeddings.append([rng.random() for _ in range(self.dim)])
-                return embeddings
-
-        try:
-            from sentence_transformers import SentenceTransformer
-
-            logger.info(
-                "Loading SentenceTransformer model (one-time initialization): %s on %s",
-                model_name,
-                device,
-            )
-            model = SentenceTransformer(model_name, device=device)
-        except Exception as exc:
-            logger.warning(
-                "SentenceTransformer import failed (%s). Falling back to stub embedder.",
-                exc,
-            )
-            model = StubSentenceTransformer()
-
-        if (
-            type(model).__module__.startswith("unittest.mock")
-            or "Mock" in type(model).__name__
-        ):
-            return StubSentenceTransformer()
-
+        logger.info(
+            "Loading SentenceTransformer model (one-time initialization): %s on %s",
+            model_name,
+            device,
+        )
+        model = SentenceTransformer(model_name, device=device)
         _SENTENCE_TRANSFORMER_CACHE[cache_key] = model
-        logger.info(f"✅ SentenceTransformer model '{model_name}' loaded and cached")
+        logger.info("SentenceTransformer model '%s' loaded and cached", model_name)
 
         return model
+
+
+# Known output widths, so a configured model needs no probe.
+KNOWN_MODEL_DIMENSIONS: Dict[str, int] = {
+    "sentence-transformers/all-MiniLM-L6-v2": 384,
+    "all-MiniLM-L6-v2": 384,
+    "all-mpnet-base-v2": 768,
+    "text-embedding-ada-002": 1536,
+    "text-embedding-3-small": 1536,
+    "text-embedding-3-large": 3072,
+    "bert-base-uncased": 768,
+    "bert-large-uncased": 1024,
+}
+
+DEFAULT_OPENAI_TIMEOUT_SECONDS = 60
+DEFAULT_OPENAI_BATCH_SIZE = 256
+
+_OFFLINE_HINT = (
+    "If this host cannot reach the model hub, set HF_HUB_OFFLINE=1 and point "
+    "embeddings.sentence_transformers.model_name at a model already on disk, or "
+    "configure a reachable real backend in embeddings.fallback_backends."
+)
+
+STUB_BACKEND = "stub"
+
+
+def _mean_pool(hidden_states, attention_mask):
+    """Mean of the token vectors that are real text, then unit length.
+
+    Padding positions are masked out, so a text's vector does not depend on how long the
+    longest text in its batch happens to be.
+    """
+    import torch
+
+    mask = attention_mask.unsqueeze(-1).to(hidden_states.dtype)
+    summed = (hidden_states * mask).sum(dim=1)
+    counts = mask.sum(dim=1).clamp(min=1e-9)
+    return torch.nn.functional.normalize(summed / counts, p=2, dim=1)
 
 
 class EmbeddingManager:
     """
     Manages embedding generation with multiple backends and fallback support.
 
-    Provides a unified interface for generating embeddings from text, with
-    automatic fallback to alternative backends if the primary fails.
+    Provides a unified interface for generating embeddings from text. The primary backend
+    is tried first, then each configured `fallback_backends` entry in order. When none
+    produces vectors it raises `EmbeddingError`: nothing is ever substituted for a real
+    model. The test embedder is reachable only by naming it (`provider: stub`).
     """
 
     def __init__(self, config_manager: ConfigurationManager):
@@ -165,18 +170,30 @@ class EmbeddingManager:
             config_manager: Configuration manager for embedding settings
         """
         self.config_manager = config_manager
-        self.embedding_config = self.config_manager.get("embeddings", {})
+        self.embedding_config = self.config_manager.get("embeddings", {}) or {}
 
         # Get primary and fallback backends
         self.primary_backend = self.embedding_config.get(
             "primary_backend", "sentence_transformers"
         )
-        self.fallback_backends = self.embedding_config.get(
-            "fallback_backends", ["openai"]
+        if self.embedding_config.get("provider") == STUB_BACKEND:
+            self.primary_backend = STUB_BACKEND
+        self.fallback_backends = list(
+            self.embedding_config.get("fallback_backends", ["openai"])
         )
+        if STUB_BACKEND in self.fallback_backends:
+            raise ValueError(
+                "The test embedder ('stub') cannot be a fallback backend: its vectors "
+                "would be mixed with a real model's. Name it as the provider instead "
+                "(embeddings.provider: stub)."
+            )
 
-        # Cache for loaded embedding functions
+        # Cache for loaded embedding functions, and why the others are not there
         self._embedding_functions: Dict[str, Callable] = {}
+        self._backend_errors: Dict[str, str] = {}
+        self._backend_widths: Dict[str, Callable[[], Optional[int]]] = {}
+        self._backend_models: Dict[str, str] = {}
+        self._dimension: Optional[int] = None
 
         # Initialize primary backend
         self._initialize_backend(self.primary_backend)
@@ -189,175 +206,147 @@ class EmbeddingManager:
             backend_name: Name of the backend to initialize
 
         Returns:
-            True if initialization successful, False otherwise
+            True if initialization successful, False otherwise. The reason a backend
+            could not start is kept in `_backend_errors` for `embed_texts` to report.
         """
+        creators = {
+            "sentence_transformers": self._create_sentence_transformers_function,
+            "openai": self._create_openai_function,
+            "huggingface": self._create_huggingface_function,
+            STUB_BACKEND: self._create_stub_function,
+        }
+        creator = creators.get(backend_name)
+        if creator is None:
+            self._backend_errors[backend_name] = (
+                f"unknown embedding backend {backend_name!r} "
+                f"(known: {', '.join(sorted(creators))})"
+            )
+            logger.error(self._backend_errors[backend_name])
+            return False
+
         try:
-            if backend_name == "sentence_transformers":
-                self._embedding_functions[backend_name] = (
-                    self._create_sentence_transformers_function()
-                )
-            elif backend_name == "openai":
-                self._embedding_functions[backend_name] = self._create_openai_function()
-            elif backend_name == "huggingface":
-                self._embedding_functions[backend_name] = (
-                    self._create_huggingface_function()
-                )
-            else:
-                logger.warning(f"Unknown embedding backend: {backend_name}")
-                return False
-
-            logger.info(f"Successfully initialized embedding backend: {backend_name}")
-            return True
-
+            self._embedding_functions[backend_name] = creator()
         except Exception as e:
+            self._backend_errors[backend_name] = f"{type(e).__name__}: {e}"
             logger.error(f"Failed to initialize embedding backend {backend_name}: {e}")
             return False
 
+        self._backend_errors.pop(backend_name, None)
+        logger.info(f"Successfully initialized embedding backend: {backend_name}")
+        return True
+
+    def _create_stub_function(self) -> Callable:
+        """The test embedder, at the configured dimension. Reachable by name only."""
+        from ..testing.embedder import MODEL_KEY, TestEmbedder
+
+        dimension = self.embedding_config.get("dimension")
+        if not dimension:
+            raise EmbeddingError(
+                "The test embedder needs embeddings.dimension: it has no model to "
+                "take a width from."
+            )
+        embedder = TestEmbedder(dimension=int(dimension))
+        self._backend_widths[STUB_BACKEND] = lambda: embedder.dimension
+        self._backend_models[STUB_BACKEND] = MODEL_KEY
+        return embedder.embed_texts
+
     def _create_sentence_transformers_function(self) -> Callable:
         """Create sentence transformers embedding function."""
-        try:
-            model_name = self.embedding_config.get("sentence_transformers", {}).get(
-                "model_name", "all-MiniLM-L6-v2"
-            )
-            device = self.embedding_config.get("sentence_transformers", {}).get(
-                "device", "cpu"
-            )
-            _get_cached_sentence_transformer(model_name, device)
-            logger.info(f"✅ SentenceTransformer initialized on device: {device}")
+        st_config = self.embedding_config.get("sentence_transformers", {})
+        model_name = st_config.get("model_name", "all-MiniLM-L6-v2")
+        device = st_config.get("device", "cpu")
+        _get_cached_sentence_transformer(model_name, device)
+        logger.info(f"SentenceTransformer initialized on device: {device}")
 
-            def embed_texts(texts: List[str]) -> List[List[float]]:
-                m = _get_cached_sentence_transformer(model_name, device)
-                embeddings: Any = m.encode(
-                    texts, convert_to_tensor=False, show_progress_bar=False
-                )
-                to_list = getattr(embeddings, "tolist", None)
-                if callable(to_list):
-                    return cast(List[List[float]], to_list())
-                return cast(List[List[float]], list(embeddings))
-
-            return embed_texts
-
-        except ImportError:
-            logger.error(
-                "sentence-transformers not available. Install with: pip install sentence-transformers"
+        def embed_texts(texts: List[str]) -> List[List[float]]:
+            m = _get_cached_sentence_transformer(model_name, device)
+            embeddings: Any = m.encode(
+                texts, convert_to_tensor=False, show_progress_bar=False
             )
-            raise
-        except Exception as e:
-            logger.error(f"Failed to create sentence transformers function: {e}")
-            raise
+            to_list = getattr(embeddings, "tolist", None)
+            if callable(to_list):
+                return cast(List[List[float]], to_list())
+            return cast(List[List[float]], list(embeddings))
+
+        def width() -> Optional[int]:
+            m = _get_cached_sentence_transformer(model_name, device)
+            reported = m.get_sentence_embedding_dimension()
+            return int(reported) if reported else None
+
+        self._backend_widths["sentence_transformers"] = width
+        self._backend_models["sentence_transformers"] = model_name
+        return embed_texts
 
     def _create_openai_function(self) -> Callable:
         """Create OpenAI embedding function."""
-        try:
-            import openai
+        import openai
 
-            openai_config = self.embedding_config.get("openai", {})
-            api_key = openai_config.get("api_key") or self.config_manager.get(
-                "openai:api_key"
-            )
-            model_name = openai_config.get("model_name", "text-embedding-ada-002")
+        openai_config = self.embedding_config.get("openai", {})
+        api_key = openai_config.get("api_key") or self.config_manager.get(
+            "openai:api_key"
+        )
+        model_name = openai_config.get("model_name", "text-embedding-ada-002")
+        timeout = openai_config.get("timeout", DEFAULT_OPENAI_TIMEOUT_SECONDS)
+        batch_size = int(openai_config.get("batch_size", DEFAULT_OPENAI_BATCH_SIZE))
 
-            if not api_key:
-                raise ValueError("OpenAI API key not found in configuration")
+        if not api_key:
+            raise ValueError("OpenAI API key not found in configuration")
 
-            client = openai.OpenAI(api_key=api_key)
+        client = openai.OpenAI(api_key=api_key, timeout=timeout)
 
-            def embed_texts(texts: List[str]) -> List[List[float]]:
-                response = client.embeddings.create(input=texts, model=model_name)
-                return [embedding.embedding for embedding in response.data]
+        def embed_texts(texts: List[str]) -> List[List[float]]:
+            vectors: List[List[float]] = []
+            for start in range(0, len(texts), batch_size):
+                chunk = texts[start : start + batch_size]
+                response = client.embeddings.create(input=chunk, model=model_name)
+                if len(response.data) != len(chunk):
+                    raise EmbeddingError(
+                        f"OpenAI returned {len(response.data)} embeddings for "
+                        f"{len(chunk)} texts",
+                        model_name=model_name,
+                    )
+                vectors.extend(item.embedding for item in response.data)
+            return vectors
 
-            return embed_texts
+        def width() -> Optional[int]:
+            if model_name in KNOWN_MODEL_DIMENSIONS:
+                return KNOWN_MODEL_DIMENSIONS[model_name]
+            return len(embed_texts(["dimension probe"])[0])
 
-        except ImportError:
-            logger.error("openai not available. Install with: pip install openai")
-            raise
-        except Exception as e:
-            logger.error(f"Failed to create OpenAI function: {e}")
-            raise
+        self._backend_widths["openai"] = width
+        self._backend_models["openai"] = model_name
+        return embed_texts
 
     def _create_huggingface_function(self) -> Callable:
         """Create Hugging Face embedding function."""
-        try:
-            import torch
+        import torch
 
-            from iris_vector_rag.common.huggingface_utils import (
-                download_huggingface_model,
-            )
+        from iris_vector_rag.common.huggingface_utils import download_huggingface_model
 
-            hf_config = self.embedding_config.get("huggingface", {})
-            model_name = hf_config.get(
-                "model_name", "sentence-transformers/all-MiniLM-L6-v2"
-            )
+        hf_config = self.embedding_config.get("huggingface", {})
+        model_name = hf_config.get(
+            "model_name", "sentence-transformers/all-MiniLM-L6-v2"
+        )
 
-            tokenizer, model = download_huggingface_model(model_name)
-
-            def embed_texts(texts: List[str]) -> List[List[float]]:
-                # Tokenize and encode
-                encoded_input = tokenizer(
-                    texts, padding=True, truncation=True, return_tensors="pt"
-                )
-
-                # Generate embeddings
-                with torch.no_grad():
-                    model_output = model(**encoded_input)
-                    # Use mean pooling
-                    embeddings = model_output.last_hidden_state.mean(dim=1)
-
-                to_list = getattr(embeddings, "tolist", None)
-                if callable(to_list):
-                    return cast(List[List[float]], to_list())
-                return cast(List[List[float]], list(embeddings))
-
-            return embed_texts
-
-        except ImportError:
-            logger.error(
-                "transformers not available. Install with: pip install transformers torch"
-            )
-            raise
-        except Exception as e:
-            logger.error(f"Failed to create Hugging Face function: {e}")
-            raise
-
-    def _create_fallback_function(self) -> Callable:
-        """Create a simple fallback embedding function."""
+        tokenizer, model = download_huggingface_model(model_name)
 
         def embed_texts(texts: List[str]) -> List[List[float]]:
-            """
-            Simple fallback that creates basic embeddings based on text length and hash.
-            This is not suitable for production but allows the system to continue functioning.
-            """
-            import hashlib
+            encoded_input = tokenizer(
+                texts, padding=True, truncation=True, return_tensors="pt"
+            )
+            with torch.no_grad():
+                model_output = model(**encoded_input)
+                embeddings = _mean_pool(
+                    model_output.last_hidden_state, encoded_input["attention_mask"]
+                )
+            return cast(List[List[float]], embeddings.tolist())
 
-            embeddings = []
-            for text in texts:
-                # Handle None or empty text
-                if text is None:
-                    text = ""
-                elif not isinstance(text, str):
-                    text = str(text)
+        def width() -> Optional[int]:
+            hidden = getattr(getattr(model, "config", None), "hidden_size", None)
+            return int(hidden) if hidden else None
 
-                # Create a simple embedding based on text characteristics
-                text_hash = hashlib.md5(text.encode()).hexdigest()
-
-                # Convert hash to numbers and normalize
-                hash_numbers = [
-                    int(text_hash[i : i + 2], 16) for i in range(0, len(text_hash), 2)
-                ]
-
-                # Pad or truncate to desired dimension (get from config or use 384 fallback)
-                target_dim = self.embedding_config.get("dimension", 384)
-                while len(hash_numbers) < target_dim:
-                    hash_numbers.extend(hash_numbers[: target_dim - len(hash_numbers)])
-                hash_numbers = hash_numbers[:target_dim]
-
-                # Normalize to [-1, 1] range
-                normalized = [(x - 127.5) / 127.5 for x in hash_numbers]
-                embeddings.append(normalized)
-
-            logger.warning(f"Using fallback embeddings for {len(texts)} texts")
-            return embeddings
-
+        self._backend_widths["huggingface"] = width
+        self._backend_models["huggingface"] = model_name
         return embed_texts
 
     def embed_text(self, text: str) -> List[float]:
@@ -397,9 +386,29 @@ class EmbeddingManager:
         """
         return self.embed_texts(texts)
 
+    def _backend_order(self) -> List[str]:
+        order = [self.primary_backend]
+        order.extend(b for b in self.fallback_backends if b not in order)
+        return order
+
+    def _run_backend(self, backend_name: str, texts: List[str]) -> List[List[float]]:
+        """One backend over all `texts`, in `batch_size` slices when configured."""
+        function = self._embedding_functions[backend_name]
+        batch_size = self.embedding_config.get("batch_size")
+        if not batch_size or len(texts) <= int(batch_size):
+            return function(texts)
+        vectors: List[List[float]] = []
+        for start in range(0, len(texts), int(batch_size)):
+            vectors.extend(function(texts[start : start + int(batch_size)]))
+        return vectors
+
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
         """
         Generate embeddings for multiple texts with fallback support.
+
+        The primary backend first, then each configured fallback in order. Raises
+        `EmbeddingError` naming every backend tried and why it failed when none produces
+        vectors of the dimension `get_embedding_dimension()` reports.
 
         Args:
             texts: List of input texts to embed
@@ -410,72 +419,113 @@ class EmbeddingManager:
         if not texts:
             return []
 
-        # Try primary backend first
-        if self.primary_backend in self._embedding_functions:
-            try:
-                return self._embedding_functions[self.primary_backend](texts)
-            except Exception as e:
-                logger.warning(f"Primary backend {self.primary_backend} failed: {e}")
-
-        # Try fallback backends
-        for backend_name in self.fallback_backends:
+        expected = self.get_embedding_dimension()
+        failures: List[str] = []
+        for backend_name in self._backend_order():
             if backend_name not in self._embedding_functions:
                 if not self._initialize_backend(backend_name):
+                    failures.append(
+                        f"{backend_name}: {self._backend_errors[backend_name]}"
+                    )
                     continue
-
             try:
-                logger.info(f"Using fallback backend: {backend_name}")
-                return self._embedding_functions[backend_name](texts)
+                vectors = self._run_backend(backend_name, texts)
+                self._check_width(backend_name, vectors, expected)
             except Exception as e:
-                logger.warning(f"Fallback backend {backend_name} failed: {e}")
+                reason = f"{type(e).__name__}: {e}"
+                logger.warning(f"Embedding backend {backend_name} failed: {reason}")
+                failures.append(f"{backend_name}: {reason}")
                 continue
+            if backend_name != self.primary_backend:
+                logger.warning(
+                    f"Primary backend {self.primary_backend} unavailable; "
+                    f"embedded with fallback backend {backend_name}"
+                )
+            return vectors
 
-        # If all backends fail, use simple fallback
-        logger.warning("All embedding backends failed, using simple fallback")
-        fallback_func = self._create_fallback_function()
-        return fallback_func(texts)
+        raise EmbeddingError(
+            "No embedding backend produced vectors. "
+            + "; ".join(failures)
+            + f". {_OFFLINE_HINT}",
+            backends=",".join(self._backend_order()),
+            text_count=len(texts),
+        )
+
+    @staticmethod
+    def _check_width(
+        backend_name: str, vectors: List[List[float]], expected: int
+    ) -> None:
+        """A backend whose vectors are not the manager's one dimension has failed."""
+        for vector in vectors:
+            if len(vector) != expected:
+                raise EmbeddingError(
+                    f"backend {backend_name} returned a {len(vector)}-dimensional vector "
+                    f"but this manager's embedding dimension is {expected}",
+                    backend=backend_name,
+                )
+
+    def _probe_dimension(self) -> int:
+        """The first backend that can say what width it produces decides."""
+        failures: List[str] = []
+        for backend_name in self._backend_order():
+            if backend_name not in self._embedding_functions:
+                if not self._initialize_backend(backend_name):
+                    failures.append(
+                        f"{backend_name}: {self._backend_errors[backend_name]}"
+                    )
+                    continue
+            try:
+                width = self._backend_widths[backend_name]()
+            except Exception as e:
+                failures.append(f"{backend_name}: {type(e).__name__}: {e}")
+                continue
+            if width:
+                configured = self.embedding_config.get("dimension")
+                source = "embeddings.dimension"
+                if not configured and os.environ.get("VECTOR_DIMENSION"):
+                    configured = os.environ["VECTOR_DIMENSION"]
+                    source = "VECTOR_DIMENSION"
+                if configured and int(configured) != width:
+                    raise EmbeddingError(
+                        f"{source} is {configured} but backend "
+                        f"{backend_name} ({self._backend_models.get(backend_name)}) "
+                        f"produces {width}-dimensional vectors. Remove the setting or "
+                        f"set it to {width}.",
+                        configured=configured,
+                        actual=width,
+                    )
+                return int(width)
+            failures.append(f"{backend_name}: reported no dimension")
+        raise EmbeddingError(
+            "Cannot determine the embedding dimension: "
+            + "; ".join(failures)
+            + f". {_OFFLINE_HINT}"
+        )
 
     def get_embedding_dimension(self) -> int:
         """
-        Get the dimension of embeddings produced by the current backend.
+        The dimension of the vectors this manager produces: the active backend's real
+        output width, computed once. `embeddings.dimension` is an override checked
+        against it, never a substitute for it.
 
-        Returns:
-            Embedding dimension
+        Raises:
+            EmbeddingError: no backend can report its width, or the override disagrees.
         """
-        # Try to get dimension from config first
-        dimension = self.embedding_config.get("dimension")
-        if dimension:
-            return dimension
+        if self._dimension is None:
+            self._dimension = self._probe_dimension()
+        return self._dimension
 
-        # Try to get from embedding config's model mapping
-        model_name = self.embedding_config.get("sentence_transformers", {}).get(
-            "model_name", "all-MiniLM-L6-v2"
+    @property
+    def model_key(self) -> str:
+        """The embedding identity of the active backend's model (`stub` for the test embedder)."""
+        for backend_name in self._backend_order():
+            if backend_name in self._backend_models:
+                return self._backend_models[backend_name]
+        if self._initialize_backend(self.primary_backend):
+            return self._backend_models[self.primary_backend]
+        raise EmbeddingError(
+            f"No embedding model is available: {self._backend_errors.get(self.primary_backend)}"
         )
-
-        # Use direct model-to-dimension mapping instead of dimension utils
-        known_dimensions = {
-            "sentence-transformers/all-MiniLM-L6-v2": 384,
-            "all-MiniLM-L6-v2": 384,
-            "all-mpnet-base-v2": 768,
-            "text-embedding-ada-002": 1536,
-            "text-embedding-3-small": 1536,
-            "text-embedding-3-large": 3072,
-            "bert-base-uncased": 768,
-            "bert-large-uncased": 1024,
-        }
-
-        if model_name in known_dimensions:
-            return known_dimensions[model_name]
-
-        # Otherwise, generate a test embedding to determine dimension
-        try:
-            test_embedding = self.embed_text("test")
-            return len(test_embedding)
-        except Exception as e:
-            # HARD FAIL - no fallback dimensions to hide configuration issues
-            error_msg = f"CRITICAL: Cannot determine embedding dimension: {e}"
-            logger.error(error_msg)
-            raise RuntimeError(error_msg) from e
 
     def is_available(self, backend_name: Optional[str] = None) -> bool:
         """
@@ -517,6 +567,7 @@ class EmbeddingManager:
                 return False
 
         self.primary_backend = backend_name
+        self._dimension = None
         logger.info(f"Switched to primary backend: {backend_name}")
         return True
 
@@ -562,8 +613,8 @@ def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
             total_calls = instance.cache_hits + instance.cache_misses
             hit_rate = instance.cache_hits / total_calls if total_calls > 0 else 0.0
             avg_time = (
-                instance.total_embedding_time_ms / total_calls
-                if total_calls > 0
+                instance.total_embedding_time_ms / instance.embedding_calls
+                if instance.embedding_calls > 0
                 else 0.0
             )
 
@@ -588,13 +639,17 @@ def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
             total_memory = sum(inst.memory_usage_mb for inst in _CACHE_STATS.values())
             total_calls = total_hits + total_misses
             hit_rate = total_hits / total_calls if total_calls > 0 else 0.0
+            timed_calls = sum(inst.embedding_calls for inst in _CACHE_STATS.values())
+            total_time = sum(
+                inst.total_embedding_time_ms for inst in _CACHE_STATS.values()
+            )
 
             return CacheStatistics(
                 config_name="<all>",
                 cache_hits=total_hits,
                 cache_misses=total_misses,
                 hit_rate=hit_rate,
-                avg_embedding_time_ms=0.0,
+                avg_embedding_time_ms=total_time / timed_calls if timed_calls else 0.0,
                 model_load_count=total_misses,
                 memory_usage_mb=total_memory,
                 device="mixed",
@@ -634,14 +689,13 @@ def clear_cache(config_name: Optional[str] = None):
                 logger.warning(f"Config '{config_name}' not found, nothing to clear")
                 return ClearCacheResult(models_cleared=0, memory_freed_mb=0.0)
 
-            # Cache keys are "model_name:device", check all possible devices
-            possible_devices = ["cuda:0", "mps", "cpu"]
-            cache_keys_to_remove = []
-
-            for device in possible_devices:
-                cache_key = f"{model_name}:{device}"
-                if cache_key in _SENTENCE_TRANSFORMER_CACHE:
-                    cache_keys_to_remove.append(cache_key)
+            # Cache keys are "model_name:device", and the device is whatever string the
+            # loader was given ("cuda", "cuda:0", "mps", "cpu", ...): match on the model.
+            cache_keys_to_remove = [
+                key
+                for key in _SENTENCE_TRANSFORMER_CACHE
+                if key.startswith(f"{model_name}:")
+            ]
 
             models_cleared = len(cache_keys_to_remove)
             memory_freed = 0.0
@@ -713,3 +767,4 @@ def _record_embedding_time(config_name: str, time_ms: float):
     with _STATS_LOCK:
         if config_name in _CACHE_STATS:
             _CACHE_STATS[config_name].total_embedding_time_ms += time_ms
+            _CACHE_STATS[config_name].embedding_calls += 1

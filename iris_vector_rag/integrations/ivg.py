@@ -203,3 +203,42 @@ def _has_4x_surface(module: Any) -> bool:
     except ImportError:
         return False
     return hasattr(migrations, "upgrade_to_4_0_0")
+
+
+def store_embedding(
+    engine,
+    node_id: str,
+    embedding: Sequence[float],
+    embedding_manager,
+    metadata: Optional[Dict[str, Any]] = None,
+    *,
+    graph: Optional[str] = None,
+):
+    """Write one vector through ivg, declaring the model that produced it.
+
+    `model_key` is the embedding manager's active model, so ivg refuses to mix stub and
+    real vectors, or two models, in one table without `force`. ivg's refusals (dimension
+    mismatch, identity conflict) reach the caller unchanged.
+    """
+    scope = {} if graph is None else {"graph": graph}
+    return engine.store_embedding(
+        node_id,
+        list(embedding),
+        metadata,
+        model_key=embedding_manager.model_key,
+        **scope,
+    )
+
+
+def store_embeddings(
+    engine,
+    items: List[Dict[str, Any]],
+    embedding_manager,
+    *,
+    graph: Optional[str] = None,
+):
+    """Write a batch of vectors through ivg under the active model's identity."""
+    scope = {} if graph is None else {"graph": graph}
+    return engine.store_embeddings(
+        items, model_key=embedding_manager.model_key, **scope
+    )

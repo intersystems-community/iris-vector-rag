@@ -9,18 +9,18 @@ This module bridges IRIS EMBEDDING columns with the Python embedding cache,
 solving the 720x slowdown issue (DP-442038) by caching models in memory.
 """
 
-from typing import List, Optional, Dict
-from dataclasses import dataclass
-import time
 import logging
+import time
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 from ..config.embedding_config import EmbeddingConfig, create_embedding_config
 from .manager import (
     _get_cached_sentence_transformer,
     _record_cache_hit,
     _record_cache_miss,
-    _record_embeddings_generated,
     _record_embedding_time,
+    _record_embeddings_generated,
 )
 
 logger = logging.getLogger(__name__)
@@ -196,6 +196,21 @@ def _detect_device(config: EmbeddingConfig) -> str:
         return "cpu"
 
 
+def _encode_in_batches(model, texts: List[str], batch_size: int) -> List[List[float]]:
+    """Encode `texts` in slices of `batch_size`, so one large call cannot exhaust memory."""
+    size = max(int(batch_size or 0), 1)
+    vectors: List[List[float]] = []
+    for start in range(0, len(texts), size):
+        encoded = model.encode(
+            texts[start : start + size],
+            convert_to_tensor=False,
+            show_progress_bar=False,
+        )
+        to_list = getattr(encoded, "tolist", None)
+        vectors.extend(to_list() if callable(to_list) else list(encoded))
+    return vectors
+
+
 def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
     """
     Generate embeddings for text using cached model (FR-001, FR-002).
@@ -324,8 +339,8 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
             )
 
     except Exception as e:
-        logger.warning(
-            "EMBEDDING_MODEL_LOAD_FAILED; using stub embeddings",
+        logger.error(
+            "EMBEDDING_MODEL_LOAD_FAILED",
             extra={
                 "config_name": config_name,
                 "model_name": config.model_name,
@@ -333,44 +348,17 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                 "error": str(e),
             },
         )
-        # Fallback stub model to keep contract tests working
-        import hashlib
-        import random
-
-        class StubSentenceTransformer:
-            def __init__(self, dim: int = 384):
-                self.dim = dim
-
-            def encode(self, texts, convert_to_tensor=False, show_progress_bar=False):
-                if isinstance(texts, str):
-                    texts_list = [texts]
-                else:
-                    texts_list = list(texts)
-                embeddings = []
-                for text in texts_list:
-                    seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (
-                        2**32
-                    )
-                    rng = random.Random(seed)
-                    embeddings.append([rng.random() for _ in range(self.dim)])
-                return embeddings
-
-        model = StubSentenceTransformer()
-        _SENTENCE_TRANSFORMER_CACHE[cache_key] = model
-        if not cache_hit:
-            model_load_time_ms = (time.time() - load_start) * 1000
-            _record_cache_miss(config_name, device, model_load_time_ms)
+        raise ValueError(
+            f"EMBEDDING_MODEL_LOAD_FAILED: cannot load {config.model_name!r} on "
+            f"{device}: {e}. Nothing is substituted for a model that will not load; if "
+            f"this host is offline, set HF_HUB_OFFLINE=1 and use a model already on disk."
+        ) from e
 
     # Generate embeddings
     try:
         # Time the embedding generation
         embed_start = time.time()
-        embeddings = model.encode(
-            texts, convert_to_tensor=False, show_progress_bar=False
-        )
-        embeddings_list = (
-            embeddings.tolist() if hasattr(embeddings, "tolist") else embeddings
-        )
+        embeddings_list = _encode_in_batches(model, texts, config.batch_size)
         embed_time_ms = (time.time() - embed_start) * 1000
 
         # Record embeddings generated and timing
@@ -407,9 +395,8 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
 
                 # Time CPU fallback embedding generation
                 embed_start = time.time()
-                embeddings = model_cpu.encode(texts, convert_to_tensor=False)
-                embeddings_list = (
-                    embeddings.tolist() if hasattr(embeddings, "tolist") else embeddings
+                embeddings_list = _encode_in_batches(
+                    model_cpu, texts, config.batch_size
                 )
                 embed_time_ms = (time.time() - embed_start) * 1000
                 device = "cpu"

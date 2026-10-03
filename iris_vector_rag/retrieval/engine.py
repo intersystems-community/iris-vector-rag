@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
+from iris_vector_rag.exceptions import EmbeddingError
+
 logger = logging.getLogger(__name__)
 
 # Imported at module level so tests can patch iris_vector_rag.retrieval.engine.RelationEmbeddingStore
@@ -161,17 +163,20 @@ class RetrievalEngine:
         return RelationEmbeddingStore(conn_mgr, cfg_mgr)
 
     def _embed_text_for_search(self, text: str) -> List[float]:
-        """Embed a query text for relation-embedding search."""
-        try:
-            cfg_mgr = getattr(self, "_config_manager", None)
-            if cfg_mgr is not None:
-                from iris_vector_rag.embeddings.manager import EmbeddingManager
+        """Embed a query text for relation-embedding search.
 
-                return EmbeddingManager(cfg_mgr).embed_text(text)
-        except Exception:
-            pass
-        # Fallback: zero vector (results in score=0 for all items, effectively random)
-        return [0.0] * 384
+        Raises `EmbeddingError` when it cannot: a zero vector would rank every relation
+        the same and return them as if they matched.
+        """
+        cfg_mgr = getattr(self, "_config_manager", None)
+        if cfg_mgr is None:
+            raise EmbeddingError(
+                "Cannot embed the query for relation search: the engine has no "
+                "configuration manager to build an embedding manager from."
+            )
+        from iris_vector_rag.embeddings.manager import EmbeddingManager
+
+        return EmbeddingManager(cfg_mgr).embed_text(text)
 
     def _retrieve_global(self, opts: Any) -> Dict[str, Any]:
         """Theme-level retrieval via relation embeddings (US1).

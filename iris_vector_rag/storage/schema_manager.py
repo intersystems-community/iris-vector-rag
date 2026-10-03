@@ -12,7 +12,7 @@ import os
 import re
 import time
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from iris_vector_rag.integrations.ivg import (
     IVG_REQUIRED_TABLES,
@@ -134,29 +134,29 @@ class SchemaManager:
         # Lazy initialization flag (Feature 078: Pure Constructors)
         self._initialized = False
 
+        # The embedding dimension is the active backend's real output width (G6 point 5),
+        # resolved on first use so that constructing a SchemaManager never loads a model.
+        # An explicit argument is the caller stating the width and is applied whichever
+        # branch below runs (ST-08).
+        self._base_embedding_dimension: Optional[int] = None
+        self._table_configs_data: Optional[Dict[str, Any]] = None
+        self._model_dimensions_data: Optional[Dict[str, int]] = None
+
         # Load and validate configuration on initialization (only if not already loaded)
         if not SchemaManager._config_loaded:
             self._load_and_validate_config()
             SchemaManager._config_loaded = True
         else:
             # Config already loaded by another instance - set instance attributes from config
-            # Use CloudConfiguration API for environment variable support (Feature 058)
-            cloud_config = self.config_manager.get_cloud_config()
-
             self.base_embedding_model = self.config_manager.get(
                 "embedding_model.name", "sentence-transformers/all-MiniLM-L6-v2"
             )
-            # Use cloud_config for vector dimension (supports VECTOR_DIMENSION env var)
-            self.base_embedding_dimension = cloud_config.vector.vector_dimension
-            if base_embedding_dimension is not None:
-                self.base_embedding_dimension = base_embedding_dimension
-
-            # Now build mappings (these methods reference the attributes we just set)
-            self._build_model_dimension_mapping()
-            self._build_table_configurations()
             logger.debug(
                 "Schema Manager: Using cached configuration from previous instance"
             )
+
+        if base_embedding_dimension is not None:
+            self.base_embedding_dimension = base_embedding_dimension
 
         # REMOVED: ensure_schema_metadata_table() call
         # Feature 078: Pure Constructors - schema initialization moved to lazy init on first use
@@ -224,22 +224,49 @@ class SchemaManager:
         """Load configuration from config manager and validate it makes sense."""
         logger.info("Schema Manager: Loading and validating configuration...")
 
-        # Use CloudConfiguration API for environment variable support (Feature 058)
-        cloud_config = self.config_manager.get_cloud_config()
-
         # Load base embedding model configuration
         self.base_embedding_model = self.config_manager.get(
             "embedding_model.name", "sentence-transformers/all-MiniLM-L6-v2"
         )
-        # Use cloud_config for vector dimension (supports VECTOR_DIMENSION env var)
-        self.base_embedding_dimension = cloud_config.vector.vector_dimension
 
-        # Validate configuration consistency
+    @property
+    def base_embedding_dimension(self) -> int:
+        """The one embedding dimension every table, migration and ivg engine uses.
+
+        An explicit constructor argument, else the embedding manager's dimension: the
+        active backend's real output width, with `embeddings.dimension` an override
+        checked against it. There is no default; it raises `EmbeddingError` when nothing
+        can say.
+        """
+        if getattr(self, "_base_embedding_dimension", None) is None:
+            from ..embeddings.manager import EmbeddingManager
+
+            dimension = EmbeddingManager(self.config_manager).get_embedding_dimension()
+            self._set_base_embedding_dimension(dimension)
+        return cast(int, self._base_embedding_dimension)
+
+    @base_embedding_dimension.setter
+    def base_embedding_dimension(self, dimension: int) -> None:
+        self._set_base_embedding_dimension(dimension)
+
+    def _set_base_embedding_dimension(self, dimension: int) -> None:
+        self._base_embedding_dimension = dimension
         self._validate_configuration()
+        self._table_configs_data = None
+        self._model_dimensions_data = None
+        getattr(self, "_dimension_cache", {}).clear()
 
-        # Build mappings for dimension lookup and table configuration
-        self._build_model_dimension_mapping()
-        self._build_table_configurations()
+    @property
+    def _table_configs(self) -> Dict[str, Any]:
+        if getattr(self, "_table_configs_data", None) is None:
+            self._build_table_configurations()
+        return cast(Dict[str, Any], self._table_configs_data)
+
+    @property
+    def _model_dimensions(self) -> Dict[str, int]:
+        if getattr(self, "_model_dimensions_data", None) is None:
+            self._build_model_dimension_mapping()
+        return cast(Dict[str, int], self._model_dimensions_data)
 
     def _detect_iris_vector_graph(self) -> bool:
         """Detect iris-vector-graph package availability without importing it."""
@@ -512,7 +539,7 @@ class SchemaManager:
 
         connection = self.connection_manager.get_connection()
         if not dry_run:
-            dimension = int(getattr(self, "base_embedding_dimension", 384) or 384)
+            dimension = self.base_embedding_dimension
             create_graph_engine(
                 connection, embedding_dimension=dimension
             ).initialize_schema()
@@ -521,7 +548,7 @@ class SchemaManager:
     def _initialize_ivg_schema(self) -> Dict[str, Any]:
         """Delegate Graph_KG schema creation to iris-vector-graph."""
         connection = self.connection_manager.get_connection()
-        dimension = int(getattr(self, "base_embedding_dimension", 384) or 384)
+        dimension = self.base_embedding_dimension
         engine = create_graph_engine(connection, embedding_dimension=dimension)
         status = engine.initialize_schema()
         return status if isinstance(status, dict) else {"status": status}
@@ -551,30 +578,20 @@ class SchemaManager:
     def _build_model_dimension_mapping(self):
         """Build unified model-to-dimension mapping from configuration."""
         # Start with known model dimensions
-        self._model_dimensions = {
-            "all-MiniLM-L6-v2": 384,
-            "sentence-transformers/all-MiniLM-L6-v2": 384,
-            "all-mpnet-base-v2": 768,
-            "text-embedding-ada-002": 1536,
-            "text-embedding-3-small": 1536,
-            "text-embedding-3-large": 3072,
-            "bert-base-uncased": 768,
-            "bert-large-uncased": 1024,
-        }
+        from ..embeddings.manager import KNOWN_MODEL_DIMENSIONS
+
+        dimensions = dict(KNOWN_MODEL_DIMENSIONS)
 
         # Add configured models
-        self._model_dimensions[self.base_embedding_model] = (
-            self.base_embedding_dimension
-        )
+        dimensions[self.base_embedding_model] = self.base_embedding_dimension
+        self._model_dimensions_data = dimensions
 
-        logger.debug(
-            f"Model-dimension mapping: {len(self._model_dimensions)} models configured"
-        )
+        logger.debug(f"Model-dimension mapping: {len(dimensions)} models configured")
 
     def _build_table_configurations(self):
         """Build table-specific configurations from config."""
         # Table-specific configurations based on config
-        self._table_configs = {
+        self._table_configs_data = {
             "SourceDocuments": {
                 "embedding_column": "embedding",
                 "uses_document_embeddings": True,
@@ -599,7 +616,7 @@ class SchemaManager:
                 "embedding_column": "relation_embedding",
                 "uses_document_embeddings": False,
                 "default_model": self.base_embedding_model,
-                "dimension": 384,
+                "dimension": self.base_embedding_dimension,
                 "supports_vector_search": True,
                 "supports_graph_traversal": True,
             },
@@ -648,7 +665,7 @@ class SchemaManager:
         }
 
         logger.debug(
-            f"Table configurations: {len(self._table_configs)} tables configured"
+            f"Table configurations: {len(self._table_configs_data)} tables configured"
         )
 
     def ensure_schema_metadata_table(self):
@@ -2324,12 +2341,11 @@ class SchemaManager:
     def _create_source_documents_table(self, cursor) -> bool:
         """Create SourceDocuments in the canonical shape."""
         try:
-            embedding_config = self.config_manager.get_embedding_config()
             cursor.execute(
                 self._canonical_create_sql(
                     CANONICAL_DOCUMENT_SHAPE,
                     "SourceDocuments",
-                    embedding_config.get("dimension", 384),
+                    self.get_vector_dimension("SourceDocuments"),
                 )
             )
             return True
@@ -2449,7 +2465,7 @@ class SchemaManager:
                 self._canonical_create_sql(
                     CANONICAL_CHUNK_SHAPE,
                     "DocumentChunks",
-                    self.config_manager.get("embedding:dimension", 384),
+                    self.get_vector_dimension("DocumentChunks"),
                 )
             )
             cursor.execute(

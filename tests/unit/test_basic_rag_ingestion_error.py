@@ -5,14 +5,16 @@ Tests verify that document ingestion failures are properly reported as Ingestion
 with accurate counts rather than silently converting failures to success.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
-from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+import pytest
+
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.exceptions import IngestionError
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 
 
+@pytest.mark.usefixtures("use_test_embedder")
 class TestBasicRAGIngestionError:
     """Test suite for BasicRAGPipeline ingestion error handling."""
 

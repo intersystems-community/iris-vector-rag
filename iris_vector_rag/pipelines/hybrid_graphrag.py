@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Optional, TypedDict
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
 from ..core.models import Document
+from ..exceptions import DimensionMismatchError
 from ..storage.catalog import IRISCatalogReader
 from ..storage.shape_resolver import TableShapeResolver
 from ..storage.table_shape import ColumnRole, TableShape
@@ -33,10 +34,6 @@ class AttachResult(TypedDict):
     dimension: int
     row_count: int
     has_hnsw_index: Optional[bool]
-
-
-class DimensionMismatchError(ValueError):
-    pass
 
 
 class HybridGraphRAGPipeline(GraphRAGPipeline):
@@ -151,7 +148,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             try:
                 self.iris_engine = modules["IRISGraphEngine"](
                     iris_connection,
-                    embedding_dimension=self._ivg_embedding_dimension(),
+                    embedding_dimension=self.embedding_manager.get_embedding_dimension(),
                 )
                 self.fusion_engine = modules["HybridSearchFusion"](self.iris_engine)
                 self.text_engine = modules["TextSearchEngine"](iris_connection)
@@ -177,14 +174,6 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         except Exception as e:
             logger.error(f"Failed to initialize iris_vector_graph components: {e}")
             raise
-
-    def _ivg_embedding_dimension(self) -> int:
-        if self.schema_manager is not None and hasattr(
-            self.schema_manager, "base_embedding_dimension"
-        ):
-            return int(self.schema_manager.base_embedding_dimension)
-        embedding_config = self.config_manager.get_embedding_config()
-        return int(embedding_config.get("dimension") or 384)
 
     def _catalog_connection(self):
         """The connection the catalog is read on.

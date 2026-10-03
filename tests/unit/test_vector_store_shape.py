@@ -104,6 +104,8 @@ def make_store(shape: str, cursor: FakeCursor, recorded_catalog) -> IRISVectorSt
             return {"table_name": table}
         if key == "embedding_model.name":
             return "sentence-transformers/all-MiniLM-L6-v2"
+        if key == "embeddings":  # the test embedder, asked for by name (G6)
+            return {"provider": "stub", "dimension": DIM}
         return default
 
     config.get.side_effect = config_get

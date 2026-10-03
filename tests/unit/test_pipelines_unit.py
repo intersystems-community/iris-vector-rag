@@ -30,6 +30,8 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
             "max_results": 10,
             "vector_store:table_name": "documents",
             "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            # The test embedder, asked for by name (G6): nothing is implied.
+            "embeddings": {"provider": "stub", "dimension": 384},
         }.get(key, default)
 
         # Configure mock LLM

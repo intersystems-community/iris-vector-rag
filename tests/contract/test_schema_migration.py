@@ -1,6 +1,6 @@
 """Contract tests for RelationEmbeddingStore schema migration — Feature 081."""
 
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, call, patch
 
 
 def _make_store():
@@ -8,6 +8,10 @@ def _make_store():
 
     conn_mgr = MagicMock()
     cfg_mgr = MagicMock()
+    # The column's width is the embedding manager's; ask for the test embedder by name.
+    cfg_mgr.get.side_effect = lambda key, default=None: (
+        {"provider": "stub", "dimension": 384} if key == "embeddings" else default
+    )
     return RelationEmbeddingStore(conn_mgr, cfg_mgr)
 
 
