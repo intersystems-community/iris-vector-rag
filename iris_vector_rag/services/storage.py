@@ -7,12 +7,12 @@ Follows existing IRIS RAG patterns for database integration.
 import json
 import logging
 import re
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
 from ..core.models import Entity, Relationship
+from ..exceptions import RAGException
 from ..storage.catalog import IRISCatalogReader
 from ..storage.schema_manager import SchemaManager
 from ..storage.shape_resolver import TableShapeResolver
@@ -22,7 +22,7 @@ from ..storage.table_shape import (
     TableNotFound,
     TableShape,
 )
-from .batch_entity_processor import BatchEntityProcessor
+from .batch_entity_processor import BatchEntityProcessor, to_vector_expression
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,19 @@ logger = logging.getLogger(__name__)
 #: the vector store uses: `LIKE` against a LONGVARCHAR column matches nothing at all
 #: in IRIS, silently, so the text is narrowed to a searchable width first.
 _STREAM_METADATA_PROJECTION = 32000
+
+
+class EntityStorageError(RAGException):
+    """Entities or relationships could not be stored.
+
+    `stored` is how many of the batch were written before the failure; `failed` lists
+    `{"entity_id", "reason"}` for those that were not.
+    """
+
+    def __init__(self, message: str, stored: int = 0, failed: Optional[list] = None):
+        super().__init__(message)
+        self.stored = stored
+        self.failed = failed or []
 
 
 def _split_table(qualified: str) -> tuple[str, str]:
@@ -109,6 +122,7 @@ class EntityStorageAdapter:
         # Table existence check caching (performance optimization - prevents redundant checks)
         # Performance fix: 99.96% reduction in table checks (59,564 → 22 calls)
         self._tables_ensured = False
+        self._configuration: Optional[ConfigurationManager] = None
 
         # Initialize optimized batch processor (Feature 057 - 30-64 sec savings per ticket)
         batch_size = storage_config.get("batch_size", 32)
@@ -116,12 +130,19 @@ class EntityStorageAdapter:
             connection_manager=connection_manager,
             config=config,
             batch_size=batch_size,
+            source_document_resolver=self._resolve_source_document,
         )
 
         logger.info(
             f"EntityStorageAdapter initialized with tables: {self.entities_table}, {self.relationships_table}"
         )
         logger.info(f"BatchEntityProcessor initialized (batch_size={batch_size})")
+
+    def _config_manager(self) -> ConfigurationManager:
+        """One `ConfigurationManager` for this adapter, built on first use."""
+        if self._configuration is None:
+            self._configuration = ConfigurationManager()
+        return self._configuration
 
     def _ensure_kg_tables(self) -> None:
         """
@@ -133,12 +154,15 @@ class EntityStorageAdapter:
         # Performance optimization: Skip if tables already ensured
         if self._tables_ensured:
             logger.debug("Tables already ensured, skipping check (cached)")
-            self._ensure_entity_columns()
             return
 
         try:
+            # The tables live in the entities table's own schema, not whatever
+            # schema a fresh ConfigurationManager would default to.
             schema_manager = SchemaManager(
-                self.connection_manager, ConfigurationManager()
+                self.connection_manager,
+                self._config_manager(),
+                schema_prefix=_schema_of(self.entities_table),
             )
             # Ensure Entities first (depends on SourceDocuments)
             success = schema_manager.ensure_table_schema("Entities")
@@ -368,9 +392,6 @@ class EntityStorageAdapter:
         elif kwargs:
             raise ValueError("Provide either an Entity or keyword fields, not both")
 
-        # Cache entity for in-process search, even if DB write fails
-        self._entity_cache[str(entity.id)] = entity
-
         conn = None
         cursor = None
         try:
@@ -391,6 +412,8 @@ class EntityStorageAdapter:
             if isinstance(entity.metadata, dict):
                 description = entity.metadata.get("description")
                 embedding = entity.metadata.get("embedding")
+            if embedding is not None and len(embedding) == 0:
+                embedding = None  # an empty vector has no width to store
 
             # Determine canonical ID to use (dedupe)
             target_entity_id = entity_id
@@ -436,7 +459,7 @@ class EntityStorageAdapter:
                     embedding_str = json.dumps(embedding)
                     update_sql = f"""
                         UPDATE {self.entities_table}
-                        SET entity_name = ?, entity_type = ?, source_doc_id = ?, description = ?, confidence = ?, embedding = TO_VECTOR(?, FLOAT, 384)
+                        SET entity_name = ?, entity_type = ?, source_doc_id = ?, description = ?, confidence = ?, embedding = {to_vector_expression(len(embedding))}
                         WHERE entity_id = ?
                     """
                     params = [
@@ -475,7 +498,7 @@ class EntityStorageAdapter:
                     insert_sql = f"""
                         INSERT INTO {self.entities_table}
                         (entity_id, entity_name, entity_type, source_doc_id, description, confidence, embedding)
-                        VALUES (?, ?, ?, ?, ?, ?, TO_VECTOR(?, FLOAT, 384))
+                        VALUES (?, ?, ?, ?, ?, ?, {to_vector_expression(len(embedding))})
                     """
                     params = [
                         entity_id,
@@ -655,15 +678,17 @@ class EntityStorageAdapter:
 
     def store_entities_batch(self, entities: List[Entity]) -> int:
         """
-        Store multiple entities using optimized batch processor (Feature 057).
+        Store multiple entities using the batch processor (Feature 057).
 
-        Performance: 5-10x faster than serial storage for 10+ entities.
-        - Serial: 40-70 seconds for 10 entities (4-7s per entity)
-        - Batch: 6-10 seconds for 10 entities (single transaction)
-        - Speedup: 30-64 seconds saved per ticket
+        Chunked by ``storage.batch_size``; existing entity ids are updated, new ones
+        inserted; ``confidence`` is written.
 
         Returns:
-            Number of successfully stored entities
+            Number of entities stored (all of them, or this raises).
+
+        Raises:
+            EntityStorageError: some entities were not stored. ``stored`` and
+                ``failed`` on the exception say which.
         """
         if not entities:
             return 0
@@ -671,28 +696,33 @@ class EntityStorageAdapter:
         # Ensure tables exist before batch storage
         self._ensure_kg_tables()
 
-        # Use optimized batch processor with executemany()
         result = self.batch_processor.store_entities_batch(
             entities, validate_count=True
         )
 
         if not result.get("validation_passed", False):
-            logger.error(
-                f"Entity batch storage validation failed: "
-                f"{result.get('entities_stored', 0)}/{len(entities)} stored"
+            raise EntityStorageError(
+                result.get("error")
+                or f"Entity batch storage failed: {result.get('entities_stored', 0)}"
+                f"/{len(entities)} stored",
+                stored=result.get("entities_stored", 0),
+                failed=result.get("failed", []),
             )
 
         return result.get("entities_stored", 0)
 
     def store_relationships_batch(self, relationships: List[Relationship]) -> int:
         """
-        Store multiple relationships using optimized batch processor (Feature 057).
+        Store multiple relationships using the batch processor (Feature 057).
 
-        Performance: 5-10x faster than serial storage for 5+ relationships.
         Includes foreign key validation to prevent orphaned relationships.
 
         Returns:
-            Number of successfully stored relationships
+            Number of relationships stored.
+
+        Raises:
+            EntityStorageError: a relationship referenced an entity that is not
+                stored, or the write failed.
         """
         if not relationships:
             return 0
@@ -700,70 +730,94 @@ class EntityStorageAdapter:
         # Ensure tables exist before batch storage
         self._ensure_kg_tables()
 
-        # Use optimized batch processor with executemany() and FK validation
         result = self.batch_processor.store_relationships_batch(
             relationships, validate_foreign_keys=True
         )
 
         if not result.get("validation_passed", False):
             orphaned = result.get("orphaned_relationships", 0)
-            logger.error(
-                f"Relationship batch storage validation failed: "
-                f"{orphaned} orphaned relationships detected"
+            raise EntityStorageError(
+                result.get("error")
+                or f"Relationship batch storage failed: {orphaned} orphaned "
+                "relationships detected",
+                stored=result.get("relationships_stored", 0),
             )
 
         return result.get("relationships_stored", 0)
 
-    def get_entities_by_document(self, document_id: str) -> List[Entity]:
-        """Retrieve all entities for a specific document."""
+    def _read(self, sql: str, params: Optional[list] = None) -> list:
+        """Run a read and return its rows. Errors propagate: an empty list means
+        "no rows", never "the query failed"."""
+        self._ensure_kg_tables()
+        conn = self.connection_manager.get_connection()
+        cursor = conn.cursor()
         try:
-            self.connection_manager.get_connection()
+            cursor.execute(sql, params or [])
+            return [tuple(row) for row in cursor.fetchall()]
+        finally:
+            cursor.close()
 
-            # For now, return empty list (implement actual query)
-            logger.debug(f"Retrieving entities for document {document_id}")
+    _ENTITY_COLUMNS = (
+        "entity_id, entity_name, entity_type, source_doc_id, description, confidence"
+    )
 
-            # TODO: Implement actual database query
-            # Example: SELECT * FROM RAG.Entities WHERE source_document_id = ?
+    @staticmethod
+    def _entity_from_row(row: tuple) -> Entity:
+        entity_id, name, entity_type, source_doc, description, confidence = row
+        return Entity(
+            id=str(entity_id),
+            text=str(name),
+            entity_type=str(entity_type),
+            confidence=float(confidence) if confidence is not None else 0.0,
+            start_offset=0,
+            end_offset=0,
+            source_document_id=str(source_doc) if source_doc is not None else "",
+            metadata={"description": description} if description else {},
+        )
 
-            return []
+    def get_entities_by_document(self, document_id: str) -> List[Entity]:
+        """Entities stored with ``source_doc_id = document_id``.
 
-        except Exception as e:
-            logger.error(f"Failed to retrieve entities for document {document_id}: {e}")
-            return []
+        Offsets are not stored and come back as 0.
+        """
+        rows = self._read(
+            f"SELECT {self._ENTITY_COLUMNS} FROM {self.entities_table} "
+            "WHERE source_doc_id = ?",
+            [document_id],
+        )
+        return [self._entity_from_row(r) for r in rows]
 
     def get_relationships_by_document(self, document_id: str) -> List[Relationship]:
-        """Retrieve all relationships for a specific document."""
-        try:
-            self.connection_manager.get_connection()
-
-            # For now, return empty list
-            logger.debug(f"Retrieving relationships for document {document_id}")
-
-            # TODO: Implement actual database query
-
-            return []
-
-        except Exception as e:
-            logger.error(
-                f"Failed to retrieve relationships for document {document_id}: {e}"
+        """Relationships stored with ``source_document = document_id``."""
+        rows = self._read(
+            "SELECT relationship_id, source_entity_id, target_entity_id, "
+            "relationship_type, confidence, source_document "
+            f"FROM {self.relationships_table} WHERE source_document = ?",
+            [document_id],
+        )
+        return [
+            Relationship(
+                id=str(rid),
+                source_entity_id=str(src),
+                target_entity_id=str(dst),
+                relationship_type=str(rtype),
+                confidence=float(confidence) if confidence is not None else 0.0,
+                source_document_id=str(doc) if doc is not None else "",
             )
-            return []
+            for rid, src, dst, rtype, confidence, doc in rows
+        ]
 
     def get_entities_by_type(self, entity_type: str, limit: int = 100) -> List[Entity]:
-        """Retrieve entities by type."""
-        try:
-            self.connection_manager.get_connection()
-
-            logger.debug(f"Retrieving entities of type {entity_type} (limit: {limit})")
-
-            # TODO: Implement actual database query
-            # Example: SELECT * FROM RAG.Entities WHERE type = ? LIMIT ?
-
-            return []
-
-        except Exception as e:
-            logger.error(f"Failed to retrieve entities by type {entity_type}: {e}")
-            return []
+        """Up to ``limit`` entities whose type is ``entity_type``."""
+        top = int(limit)
+        if top < 1:
+            raise ValueError(f"limit must be at least 1, got {limit}")
+        rows = self._read(
+            f"SELECT TOP {top} {self._ENTITY_COLUMNS} FROM {self.entities_table} "
+            "WHERE entity_type = ?",
+            [entity_type],
+        )
+        return [self._entity_from_row(r) for r in rows]
 
     def search_entities(
         self,
@@ -778,8 +832,11 @@ class EntityStorageAdapter:
         """
         Search for entities by name with fuzzy matching.
 
-        Supports case-insensitive substring matching using SQL LIKE operator
-        for finding entity name variations (e.g., "Scott Derrickson" matches "Scott Derrickson director").
+        The entity-type and confidence filters run in SQL. The name match does not:
+        every remaining row is read and compared in Python (Levenshtein distance,
+        token subset, substring), so cost grows with the size of the entities table.
+        Matches are case-insensitive (e.g. "Scott Derrickson" matches
+        "Scott Derrickson director").
 
         Args:
             query: Search query string
@@ -806,8 +863,8 @@ class EntityStorageAdapter:
             >>> print(results[0]["similarity_score"])  # 1.0
 
         Note:
-            The fuzzy parameter is always True (SQL LIKE with LOWER() provides case-insensitive substring matching).
-            The edit_distance_threshold is not currently implemented.
+            With ``fuzzy=False`` only an exact (case-insensitive) name matches.
+            ``edit_distance_threshold`` is the largest Levenshtein distance accepted.
         """
         if not query or not str(query).strip():
             return []
@@ -1029,93 +1086,30 @@ class EntityStorageAdapter:
                 pass
 
     def create_tables_if_not_exist(self) -> bool:
-        """Create entity and relationship tables if they don't exist."""
-        try:
-            self.connection_manager.get_connection()
+        """Create the entity and relationship tables (in the entities table's schema).
 
-            # SQL for creating entities table
-            entities_sql = f"""
-            CREATE TABLE IF NOT EXISTS {self.entities_table} (
-                id VARCHAR(255) PRIMARY KEY,
-                text VARCHAR(1000) NOT NULL,
-                type VARCHAR(100) NOT NULL,
-                confidence DECIMAL(3,2) NOT NULL,
-                start_offset INTEGER NOT NULL,
-                end_offset INTEGER NOT NULL,
-                source_document_id VARCHAR(255) NOT NULL,
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-
-            # SQL for creating relationships table
-            relationships_sql = f"""
-            CREATE TABLE IF NOT EXISTS {self.relationships_table} (
-                id VARCHAR(255) PRIMARY KEY,
-                source_entity_id VARCHAR(255) NOT NULL,
-                target_entity_id VARCHAR(255) NOT NULL,
-                type VARCHAR(100) NOT NULL,
-                confidence DECIMAL(3,2) NOT NULL,
-                source_document_id VARCHAR(255) NOT NULL,
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_entity_id) REFERENCES {self.entities_table}(id),
-                FOREIGN KEY (target_entity_id) REFERENCES {self.entities_table}(id)
-            )
-            """
-
-            # SQL for creating embeddings table (optional)
-            embeddings_sql = f"""
-            CREATE TABLE IF NOT EXISTS {self.embeddings_table} (
-                entity_id VARCHAR(255) PRIMARY KEY,
-                embedding_vector LONGBLOB,
-                model_name VARCHAR(100),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (entity_id) REFERENCES {self.entities_table}(id)
-            )
-            """
-
-            # For now, just log the SQL (replace with actual execution)
-            logger.info("Creating entity extraction tables if they don't exist")
-            logger.debug(f"Entities table SQL: {entities_sql}")
-            logger.debug(f"Relationships table SQL: {relationships_sql}")
-            logger.debug(f"Embeddings table SQL: {embeddings_sql}")
-
-            # TODO: Execute the SQL statements
-            # cursor = conn.cursor()
-            # cursor.execute(entities_sql)
-            # cursor.execute(relationships_sql)
-            # cursor.execute(embeddings_sql)
-            # conn.commit()
-
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to create tables: {e}")
-            return False
+        Returns True when they exist. Raises when they cannot be created.
+        """
+        self._ensure_kg_tables()
+        return True
 
     def get_storage_stats(self) -> Dict[str, Any]:
-        """Get statistics about stored entities and relationships."""
-        try:
-            self.connection_manager.get_connection()
-
-            # For now, return mock stats
-            stats = {
-                "entities_count": 0,
-                "relationships_count": 0,
-                "entity_types": {},
-                "relationship_types": {},
-                "last_updated": datetime.utcnow().isoformat(),
-            }
-
-            logger.debug("Retrieved storage statistics")
-
-            # TODO: Implement actual statistics queries
-            # Example: SELECT COUNT(*) FROM RAG.Entities
-            # Example: SELECT type, COUNT(*) FROM RAG.Entities GROUP BY type
-
-            return stats
-
-        except Exception as e:
-            logger.error(f"Failed to get storage stats: {e}")
-            return {}
+        """Counts of stored entities and relationships, in total and by type."""
+        entities = self._read(f"SELECT COUNT(*) FROM {self.entities_table}")[0][0]
+        relationships = self._read(f"SELECT COUNT(*) FROM {self.relationships_table}")[
+            0
+        ][0]
+        entity_types = self._read(
+            f"SELECT entity_type, COUNT(*) FROM {self.entities_table} "
+            "GROUP BY entity_type"
+        )
+        relationship_types = self._read(
+            f"SELECT relationship_type, COUNT(*) FROM {self.relationships_table} "
+            "GROUP BY relationship_type"
+        )
+        return {
+            "entities_count": int(entities),
+            "relationships_count": int(relationships),
+            "entity_types": {str(t): int(n) for t, n in entity_types},
+            "relationship_types": {str(t): int(n) for t, n in relationship_types},
+        }

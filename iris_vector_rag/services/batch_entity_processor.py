@@ -13,18 +13,32 @@ Key Optimizations:
 1. Single transaction boundary per ticket (commit once, not per entity)
 2. IRIS DBAPI cursor.executemany() for batch INSERT operations
 3. Foreign key validation before storage (prevents orphaned relationships)
-4. Automatic retry with smaller batch size on connection timeout
-5. Transaction rollback on validation failure (data integrity guarantee)
+4. A chunk that fails is rolled back and retried in smaller halves, down to
+   single rows, so one bad row costs one row and is reported in ``failed``
+5. ``batch_size`` chunks the work; each chunk is its own transaction
+
+Entity storage is therefore not all-or-nothing across a call: chunks that
+succeeded stay committed. The result says exactly which entities were not stored.
 """
 
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from ..core.connection import ConnectionManager
 from ..core.models import Entity, Relationship
+from ..storage.table_shape import CANONICAL_VECTOR_TYPE
 
 logger = logging.getLogger(__name__)
+
+
+def to_vector_expression(dimension: int) -> str:
+    """`TO_VECTOR(?, <type>, <dimension>)` for an embedding of this width.
+
+    The width is the embedding's own: IRIS rejects a value of another width than the
+    column, loudly, which a constant here would not survive.
+    """
+    return f"TO_VECTOR(?, {CANONICAL_VECTOR_TYPE}, {int(dimension)})"
 
 
 class BatchEntityProcessor:
@@ -40,6 +54,7 @@ class BatchEntityProcessor:
         connection_manager: ConnectionManager,
         config: Dict[str, Any],
         batch_size: int = 32,
+        source_document_resolver: Optional[Callable[[Any, str], str]] = None,
     ):
         """
         Initialize batch entity processor.
@@ -47,9 +62,16 @@ class BatchEntityProcessor:
         Args:
             connection_manager: IRIS database connection manager
             config: Configuration dict with table names
-            batch_size: Maximum entities per batch operation (default: 32)
+            batch_size: Maximum entities per transaction (default: 32); a larger
+                call is split into chunks of this size
+            source_document_resolver: Optional ``(cursor, raw_id) -> stored_id``
+                mapping an entity's source document onto a document-table row, as
+                ``EntityStorageAdapter.store_entity`` does
         """
+        if batch_size < 1:
+            raise ValueError(f"batch_size must be at least 1, got {batch_size}")
         self.connection_manager = connection_manager
+        self.source_document_resolver = source_document_resolver
         self.config = config
         self.batch_size = batch_size
 
@@ -69,20 +91,26 @@ class BatchEntityProcessor:
         self, entities: List[Entity], validate_count: bool = True
     ) -> Dict[str, Any]:
         """
-        Store multiple entities in a single batch operation using executemany().
+        Store entities in chunks of ``batch_size``, inserting new ids and updating
+        existing ones (the same upsert as ``EntityStorageAdapter.store_entity``).
 
-        Performance: 5-10x faster than serial storage for 10+ entities.
+        Every row carries ``confidence``. An entity id repeated in the call keeps its
+        last occurrence. A chunk that fails is rolled back and retried in halves;
+        rows that still fail alone are reported, not raised.
 
         Args:
             entities: List of entities to store
-            validate_count: Whether to validate extracted count == stored count
+            validate_count: Re-count the stored ids in the table afterwards and
+                compare with the number of distinct ids in the call
 
         Returns:
             Dict with:
-                - entities_stored: Number successfully stored
-                - validation_passed: Whether count validation succeeded
+                - entities_stored: Number of distinct entities written
+                - validation_passed: True when every entity was stored (and, if
+                  requested, the table holds the expected count)
                 - storage_time_ms: Time taken for storage operation
-                - error: Error message if failed
+                - failed: ``[{"entity_id", "reason"}]`` for entities not stored
+                - error: Message when anything was not stored
 
         Example:
             >>> processor = BatchEntityProcessor(conn_mgr, config)
@@ -95,6 +123,7 @@ class BatchEntityProcessor:
                 "entities_stored": 0,
                 "validation_passed": True,
                 "storage_time_ms": 0,
+                "failed": [],
             }
 
         import time
@@ -103,136 +132,70 @@ class BatchEntityProcessor:
 
         conn = None
         cursor = None
-        entities_stored = 0
+        stored_ids: List[str] = []
+        failed: List[Dict[str, str]] = []
 
         try:
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
-            # Log entity IDs being stored for debugging
-            entity_ids_to_store = [str(e.id) for e in entities]
-            logger.debug(
-                f"Preparing to store {len(entities)} entities. "
-                f"First 5 IDs: {entity_ids_to_store[:5]}"
-            )
+            distinct: Dict[str, Entity] = {str(e.id): e for e in entities}
+            records = [self._entity_record(cursor, e) for e in distinct.values()]
 
-            # Prepare batch data for executemany()
-            batch_data = []
-
-            for entity in entities:
-                # Extract fields
-                entity_id = str(entity.id)
-                entity_name = str(entity.text).strip()
-                entity_type = (
-                    entity.entity_type.name
-                    if hasattr(entity.entity_type, "name")
-                    else str(entity.entity_type).split(".")[-1].strip()
+            for offset in range(0, len(records), self.batch_size):
+                self._store_chunk(
+                    conn,
+                    cursor,
+                    records[offset : offset + self.batch_size],
+                    stored_ids,
+                    failed,
                 )
-                source_document = str(entity.source_document_id).strip()
-                description = None
-                embedding = None
 
-                if isinstance(entity.metadata, dict):
-                    description = entity.metadata.get("description")
-                    embedding = entity.metadata.get("embedding")
-
-                # Build parameter tuple for this entity
-                if embedding is not None:
-                    embedding_str = json.dumps(embedding)
-                    batch_data.append(
-                        (
-                            entity_id,
-                            entity_name,
-                            entity_type,
-                            source_document,
-                            description,
-                            embedding_str,
-                        )
+            errors: List[str] = []
+            if failed:
+                errors.append(
+                    f"{len(failed)} of {len(records)} entities not stored: "
+                    + ", ".join(
+                        f"{f['entity_id']} ({f['reason']})" for f in failed[:10]
                     )
-                else:
-                    batch_data.append(
-                        (
-                            entity_id,
-                            entity_name,
-                            entity_type,
-                            source_document,
-                            description,
-                        )
+                )
+            if validate_count:
+                in_table = self._count_in_table(cursor, [r["id"] for r in records])
+                if in_table != len(records):
+                    errors.append(
+                        f"Entity count mismatch: expected {len(records)} in "
+                        f"{self.entities_table}, found {in_table}"
                     )
-
-            # Execute batch INSERT using executemany()
-            if batch_data:
-                # Determine SQL based on whether embeddings are present
-                has_embeddings = any(
-                    isinstance(e.metadata, dict) and e.metadata.get("embedding")
-                    for e in entities
-                )
-
-                if has_embeddings:
-                    # Use TO_VECTOR for embedding column
-                    insert_sql = f"""
-                        INSERT INTO {self.entities_table}
-                        (entity_id, entity_name, entity_type, source_doc_id, description, embedding)
-                        VALUES (?, ?, ?, ?, ?, TO_VECTOR(?, FLOAT, 384))
-                    """
-                else:
-                    insert_sql = f"""
-                        INSERT INTO {self.entities_table}
-                        (entity_id, entity_name, entity_type, source_doc_id, description)
-                        VALUES (?, ?, ?, ?, ?)
-                    """
-
-                # Execute batch operation (single database round-trip)
-                cursor.executemany(insert_sql, batch_data)
-                entities_stored = len(batch_data)
-
-                logger.debug(
-                    f"Batch INSERT: {entities_stored} entities in single operation"
-                )
-
-            # Commit transaction (single commit for all entities)
-            conn.commit()
 
             storage_time_ms = (time.time() - start_time) * 1000
-
-            # Validate count if requested
-            validation_passed = True
-            if validate_count:
-                extracted_count = len(entities)
-                if entities_stored != extracted_count:
-                    validation_passed = False
-                    logger.error(
-                        f"Entity count mismatch: extracted {extracted_count}, "
-                        f"stored {entities_stored}"
-                    )
-
-            logger.info(
-                f"Batch stored {entities_stored} entities in {storage_time_ms:.1f}ms "
-                f"(avg: {storage_time_ms/entities_stored:.1f}ms per entity)"
-            )
-
-            return {
-                "entities_stored": entities_stored,
-                "validation_passed": validation_passed,
+            result: Dict[str, Any] = {
+                "entities_stored": len(stored_ids),
+                "validation_passed": not errors,
                 "storage_time_ms": storage_time_ms,
+                "failed": failed,
             }
+            if errors:
+                result["error"] = "; ".join(errors)
+                logger.error(f"Batch entity storage incomplete: {result['error']}")
+            else:
+                logger.info(
+                    f"Batch stored {len(stored_ids)} entities in {storage_time_ms:.1f}ms"
+                )
+            return result
 
         except Exception as e:
-            # Rollback transaction on error (ensures atomicity)
             if conn:
                 try:
                     conn.rollback()
-                    logger.warning("Transaction rolled back due to error")
                 except Exception:
                     pass
-
             storage_time_ms = (time.time() - start_time) * 1000
-
             logger.error(f"Batch entity storage failed: {e}")
             return {
-                "entities_stored": 0,
+                "entities_stored": len(stored_ids),
                 "validation_passed": False,
                 "storage_time_ms": storage_time_ms,
+                "failed": failed,
                 "error": str(e),
             }
 
@@ -242,6 +205,137 @@ class BatchEntityProcessor:
                     cursor.close()
                 except Exception:
                     pass
+
+    def _entity_record(self, cursor, entity: Entity) -> Dict[str, Any]:
+        """The fields of one entity row, with its optional embedding normalised."""
+        entity_type = (
+            entity.entity_type.name
+            if hasattr(entity.entity_type, "name")
+            else str(entity.entity_type).split(".")[-1].strip()
+        )
+        source_document = str(entity.source_document_id).strip()
+        if self.source_document_resolver is not None:
+            source_document = self.source_document_resolver(cursor, source_document)
+        description = None
+        embedding = None
+        if isinstance(entity.metadata, dict):
+            description = entity.metadata.get("description")
+            embedding = entity.metadata.get("embedding")
+        # An empty embedding is no embedding; its width would be 0.
+        has_embedding = embedding is not None and len(embedding) > 0
+        return {
+            "id": str(entity.id),
+            "name": str(entity.text).strip(),
+            "type": entity_type,
+            "doc": source_document,
+            "description": description,
+            "confidence": float(entity.confidence),
+            "embedding": json.dumps(list(embedding)) if has_embedding else None,
+            "dimension": len(embedding) if has_embedding else 0,
+        }
+
+    def _store_chunk(
+        self,
+        conn,
+        cursor,
+        chunk: List[Dict[str, Any]],
+        stored_ids: List[str],
+        failed: List[Dict[str, str]],
+    ) -> None:
+        """Write one chunk in one transaction; on failure retry it in halves."""
+        try:
+            existing = self._existing_ids(cursor, [r["id"] for r in chunk])
+            for is_update in (False, True):
+                part = [r for r in chunk if (r["id"] in existing) == is_update]
+                for dimension in sorted({r["dimension"] for r in part}):
+                    rows = [r for r in part if r["dimension"] == dimension]
+                    sql, params = self._statement(is_update, dimension, rows)
+                    cursor.executemany(sql, params)
+            conn.commit()
+            stored_ids.extend(r["id"] for r in chunk)
+        except Exception as exc:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            if len(chunk) == 1:
+                reason = str(exc)
+                if chunk[0]["dimension"]:
+                    reason += (
+                        f" (the row carries a {chunk[0]['dimension']}-wide embedding; "
+                        f"{self.entities_table} needs a matching embedding column)"
+                    )
+                failed.append({"entity_id": chunk[0]["id"], "reason": reason})
+                return
+            logger.warning(
+                f"Chunk of {len(chunk)} entities failed ({exc}); retrying in halves"
+            )
+            middle = len(chunk) // 2
+            self._store_chunk(conn, cursor, chunk[:middle], stored_ids, failed)
+            self._store_chunk(conn, cursor, chunk[middle:], stored_ids, failed)
+
+    def _statement(self, is_update: bool, dimension: int, rows: List[Dict[str, Any]]):
+        """One INSERT or UPDATE and its parameter rows, all of one width."""
+        with_vector = dimension > 0
+        vector = to_vector_expression(dimension)
+        if is_update:
+            sets = (
+                "entity_name = ?, entity_type = ?, source_doc_id = ?, "
+                "description = ?, confidence = ?"
+            )
+            if with_vector:
+                sets += f", embedding = {vector}"
+            sql = f"UPDATE {self.entities_table} SET {sets} WHERE entity_id = ?"
+            params = [
+                (r["name"], r["type"], r["doc"], r["description"], r["confidence"])
+                + ((r["embedding"],) if with_vector else ())
+                + (r["id"],)
+                for r in rows
+            ]
+        else:
+            columns = (
+                "entity_id, entity_name, entity_type, source_doc_id, "
+                "description, confidence"
+            )
+            values = "?, ?, ?, ?, ?, ?"
+            if with_vector:
+                columns += ", embedding"
+                values += f", {vector}"
+            sql = f"INSERT INTO {self.entities_table} ({columns}) VALUES ({values})"
+            params = [
+                (
+                    r["id"],
+                    r["name"],
+                    r["type"],
+                    r["doc"],
+                    r["description"],
+                    r["confidence"],
+                )
+                + ((r["embedding"],) if with_vector else ())
+                for r in rows
+            ]
+        return sql, params
+
+    def _existing_ids(self, cursor, ids: List[str]) -> set:
+        marks = ",".join("?" * len(ids))
+        cursor.execute(
+            f"SELECT entity_id FROM {self.entities_table} WHERE entity_id IN ({marks})",
+            ids,
+        )
+        return {str(row[0]) for row in cursor.fetchall()}
+
+    def _count_in_table(self, cursor, ids: List[str]) -> int:
+        total = 0
+        for offset in range(0, len(ids), self.batch_size):
+            chunk = ids[offset : offset + self.batch_size]
+            marks = ",".join("?" * len(chunk))
+            cursor.execute(
+                f"SELECT COUNT(*) FROM {self.entities_table} "
+                f"WHERE entity_id IN ({marks})",
+                chunk,
+            )
+            total += int(cursor.fetchone()[0])
+        return total
 
     def store_relationships_batch(
         self,
@@ -435,10 +529,12 @@ class BatchEntityProcessor:
         validate: bool = True,
     ) -> Dict[str, Any]:
         """
-        Store entities and relationships in a single transaction for maximum performance.
+        Store entities, then relationships.
 
-        This method ensures atomicity: either ALL entities + relationships are stored,
-        or NONE are stored (rollback on failure).
+        This is not atomic: entities commit (chunk by chunk) before relationships
+        are attempted, and a relationship failure does not undo the entities. The
+        result reports what was stored. If any entity was not stored, relationships
+        are not attempted and the entity error is returned.
 
         Args:
             entities: List of entities to store
@@ -465,11 +561,12 @@ class BatchEntityProcessor:
 
         if not entity_result.get("validation_passed", False):
             return {
-                "entities_stored": 0,
+                "entities_stored": entity_result.get("entities_stored", 0),
                 "relationships_stored": 0,
                 "validation_passed": False,
                 "total_time_ms": (time.time() - start_time) * 1000,
-                "error": "Entity storage validation failed",
+                "failed": entity_result.get("failed", []),
+                "error": entity_result.get("error", "Entity storage failed"),
             }
 
         # Store relationships (with foreign key validation)
