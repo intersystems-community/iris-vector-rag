@@ -287,8 +287,14 @@ class TestEnvironmentIsAutomaticWhereIrisIsNeeded:
         assert "def _iris_environment" in source
         body = source.split("def _iris_environment", 1)[1].split("\n\n\n", 1)[0]
         assert 'getfixturevalue("iris_target")' in body
+        assert "IRIS_TEST_DIRECTORIES" in body
+        tuple_line = next(
+            line
+            for line in source.splitlines()
+            if line.startswith("IRIS_TEST_DIRECTORIES")
+        )
         for directory in ("integration", "e2e", "contract"):
-            assert f'"{directory}"' in body
+            assert f'"{directory}"' in tuple_line
 
     def test_unit_tests_do_not_need_docker_or_iris(self):
         body = (
