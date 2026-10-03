@@ -27,6 +27,7 @@ Usage:
         print("Response validation failed!")
 """
 
+import dataclasses
 import inspect
 import logging
 from dataclasses import dataclass
@@ -139,7 +140,8 @@ class PipelineValidator:
         Initialize validator.
 
         Args:
-            strict_mode: If True, treats warnings as errors
+            strict_mode: If True, every WARNING violation is reported as an ERROR
+                (INFO violations are left alone)
         """
         self.strict_mode = strict_mode
 
@@ -174,7 +176,7 @@ class PipelineValidator:
                     suggestion="Ensure your pipeline class inherits from iris_vector_rag.core.base.RAGPipeline",
                 )
             )
-            return violations  # Cannot continue validation
+            return violations  # Cannot continue validation (already an ERROR)
 
         # Check required methods exist and are concretely implemented (not still abstract)
         import inspect as _inspect
@@ -203,7 +205,7 @@ class PipelineValidator:
         if hasattr(pipeline_class, "load_documents"):
             violations.extend(self._validate_load_documents_signature(pipeline_class))
 
-        return violations
+        return self._apply_strict_mode(violations)
 
     def validate_response(
         self, response: Dict[str, Any], pipeline_name: str = "unknown"
@@ -272,7 +274,22 @@ class PipelineValidator:
                     )
                 )
 
-        return violations
+        return self._apply_strict_mode(violations)
+
+    def _apply_strict_mode(
+        self, violations: List[PipelineContractViolation]
+    ) -> List[PipelineContractViolation]:
+        """In strict mode report every WARNING as an ERROR; otherwise change nothing."""
+        if not self.strict_mode:
+            return violations
+        return [
+            (
+                dataclasses.replace(v, severity=ViolationSeverity.ERROR)
+                if v.severity is ViolationSeverity.WARNING
+                else v
+            )
+            for v in violations
+        ]
 
     def _validate_query_signature(
         self, pipeline_class: Type[RAGPipeline]

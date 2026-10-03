@@ -7,13 +7,15 @@ conform to the standardized API contract.
 Feature: Pipeline Contract Validation (047)
 """
 
+from typing import Any, Dict, List
+
 import pytest
-from typing import Dict, Any, List
+
 from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.core.validators import (
-    PipelineValidator,
     PipelineContractViolation,
+    PipelineValidator,
     ViolationSeverity,
 )
 
@@ -26,8 +28,8 @@ class ValidPipeline(RAGPipeline):
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         # Create defaults if needed
         if connection_manager is None or config_manager is None:
-            from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
 
             if config_manager is None:
                 config_manager = ConfigurationManager()
@@ -72,8 +74,8 @@ class MissingMethodPipeline(RAGPipeline):
 
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         if connection_manager is None or config_manager is None:
-            from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
 
             if config_manager is None:
                 config_manager = ConfigurationManager()
@@ -99,8 +101,8 @@ class InvalidSignaturePipeline(RAGPipeline):
 
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         if connection_manager is None or config_manager is None:
-            from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
 
             if config_manager is None:
                 config_manager = ConfigurationManager()
@@ -127,8 +129,8 @@ class DeprecatedParamPipeline(RAGPipeline):
 
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         if connection_manager is None or config_manager is None:
-            from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
 
             if config_manager is None:
                 config_manager = ConfigurationManager()
@@ -363,9 +365,7 @@ class TestPipelineValidator:
 
     def test_strict_mode_treats_warnings_as_errors(self):
         """Test that strict_mode affects validation behavior."""
-        # In strict mode, validators themselves don't change behavior
-        # (that's handled by the registry), but we can test that
-        # warnings are properly categorized
+        # Strict mode reports every WARNING as an ERROR (CR-12)
         validator = PipelineValidator(strict_mode=True)
         assert validator.strict_mode is True
 
@@ -375,8 +375,8 @@ class TestPipelineValidator:
                 self, connection_manager=None, config_manager=None, vector_store=None
             ):
                 if connection_manager is None or config_manager is None:
-                    from iris_vector_rag.core.connection import ConnectionManager
                     from iris_vector_rag.config.manager import ConfigurationManager
+                    from iris_vector_rag.core.connection import ConnectionManager
 
                     if config_manager is None:
                         config_manager = ConfigurationManager()
@@ -399,9 +399,18 @@ class TestPipelineValidator:
 
         violations = validator.validate_pipeline_class(NoKwargsPipeline)
         warnings = [v for v in violations if v.severity == ViolationSeverity.WARNING]
+        errors = [v for v in violations if v.severity == ViolationSeverity.ERROR]
 
-        # Should have warnings about missing **kwargs
-        assert len(warnings) > 0, "Should have warnings about missing **kwargs"
+        assert warnings == [], "Strict mode must not leave warnings"
+        assert any(
+            "kwargs" in v.message for v in errors
+        ), "Missing **kwargs should now be an error"
+
+        lax = PipelineValidator().validate_pipeline_class(NoKwargsPipeline)
+        assert any(
+            v.severity == ViolationSeverity.WARNING and "kwargs" in v.message
+            for v in lax
+        ), "Without strict mode, missing **kwargs stays a warning"
 
     def test_get_contract_summary(self):
         """Test contract summary generation."""

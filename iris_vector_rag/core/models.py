@@ -1,10 +1,10 @@
-import uuid
-import time
 import re
+import time
+import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 
 def default_id_factory():
@@ -110,9 +110,12 @@ class Document:
     # Let's provide a custom __hash__.
 
     def __hash__(self):
-        # Convert dict to a hashable form (tuple of sorted items) for hashing
-        meta_tuple = tuple(sorted(self.metadata.items()))
-        return hash((self.page_content, meta_tuple, self.id))
+        # Hash the immutable identity only. `metadata` is a mutable dict that may hold
+        # lists or dicts (unhashable) and that fusion rewrites after a document is in a
+        # set or dict, so hashing it would raise or change the hash. Equal documents
+        # (__eq__ compares every field) still have equal ids and content, so the
+        # hash/eq contract holds.
+        return hash((self.id, self.page_content))
 
     @property
     def similarity_score(self) -> float:
@@ -596,24 +599,22 @@ class ProcessingMetrics:
             self.failed_batches_count += 1
             return  # Don't update other metrics for failed batches
 
+        # Running averages cover successful batches only: a failed batch has no
+        # processing time or entity count to average.
+        successful = self.total_batches_processed - self.failed_batches_count
+
         # Update average processing time (running average)
-        total_time = self.average_batch_processing_time * (
-            self.total_batches_processed - 1
-        )
+        total_time = self.average_batch_processing_time * (successful - 1)
         total_time += batch_result.processing_time
-        self.average_batch_processing_time = total_time / self.total_batches_processed
+        self.average_batch_processing_time = total_time / successful
 
         # Update entity extraction rate (running average)
         entity_counts = batch_result.get_entity_count_by_document()
         total_entities = sum(entity_counts.values())
 
-        total_entity_rate = self.entity_extraction_rate_per_batch * (
-            self.total_batches_processed - 1
-        )
+        total_entity_rate = self.entity_extraction_rate_per_batch * (successful - 1)
         total_entity_rate += total_entities
-        self.entity_extraction_rate_per_batch = (
-            total_entity_rate / self.total_batches_processed
-        )
+        self.entity_extraction_rate_per_batch = total_entity_rate / successful
 
         # Update zero-entity document count
         for count in entity_counts.values():

@@ -70,6 +70,30 @@ ST-16 to ST-18).
   relationship ID matches no row, and uses the configured schema (`schema_prefix`) rather
   than a literal `RAG.`.
 
+### Changed: `core/` contracts match what they promise
+
+- **`RAGPipeline.retrieve()` returns `List[Document]`**, as annotated. It called
+  `query()` and returned its whole response dict. It now calls
+  `query(..., generate_answer=False)` and returns `retrieved_documents`, which is what
+  `BasicRAGPipeline.retrieve()` already did. A subclass that relied on the dict should
+  call `query()`.
+- **`RAGPipeline.clear()` clears.** It looked for `vector_store.clear`, which no store
+  has, logged a warning and deleted nothing. It calls `clear_documents()`; a store
+  without it raises `NotImplementedError`.
+- **`RAGPipeline.query()` names its first parameter `query`**, not `query_text`, and
+  `load_documents()` makes `documents_path` optional. Both match what every pipeline
+  implements and what `PipelineValidator` requires; a subclass following the base used
+  to get a validator ERROR, and `ingest()` could not reach a `load_documents` that
+  required a path.
+- **`PipelineValidator(strict_mode=True)` reports every WARNING as an ERROR**, as its
+  docstring says. The flag was stored and never read.
+- **`ProcessingMetrics` averages cover successful batches only.** A failed batch no
+  longer counts in the divisor (one failure plus one 10 s success reported 5 s).
+  `total_batches_processed` still counts every batch.
+- **`Document.__hash__` hashes `(id, page_content)`.** It hashed the metadata, so a list
+  or dict value raised `TypeError` and fusion's metadata writes changed the hash of a
+  document already in a set.
+
 ### Changed: fusion keeps real content and sane scores
 
 `retrieval="text"`, `"hybrid"` and `"rrf"` (and the weighted form of `"mix"`) return
