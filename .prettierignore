@@ -9,7 +9,6 @@ node_modules/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
-tools/nodejs/
 
 # Historical feature material and generated artifacts, not source.
 specs/

@@ -36,6 +36,48 @@ cycle.
   vector-dimension default as the source of the schema's width. See the dimension entry
   below.
 
+### Changed: the MCP server is Python over stdio, the Node server is removed
+
+Feature `mcp-stdio-server` of the 2026-10 review
+([ADR 0002](docs/adr/0002-mcp-server-is-python-over-stdio.md); VM-01, VM-03 to VM-06,
+VM-13, VM-16 (the `mcp/` items), VM-17, OS-25).
+
+- **Changed: one entry point.** `iris-vector-rag-mcp`, or
+  `python -m iris_vector_rag.mcp`, starts a stdio MCP server built on the official `mcp`
+  Python SDK. No subcommands, no port. The IRIS connection comes from the connection
+  settings resolver (`IRIS_HOST`, `IRIS_PORT`, `IRIS_NAMESPACE`, `IRIS_USERNAME`,
+  `IRIS_PASSWORD`, `IRIS_CONTAINER_NAME`).
+- **Changed: six tools.** `rag_basic`, `rag_basic_rerank`, `rag_crag`, `rag_graphrag`,
+  `rag_pylate_colbert` and `rag_health_check`. Input schemas set
+  `additionalProperties: false`, and unknown arguments are rejected instead of being
+  passed to `pipeline.query(**params)` (VM-13). A failing tool returns an error that
+  names the exception type and nothing else; the detail goes to the log on stderr.
+- **Changed: the health check measures.** It times `SELECT 1` against the resolved
+  IRIS, constructs each pipeline and embeds one string, and reports `healthy`,
+  `degraded` or `unavailable`. The hard-coded "connected, 10 ms, pool 1/10, 2% errors"
+  values are gone (VM-06). `include_performance_metrics` is removed from its schema.
+- **Changed: a query with IRIS down is an error.** The server checks the connection
+  before running a pipeline, because `BasicRAGPipeline` logs a retrieval failure and
+  still returns an answer.
+- **Changed: the `mcp` extra** is the official `mcp` SDK only (`mcp>=1.9.0,<2`);
+  `fastapi`, `uvicorn` and `websockets` left it and the `all` extra (the `api` extra
+  still has them). The wheel now ships `mcp/mcp_tool_schema.json`, which the installed
+  package needed and did not contain.
+- **Removed: the Node.js server** (`tools/nodejs/`), `Dockerfile.mcp`,
+  `scripts/docker/docker-entrypoint-mcp.sh` and `config/mcp_config.yaml`. The Node server
+  only worked through an HTTP bridge at `localhost:8001` that was never served. The
+  last commit that contains it is tagged `archive/mcp-node-v1`.
+- **Removed: the HTTP bridge and the authentication** (`mcp/bridge.py`, `MCP_AUTH_MODE`,
+  the `api_key` check that never validated anything), `mcp/cli.py`, `mcp/config.py`, the
+  `python`/`both` modes stub in `mcp/__main__.py` and the dead `api.services` import.
+  Stdio makes the process boundary the trust boundary.
+- **Removed: the tools `rag_metrics`** (no counters existed) **and
+  `rag_iris_global_graphrag`** (it depends on an external application), the unused range
+  validators in `mcp/validation.py`, and `mcp/iris_llm_handler.py` (its only consumer was
+  the bridge).
+- **Fixed: `docs/MCP_INTEGRATION.md`** is rewritten with a working Claude Desktop
+  configuration and uses `IRIS_USERNAME`, not `IRIS_USER`.
+
 ### Changed: storage stops losing data and reporting what did not happen
 
 Feature `storage-correctness` of the 2026-10 review (ST-04 to ST-07, ST-10 to ST-12,

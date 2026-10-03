@@ -37,7 +37,7 @@ iris_vector_rag/           # Main package
   config/                  # ConfigurationManager, default_config.yaml
   validation/              # Pre-flight validators, SetupOrchestrator
   services/                # Entity extraction, storage adapters
-  mcp/                     # MCP server (8 tools — rag_basic … rag_metrics)
+  mcp/                     # MCP server (stdio, 6 tools — rag_basic … rag_health_check)
   api/                     # Optional REST API (FastAPI + Redis)
   common/                  # Shared utilities, LLM cache, SQL executor
 
@@ -68,8 +68,8 @@ examples/                  # compare_pipelines.py and usage examples
 | Validation pre-flight | `validation/requirements.py` + `validation/validator.py` | `BasicRAGRequirements`, etc.                                                        |
 | Schema prefix         | `config/manager.py::get_schema_prefix()`                 | `IRIS_SCHEMA_PREFIX` env var; default `RAG`                                         |
 | Engine entry point    | `core/engine.py::IRISVectorEngine`                       | `from_config()` for one-line construction; replaces `(cm, cfg)` pair                |
-| MCP server            | `mcp/bridge.py`, `mcp/tool_schemas.py`                   | 8 tools: `rag_basic`, `rag_crag`, `rag_graphrag`, …                                 |
-| MCP CLI               | `mcp/cli.py`                                             | `python -m iris_vector_rag.mcp start/stop/status/health/list-tools`                 |
+| MCP server            | `mcp/server.py`, `mcp/health.py`, `mcp/tool_schemas.py`  | stdio, 6 tools: `rag_basic`, `rag_crag`, `rag_graphrag`, …, `rag_health_check`      |
+| MCP entry point       | `mcp/__main__.py`                                        | `iris-vector-rag-mcp` or `python -m iris_vector_rag.mcp` (no subcommands)           |
 | CLOB handling         | `storage/clob_handler.py::ensure_string_content()`       | Apply on every retrieved `page_content`                                             |
 | Metadata filtering    | `storage/metadata_filter_manager.py`                     | 17 default keys; blocks SQL injection patterns                                      |
 
@@ -115,9 +115,7 @@ flake8 iris_vector_rag/
 mypy iris_vector_rag/ --strict
 
 # MCP server
-python -m iris_vector_rag.mcp start         # Start on default port
-python -m iris_vector_rag.mcp list-tools    # List 8 exposed tools
-python -m iris_vector_rag.mcp status        # Server status
+iris-vector-rag-mcp                         # Start the stdio server (or: python -m iris_vector_rag.mcp)
 ```
 
 No `make test` target — invoke `pytest` directly.

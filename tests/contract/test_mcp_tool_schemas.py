@@ -1,7 +1,7 @@
 """
 Contract tests for MCP Tool Schemas.
 
-These tests verify that all 8 MCP tool schemas (6 RAG pipelines + 2 utility tools)
+These tests verify that all 6 MCP tool schemas (5 RAG pipelines + the health check)
 are correctly defined and validated. Following TDD principles, these tests MUST FAIL initially.
 
 Feature: Complete MCP Tools Implementation
@@ -10,8 +10,9 @@ Branch: 043-complete-mcp-tools
 
 import importlib.util
 import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestMCPToolSchemaFile:
@@ -21,9 +22,8 @@ class TestMCPToolSchemaFile:
         """Verify mcp_tool_schema.json file exists in contracts directory."""
         schema_path = (
             Path(__file__).parent.parent.parent
-            / "specs"
-            / "043-complete-mcp-tools"
-            / "contracts"
+            / "iris_vector_rag"
+            / "mcp"
             / "mcp_tool_schema.json"
         )
         assert schema_path.exists(), f"MCP tool schema file not found at {schema_path}"
@@ -32,9 +32,8 @@ class TestMCPToolSchemaFile:
         """Verify schema file contains valid JSON."""
         schema_path = (
             Path(__file__).parent.parent.parent
-            / "specs"
-            / "043-complete-mcp-tools"
-            / "contracts"
+            / "iris_vector_rag"
+            / "mcp"
             / "mcp_tool_schema.json"
         )
 
@@ -45,13 +44,12 @@ class TestMCPToolSchemaFile:
         assert "tools" in schema_data
         assert isinstance(schema_data["tools"], list)
 
-    def test_schema_contains_8_tools(self):
-        """Verify schema defines 8 tools (6 RAG + 2 utility)."""
+    def test_schema_contains_6_tools(self):
+        """Verify schema defines 6 tools (5 RAG + the health check)."""
         schema_path = (
             Path(__file__).parent.parent.parent
-            / "specs"
-            / "043-complete-mcp-tools"
-            / "contracts"
+            / "iris_vector_rag"
+            / "mcp"
             / "mcp_tool_schema.json"
         )
 
@@ -59,8 +57,8 @@ class TestMCPToolSchemaFile:
             schema_data = json.load(f)
 
         assert (
-            len(schema_data["tools"]) == 8
-        ), f"Expected 8 tools, found {len(schema_data['tools'])}"
+            len(schema_data["tools"]) == 6
+        ), f"Expected 6 tools, found {len(schema_data['tools'])}"
 
 
 class TestMCPToolSchemaModule:
@@ -107,7 +105,6 @@ class TestRAGToolSchemas:
             ("rag_crag", ["corrective", "self-evaluation"]),
             ("rag_graphrag", ["hybrid", "graph", "knowledge"]),
             ("rag_pylate_colbert", ["colbert", "late", "interaction"]),
-            ("rag_iris_global_graphrag", ["global", "academic", "papers"]),
         ],
     )
     def test_rag_tool_schema_exists(self, tool_name, expected_description_keywords):
@@ -138,7 +135,6 @@ class TestRAGToolSchemas:
             "rag_crag",
             "rag_graphrag",
             "rag_pylate_colbert",
-            "rag_iris_global_graphrag",
         ],
     )
     def test_rag_tool_requires_query_parameter(self, tool_name):
@@ -168,7 +164,6 @@ class TestRAGToolSchemas:
             "rag_crag",
             "rag_graphrag",
             "rag_pylate_colbert",
-            "rag_iris_global_graphrag",
         ],
     )
     def test_rag_tool_has_top_k_parameter(self, tool_name):
@@ -290,7 +285,7 @@ class TestGraphRAGSchema:
 
 
 class TestUtilityToolSchemas:
-    """Test utility tool schemas (health_check, metrics)."""
+    """Test utility tool schemas (health_check)."""
 
     def test_health_check_tool_schema(self):
         """Verify rag_health_check tool schema."""
@@ -308,37 +303,10 @@ class TestUtilityToolSchemas:
         # Verify parameters
         props = schema["inputSchema"]["properties"]
         assert "include_details" in props
-        assert "include_performance_metrics" in props
+        assert "include_performance_metrics" not in props  # nothing measures it
 
         # Verify boolean parameters
         assert props["include_details"]["type"] == "boolean"
-        assert props["include_performance_metrics"]["type"] == "boolean"
-
-    def test_metrics_tool_schema(self):
-        """Verify rag_metrics tool schema."""
-        from iris_vector_rag.mcp.tool_schemas import get_schema
-
-        schema = get_schema("rag_metrics")
-        assert schema is not None
-
-        # Verify description mentions metrics/performance
-        assert (
-            "metric" in schema["description"].lower()
-            or "performance" in schema["description"].lower()
-        )
-
-        # Verify parameters
-        props = schema["inputSchema"]["properties"]
-        assert "time_range" in props
-        assert "technique_filter" in props
-
-        # Verify time_range enum
-        time_range_prop = props["time_range"]
-        assert time_range_prop["type"] == "string"
-        assert "enum" in time_range_prop
-        expected_ranges = ["5m", "15m", "1h", "6h", "24h", "7d"]
-        for range_val in expected_ranges:
-            assert range_val in time_range_prop["enum"]
 
 
 class TestSchemaValidation:
@@ -403,13 +371,13 @@ class TestSchemaValidation:
 class TestGetAllSchemas:
     """Test get_all_schemas function."""
 
-    def test_get_all_schemas_returns_8_tools(self):
-        """Verify get_all_schemas returns all 8 tool schemas."""
+    def test_get_all_schemas_returns_6_tools(self):
+        """Verify get_all_schemas returns all 6 tool schemas."""
         from iris_vector_rag.mcp.tool_schemas import get_all_schemas
 
         all_schemas = get_all_schemas()
         assert isinstance(all_schemas, dict)
-        assert len(all_schemas) == 8
+        assert len(all_schemas) == 6
 
         # Verify all expected tools are present
         expected_tools = [
@@ -418,9 +386,7 @@ class TestGetAllSchemas:
             "rag_crag",
             "rag_graphrag",
             "rag_pylate_colbert",
-            "rag_iris_global_graphrag",
             "rag_health_check",
-            "rag_metrics",
         ]
 
         for tool_name in expected_tools:

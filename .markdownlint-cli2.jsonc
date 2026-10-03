@@ -19,7 +19,6 @@
     "docs/archived/**",
     "outputs/**",
     "htmlcov/**",
-    "tools/nodejs/**",
     "scripts/validation/reports/**",
     "evaluation_framework/evaluation_results/**",
     "**/tests/fixtures/**",

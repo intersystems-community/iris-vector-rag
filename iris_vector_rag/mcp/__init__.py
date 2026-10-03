@@ -1,19 +1,11 @@
-"""MCP implementation for iris-vector-rag."""
+"""MCP server for iris-vector-rag (stdio; see ``iris_vector_rag.mcp.server``).
 
-from iris_vector_rag.mcp.bridge import MCPBridge
-from iris_vector_rag.mcp.iris_llm_handler import (
-    IrisLLMToolHandler,
-    register_iris_toolset,
-)
+Importing this package does not import the MCP SDK; only the server does.
+"""
+
 from iris_vector_rag.mcp.technique_handlers import (
     TechniqueHandler,
     TechniqueHandlerRegistry,
 )
 
-__all__ = [
-    "MCPBridge",
-    "TechniqueHandler",
-    "TechniqueHandlerRegistry",
-    "IrisLLMToolHandler",
-    "register_iris_toolset",
-]
+__all__ = ["TechniqueHandler", "TechniqueHandlerRegistry"]

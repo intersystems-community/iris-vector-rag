@@ -1,8 +1,8 @@
 """
 MCP Tool Schema Definitions.
 
-This module provides access to MCP tool schemas for all 6 RAG pipelines
-and 2 utility tools, loaded from the contract schema file.
+This module provides access to MCP tool schemas for the 5 RAG pipelines
+and the health check, loaded from the contract schema file.
 
 Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
@@ -10,7 +10,7 @@ Branch: 043-complete-mcp-tools
 
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Load schemas from package data
 _SCHEMA_PATH = Path(__file__).parent / "mcp_tool_schema.json"
@@ -74,6 +74,14 @@ def validate_params(
     properties = input_schema.get("properties", {})
     required_fields = input_schema.get("required", [])
 
+    # Unknown keys would reach pipeline.query(**params); the schemas forbid them.
+    if input_schema.get("additionalProperties") is False:
+        for key in params:
+            if key not in properties:
+                raise ValidationError(
+                    key, params[key], f"Unknown parameter '{key}' for tool {tool_name}"
+                )
+
     # Start with copy of provided params
     validated = params.copy()
 
@@ -97,6 +105,11 @@ def validate_params(
             param_type = param_schema.get("type")
 
             # Type validation
+            if param_type in ("integer", "number") and isinstance(value, bool):
+                raise ValidationError(
+                    param_name, value, f"Parameter '{param_name}' must be {param_type}"
+                )
+
             if param_type == "integer" and not isinstance(value, int):
                 raise ValidationError(
                     param_name, value, f"Parameter '{param_name}' must be integer"

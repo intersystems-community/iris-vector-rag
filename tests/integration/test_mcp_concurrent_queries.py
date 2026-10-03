@@ -8,8 +8,9 @@ Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 
 @pytest.mark.integration
@@ -20,9 +21,9 @@ class TestMCPConcurrentQueries:
     @pytest.mark.asyncio
     async def test_three_concurrent_queries_different_pipelines(self):
         """Verify 3 concurrent queries to different pipelines complete successfully."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Create 3 concurrent query tasks
         tasks = [
@@ -46,9 +47,9 @@ class TestMCPConcurrentQueries:
     @pytest.mark.asyncio
     async def test_five_concurrent_queries_max_connections(self):
         """Verify 5 concurrent queries work (at connection limit)."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Create 5 concurrent queries
         tasks = [
@@ -66,9 +67,9 @@ class TestMCPConcurrentQueries:
     @pytest.mark.asyncio
     async def test_no_resource_conflicts_concurrent(self):
         """Verify concurrent queries don't have resource conflicts."""
-        from iris_vector_rag.mcp.bridge import MCPBridge
+        from tests.support.mcp_tools import McpTools
 
-        bridge = MCPBridge()
+        bridge = McpTools()
 
         # Run same query multiple times concurrently
         query = "What is diabetes mellitus?"
@@ -87,9 +88,10 @@ class TestMCPConcurrentQueries:
     async def test_concurrent_queries_performance(self):
         """Verify concurrent queries don't significantly degrade performance."""
         import time
-        from iris_vector_rag.mcp.bridge import MCPBridge
 
-        bridge = MCPBridge()
+        from tests.support.mcp_tools import McpTools
+
+        bridge = McpTools()
 
         # Measure sequential execution
         start = time.time()

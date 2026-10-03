@@ -1,4 +1,3 @@
-nodejs/node_modules/
 .vscode/
 .llm_cache/
 
@@ -202,7 +201,6 @@ TODO.md
 # Specification tracking directory (moved to feature-specific location)
 # Keep main project constitution but ignore feature-specific .specify directories
 specs/**/.specify/
-tools/nodejs/node_modules/
 
 # Generated artifacts and editor configs (060 cleanup)
 .opencode/
