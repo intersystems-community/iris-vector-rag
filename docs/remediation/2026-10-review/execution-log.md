@@ -134,3 +134,39 @@ entry: feature, question, choice, why.
   `tests/contract/test_objectscript_sdk_fix.py`, not `tests/e2e/`:
   `tests/e2e/conftest.py` has a session autouse fixture that starts a second
   container.
+
+## Phase 2
+
+- **Integration, e2e and root suites, first honest run.** With the broken e2e
+  conftest replaced, these suites ran for the first time on a real IRIS: master
+  has 177 failed and 376 errors, `remediation/integrated` has 161 failed and 33
+  errors (370 fixed, nothing lost). Nine failures that were masked by setup
+  errors before are new to the list and quarantined in
+  `tests/contract/ci_known_failures.txt`: six `test_graphrag_vector_search`
+  tests that read `result.contexts` on a dict (owner `pipelines-fix`),
+  `test_mcp_basic_rag` "Document missing score" and `test_hybridgraphrag_e2e`
+  "execution time in metadata" (owner `pipelines-fix`), and
+  `test_multi_query_rrf_e2e` (a `UserWarning` from ivg under `-W error`; owner
+  `retrieval-fusion-fix`).
+- **e2e conftest.** `iris_infrastructure` is deleted: it exported
+  `RAG_DATABASE__IRIS__*`, which beat a config file's host and broke two
+  configuration tests, and the resolver already reads `IRIS_*` from
+  `iris_target`.
+- **SDK contract tests use a throwaway container of their own.** They stub
+  `Graph.KG.BM25Index` and compile the SDK classes into USER; on the pinned dev
+  container the real ivg class exists and the stub assertions cannot hold. A
+  pinned run before this change compiled the SDK classes into the dev
+  container's USER namespace and killed `^RAG.SDK.Config` and `^SDKFixBM25`
+  there; both are harmless.
+- **embedding-integrity.** OE-04, OE-10, OE-13 and OE-14 are done in it;
+  `iris_embedding` keeps raising `EMPTY_TEXT` on blank text because a contract
+  test asserts it; `stub` cannot be a fallback; `base_embedding_dimension` keeps
+  its name but resolves lazily.
+- **objectscript-sdk-fix.** `TOP` is dropped from `VectorSearch` (ordering in
+  SQL, stop at `topK` in the fetch loop); string-returning methods end in
+  `Quit <result>`; `Embed` and `Evaluate` (Python methods) are not converted, so
+  OS-15 is partly done; `Install` with no argument installs the latest release.
+- **connection-settings.** Config-file tier sits below the pinned container and
+  above the defaults; an explicit `""` raises `ValidationError`, only `None`
+  means unset; `IRIS_TIMEOUT` is resolved but nothing reads it yet;
+  `docs/MCP_INTEGRATION.md` still says `IRIS_USER` (owner `mcp-stdio-server`).

@@ -30,44 +30,9 @@ from iris_vector_rag.core.models import Document
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 logger = logging.getLogger(__name__)
-IRIS_ENV_KEYS = [
-    "RAG_DATABASE__IRIS__HOST",
-    "RAG_DATABASE__IRIS__PORT",
-    "RAG_DATABASE__IRIS__USERNAME",
-    "RAG_DATABASE__IRIS__PASSWORD",
-    "RAG_DATABASE__IRIS__NAMESPACE",
-    "IRIS_HOST",
-    "IRIS_PORT",
-    "IRIS_USERNAME",
-    "IRIS_PASSWORD",
-    "IRIS_NAMESPACE",
-]
 
 # Load environment variables for E2E tests
 load_dotenv()
-
-
-@pytest.fixture(scope="session", autouse=True)
-def iris_infrastructure(iris_target):
-    """Point the RAG_DATABASE__IRIS__* settings at the session's IRIS (`iris_target`).
-
-    The container is the one tests/conftest.py resolves: this project's pinned container or
-    an ephemeral one. Nothing here starts a container or skips.
-    """
-    original_env = {key: os.environ.get(key) for key in IRIS_ENV_KEYS}
-    os.environ["RAG_DATABASE__IRIS__HOST"] = iris_target.host
-    os.environ["RAG_DATABASE__IRIS__PORT"] = str(iris_target.port)
-    os.environ["RAG_DATABASE__IRIS__USERNAME"] = iris_target.username
-    os.environ["RAG_DATABASE__IRIS__PASSWORD"] = iris_target.password
-    os.environ["RAG_DATABASE__IRIS__NAMESPACE"] = iris_target.namespace
-    try:
-        yield
-    finally:
-        for key, value in original_env.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
-                os.environ[key] = value
 
 
 @pytest.fixture(scope="session", autouse=True)

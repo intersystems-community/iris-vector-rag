@@ -74,3 +74,9 @@ def test_e2e_conftest_takes_its_iris_from_iris_target():
     assert "pytest.skip" not in source
     assert "iris_devtester.connections import get_connection" not in source
     assert "SKIP_IRIS_TESTS" not in source
+
+
+def test_e2e_conftest_does_not_leak_rag_database_overrides():
+    """RAG_DATABASE__IRIS__* beat a config file's host, so tests of file loading saw the pin."""
+    source = (TESTS / "e2e" / "conftest.py").read_text()
+    assert "RAG_DATABASE__IRIS__" not in source
