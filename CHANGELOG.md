@@ -25,6 +25,48 @@ cycle.
   only re-exports `iris_vector_graph.dbapi_utils`, which is a hard dependency; the
   fallback `insert_vector` took different arguments than its call sites passed.
 
+### Connection settings: one resolver, no guessing
+
+- **Changed:** every connection entry point reads one resolver,
+  `iris_vector_rag.config.connection_settings`, with iris-devtester's variable names
+  and precedence: explicit arguments, the environment, a `.env` in the working
+  directory, the pinned container, the `database.iris` section of the configuration
+  file, then defaults. The variables are `IRIS_HOST`, `IRIS_PORT`, `IRIS_NAMESPACE`,
+  `IRIS_USERNAME`, `IRIS_PASSWORD`, `IRIS_TIMEOUT` and `IRIS_CONTAINER_NAME`.
+  `IRIS_TIMEOUT` is resolved and exposed on the settings; the session's handshake budget
+  is still `IRIS_CONNECT_TIMEOUT`.
+- **Changed:** the defaults are `localhost:1972`, namespace `USER`, user `_SYSTEM` and
+  password `SYS`, stated once (not in `default_config.yaml`, `ConfigurationManager`,
+  the session and the discovery helper). One log line names the `host:port` and user
+  in use. When nothing was configured and the connection is refused or times out, the
+  error says so and points at `IRIS_PORT` and `IRIS_CONTAINER_NAME`.
+- **Changed:** `IRIS_USERNAME` beats `IRIS_USER` everywhere. `IRIS_USER` still works
+  and raises a `DeprecationWarning`; it is removed after 0.16.
+- **Changed:** `LOG_LEVEL` and `LOG_PATH` now beat the `logging` section of the YAML
+  file, as every other environment variable already did.
+- **Changed:** a configuration file no longer needs `database.iris.host`;
+  `ConfigurationManager` no longer raises `ConfigValidationError` for its absence.
+  A port that is not a port raises in every getter, naming `IRIS_PORT`.
+- **Changed:** importing `iris_vector_rag` no longer loads a `.env` into the
+  environment. The resolver reads `.env` from the working directory for `IRIS_*`
+  settings; a script that wants other variables (an API key) from a file calls
+  `dotenv.load_dotenv()` itself.
+- **Changed:** `get_iris_connector()` no longer prints the database URL, which
+  normally carries the password.
+- **Removed:** Docker scanning. `auto_detect_iris_port()` ran `docker ps` and took the
+  first container mentioning "iris" and "1972", any project's. The only Docker lookup
+  left is `docker port <name> 1972/tcp` for the exact container named by
+  `IRIS_CONTAINER_NAME`. Anyone who relied on the scan to find a non-default port sets
+  `IRIS_PORT` or `IRIS_CONTAINER_NAME`.
+- **Removed:** the password-fix helper (`_hard_fix_iris_passwords`, and 083's
+  `recover_password`), which ran `UnExpireUserPasswords("*")` through `docker exec` on
+  a container found by port substring. An expired password raises the session's
+  `PasswordExpired` with a hint: preconfigure the container (`ChangePassword=0`) or
+  create it with iris-devtester.
+- **Fixed:** `default_config.yaml` had two `embeddings` keys, so the YAML parser kept
+  the second and silently dropped `mode` and `text_in`. They are one key now, with every
+  setting.
+
 ### CI gates for the first time
 
 - **Changed:** `ci.yml` now triggers on pushes to `master` and on every pull
