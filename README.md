@@ -118,10 +118,14 @@ scores = evaluate(EvaluationDataset(samples=[sample]),
 
 ```bash
 pip install iris-vector-rag[colbert]     # ColBERT/PyLate support
-pip install iris-vector-rag[dspy]        # DSPy prompt optimization
 pip install iris-vector-rag[evaluation]  # RAGAS evaluation framework
 pip install iris-vector-rag[api]         # REST API server (FastAPI + Redis)
 ```
+
+> **Experimental:** `pip install iris-vector-rag[dspy]` provides DSPy prompt optimization
+> modules, currently under development. See
+> [spec 073](docs/specs/073-dspy-optimization.md) for details. Not recommended for
+> production.
 
 ## MCP Server
 
@@ -142,9 +146,15 @@ python -m iris_vector_rag.mcp status      # server status
 ## Development
 
 ```bash
-pip install -e ".[dspy,evaluation]"
+pip install -e ".[evaluation]"
 pytest tests/unit/                    # Fast, no IRIS needed
 pytest tests/unit/ tests/contract/    # Full suite, needs IRIS running
+```
+
+To use experimental DSPy modules:
+
+```bash
+pip install -e ".[dspy,evaluation]"  # Installs experimental dspy_modules
 ```
 
 ## Architecture

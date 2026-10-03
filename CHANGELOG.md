@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Changed
+
+- **DSPy support marked experimental.** The `dspy_modules` package is now available via
+  the optional `dspy` extra (`pip install iris-vector-rag[dspy]`), with its experimental
+  status clearly documented. This module is under active development (spec 073) and not
+  recommended for production. A `FutureWarning` is issued on import.
+- **Documentation corrected.** Removed false claims that DSPy integration is supported or
+  production-ready from README, AGENTS, and Makefile. Updated all references to note spec
+  073 as the tracking issue and direct users to the core entity services for production use.
+
 ### iris-vector-graph 4.1
 
 IVR now requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 re-keyed `Graph_KG`
