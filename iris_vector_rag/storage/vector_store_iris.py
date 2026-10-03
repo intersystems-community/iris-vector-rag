@@ -443,6 +443,26 @@ class IRISVectorStore(VectorStore):
                 )
                 # Don't raise here - let the subsequent operations fail with clearer errors
 
+    _RESERVED_TABLE_PARTS = frozenset(
+        {
+            "DROP",
+            "DELETE",
+            "INSERT",
+            "UPDATE",
+            "CREATE",
+            "ALTER",
+            "TRUNCATE",
+            "EXEC",
+            "EXECUTE",
+            "SELECT",
+            "UNION",
+            "DECLARE",
+            "CONVERT",
+            "CAST",
+            "SCRIPT",
+        }
+    )
+
     def _validate_table_name(self, table_name: str) -> None:
         """
         Validate table name to prevent SQL injection.
@@ -479,39 +499,18 @@ class IRISVectorStore(VectorStore):
                 f"Must be in format 'Schema.TableName' with alphanumeric characters and underscores only."
             )
 
-        # Additional check: prevent SQL keywords and dangerous patterns
-        dangerous_patterns = [
-            "drop",
-            "delete",
-            "insert",
-            "update",
-            "create",
-            "alter",
-            "truncate",
-            "exec",
-            "execute",
-            "select",
-            "union",
-            "script",
-            "--",
-            ";",
-            "/*",
-            "*/",
-            "xp_",
-            "sp_",
-            "declare",
-            "cast",
-            "convert",
-        ]
-
-        table_lower = table_name.lower()
-        for pattern in dangerous_patterns:
-            if pattern in table_lower:
+        # The pattern above is the defence: it admits only letters, digits and
+        # underscores, so no quote, space, comment marker or semicolon can get through.
+        # A substring blacklist on top of it rejected valid names such as
+        # `RAG.Descriptions` ("script") and `RAG.Forecasts` ("cast"). What stays is a
+        # check that no whole part of the name is itself a SQL keyword.
+        for part in table_name.split("."):
+            if part.upper() in self._RESERVED_TABLE_PARTS:
                 logger.error(
-                    f"Security violation: Dangerous pattern in table name: {table_name}"
+                    f"Security violation: SQL keyword as a table name part: {table_name}"
                 )
                 raise VectorStoreConfigurationError(
-                    f"Table name contains restricted pattern: {pattern}"
+                    f"Table name part '{part}' is a reserved SQL keyword"
                 )
 
         logger.info(f"✅ Custom table name validated: {table_name}")

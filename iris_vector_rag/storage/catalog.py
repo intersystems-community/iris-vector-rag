@@ -74,7 +74,7 @@ IDENTITY_SQL = """
 
 INDEX_SQL = """
     SELECT INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES
-    WHERE TABLE_NAME = ?
+    WHERE UPPER(TABLE_SCHEMA) = UPPER(?) AND UPPER(TABLE_NAME) = UPPER(?)
 """
 
 INDEX_COLUMN_SQL = """
@@ -173,8 +173,11 @@ class IRISCatalogReader:
             key_columns=keys,
         )
 
-    def index_names(self, table: str, cursor: Any = None) -> set[str]:
+    def index_names(self, schema: str, table: str, cursor: Any = None) -> set[str]:
         """The indexes declared on a table, upper-cased.
+
+        Scoped by schema: two schemas can carry the same table and index name, and an
+        index in one must not read as present in the other.
 
         Not part of the `CatalogReader` protocol and not part of `TableShape`: a shape
         describes columns, and nothing in the read or write path branches on whether an
@@ -187,10 +190,12 @@ class IRISCatalogReader:
         try:
             return {
                 str(row["INDEX_NAME"]).upper()
-                for row in self._rows(cursor, INDEX_SQL, [table])
+                for row in self._rows(cursor, INDEX_SQL, [schema, table])
             }
         except Exception as exc:  # noqa: BLE001 - the driver error becomes the cause
-            raise CatalogUnavailable(f"index query failed: {exc}", "", table) from exc
+            raise CatalogUnavailable(
+                f"index query failed: {exc}", schema, table
+            ) from exc
         finally:
             if own_cursor:
                 _close(cursor)

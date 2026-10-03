@@ -28,10 +28,10 @@ Example:
 import logging
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Set, Any
+from typing import Any, Dict, List, Set
 
-from iris_vector_rag.storage.constants import DEFAULT_FILTER_KEYS
 from iris_vector_rag.exceptions import VectorStoreConfigurationError
+from iris_vector_rag.storage.constants import DEFAULT_FILTER_KEYS
 
 logger = logging.getLogger(__name__)
 
@@ -149,8 +149,11 @@ class MetadataFilterManager:
                     f"contain only alphanumeric characters and underscores"
                 )
 
-            # Check for SQL keywords (case-insensitive)
-            if any(keyword in key.upper() for keyword in self.SQL_KEYWORDS):
+            # A key that IS a SQL keyword is refused. A key that merely contains the
+            # letters of one (`category` has "OR", `priority` has "OR", `brand` has
+            # "AND") is a legitimate name; the pattern above already guarantees it is a
+            # plain identifier, which is what keeps it out of injection territory.
+            if key.upper() in self.SQL_KEYWORDS:
                 raise VectorStoreConfigurationError(
                     f"Invalid field name '{key}': contains SQL keyword or special "
                     f"characters that could enable SQL injection"

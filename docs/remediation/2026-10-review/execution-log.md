@@ -134,3 +134,46 @@ entry: feature, question, choice, why.
   `tests/contract/test_objectscript_sdk_fix.py`, not `tests/e2e/`:
   `tests/e2e/conftest.py` has a session autouse fixture that starts a second
   container.
+
+## storage-correctness
+
+- **storage-correctness: guard shape.** `migrate_table` gets `allow_destructive=False`
+  and raises `DestructiveMigrationError` (not `False`) for a populated target: a silent
+  `False` is what hid failures before. Targets: the table itself, plus `DocumentChunks`
+  for `SourceDocuments`. A table whose row count cannot be read is not assumed empty.
+  `preserve_data=True` on `DocumentChunks` skips the guard, because that migrator leaves
+  an existing table alone in that case.
+- **storage-correctness: rdf** and kg*NodeEmbeddings_optimized names.*\* Qualified with
+  the manager's schema (`_qn`), as the review asked, so they land in `RAG` (or the
+  configured prefix), not `Graph_KG`. ivg 4.x owns `Graph_KG` with a different layout;
+  DEBT entry 9 (removing this DDL path) is untouched. A failed HNSW index on the
+  `kg_NodeEmbeddings_optimized` migration now fails the migration.
+- **storage-correctness: `SchemaMetadata`.** The "current user" fallback is removed. If
+  the table cannot be created in the configured schema the manager still carries on
+  without it (unchanged policy), but logs an error, not a warning.
+- **storage-correctness: ensure_all_vector_indexes vs `Entities`.** The standard
+  `Entities` table has no `embedding` column, so the hardcoded `Entities` index could
+  never be created and the failure was swallowed. Now a table without the column is
+  skipped and left out of the returned list; a missing table or a failed create raises.
+- **storage-correctness: `_ensure_index` config.** Accepts `columns` or the singular
+  `column` the shipped pipeline config uses. A config with `parameters` (the
+  `IRISGlobalGraphRAG` entry asks for `DotProduct`) raises rather than building a
+  different index. Required-index failures return `False` from `ensure_pipeline_schema`;
+  optional ones (the GraphRAG KG index, which names no column) log a warning.
+- **storage-correctness: TEXT width.** `VARCHAR(4000)`, matching the `description` column
+  `services/storage.py` adds. New tables only; `needs_migration` was not changed.
+- **storage-correctness: table-name check.** Kept the identifier regex, replaced the
+  substring blacklist by a whole-part keyword check. Filter keys: whole-key keyword check
+  (the regex already limits them to identifiers).
+- **storage-correctness: `process_document_row`.** Keeps non-CLOB values' types, `None`
+  included. `ensure_string_content` still returns string `page_content` and string
+  top-level fields; only nested metadata dicts changed.
+- **storage-correctness: ST-16.** `RelationEmbeddingStore(schema_prefix=None)` resolves
+  the prefix with the function `SchemaManager` now shares (`resolve_schema_prefix`), so
+  `retrieval/engine.py` (not edited; another agent's file) needs no change. The hardcoded
+  384 was already handled by embedding-integrity (checked: the store asks the embedding
+  manager for its width). Zero-row `UPDATE` is detected through `cursor.rowcount`,
+  verified against the real driver.
+- **storage-correctness: pre-existing failures.** `tests/test_schema_manager_bugs.py`
+  (7 failures) and the collection error in `tests/integration/test_ivg_4x_upgrade_e2e.py`
+  fail identically on the integration branch; untouched.
