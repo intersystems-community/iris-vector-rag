@@ -55,50 +55,82 @@ entry: feature, question, choice, why.
 
 ## Phase 2: embedding-integrity
 
-- **OE-04, OE-10, OE-13 (left to the planning step).** Done here, not in a separate
-  `embedding-manager-fixes` feature: `findings.md` tags all three
+- **OE-04, OE-10, OE-13 (left to the planning step).** Done here, not in a
+  separate `embedding-manager-fixes` feature: `findings.md` tags all three
   `feature:embedding-integrity` and the plan row names "the embedding manager's
-  correctness fixes". OE-14 (manager half: OpenAI timeout and input chunking) too.
-  Vectors from the HuggingFace backend change value (padding is masked, output is
-  normalised); the CHANGELOG says to re-embed. IVR's own tables record no embedding
-  identity yet (G6 point 7 defers that), so the staleness is documented, not enforced.
-- **OE-10, blank text.** `iris_embedding.embed_texts` keeps raising `EMPTY_TEXT` naming
-  the index (a contract test asserts it, and a blank text has no sound vector: a zero or
-  made-up one is exactly what this feature removes). `EmbeddingManager.embed_texts` keeps
-  embedding `""` as the model sees it. The batch-splitting half of OE-10 is done.
-- **Dimension authority keeps its name.** `SchemaManager.base_embedding_dimension` stays as
-  an attribute (tests, scripts and contracts pass and read it) but is now a lazy property:
-  an explicit constructor argument wins (the caller states the width, and the store's
-  insert and query checks refuse a mismatch), otherwise the embedding manager's value.
-  Lazy because a `SchemaManager` or `IRISVectorStore` constructor must not load a model
-  (feature 078). `VECTOR_DIMENSION` is read as the override `embeddings.dimension` would
-  be, and raises when it disagrees with the model.
-- **Where the policy's errors live.** The manager raises `EmbeddingError`; the IRIS
-  EMBEDDING entry point (`iris_embedding.embed_texts`) raises its own `ValueError` with an
-  `EMBEDDING_MODEL_LOAD_FAILED` code, like its other failures. `DimensionMismatchError` is
-  both a `VectorStoreDataError` and a `ValueError`, so existing handlers of either keep
-  working; the HybridGraphRAG one moved to `exceptions.py` under the same name.
-- **The test embedder cannot be a fallback and needs a dimension.** Naming `stub`
-  in `fallback_backends` raises at construction (mixing stub and real vectors is what the
-  identity rule forbids), and `provider: stub` without `dimension` raises instead of defaulting to 384.
-- **Writes through ivg (G6 point 7).** IVR has no call site that writes embeddings through
-  an ivg engine (its own tables use `insert_vector` on IVR tables, which has no identity).
-  `integrations.ivg.store_embedding` and `store_embeddings` are the seam: they pass the
-  active model as `model_key` and cannot be overridden. No caller exists yet; the first
-  code that writes to `Graph_KG` embeddings should use them.
+  correctness fixes". OE-14 (manager half: OpenAI timeout and input chunking)
+  too. Vectors from the HuggingFace backend change value (padding is masked,
+  output is normalised); the CHANGELOG says to re-embed. IVR's own tables record
+  no embedding identity yet (G6 point 7 defers that), so the staleness is
+  documented, not enforced.
+- **OE-10, blank text.** `iris_embedding.embed_texts` keeps raising `EMPTY_TEXT`
+  naming the index (a contract test asserts it, and a blank text has no sound
+  vector: a zero or made-up one is exactly what this feature removes).
+  `EmbeddingManager.embed_texts` keeps embedding `""` as the model sees it. The
+  batch-splitting half of OE-10 is done.
+- **Dimension authority keeps its name.**
+  `SchemaManager.base_embedding_dimension` stays as an attribute (tests, scripts
+  and contracts pass and read it) but is now a lazy property: an explicit
+  constructor argument wins (the caller states the width, and the store's insert
+  and query checks refuse a mismatch), otherwise the embedding manager's value.
+  Lazy because a `SchemaManager` or `IRISVectorStore` constructor must not load
+  a model (feature 078). `VECTOR_DIMENSION` is read as the override
+  `embeddings.dimension` would be, and raises when it disagrees with the model.
+- **Where the policy's errors live.** The manager raises `EmbeddingError`; the
+  IRIS EMBEDDING entry point (`iris_embedding.embed_texts`) raises its own
+  `ValueError` with an `EMBEDDING_MODEL_LOAD_FAILED` code, like its other
+  failures. `DimensionMismatchError` is both a `VectorStoreDataError` and a
+  `ValueError`, so existing handlers of either keep working; the HybridGraphRAG
+  one moved to `exceptions.py` under the same name.
+- **The test embedder cannot be a fallback and needs a dimension.** Naming
+  `stub` in `fallback_backends` raises at construction (mixing stub and real
+  vectors is what the identity rule forbids), and `provider: stub` without
+  `dimension` raises instead of defaulting to 384.
+- **Writes through ivg (G6 point 7).** IVR has no call site that writes
+  embeddings through an ivg engine (its own tables use `insert_vector` on IVR
+  tables, which has no identity). `integrations.ivg.store_embedding` and
+  `store_embeddings` are the seam: they pass the active model as `model_key` and
+  cannot be overridden. No caller exists yet; the first code that writes to
+  `Graph_KG` embeddings should use them.
 - **More fake embedders than the policy named, removed.** CRAG caught a failed
   `get_embedding_func()` and swapped in `get_embedding_func(provider="stub")`;
-  `IRISVectorStore.similarity_search` returned a zero-vector search when the config manager
-  looked like a Mock; HybridGraphRAG `hybrid_fusion` searched text-only and `rrf` raised a
-  bare `ValueError` when the query embedding failed; the HF embedder in `common/utils`
-  returned zeros when it got nothing back. All now raise. The explicit stub provider of
-  `get_embedding_func` stays, backed by the test embedder.
-- **`IRISVectorEngine.embedding_dimension` lost its config fallback.** It asked a
-  `get_embedding_dimension()` that `SchemaManager` never had, swallowed the
-  `AttributeError` and read `embeddings.dimension` or `get_embedding_config()`: a third
-  source. It now returns the schema manager's value and raises if there is none. Two
-  `tests/unit/session` tests of the old behaviour were rewritten.
-- **pyproject `filterwarnings`.** Model loads in the test run failed under the `error`
-  policy: transformers 4.41 (allowed by the pin) passes `resume_download` to
-  huggingface_hub 0.36, which warns. The old implicit stub had hidden this on every local
-  run. One narrow `ignore` added, with a comment to delete it when the floor moves.
+  `IRISVectorStore.similarity_search` returned a zero-vector search when the
+  config manager looked like a Mock; HybridGraphRAG `hybrid_fusion` searched
+  text-only and `rrf` raised a bare `ValueError` when the query embedding
+  failed; the HF embedder in `common/utils` returned zeros when it got nothing
+  back. All now raise. The explicit stub provider of `get_embedding_func` stays,
+  backed by the test embedder.
+- **`IRISVectorEngine.embedding_dimension` lost its config fallback.** It asked
+  a `get_embedding_dimension()` that `SchemaManager` never had, swallowed the
+  `AttributeError` and read `embeddings.dimension` or `get_embedding_config()`:
+  a third source. It now returns the schema manager's value and raises if there
+  is none. Two `tests/unit/session` tests of the old behaviour were rewritten.
+- **pyproject `filterwarnings`.** Model loads in the test run failed under the
+  `error` policy: transformers 4.41 (allowed by the pin) passes
+  `resume_download` to huggingface_hub 0.36, which warns. The old implicit stub
+  had hidden this on every local run. One narrow `ignore` added, with a comment
+  to delete it when the floor moves.
+- **objectscript-sdk-fix: SELECT TOP with ORDER BY.** `VectorSearch` needs both
+  to be correct. The workspace rule and OS-15 forbid the pair, so the SQL keeps
+  `ORDER BY` and the fetch loop stops at `topK` rows. Cost: no `TOP`-driven HNSW
+  pushdown on that query. Revisit if a consumer's table has an HNSW index and
+  the latency shows.
+- **objectscript-sdk-fix: `Quit tSC` on string-returning methods.** The rule's
+  "last line `Quit tSC`" fits `%Status` methods. The SDK's methods return JSON
+  strings (public API, kept). They start with `Set tSC = $$$OK`, use `tSC` for
+  every status, and end with `Quit <result>`.
+- **objectscript-sdk-fix: Embed and Evaluate not converted.** Both are
+  `[ Language = python ]` methods that cannot be compiled in the test container
+  (DEBT entries 1 and 10), so renaming their parameters could not be verified.
+- **objectscript-sdk-fix: stream OIDs.** `%GetData` returns a `$LISTBUILD` OID
+  in this IRIS, not `id@class`; `ReadText` returned that raw OID as the "text".
+  Both forms are now opened.
+- **objectscript-sdk-fix: Install.** No version argument installs the latest
+  release (unpinned) rather than a version baked into the class;
+  `Install(pVersion)` pins.
+- **objectscript-sdk-fix: `Schema.Status` on a missing table** reports dimension
+  0, not 384; an unknown dimension is not a default.
+- **objectscript-sdk-fix: test location.**
+  `tests/contract/test_objectscript_sdk_fix.py`, not `tests/e2e/`:
+  `tests/e2e/conftest.py` has a session autouse fixture that starts a second
+  container.
