@@ -6,17 +6,16 @@ import numpy as np
 
 
 def _ensure_native_conn(conn):
-    import os
-
     # The non-warning twin: this is the library calling itself (US5).
     from iris_vector_rag.common.iris_connection import _session_connection
 
+    # What the connection says about itself wins; the settings resolver fills the rest.
     return _session_connection(
-        host=getattr(conn, "hostname", os.environ.get("IRIS_HOST", "localhost")),
-        port=getattr(conn, "port", int(os.environ.get("IRIS_PORT", "1972"))),
-        namespace=getattr(conn, "namespace", os.environ.get("IRIS_NAMESPACE", "USER")),
-        username=os.environ.get("IRIS_USERNAME", "_SYSTEM"),
-        password=os.environ.get("IRIS_PASSWORD", "SYS"),
+        host=getattr(conn, "hostname", None),
+        port=getattr(conn, "port", None),
+        namespace=getattr(conn, "namespace", None),
+        username=None,
+        password=None,
     )
 
 

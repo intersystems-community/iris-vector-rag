@@ -3,6 +3,10 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+from iris_vector_rag.config.connection_settings import (
+    ConnectionSettings,
+    resolve_connection_settings,
+)
 from iris_vector_rag.config.entities import (
     CloudConfiguration,
     ConfigSource,
@@ -63,8 +67,8 @@ class ConfigurationManager:
         # Basic environment variable loading (will be refined)
         self._load_env_variables()
 
-        # Validate required configuration
-        self._validate_required_config()
+        # Nothing is required of the file: connection settings always resolve, to the
+        # defaults at worst (config/connection_settings.py), and say so in a log line.
 
     def _load_env_variables(self):
         """
@@ -124,27 +128,6 @@ class ConfigurationManager:
             return value_str
         return value_str  # Default return if no specific cast matches
 
-    def _validate_required_config(self):
-        """
-        Validate that required configuration values are present.
-
-        Raises:
-            ConfigValidationError: If required configuration is missing
-        """
-        # Define required configuration keys
-        required_keys = ["database:iris:host"]
-
-        # Check each required key
-        for key in required_keys:
-            value = self.get(key)
-            if value is None:
-                raise ConfigValidationError(f"Missing required config: {key}")
-
-        # Check for critical IRIS configuration from environment (for backward compatibility)
-        # Note: This is only checked if the config file doesn't provide the host
-        if self.get("database:iris:host") is None and "IRIS_HOST" not in os.environ:
-            raise ConfigValidationError("Missing required config: database:iris:host")
-
     def _get_value_by_keys(self, config_dict: Dict, keys: list) -> Any:
         """Helper to navigate nested dict with a list of keys."""
         current = config_dict
@@ -198,7 +181,7 @@ class ConfigurationManager:
             The configuration value at the path, or default if not found
         """
         # Split on dots and navigate the nested dict
-        keys = path.split('.')
+        keys = path.split(".")
         value = self._config
 
         for key in keys:
@@ -509,84 +492,53 @@ class ConfigurationManager:
 
         deep_merge(self._config, new_config)
 
+    def _connection_section(self) -> Dict[str, Any]:
+        """The user-written IRIS connection section: ``database.iris``, or ``database``."""
+        section = self.get("database", {})
+        if not isinstance(section, dict):
+            return {}
+        nested = section.get("iris")
+        return nested if isinstance(nested, dict) else section
+
+    def get_connection_settings(self) -> ConnectionSettings:
+        """The resolved connection settings, with where each value came from.
+
+        Explicit settings, then the environment, then ``.env``, then the pinned
+        container, then this configuration's ``database.iris`` section, then defaults
+        (see ``config/connection_settings.py``). Raises on a port that is not a port.
+        """
+        return resolve_connection_settings(config_file=self._connection_section())
+
     def get_database_config(self) -> Dict[str, Any]:
         """
-        Get database configuration with defaults for IRIS connection.
+        Get database configuration for the IRIS connection.
 
         Returns:
             Dictionary containing database configuration
 
-        Precedence: env > YAML > defaults
+        Precedence: environment > `.env` > pinned container > YAML > defaults, from the
+        one resolver (``get_connection_settings``).
         """
-        default_config = {
-            "host": "localhost",
-            "port": 1972,  # Integer for proper type casting (AUD-005: fixed from 1974)
-            "namespace": "USER",
-            "username": "_SYSTEM",
-            "password": "SYS",
-            "driver_path": None,
-        }
-
-        # First apply user-defined database config from YAML (this includes env var overrides)
-        user_config = self.get("database", {})
-        if isinstance(user_config, dict):
-            # Handle nested IRIS config
-            if "iris" in user_config and isinstance(user_config["iris"], dict):
-                default_config.update(user_config["iris"])
-            else:
-                default_config.update(user_config)
-
-        # Ensure port from YAML is converted to int (YAML may have "1972" as string)
-        if "port" in default_config and not isinstance(default_config["port"], int):
-            try:
-                default_config["port"] = int(default_config["port"])
-            except ValueError:
-                raise ValueError(
-                    f"Database port must be an integer, got: {default_config['port']}"
-                )
-
-        # Handle IRIS_USERNAME vs IRIS_USER precedence (FR-005: AUD-005)
-        # IRIS_USERNAME takes precedence, but IRIS_USER is a fallback for legacy code
-        if "IRIS_USERNAME" in os.environ:
-            default_config["username"] = os.environ["IRIS_USERNAME"]
-        elif "IRIS_USER" in os.environ:
-            default_config["username"] = os.environ["IRIS_USER"]
-
-        # Map environment variables to config keys (legacy support)
-        env_mappings = {
-            "IRIS_HOST": "host",
-            "IRIS_PORT": "port",
-            "IRIS_NAMESPACE": "namespace",
-            "IRIS_PASSWORD": "password",
-            "IRIS_DRIVER_PATH": "driver_path",
-        }
-
-        # Override with environment variables (legacy format)
-        for env_key, config_key in env_mappings.items():
-            if env_key in os.environ:
-                value = os.environ[env_key]
-                # Cast port to int for proper type and validation
-                if config_key == "port":
-                    try:
-                        value = int(value)
-                        # Validate port is in valid range (1-65535)
-                        if not (1 <= value <= 65535):
-                            raise ValueError(
-                                f"IRIS_PORT must be between 1 and 65535, got: {value}"
-                            )
-                    except ValueError as e:
-                        if "between" in str(e):
-                            raise
-                        raise ValueError(
-                            f"IRIS_PORT must be an integer, got: {os.environ[env_key]}"
-                        ) from e
-                default_config[config_key] = value
-
-        return default_config
+        settings = self.get_connection_settings()
+        config = dict(self._connection_section())
+        config.update(
+            host=settings.host,
+            port=settings.port,
+            namespace=settings.namespace,
+            username=settings.username,
+            password=settings.password,
+        )
+        config["driver_path"] = os.environ.get(
+            "IRIS_DRIVER_PATH", config.get("driver_path")
+        )
+        return config
 
     def get_logging_config(self) -> Dict[str, Any]:
         """
         Get logging configuration with defaults.
+
+        Precedence: environment (LOG_LEVEL, LOG_PATH) > YAML `logging` section > defaults,
+        the same order as every other getter.
 
         Returns:
             Dictionary containing logging configuration
@@ -597,18 +549,14 @@ class ConfigurationManager:
             "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         }
 
-        # Map environment variables to config keys
-        env_mappings = {"LOG_LEVEL": "level", "LOG_PATH": "path"}
-
-        # Override with environment variables
-        for env_key, config_key in env_mappings.items():
-            if env_key in os.environ:
-                default_config[config_key] = os.environ[env_key]
-
-        # Also check for user-defined logging config in YAML
         user_config = self.get("logging", {})
         if isinstance(user_config, dict):
             default_config.update(user_config)
+
+        env_mappings = {"LOG_LEVEL": "level", "LOG_PATH": "path"}
+        for env_key, config_key in env_mappings.items():
+            if env_key in os.environ:
+                default_config[config_key] = os.environ[env_key]
 
         return default_config
 
@@ -755,7 +703,9 @@ class ConfigurationManager:
         Get cloud deployment configuration with 12-factor app priority.
 
         Configuration priority (highest to lowest):
-        1. Environment variables (IRIS_HOST, VECTOR_DIMENSION, TABLE_SCHEMA, etc.)
+        1. Environment variables (IRIS_HOST, VECTOR_DIMENSION, TABLE_SCHEMA, etc.);
+           connection values go through the one resolver, so `.env` and a pinned
+           container count too
         2. Configuration file (YAML)
         3. Defaults (localhost:1972, 384 dimensions, RAG schema)
 
@@ -769,34 +719,36 @@ class ConfigurationManager:
             >>> print(f"Vector dimension: {cloud_config.vector.vector_dimension}")
         """
         # Initialize with defaults
-        connection_config = ConnectionConfiguration()
         vector_config = VectorConfiguration()
         table_config = TableConfiguration()
 
-        # Apply config file settings (priority 2)
-        db_config = self.get("database:iris", {})
-        if isinstance(db_config, dict):
-            if "host" in db_config:
-                connection_config.host = db_config["host"]
-                connection_config.source["host"] = ConfigSource.CONFIG_FILE
-            if "port" in db_config:
-                connection_config.port = int(db_config["port"])
-                connection_config.source["port"] = ConfigSource.CONFIG_FILE
-            if "username" in db_config:
-                connection_config.username = db_config["username"]
-                connection_config.source["username"] = ConfigSource.CONFIG_FILE
-            if "password" in db_config:
-                connection_config.password = db_config["password"]
-                connection_config.source["password"] = ConfigSource.CONFIG_FILE
-            if "namespace" in db_config:
-                connection_config.namespace = db_config["namespace"]
-                connection_config.source["namespace"] = ConfigSource.CONFIG_FILE
+        # Connection settings come from the one resolver; its sources map onto ours.
+        resolved = self.get_connection_settings()
+        connection_config = ConnectionConfiguration(
+            host=resolved.host,
+            port=resolved.port,
+            username=resolved.username,
+            password=resolved.password,
+            namespace=resolved.namespace,
+        )
+        source_of = {
+            "explicit": ConfigSource.ENVIRONMENT,
+            "environment": ConfigSource.ENVIRONMENT,
+            "dotenv": ConfigSource.ENVIRONMENT,
+            "container": ConfigSource.ENVIRONMENT,
+            "config_file": ConfigSource.CONFIG_FILE,
+            "default": ConfigSource.DEFAULT,
+        }
+        for name in ("host", "port", "username", "password", "namespace"):
+            connection_config.source[name] = source_of[resolved.sources[name]]
 
         # Apply vector config from file
         vector_file_config = self.get("storage", {})
         if isinstance(vector_file_config, dict):
             if "vector_dimension" in vector_file_config:
-                vector_config.vector_dimension = int(vector_file_config["vector_dimension"])
+                vector_config.vector_dimension = int(
+                    vector_file_config["vector_dimension"]
+                )
                 vector_config.source["vector_dimension"] = ConfigSource.CONFIG_FILE
             if "distance_metric" in vector_file_config:
                 vector_config.distance_metric = vector_file_config["distance_metric"]
@@ -815,16 +767,13 @@ class ConfigurationManager:
                 table_config.entities_table = table_file_config["entities_table"]
                 table_config.source["entities_table"] = ConfigSource.CONFIG_FILE
             if "relationships_table" in table_file_config:
-                table_config.relationships_table = table_file_config["relationships_table"]
+                table_config.relationships_table = table_file_config[
+                    "relationships_table"
+                ]
                 table_config.source["relationships_table"] = ConfigSource.CONFIG_FILE
 
         # Apply environment variable overrides (priority 1)
         env_mappings = {
-            "IRIS_HOST": ("connection", "host"),
-            "IRIS_PORT": ("connection", "port"),
-            "IRIS_USERNAME": ("connection", "username"),
-            "IRIS_PASSWORD": ("connection", "password"),
-            "IRIS_NAMESPACE": ("connection", "namespace"),
             "VECTOR_DIMENSION": ("vector", "vector_dimension"),
             "TABLE_SCHEMA": ("table", "table_schema"),
         }
@@ -833,17 +782,7 @@ class ConfigurationManager:
             if env_var in os.environ:
                 value = os.environ[env_var]
 
-                if config_type == "connection":
-                    # Cast port to int
-                    if attr_name == "port":
-                        try:
-                            value = int(value)
-                        except ValueError:
-                            pass  # Keep as string if casting fails
-                    setattr(connection_config, attr_name, value)
-                    connection_config.source[attr_name] = ConfigSource.ENVIRONMENT
-
-                elif config_type == "vector":
+                if config_type == "vector":
                     # Cast vector_dimension to int
                     if attr_name == "vector_dimension":
                         try:

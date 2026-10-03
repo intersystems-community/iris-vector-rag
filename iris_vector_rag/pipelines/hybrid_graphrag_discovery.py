@@ -70,14 +70,14 @@ class GraphCoreDiscovery:
             raise ImportError(f"{message}. {exc}") from exc
 
     def get_connection_config(self) -> Dict[str, Any]:
-        """Return IRIS connection configuration from environment variables."""
-        return {
-            "host": os.environ.get("IRIS_HOST", "localhost"),
-            "port": int(os.environ.get("IRIS_PORT", "1974")),
-            "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
-            "username": os.environ.get("IRIS_USERNAME", "SuperUser"),
-            "password": os.environ.get("IRIS_PASSWORD", "SYS"),
-        }
+        """Return the IRIS connection configuration the settings resolver yields."""
+        from iris_vector_rag.config.connection_settings import (
+            resolve_connection_settings,
+        )
+
+        settings = resolve_connection_settings().to_dict()
+        settings.pop("timeout")
+        return settings
 
     def validate_connection_config(
         self, connection_config: Dict[str, Any]

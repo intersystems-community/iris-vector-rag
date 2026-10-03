@@ -10,8 +10,10 @@ errors, warns once per call site, and is removed in 0.16.
     from iris_vector_rag.session import session_for
     connection = session_for(config_manager).connection_for_adapter()
 
-`detect_iris_edition`, `auto_detect_iris_port` and `_get_iris_dbapi_module` are not
-deprecated: they answer questions about the environment, not about connections.
+`detect_iris_edition` and `_get_iris_dbapi_module` are not deprecated: they answer
+questions about the environment, not about connections. the port scanner, which
+ran `docker ps` and took the first container mentioning "iris" and "1972", is gone: the
+settings resolver (`config/connection_settings.py`) decides host and port.
 
 Feature: 051-simplify-iris-connection
 Feature: 083-iris-session (deprecation)
@@ -20,7 +22,6 @@ Feature: 083-iris-session (deprecation)
 import logging
 import os
 import re
-import subprocess
 import warnings
 from typing import Any, Dict, Optional, Tuple
 
@@ -61,42 +62,6 @@ def _get_iris_dbapi_module():
     return None
 
 
-def auto_detect_iris_port() -> Optional[int]:
-    """Auto-detect running IRIS instance and its SuperServer port."""
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}\\t{{.Ports}}"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if result.returncode == 0:
-            for line in result.stdout.split("\n"):
-                if "iris" in line.lower() and "1972" in line:
-                    match = re.search(r"0\.0\.0\.0:(\d+)->1972/tcp", line)
-                    if match:
-                        return int(match.group(1))
-    except Exception:
-        pass
-
-    try:
-        result = subprocess.run(
-            ["iris", "list"], capture_output=True, text=True, timeout=5
-        )
-        if result.returncode == 0:
-            lines = result.stdout.split("\n")
-            for i, line in enumerate(lines):
-                if "status:" in line and "running" in line:
-                    for j in range(i + 1, min(i + 5, len(lines))):
-                        if "SuperServers:" in lines[j]:
-                            match = re.search(r"SuperServers:\s+(\d+)", lines[j])
-                            if match:
-                                return int(match.group(1))
-    except Exception:
-        pass
-    return None
-
-
 def _validate_connection_params(h: str, p: int, n: str, u: str, pwd: str) -> None:
     if not h or not h.strip():
         raise ValidationError("host", h, "non-empty string", "Host cannot be empty")
@@ -106,20 +71,6 @@ def _validate_connection_params(h: str, p: int, n: str, u: str, pwd: str) -> Non
         raise ValidationError(
             "namespace", n, "alphanumeric + underscores", f"Invalid namespace: {n}"
         )
-
-
-def _get_connection_params_from_env() -> Dict[str, Any]:
-    port_env = os.environ.get("IRIS_PORT")
-    port = int(port_env) if port_env else (auto_detect_iris_port() or 1972)
-    return {
-        "host": os.environ.get("IRIS_HOST", "localhost"),
-        "port": port,
-        "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
-        "username": os.environ.get(
-            "IRIS_USER", os.environ.get("IRIS_USERNAME", "_SYSTEM")
-        ),
-        "password": os.environ.get("IRIS_PASSWORD", "SYS"),
-    }
 
 
 def detect_iris_edition() -> Tuple[str, int]:
@@ -171,20 +122,28 @@ def _session_connection(
     Kept separate from the deprecated name so the library's own remaining callers
     do not raise a warning their users cannot act on.
     """
+    from iris_vector_rag.config.connection_settings import resolve_connection_settings
     from iris_vector_rag.session import SessionIdentity, session_for
 
-    env = _get_connection_params_from_env()
-    h = env["host"] if host is None else host
-    p = env["port"] if port is None else port
-    n = env["namespace"] if namespace is None else namespace
-    u = env["username"] if username is None else username
-    pwd = env["password"] if password is None else password
+    settings = resolve_connection_settings(
+        {
+            "host": host,
+            "port": port,
+            "namespace": namespace,
+            "username": username,
+            "password": password,
+        }
+    )
 
     # Validated here rather than in the identity so that the parameter names in
     # the error are the ones the caller passed (ValidationError.parameter_name).
-    _validate_connection_params(h, p, n, u, pwd)
-
-    identity = SessionIdentity(
-        host=h, port=int(p), namespace=n, username=u, password=pwd
+    _validate_connection_params(
+        settings.host,
+        settings.port,
+        settings.namespace,
+        settings.username,
+        settings.password,
     )
+
+    identity = SessionIdentity.from_settings(settings)
     return session_for(identity=identity).connection_for_adapter()

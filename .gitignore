@@ -158,6 +158,7 @@ temp_iris.key
 
 # Configuration files (.gitignored)
 config/
+!iris_vector_rag/config/
 
 # Output and temporary directories that accumulate files
 outputs/logs/

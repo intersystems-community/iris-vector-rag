@@ -67,7 +67,8 @@ def test_from_env_reads_the_documented_variables(monkeypatch):
     monkeypatch.setenv("IRIS_HOST", "iris.example")
     monkeypatch.setenv("IRIS_PORT", "1234")
     monkeypatch.setenv("IRIS_NAMESPACE", "RAG")
-    monkeypatch.setenv("IRIS_USER", "someone")
+    monkeypatch.delenv("IRIS_USER", raising=False)
+    monkeypatch.setenv("IRIS_USERNAME", "someone")
     monkeypatch.setenv("IRIS_PASSWORD", "secret")
 
     identity = SessionIdentity.from_env()
@@ -76,12 +77,13 @@ def test_from_env_reads_the_documented_variables(monkeypatch):
     assert identity.password == "secret"
 
 
-def test_from_env_accepts_the_username_alias(monkeypatch):
-    monkeypatch.delenv("IRIS_USER", raising=False)
-    monkeypatch.setenv("IRIS_USERNAME", "aliased")
+def test_from_env_accepts_the_deprecated_username_alias(monkeypatch):
+    monkeypatch.delenv("IRIS_USERNAME", raising=False)
+    monkeypatch.setenv("IRIS_USER", "aliased")
     monkeypatch.setenv("IRIS_PORT", "51972")
 
-    assert SessionIdentity.from_env().username == "aliased"
+    with pytest.warns(DeprecationWarning, match="IRIS_USERNAME"):
+        assert SessionIdentity.from_env().username == "aliased"
 
 
 def test_from_config_uses_the_configuration_manager():

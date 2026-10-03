@@ -15,6 +15,32 @@ if TYPE_CHECKING:  # pragma: no cover
     from iris_vector_rag.session.identity import SessionIdentity
 
 
+_REFUSAL_MARKERS = (
+    "refused",
+    "unreachable",
+    "not reachable",
+    "timed out",
+    "timeout",
+    "communication link",
+    "name or service not known",
+)
+
+
+def _unconfigured_and_unreachable(identity: object, detail: str) -> bool:
+    return bool(getattr(identity, "from_defaults", False)) and any(
+        marker in detail.lower() for marker in _REFUSAL_MARKERS
+    )
+
+
+def _default_hint(identity: object) -> str:
+    return (
+        f"No connection settings were configured, so the defaults were used: "
+        f"{getattr(identity, 'host', '?')}:{getattr(identity, 'port', '?')} as user "
+        f"{getattr(identity, 'username', '?')}. Set IRIS_HOST and IRIS_PORT, or set "
+        f"IRIS_CONTAINER_NAME to the container to use"
+    )
+
+
 class SessionError(ConnectionError):
     """A session could not do what was asked of it.
 
@@ -25,10 +51,14 @@ class SessionError(ConnectionError):
     """
 
     opens_backoff: bool = False
+    # Whether a failure of this kind, on settings nobody configured, earns the hint.
+    hints_defaults: bool = False
 
     def __init__(self, identity: "SessionIdentity", detail: str = "") -> None:
         self.identity = identity
         self.detail = detail
+        if self.hints_defaults and _unconfigured_and_unreachable(identity, detail):
+            detail = f"{detail}. {_default_hint(identity)}" if detail else detail
         label = getattr(identity, "label", str(identity))
         message = (
             f"IRIS session {label}: {detail}" if detail else f"IRIS session {label}"
@@ -39,18 +69,21 @@ class SessionError(ConnectionError):
 class IRISUnreachable(SessionError):
     """The port is not accepting connections."""
 
+    hints_defaults = True
     opens_backoff = False
 
 
 class HandshakeTimeout(SessionError):
     """TCP connected but the driver handshake never completed in budget."""
 
+    hints_defaults = True
     opens_backoff = True
 
 
 class ConnectFailed(SessionError):
     """The driver refused the connection for a reason of its own."""
 
+    hints_defaults = True
     opens_backoff = True
 
 

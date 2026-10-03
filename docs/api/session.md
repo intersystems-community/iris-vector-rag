@@ -116,16 +116,24 @@ it again would make the caller wait longer than the truth.
 
 ## Tuning
 
-| Variable                      | Default     | Meaning                                                 |
-| ----------------------------- | ----------- | ------------------------------------------------------- |
-| `IRIS_HEALTH_INTERVAL`        | `30`        | Seconds a connection is trusted between probes.         |
-| `IRIS_CONNECT_TIMEOUT`        | `10`        | Seconds the driver handshake may take.                  |
-| `IRIS_CONNECT_BACKOFF`        | `30`        | Seconds before retrying after a budget-burning failure. |
-| `IRIS_HOST`                   | `localhost` | Instance host, when no config manager is given.         |
-| `IRIS_PORT`                   | detected    | SuperServer port.                                       |
-| `IRIS_NAMESPACE`              | `USER`      | Namespace.                                              |
-| `IRIS_USER` / `IRIS_USERNAME` | `_SYSTEM`   | Account.                                                |
-| `IRIS_PASSWORD`               | `SYS`       | Password. Never appears in a log, repr or error.        |
+| Variable               | Default     | Meaning                                                                       |
+| ---------------------- | ----------- | ----------------------------------------------------------------------------- |
+| `IRIS_HEALTH_INTERVAL` | `30`        | Seconds a connection is trusted between probes.                               |
+| `IRIS_CONNECT_TIMEOUT` | `10`        | Seconds the driver handshake may take.                                        |
+| `IRIS_CONNECT_BACKOFF` | `30`        | Seconds before retrying after a budget-burning failure.                       |
+| `IRIS_HOST`            | `localhost` | Instance host.                                                                |
+| `IRIS_PORT`            | `1972`      | SuperServer port. Never guessed from running containers.                      |
+| `IRIS_NAMESPACE`       | `USER`      | Namespace.                                                                    |
+| `IRIS_USERNAME`        | `_SYSTEM`   | Account. `IRIS_USER` is a deprecated alias.                                   |
+| `IRIS_PASSWORD`        | `SYS`       | Password. Never appears in a log, repr or error.                              |
+| `IRIS_CONTAINER_NAME`  | unset       | Pin one container; its published 1972 port is used when `IRIS_PORT` is unset. |
+
+Precedence, one resolver (`iris_vector_rag.config.connection_settings`): explicit
+arguments, the environment, a `.env` in the working directory, the pinned container,
+the `database.iris` section of the configuration file, the defaults. One log line
+names the `host:port` and user in use. When nothing was configured and the connection
+is refused or times out, the error says the defaults were used and points at
+`IRIS_PORT` and `IRIS_CONTAINER_NAME`.
 
 Per-session overrides: `session_for(health_interval=...)`, and
 `IRISSession(connect_timeout=..., backoff_seconds=...)`.
