@@ -2,7 +2,7 @@
 
 Covers OS-01 to OS-05, OS-15 and OS-16 of the 2026-10 review (feature
 `objectscript-sdk-fix`). The classes are compiled for real: the fixture copies the SDK's
-`.cls` files into the ephemeral container the `iris_target` fixture started, loads and
+`.cls` files into a throwaway container of its own, loads and
 compiles them in USER with `$SYSTEM.OBJ.LoadDir`, and every test calls the compiled classes
 through `iris session`. Nothing is mocked except `Graph.KG.BM25Index`, which belongs to
 iris-vector-graph (not in the test image): a recording stand-in is compiled only when the
@@ -100,9 +100,7 @@ class Server:
         )
 
 
-@pytest.fixture(scope="module")
-def server(iris_target) -> Server:
-    srv = Server(iris_target.container)
+def _load(srv: Server) -> Server:
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "BM25Index.cls").write_text(BM25_STUB)
         subprocess.run(
@@ -161,6 +159,22 @@ def server(iris_target) -> Server:
     assert "LOAD:1" in out, f"SDK classes did not compile:\n{out}"
     assert "ERROR" not in out, out
     return srv
+
+
+@pytest.fixture(scope="module")
+def server() -> Server:
+    """A throwaway container of its own, whichever IRIS the session pins.
+
+    The tests stub Graph.KG.BM25Index, which the dev container has for real, and compile
+    the SDK classes into USER; neither belongs in a shared database.
+    """
+    from tests.support.iris_environment import start_ephemeral
+
+    container, target = start_ephemeral()
+    try:
+        yield _load(Server(target.container))
+    finally:
+        container.stop()
 
 
 @pytest.fixture
