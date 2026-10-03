@@ -44,7 +44,7 @@ def test_testing_package_no_longer_exports_the_bridge():
     import iris_vector_rag.testing as testing
 
     assert not hasattr(testing, "IrisDevToolsBridge")
-    assert "IrisDevToolsBridge" not in testing.__all__
+    assert "IrisDevToolsBridge" not in getattr(testing, "__all__", [])
 
 
 def test_db_vector_utils_has_no_pure_sql_fallbacks():
