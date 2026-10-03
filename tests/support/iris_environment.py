@@ -250,3 +250,45 @@ def _unexpire_passwords(name: str, attempts: int = 36, delay: float = 5.0) -> No
     raise IrisUnreachable(
         f"Ephemeral container {name} never accepted the password unexpire step."
     )
+
+
+def main(
+    argv,
+    *,
+    env: Mapping[str, str] = os.environ,
+    declared: Optional[str] = None,
+    docker_port: Callable[[str], Optional[int]] = docker_port,
+    connector: Callable[[IrisTarget], Any] = _dbapi_connect,
+    attempts: int = 6,
+    delay: float = 5.0,
+) -> int:
+    """`warm-up`: connect to the pinned container and run the warm-up query."""
+    import sys
+
+    if list(argv) != ["warm-up"]:
+        print(
+            "usage: python -m tests.support.iris_environment warm-up", file=sys.stderr
+        )
+        return 2
+    try:
+        if declared is None:
+            declared = declared_container(Path(__file__).resolve().parents[2])
+        target = resolve_pinned(env, declared=declared, docker_port=docker_port)
+        if target is None:
+            print(
+                "warm-up needs IRIS_CONTAINER_NAME to name the container.",
+                file=sys.stderr,
+            )
+            return 2
+        connect(target, connector=connector, attempts=attempts, delay=delay).close()
+    except (IrisUnreachable, ForeignContainerError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    print(f"IRIS answered: container={target.container} port={target.port}")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main(sys.argv[1:]))

@@ -231,3 +231,42 @@ class TestExportedEnvironment:
             0
         ]
         assert "environment()" in body
+
+
+class TestWarmUpCommand:
+    """`python -m tests.support.iris_environment warm-up`, the last step of make iris-reset."""
+
+    def test_warm_up_succeeds_against_a_live_pinned_container(self, capsys):
+        conn = TestConnect.Conn()
+        code = env_mod.main(
+            ["warm-up"],
+            env={"IRIS_CONTAINER_NAME": DECLARED},
+            declared=DECLARED,
+            docker_port=_docker_port({DECLARED: 51972}),
+            connector=lambda t: conn,
+        )
+        assert code == 0
+        assert "51972" in capsys.readouterr().out
+
+    def test_warm_up_without_a_pinned_container_is_an_error(self, capsys):
+        code = env_mod.main(
+            ["warm-up"], env={}, declared=DECLARED, docker_port=_docker_port({})
+        )
+        assert code == 2
+        assert "IRIS_CONTAINER_NAME" in capsys.readouterr().err
+
+    def test_warm_up_failure_exits_nonzero_with_the_hint(self, capsys):
+        def dead(target):
+            raise OSError("refused")
+
+        code = env_mod.main(
+            ["warm-up"],
+            env={"IRIS_CONTAINER_NAME": DECLARED},
+            declared=DECLARED,
+            docker_port=_docker_port({DECLARED: 51972}),
+            connector=dead,
+            attempts=1,
+            delay=0,
+        )
+        assert code == 1
+        assert "make iris-reset" in capsys.readouterr().err

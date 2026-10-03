@@ -38,6 +38,7 @@ jobs:
       - name: Run smoke tests
         env:
           IRIS_HOST: localhost
+          IRIS_CONTAINER_NAME: iris
           IRIS_PORT: 1972
           IRIS_USERNAME: _SYSTEM
           IRIS_PASSWORD: SYS

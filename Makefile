@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install iris-up iris-down iris-logs test-unit lint format-check doctor
+.PHONY: help install iris-up iris-down iris-logs iris-reset test-unit lint format-check doctor
 
 help: ## Show available targets
 	@echo ""
@@ -20,6 +20,9 @@ iris-down: ## Stop IRIS container
 
 iris-logs: ## View IRIS container logs
 	docker compose logs -f iris
+
+iris-reset: ## Recover a wedged project IRIS container (stop, restart, wait, warm-up)
+	bash scripts/ci/iris-reset.sh
 
 test-unit: ## Run unit tests (no database required)
 	python -m pytest tests/unit/ --timeout=30 -q

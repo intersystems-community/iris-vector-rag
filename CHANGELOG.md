@@ -52,6 +52,28 @@ Two things a user can observe.
   SDK's write path resolves the element type from the column it is writing to, and only
   falls back to `FLOAT` when the column cannot be read.
 
+### Test environment: one real IRIS, no mock, no skip (0.15)
+
+- **Removed: `iris_vector_rag.testing`.** The backend-mode harness (`backend_manager`,
+  `connection_pool`, `validators`, `exceptions`), the fake session driver and the devtools
+  bridge no longer ship in the wheel; they are `tests/support/` in the repository.
+  `iris_vector_rag.config.backend_modes` moved with them. Nothing in the package imported
+  them. The package `iris_vector_rag.testing` stays, empty, for the test embedder.
+- **Changed: the test suite's `iris_connection` is a live IRIS connection.** It was a
+  `MockConnection` from the connection pool, so tests that believed they used IRIS used a
+  dictionary. `IRIS_CONTAINER_NAME` pins this project's container;
+  without it the suite starts an ephemeral container and removes it. Another project's
+  container is refused. An unreachable IRIS raises `IrisUnreachable` with a hint; it never
+  becomes a mock and the test is never skipped.
+- **Removed: the `los-iris` fixtures.** `iris_database_config` and `iris_test_session`
+  attached to another project's container, ran `DROP TABLE` there, and returned a `Mock`
+  on any failure. The session-start probe of ports 11972 and 21972 went with them.
+- **New: `make iris-reset`** stops IRIS cleanly, restarts the project container through
+  `idt container restart`, waits until it answers and makes the warm-up connection.
+- Eleven tests that only passed against the mock now fail for the reasons they always
+  had (the medical-20 graph fixture is not loaded; one inserts into a column that does not
+  exist). They are listed in `tests/contract/ci_known_failures.txt`.
+
 ### IRIS session: one object owns the connection (0.15)
 
 Before this release there were eleven ways to get a connection to IRIS and each
