@@ -74,6 +74,26 @@ def entity_storage_adapter(connection_manager):
     }
     adapter = EntityStorageAdapter(connection_manager, config)
 
+    # An earlier test's schema reset can leave a non-canonical `RAG.Entities` behind
+    # (tests/utils/schema_models.py describes one with no `confidence`). Writes to it
+    # fail, and these tests used to pass anyway on the adapter's pre-commit cache.
+    # The table holds only this suite's rows, so drop it when it is not canonical and
+    # let the adapter's first write create it (migrate_table's own DDL for Entities
+    # has no `confidence` either, so it is not used here).
+    probe = connection_manager.get_connection().cursor()
+    try:
+        probe.execute("SELECT TOP 1 confidence, source_doc_id FROM RAG.Entities")
+        probe.fetchall()
+    except Exception:
+        drop = connection_manager.get_connection().cursor()
+        try:
+            drop.execute("DROP TABLE IF EXISTS RAG.EntityRelationships")
+            drop.execute("DROP TABLE IF EXISTS RAG.Entities")
+        finally:
+            drop.close()
+    finally:
+        probe.close()
+
     # Clean up test data before each test
     # This ensures tests start with a clean state
     conn = connection_manager.get_connection()

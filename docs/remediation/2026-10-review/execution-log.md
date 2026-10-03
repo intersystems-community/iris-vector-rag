@@ -306,3 +306,21 @@ entry: feature, question, choice, why.
   `test_optimized_program_loading.py`, two in
   `tests/integration/test_entity_extraction_logging.py`) and the three example
   scripts built on it. Their subject is removed by the G4 decision, not weakened.
+- **entity-services-fix: query time without an LLM.**
+  `GraphRAGPipeline._find_seed_entities` runs the extraction service on the
+  query. With the no-LLM raise it would have crashed every query on a pipeline
+  without `llm_func`, which used to fall back to vector search. It now catches
+  `EntityExtractionError`, logs a warning and returns no seeds, so the fallback
+  and its `retrieval_method` stand. (Second edit in `pipelines/graphrag.py`.)
+- **entity-services-fix: tests that passed on a lie.** The 22
+  `test_fuzzy_entity_search_contracts.py` tests passed only because
+  `store_entity` cached the entity before the write and search merged the cache
+  back, while the write itself failed on a `RAG.Entities` left by the test
+  schema reset (`tests/utils/schema_models.py` describes an `Entities` without
+  `confidence`). The fixture now drops that table when it is not canonical and
+  lets the adapter create it. The batch tests that built the service with no
+  `llm_func` and only checked result structure now pass a stub `llm_func`.
+  Separate defect, not fixed here: `SchemaManager.migrate_table("Entities")`
+  (schema_manager.py around line 1708) emits an `Entities` DDL with no
+  `confidence` column, unlike the ensure path. Owner: `storage-correctness`
+  follow-up or `validation-truthfulness`.

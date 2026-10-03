@@ -51,7 +51,11 @@ class TestBatchExtractionContract:
         # Initialize service (will need real config in implementation)
         config_manager = ConfigurationManager()
         connection_manager = ConnectionManager(config_manager)
-        service = EntityExtractionService(config_manager, connection_manager)
+        service = EntityExtractionService(
+            config_manager,
+            connection_manager,
+            llm_func=lambda prompt: '[{"text": "Test", "type": "PERSON"}]',
+        )
 
         # Create test document
         test_doc = Document(
@@ -78,7 +82,11 @@ class TestBatchExtractionContract:
 
         config_manager = ConfigurationManager()
         connection_manager = ConnectionManager(config_manager)
-        service = EntityExtractionService(config_manager, connection_manager)
+        service = EntityExtractionService(
+            config_manager,
+            connection_manager,
+            llm_func=lambda prompt: '[{"text": "Test", "type": "PERSON"}]',
+        )
 
         # Empty documents list should raise ValueError
         with pytest.raises(ValueError, match="documents.*cannot be empty"):
@@ -92,7 +100,11 @@ class TestBatchExtractionContract:
 
         config_manager = ConfigurationManager()
         connection_manager = ConnectionManager(config_manager)
-        service = EntityExtractionService(config_manager, connection_manager)
+        service = EntityExtractionService(
+            config_manager,
+            connection_manager,
+            llm_func=lambda prompt: '[{"text": "Test", "type": "PERSON"}]',
+        )
 
         # Create test documents
         test_docs = [

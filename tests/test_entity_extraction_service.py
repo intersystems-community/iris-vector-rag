@@ -10,12 +10,7 @@ import pytest
 
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
-from iris_vector_rag.core.models import (
-    Document,
-    Entity,
-    EntityTypes,
-    Relationship,
-)
+from iris_vector_rag.core.models import Document, Entity, EntityTypes, Relationship
 from iris_vector_rag.embeddings.manager import EmbeddingManager
 from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
@@ -217,6 +212,7 @@ class TestEntityExtractionService:
         service = EntityExtractionService(
             config_manager=self.config_manager,
             connection_manager=self.connection_manager,
+            llm_func=lambda prompt: "[]",
         )
 
         # Test with invalid document

@@ -26,7 +26,11 @@ class TestBatchRetryLogic:
         """Initialize EntityExtractionService."""
         config_manager = ConfigurationManager()
         connection_manager = ConnectionManager(config_manager)
-        return EntityExtractionService(config_manager, connection_manager)
+        return EntityExtractionService(
+            config_manager,
+            connection_manager,
+            llm_func=lambda prompt: '[{"text": "Test", "type": "PERSON"}]',
+        )
 
     @pytest.fixture
     def test_documents(self):

@@ -293,9 +293,16 @@ class GraphRAGPipeline(RAGPipeline):
     def _find_seed_entities(self, query_text: str) -> List[str]:
         """Find entity IDs in the graph matching extracted query entities."""
         from ..core.models import Document as CoreDoc
+        from ..services.entity_extraction import EntityExtractionError
 
         doc_wrapper = CoreDoc(page_content=query_text, id="query")
-        entities = self.entity_extraction_service.extract_entities(doc_wrapper)
+        try:
+            entities = self.entity_extraction_service.extract_entities(doc_wrapper)
+        except EntityExtractionError as exc:
+            # Without an LLM (or when it fails) the query has no entities to look up;
+            # the caller falls back to vector search and says so in `retrieval_method`.
+            logger.warning(f"Seed entity extraction failed for the query: {exc}")
+            return []
 
         entity_ids: List[str] = []
         for entity in entities:

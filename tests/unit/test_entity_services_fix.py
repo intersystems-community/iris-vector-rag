@@ -673,3 +673,14 @@ def test_load_documents_raises_when_every_document_fails(no_schema_or_adapter):
         _pipeline(service, None).load_documents(
             "", documents=_docs("a", "b", "c", "d", "e", "f")  # two batches of 5 and 1
         )
+
+
+def test_a_query_without_an_llm_finds_no_seed_entities_instead_of_crashing(caplog):
+    service = EntityExtractionService(_config())  # no llm_func
+    pipeline = _pipeline(service, None)
+
+    with caplog.at_level("WARNING"):
+        seeds = pipeline._find_seed_entities("what treats diabetes?")
+
+    assert seeds == []
+    assert "Seed entity extraction failed" in caplog.text
