@@ -11,7 +11,7 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from iris_vector_rag.common.db_vector_utils import insert_vector
+from iris_vector_rag.common.db_vector_utils import insert_vector, normalize_vector
 
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
@@ -759,6 +759,20 @@ class IRISVectorStore(VectorStore):
                 shape.column_for(ColumnRole.EMBEDDING) if embeddings else None
             )
 
+            # Every width is checked before the first row is written. The session's
+            # connection is in autocommit mode, so a rollback cannot take back the rows
+            # written before a bad vector: the batch has to be refused whole up front.
+            if embeddings and vector is not None:
+                for i, embedding in enumerate(embeddings[: len(documents)]):
+                    if len(embedding) != vector.dimension:
+                        raise DimensionMismatchError(
+                            len(embedding),
+                            vector.dimension,
+                            f"{shape.qualified_name}.{embedding_column.name} "
+                            f"(document {documents[i].id})",
+                            document_id=documents[i].id,
+                        )
+
             added_ids = []
             logger.debug(
                 f"_store_documents called with {len(documents)} documents and embeddings: {embeddings is not None}"
@@ -793,6 +807,10 @@ class IRISVectorStore(VectorStore):
                     values[title_column.name] = title
 
                 if embeddings and len(embeddings) > i:
+                    # upsert=False: ivg falls back to UPDATE only when the duplicate-key
+                    # error text contains UNIQUE or DUPLICATE, and this driver can report
+                    # a duplicate as "<LIST ERROR> ...". The store asks IRIS whether the
+                    # row exists instead of trusting a message.
                     success = insert_vector(
                         cursor=cursor,
                         table_name=self.table_name,
@@ -802,14 +820,30 @@ class IRISVectorStore(VectorStore):
                         key_columns={identifier.name: doc.id},
                         additional_columns=values,
                         dtype=vector.element_type,
+                        upsert=False,
                     )
+                    if not success and self._row_exists(
+                        cursor, identifier.name, doc.id
+                    ):
+                        self._update_with_vector(
+                            cursor,
+                            identifier.name,
+                            doc.id,
+                            values,
+                            embedding_column.name,
+                            embeddings[i],
+                            vector,
+                        )
+                        success = True
                     if not success:
                         # ivg has logged the cause. Carrying on would commit the rest of
                         # the batch and return a partial id list as if it were whole.
                         raise VectorStoreDataError(
                             f"Failed to store document {doc.id} with its vector; "
-                            f"the batch was not committed",
+                            f"the batch stopped there (rows before it may already be "
+                            f"stored if the connection autocommits)",
                             document_id=doc.id,
+                            stored_ids=list(added_ids),
                         )
                     added_ids.append(doc.id)
                     logger.debug(f"Successfully upserted document {doc.id} with vector")
@@ -865,6 +899,35 @@ class IRISVectorStore(VectorStore):
             raise VectorStoreDataError(f"Failed to store documents: {error_msg}")
         finally:
             cursor.close()
+
+    def _row_exists(self, cursor, identifier: str, doc_id: str) -> bool:
+        cursor.execute(
+            f"SELECT COUNT(*) FROM {self.table_name} WHERE {identifier} = ?", [doc_id]
+        )
+        row = cursor.fetchone()
+        return bool(row and row[0] > 0)
+
+    def _update_with_vector(
+        self,
+        cursor,
+        identifier: str,
+        doc_id: str,
+        values: Dict[str, Any],
+        vector_column: str,
+        embedding: List[float],
+        vector,
+    ) -> None:
+        """UPDATE an existing row, its vector included. The width is already checked."""
+        processed = normalize_vector(embedding, vector.dimension)
+        assignments = [f"{column} = ?" for column in values]
+        assignments.append(
+            f"{vector_column} = TO_VECTOR(?, {vector.element_type}, {vector.dimension})"
+        )
+        cursor.execute(
+            f"UPDATE {self.table_name} SET {', '.join(assignments)} "
+            f"WHERE {identifier} = ?",
+            [*values.values(), "[" + ",".join(map(str, processed)) + "]", doc_id],
+        )
 
     def add_documents(
         self,

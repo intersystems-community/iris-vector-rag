@@ -77,11 +77,16 @@ def test_storing_a_wrong_sized_embedding_raises_and_commits_nothing(recorded_cat
     store = make_store("canonical", cursor, recorded_catalog)
     connection = store.connection_manager.get_connection.return_value
 
-    with pytest.raises(DimensionMismatchError, match="dimension mismatch"):
-        store._store_documents(
-            [document("a"), document("b")], embeddings=[[0.1] * DIM, [0.1] * (DIM + 1)]
-        )
+    with patch("iris_vector_rag.storage.vector_store_iris.insert_vector") as insert:
+        with pytest.raises(DimensionMismatchError, match="dimension mismatch"):
+            store._store_documents(
+                [document("a"), document("b")],
+                embeddings=[[0.1] * DIM, [0.1] * (DIM + 1)],
+            )
 
+    # The session connection autocommits, so a rollback cannot un-write the first
+    # document: every width is checked before any row is.
+    insert.assert_not_called()
     connection.commit.assert_not_called()
     connection.rollback.assert_called()
 
@@ -96,10 +101,11 @@ def test_a_failed_insert_aborts_the_batch(recorded_catalog):
         "iris_vector_rag.storage.vector_store_iris.insert_vector",
         side_effect=[True, False],
     ):
-        with pytest.raises(VectorStoreDataError, match="b"):
+        with pytest.raises(VectorStoreDataError, match="b") as info:
             store._store_documents(
                 [document("a"), document("b")], embeddings=[[0.1] * DIM, [0.1] * DIM]
             )
+    assert info.value.details["stored_ids"] == ["a"]
 
     connection.commit.assert_not_called()
     connection.rollback.assert_called()
@@ -230,3 +236,58 @@ def test_engine_embedding_dimension_is_the_schema_managers():
         IRISVectorEngine, "vector_store", PropertyMock(return_value=store)
     ):
         assert engine.embedding_dimension == 1536
+
+
+# ---------------------------------------------------------------------------
+# ST-13 follow-on: re-adding an existing document must not depend on an error message
+# ---------------------------------------------------------------------------
+
+
+class _ExistingRowCursor(FakeCursor):
+    """A table that already holds the row; the driver's duplicate-key error is garbled.
+
+    ivg's upsert falls back to UPDATE only when the error text contains UNIQUE or
+    DUPLICATE. This driver can report the duplicate as `<LIST ERROR> ...`, so the
+    store must not rely on it.
+    """
+
+    def execute(self, sql, params=None):
+        upper = " ".join(str(sql).upper().split())
+        if upper.startswith("INSERT"):
+            self.executed.append((sql, params))
+            raise RuntimeError("<LIST ERROR> Incorrect list format, unsupported type")
+        if upper.startswith("SELECT COUNT(*)"):
+            self.executed.append((sql, params))
+            self._result = [(1,)]
+            return
+        super().execute(sql, params)
+
+
+def test_re_adding_an_existing_document_updates_it_whatever_the_duplicate_error_says(
+    recorded_catalog,
+):
+    cursor = _ExistingRowCursor()
+    store = make_store("canonical", cursor, recorded_catalog)
+
+    ids = store._store_documents([document("a", "new text")], embeddings=[[0.1] * DIM])
+
+    assert ids == ["a"]
+    update = [sql for sql in cursor.sql if sql.upper().startswith("UPDATE")]
+    assert len(update) == 1 and "TO_VECTOR" in update[0].upper()
+    params = [p for sql, p in cursor.executed if sql.upper().startswith("UPDATE")][0]
+    assert "new text" in params and params[-1] == "a"
+
+
+def test_a_failed_insert_of_a_new_document_still_raises(recorded_catalog):
+    cursor = _ExistingRowCursor()
+    cursor.execute = lambda sql, params=None: (
+        (_ for _ in ()).throw(  # type: ignore[assignment]
+            RuntimeError("the table is gone")
+        )
+        if str(sql).upper().startswith("INSERT")
+        else FakeCursor.execute(cursor, sql, params)
+    )
+    cursor.fetchone = lambda: (0,)  # type: ignore[assignment]
+    store = make_store("canonical", cursor, recorded_catalog)
+    with pytest.raises(VectorStoreDataError, match="a"):
+        store._store_documents([document("a")], embeddings=[[0.1] * DIM])

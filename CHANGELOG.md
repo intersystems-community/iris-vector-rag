@@ -73,7 +73,12 @@ N}` (or `primary_backend: stub`). It lives in `iris_vector_rag.testing.embedder`
   `ValueError`, in ivg's wording) on insert and on query. `normalize_vector` and
   `insert_vector` in `common.db_vector_utils` no longer truncate or zero-pad. A failed
   `insert_vector` aborts the batch instead of being logged, skipped and committed with a
-  partial id list. (ST-13, ST-23)
+  partial id list; every vector's width is checked before the first row is written, since
+  the session connection autocommits and a rollback cannot take rows back. Re-adding a
+  document that exists now updates it: the store asks IRIS whether the row exists instead
+  of relying on ivg matching `UNIQUE` in the driver's error text, which this driver can
+  replace with `<LIST ERROR> ...` (such a re-add used to be logged as a failure and the
+  old row kept). (ST-13, ST-23)
 - **Writes through ivg carry the model.** `integrations.ivg.store_embedding` and
   `store_embeddings` pass the active model's name as `model_key`, so ivg refuses to mix
   stub and real vectors, or two models, without `force`. IVR's own tables do not record

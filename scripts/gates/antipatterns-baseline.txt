@@ -29,8 +29,8 @@ hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:60
 hardcoded-vector-type	iris_vector_rag/services/batch_entity_processor.py:176
 hardcoded-vector-type	iris_vector_rag/services/storage.py:439
 hardcoded-vector-type	iris_vector_rag/services/storage.py:478
-hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:13
-hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:24
+hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:12
+hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:22
 hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:1281
 hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:368
 hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:379
