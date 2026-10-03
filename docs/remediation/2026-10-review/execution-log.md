@@ -221,3 +221,38 @@ entry: feature, question, choice, why.
   `tests/test_schema_manager_bugs.py` (7 failures) and the collection error in
   `tests/integration/test_ivg_4x_upgrade_e2e.py` fail identically on the
   integration branch; untouched.
+- **retrieval-fusion-fix: the score formula.** Q4/Q5 left the formula open.
+  Chose `weight * (n - r + 1) / n` (top hit earns the full weight, last earns
+  `weight / n`, lone hit earns its weight): the smallest change that stops the
+  last hit and `n=1` from scoring 0, keeps a linear rank scale and keeps weights
+  meaningful. RRF unchanged.
+- **retrieval-fusion-fix: hits the store does not hold.** A text hit whose id
+  `fetch_documents_by_ids` cannot find is dropped with a warning, not returned
+  blank and not raised: it has nothing to show and the rest of the query is
+  good.
+- **retrieval-fusion-fix: where the threshold applies.** Only to similarity
+  scores: the vector leg and `mix` relation hits. Text scores are index ranks on
+  another scale and QueryOptions validates the threshold as 0..1, so
+  `retrieval="text"` with a threshold raises rather than compare unlike numbers;
+  text-only hits in fusion are not thresholded. To get scores the engine uses
+  `similarity_search_with_score` when a threshold is set, since `search_by_text`
+  returns documents without scores (the plain-vector path dropped everything
+  under any threshold for that reason). `BasicRAGPipeline` routes a threshold
+  through the engine for the same reason.
+- **retrieval-fusion-fix: filter where it cannot apply.** Relation hits carry no
+  document metadata. `global` with a filter raises `ValueError`; `mix` with a
+  filter skips the relation leg and sets `degraded` plus `degradation_reason` (a
+  leak of out-of-scope relations would be worse than a smaller result).
+- **retrieval-fusion-fix: raw text score.** Under fusion, the per-source key
+  `text_score` (FR-011) overwrites the text engine's raw `text_score`, as
+  before; in `text` mode the raw score stays under `text_score`. Not renamed:
+  public keys.
+- **retrieval-fusion-fix: the contract fake.**
+  `tests/contract/test_metadata_filter_applied.py` faked a store whose
+  `search_by_text` returned scores in metadata, which the real store never does.
+  The fake gained `similarity_search_with_score`, as the real store has.
+- **retrieval-fusion-fix: upstream limit, not fixed.** iris-vector-graph's
+  `TextSearchEngine.search_documents` reads a table named `docs(id, text)` by
+  default, not `RAG.SourceDocuments`, and falls back to `LIKE` on any error. The
+  E2E points it at a table of its own. Whether the engine should name the vector
+  store's table is a separate question (not in CR-01..03).

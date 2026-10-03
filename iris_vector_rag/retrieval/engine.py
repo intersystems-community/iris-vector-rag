@@ -78,11 +78,41 @@ class RetrievalEngine:
                 f"Mode {mode_name!r} is registered but not implemented."
             )
 
+    def _vector_leg(self, query: str, opts: Any) -> List[Any]:
+        """Vector hits for ``query`` under the options' filter and threshold.
+
+        ``metadata_filter`` is pushed into the store. With ``similarity_threshold`` above
+        zero the scored search is used so each hit carries ``metadata["score"]`` and hits
+        below the threshold are dropped; ``search_by_text`` returns documents without
+        their scores.
+        """
+        threshold = getattr(opts, "similarity_threshold", 0.0) or 0.0
+        metadata_filter = getattr(opts, "metadata_filter", None)
+        if threshold > 0.0:
+            scored = self.vector_store.similarity_search_with_score(
+                query, k=opts.top_k, filter=metadata_filter
+            )
+            docs = []
+            for doc, score in scored:
+                doc.metadata["score"] = float(score)
+                if float(score) >= threshold:
+                    docs.append(doc)
+            return docs
+        return list(
+            self.vector_store.search_by_text(
+                query, top_k=opts.top_k, metadata_filter=metadata_filter
+            )
+        )
+
     def _retrieve_vector(self, opts: Any) -> List[Any]:
-        return self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
+        return self._vector_leg(opts.query, opts)
 
     def _text_search_to_docs(self, results: List[Any]) -> List[Any]:
-        """Convert (doc_id, score) tuples from TextSearchEngine to Document objects."""
+        """Convert (doc_id, score) tuples from TextSearchEngine to Document objects.
+
+        The documents are bare: the text index gives ids and scores, not content. Use
+        `_text_leg` to get them hydrated.
+        """
         from iris_vector_rag.core.models import Document
 
         docs = []
@@ -103,24 +133,67 @@ class RetrievalEngine:
                 docs.append(item)
         return docs
 
-    def _retrieve_text(self, opts: Any) -> List[Any]:
+    def _hydrate(self, docs: List[Any]) -> List[Any]:
+        """Fill in the content of hits that have none, by id, from the vector store.
+
+        A text-index hit carries an id and a score only. A hit the store does not hold
+        is dropped with a warning: it has nothing to show.
+        """
+        blank = [d for d in docs if not getattr(d, "page_content", "")]
+        if not blank:
+            return docs
+        wanted = [str(d.id) for d in blank]
+        fetched = {
+            str(d.id): d for d in self.vector_store.fetch_documents_by_ids(wanted)
+        }
+        hydrated = []
+        for d in docs:
+            if getattr(d, "page_content", ""):
+                hydrated.append(d)
+                continue
+            real = fetched.get(str(d.id))
+            if real is None:
+                logger.warning(
+                    "Text search returned id %r, which the vector store does not "
+                    "hold; dropping the hit",
+                    d.id,
+                )
+                continue
+            # The text score stays; everything the store knows about the document joins it.
+            real.metadata.update(d.metadata)
+            hydrated.append(real)
+        return hydrated
+
+    def _text_leg(self, opts: Any) -> List[Any]:
+        """Text hits with content, filtered by ``metadata_filter`` on the stored metadata."""
         from iris_vector_graph.text_search import (
             TextSearchEngine,  # type: ignore[import]
         )
 
         engine = TextSearchEngine(connection=self.connection)
         raw = engine.search_documents(opts.query, k=opts.top_k)
-        return self._text_search_to_docs(raw)
+        docs = self._hydrate(self._text_search_to_docs(raw))
+        metadata_filter = getattr(opts, "metadata_filter", None)
+        if metadata_filter:
+            docs = [
+                d
+                for d in docs
+                if all(d.metadata.get(k) == v for k, v in metadata_filter.items())
+            ]
+        return docs
+
+    def _retrieve_text(self, opts: Any) -> List[Any]:
+        if (getattr(opts, "similarity_threshold", 0.0) or 0.0) > 0.0:
+            raise ValueError(
+                "similarity_threshold does not apply to retrieval='text': text "
+                "scores are index ranks, not similarities. Use 'hybrid' or 'rrf', "
+                "where the threshold applies to the vector leg."
+            )
+        return self._text_leg(opts)
 
     def _retrieve_fusion(self, opts: Any, mode_name: str) -> List[Any]:
-        from iris_vector_graph.text_search import (
-            TextSearchEngine,  # type: ignore[import]
-        )
-
-        vector_docs = self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
-        text_engine = TextSearchEngine(connection=self.connection)
-        raw_text = text_engine.search_documents(opts.query, k=opts.top_k)
-        text_docs = self._text_search_to_docs(raw_text)
+        vector_docs = self._vector_leg(opts.query, opts)
+        text_docs = self._text_leg(opts)
 
         if mode_name == "rrf":
             return _reciprocal_rank_fusion([vector_docs, text_docs], top_k=opts.top_k)
@@ -185,6 +258,13 @@ class RetrievalEngine:
         Falls back gracefully when index empty (FR-009); hard error when KG absent
         handled by check_prerequisites in retrieve().
         """
+        if getattr(opts, "metadata_filter", None):
+            raise ValueError(
+                "metadata_filter cannot be applied to retrieval='global': relation "
+                "hits carry no document metadata, so the filter would be ignored and "
+                "out-of-scope relations returned. Use 'mix' (which scopes its "
+                "document legs) or 'vector'."
+            )
         high_kws, low_kws = self._get_or_extract_keywords(opts)
         degraded = False
         degradation_reason = ""
@@ -264,7 +344,7 @@ class RetrievalEngine:
         # 1. Naive chunk vector search (existing pipeline mechanism)
         naive_docs: List[Any] = []
         try:
-            naive_raw = self.vector_store.search_by_text(opts.query, top_k=opts.top_k)
+            naive_raw = self._vector_leg(opts.query, opts)
             for doc in naive_raw or []:
                 doc.metadata["retrieval_source"] = "naive"
                 naive_docs.append(doc)
@@ -273,7 +353,16 @@ class RetrievalEngine:
 
         # 2. High-level relation embedding search
         high_docs: List[Any] = []
-        if high_kws and rel_store.count_embedded() > 0:
+        metadata_filter = getattr(opts, "metadata_filter", None)
+        relation_skip_reason = ""
+        if metadata_filter:
+            # Relation hits carry no document metadata, so the filter cannot scope
+            # them. Including them would leak out-of-scope content; say so instead.
+            relation_skip_reason = (
+                "metadata_filter supplied: relation hits carry no document metadata, "
+                "so the relation leg was skipped"
+            )
+        elif high_kws and rel_store.count_embedded() > 0:
             query_text = " ".join(high_kws)
             query_emb = self._embed_text_for_search(query_text)
             raw = rel_store.search(query_emb, top_k=opts.top_k)
@@ -290,13 +379,18 @@ class RetrievalEngine:
                     source="high_level",
                 )
                 high_docs.append(doc)
+            threshold = getattr(opts, "similarity_threshold", 0.0) or 0.0
+            if threshold > 0.0:
+                high_docs = [
+                    d for d in high_docs if d.metadata.get("score", 0.0) >= threshold
+                ]
 
         # 3. Low-level entity vector search
         low_docs: List[Any] = []
         if low_kws:
             try:
                 low_query = " ".join(low_kws)
-                low_raw = self.vector_store.search_by_text(low_query, top_k=opts.top_k)
+                low_raw = self._vector_leg(low_query, opts)
                 for doc in low_raw or []:
                     doc.metadata["retrieval_source"] = "low_level"
                     low_docs.append(doc)
@@ -315,6 +409,7 @@ class RetrievalEngine:
                 [high_docs, low_docs, naive_docs],
                 [w_high, w_low, w_naive],
                 top_k=opts.top_k,
+                source_names=["high_level", "low_level", "naive"],
             )
             fusion_method = "weighted_score"
         else:
@@ -335,7 +430,7 @@ class RetrievalEngine:
         if extractor is not None:
             extraction_model = getattr(extractor, "model_name", None)
 
-        degraded_mix = not high_kws and not low_kws
+        degraded_mix = (not high_kws and not low_kws) or bool(relation_skip_reason)
         logger.debug(
             "mix retrieval complete",
             extra={
@@ -357,6 +452,7 @@ class RetrievalEngine:
                 "high_level_keywords": high_kws,
                 "low_level_keywords": low_kws,
                 "degraded": degraded_mix,
+                "degradation_reason": relation_skip_reason,
                 "retrieval_mode": "mix",
                 "extraction_model": extraction_model,
             },
@@ -379,15 +475,62 @@ def _make_doc(
     return Document(id=doc_id, page_content=content, metadata=meta)
 
 
+def _check_fusion_inputs(
+    result_lists: List[List[Any]],
+    source_names: List[str],
+    weights: Optional[List[float]] = None,
+) -> None:
+    """Refuse lists, names and weights that do not pair up; `zip` would drop the extras."""
+    if len(source_names) != len(result_lists):
+        raise ValueError(
+            f"Fusion got {len(result_lists)} result lists but {len(source_names)} "
+            f"source_names ({source_names}); pass one name per list."
+        )
+    if weights is not None and len(weights) != len(result_lists):
+        raise ValueError(
+            f"Fusion got {len(result_lists)} result lists but {len(weights)} "
+            f"weights; pass one weight per list."
+        )
+
+
+def _merge_hit(seen: dict, doc_id: str, doc: Any) -> None:
+    """Keep one document per id: the one with content, carrying both hits' metadata."""
+    current = seen.get(doc_id)
+    if current is None:
+        seen[doc_id] = doc
+        return
+    if not getattr(current, "page_content", "") and getattr(doc, "page_content", ""):
+        current, doc = doc, current
+        seen[doc_id] = current
+    # `current` is the keeper; the other hit only adds the keys it lacks.
+    for key, value in doc.metadata.items():
+        current.metadata.setdefault(key, value)
+
+
+def _finish(ordered: List[str], seen: dict, per_source: dict, scores: dict, top_k: int):
+    result = []
+    for did in ordered[:top_k]:
+        doc = seen[did]
+        doc.metadata.update(per_source[did])
+        doc.metadata["fusion_score"] = scores[did]
+        result.append(doc)
+    return result
+
+
 def _reciprocal_rank_fusion(
     result_lists: List[List[Any]],
     top_k: int = 10,
     k: int = 60,
     source_names: Optional[List[str]] = None,
 ) -> List[Any]:
-    """Merge ranked lists via RRF scoring; record per-source scores in doc.metadata (FR-011)."""
+    """Merge ranked lists via RRF scoring; record per-source scores in doc.metadata (FR-011).
+
+    A hit at 1-based rank r earns ``1 / (k + r)`` from its list; a document's score is
+    the sum over the lists it appears in. One document per id survives, with content.
+    """
     if source_names is None:
-        source_names = ["vector", "text"]
+        source_names = ["vector", "text"][: len(result_lists)]
+    _check_fusion_inputs(result_lists, source_names)
     scores: dict = {}
     per_source: dict = {}
     seen: dict = {}
@@ -397,15 +540,9 @@ def _reciprocal_rank_fusion(
             contrib = 1.0 / (k + rank)
             scores[doc_id] = scores.get(doc_id, 0.0) + contrib
             per_source.setdefault(doc_id, {})[f"{source}_score"] = contrib
-            seen[doc_id] = doc
+            _merge_hit(seen, doc_id, doc)
     ordered = sorted(seen.keys(), key=lambda did: scores[did], reverse=True)
-    result = []
-    for did in ordered[:top_k]:
-        doc = seen[did]
-        doc.metadata.update(per_source[did])
-        doc.metadata["fusion_score"] = scores[did]
-        result.append(doc)
-    return result
+    return _finish(ordered, seen, per_source, scores, top_k)
 
 
 def _weighted_score_fusion(
@@ -414,28 +551,29 @@ def _weighted_score_fusion(
     top_k: int = 10,
     source_names: Optional[List[str]] = None,
 ) -> List[Any]:
-    """Merge ranked lists via weighted reciprocal-rank proxy scores; record per-source scores (FR-011)."""
+    """Merge ranked lists via weighted rank scores; record per-source scores (FR-011).
+
+    A hit at 1-based rank r in a list of n hits earns ``weight * (n - r + 1) / n``: the
+    top hit earns the whole weight, the last earns ``weight / n``, and the only hit in
+    a list earns its whole weight. (Before 0.15 the formula was ``weight * (1 - r / n)``,
+    which gave the last hit of every list, and a lone hit, nothing.)
+    """
     if source_names is None:
-        source_names = ["vector", "text"]
+        source_names = ["vector", "text"][: len(result_lists)]
+    _check_fusion_inputs(result_lists, source_names, weights)
     scores: dict = {}
     per_source: dict = {}
     seen: dict = {}
     for source, (ranked, w) in zip(source_names, zip(result_lists, weights)):
-        n = max(len(ranked), 1)
+        n = len(ranked)
         for rank, doc in enumerate(ranked, start=1):
             doc_id = _doc_id(doc)
-            contrib = w * (1.0 - rank / n)
+            contrib = w * (n - rank + 1) / n
             scores[doc_id] = scores.get(doc_id, 0.0) + contrib
             per_source.setdefault(doc_id, {})[f"{source}_score"] = contrib
-            seen[doc_id] = doc
+            _merge_hit(seen, doc_id, doc)
     ordered = sorted(seen.keys(), key=lambda did: scores[did], reverse=True)
-    result = []
-    for did in ordered[:top_k]:
-        doc = seen[did]
-        doc.metadata.update(per_source[did])
-        doc.metadata["fusion_score"] = scores[did]
-        result.append(doc)
-    return result
+    return _finish(ordered, seen, per_source, scores, top_k)
 
 
 def _doc_id(doc: Any) -> str:

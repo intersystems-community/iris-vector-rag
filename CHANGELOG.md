@@ -70,6 +70,36 @@ ST-16 to ST-18).
   relationship ID matches no row, and uses the configured schema (`schema_prefix`) rather
   than a literal `RAG.`.
 
+### Changed: fusion keeps real content and sane scores
+
+`retrieval="text"`, `"hybrid"` and `"rrf"` (and the weighted form of `"mix"`) return
+different results from before. There is no flag: the old results were wrong. (CR-01,
+CR-02, CR-03, CR-09)
+
+- **Content is never blank.** A text-index hit carries an id and a score; the engine now
+  fetches the document by id from the vector store, so text-only hits come back with
+  content and metadata. A hit found by both legs is one document, with content. A text
+  hit the store does not hold is dropped with a warning.
+- **New weighted score.** A hit at 1-based rank `r` in a list of `n` hits earns
+  `weight * (n - r + 1) / n`: the top hit earns the whole weight, the last earns
+  `weight / n`, a lone hit earns its whole weight. Before, it was `weight * (1 - r / n)`,
+  so the last hit, and any one-hit list, earned 0. A top-1 vector hit in `hybrid` mode now
+  scores 0.7 (the default vector weight), not 0. `rrf` scoring (`1 / (60 + rank)`) is
+  unchanged. Rankings and `fusion_score` values change for existing callers.
+- **`mix` with `weights` keeps all three lists.** The naive vector list was dropped and
+  the score keys mislabelled; the keys are now `high_level_score`, `low_level_score` and
+  `naive_score`, as under RRF. Fusion raises `ValueError` if lists, names and weights do
+  not pair up.
+- **`metadata_filter` and `similarity_threshold` are honoured in every mode.** The filter
+  reaches the vector leg, and scopes text hits on their stored metadata. The threshold is
+  a similarity cut-off, so it applies to the vector leg (a fused text-only hit has no
+  similarity and is kept) and to `mix` relation hits. It also now works on the plain
+  vector path, where it used to drop every document because the store returns none of
+  their scores. Not applicable, so refused loudly: `similarity_threshold` with
+  `retrieval="text"` and `metadata_filter` with `retrieval="global"` raise `ValueError`;
+  `mix` with a filter skips the relation leg (relations carry no document metadata) and
+  reports `degraded` with the reason in the result metadata.
+
 ### Changed: no fake vectors, and one embedding dimension
 
 Failures that used to produce fake vectors now raise. This follows the connection-settings
