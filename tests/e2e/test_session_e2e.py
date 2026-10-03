@@ -130,12 +130,8 @@ def _terminate_server_job(session):
     """Kill this connection's job inside IRIS. The real death, not a close()."""
     import subprocess
 
-    from iris_vector_rag.session.drivers import NetworkDriver
-
     job = session.one("SELECT $JOB")[0]
-    container = NetworkDriver()._container_publishing(session.identity.port)
-    if not container:
-        pytest.skip("no local container publishing this port; cannot kill a job")
+    container = os.environ.get("IRIS_CONTAINER_NAME", "iris-vector-rag-iris")
     script = f"Do ##class(%SYSTEM.Process).Terminate({job},2)\nHalt\n"
     subprocess.run(
         ["docker", "exec", "-i", container, "iris", "session", "IRIS", "-U", "%SYS"],

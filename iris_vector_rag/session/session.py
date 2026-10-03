@@ -80,9 +80,6 @@ class _BorrowedDriver:
     def password_expired(self, error: BaseException) -> bool:
         return False
 
-    def recover_password(self, identity: SessionIdentity) -> bool:
-        return False
-
 
 class IRISSession:
     """A caller's relationship with one IRIS instance and namespace."""
@@ -108,7 +105,6 @@ class IRISSession:
         self._connect_lock = threading.RLock()
         self._tracked: List[Any] = []
         self._backoff_until = 0.0
-        self._password_recovered = False
 
         if driver is not None:
             self.driver = driver
@@ -350,29 +346,15 @@ class IRISSession:
         return connection
 
     def _after_connect_failure(self, error: Exception) -> Any:
-        """An expired password is recoverable once; everything else backs off."""
+        """An expired password is reported with a hint; everything else backs off."""
         if self.driver.password_expired(error):
-            if self._password_recovered:
-                raise PasswordExpired(
-                    self.identity,
-                    "the password is still expired after one recovery attempt",
-                ) from error
-            self._password_recovered = True
-            if not self.driver.recover_password(self.identity):
-                raise PasswordExpired(
-                    self.identity,
-                    "the password is expired and could not be cleared",
-                ) from error
-            logger.info("cleared expired password state for %s", self.identity.label)
-            try:
-                return self.driver.connect(self.identity)
-            except Exception as retry_error:
-                if self.driver.password_expired(retry_error):
-                    raise PasswordExpired(
-                        self.identity,
-                        "recovery ran but the password is still expired",
-                    ) from retry_error
-                raise self._back_off(retry_error) from retry_error
+            raise PasswordExpired(
+                self.identity,
+                f"{error}. The container requires a password change, and the library "
+                f"does not clear it: preconfigure the container (ChangePassword=0 in "
+                f"its CPF merge) or create it with iris-devtester, whose container "
+                f"factory owns that story",
+            ) from error
         raise self._back_off(error) from error
 
     def _back_off(self, error: Exception) -> SessionError:

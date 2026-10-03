@@ -3,7 +3,7 @@ Connection pool for the HTTP API, now a thin layer over one session.
 
 The pool this replaces kept its own free list and called `iris.dbapi.connect` itself,
 so none of the connections it handed out had the socket precheck, the bounded
-handshake or the expired-password recovery, and `pool_pre_ping` meant a `SELECT 1`
+handshake, and `pool_pre_ping` meant a `SELECT 1`
 before *every* request. The session already gives each thread its own connection,
 probes it on a cadence rather than per use, and replaces it when it dies -- which is
 what the free list, the pre-ping and the recycle timer were each approximating.

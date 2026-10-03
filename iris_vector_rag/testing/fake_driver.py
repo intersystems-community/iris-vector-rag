@@ -134,7 +134,6 @@ class FakeDriver:
         self.connects = 0
         self.pings = 0
         self.closes = 0
-        self.recoveries = 0
         self.cursors_opened = 0
         self.cursors_closed = 0
         self.statements: List[str] = []
@@ -172,11 +171,6 @@ class FakeDriver:
 
     def password_expired(self, error: BaseException) -> bool:
         return "password change required" in str(error).lower()
-
-    def recover_password(self, identity: Any) -> bool:
-        self.recoveries += 1
-        self.expired_password = False
-        return True
 
     # -- convenience for tests ---------------------------------------------
 

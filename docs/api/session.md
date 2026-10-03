@@ -18,8 +18,8 @@ Acquiring a session costs nothing. The first statement opens the connection.
 ## Why
 
 Before 0.15 there were eleven ways to acquire a connection, and each had its own
-subset of the protections: one had the two-second socket precheck, the bounded
-handshake and the expired-password recovery; the others had none of them. A caller
+subset of the protections: one had the two-second socket precheck and the bounded
+handshake; the others had none of them. A caller
 that took the wrong one could hang forever on a container that was still starting.
 
 The session is the one way in, so a protection added once applies everywhere.
@@ -106,7 +106,7 @@ instance:
 | `ConnectFailed`          | The driver refused for a reason of its own.         | yes            |
 | `InBackoff`              | A previous attempt burned the budget; fail now.     | no             |
 | `NoUsableDriver`         | Neither driver can be used in this process.         | no             |
-| `PasswordExpired`        | Expired password, and recovery did not clear it.    | no             |
+| `PasswordExpired`        | Expired password; the library reports it, not fixes | no             |
 | `ConnectionLost`         | An owned connection died and its replacement too.   | no             |
 | `CallerConnectionBroken` | A borrowed connection failed.                       | no             |
 
@@ -133,14 +133,14 @@ Per-session overrides: `session_for(health_interval=...)`, and
 ## Drivers
 
 A driver is anything with seven operations: `name`, `available()`, `connect(identity)`,
-`ping(connection)`, `close(connection)`, `password_expired(error)` and
-`recover_password(identity)` — plus an optional eighth, `is_closed(connection)`, for a
+`ping(connection)`, `close(connection)` and `password_expired(error)` — plus an optional eighth, `is_closed(connection)`, for a
 driver that can say locally whether a handle is closed. A driver without it makes the
 session fall back to probing.
 
 - `EmbeddedDriver` — IRIS reached from inside the instance.
 - `NetworkDriver` — the SuperServer port, with the socket precheck, the bounded
-  handshake and the expired-password recovery.
+  handshake and expired-password detection. On a "password change required" failure the
+  session raises `PasswordExpired` with a hint; it never runs `docker exec`.
 
 `select_driver` prefers embedded, logs which it chose and why, and names every driver
 it tried when none can be used. `iris_vector_rag/session/drivers.py` is the only

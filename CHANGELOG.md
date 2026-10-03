@@ -5,8 +5,8 @@
 ### IRIS session: one object owns the connection (0.15)
 
 Before this release there were eleven ways to get a connection to IRIS and each
-carried its own subset of the protections — one had the bounded handshake and the
-expired-password recovery, the others had none of them, so a caller that picked the
+carried its own subset of the protections — one had the bounded handshake, the
+others had none of it, so a caller that picked the
 wrong one could hang on an instance that was still starting. `IRISSession` owns one
 instance-and-namespace relationship: the identity, the driver choice, the connection,
 its health cadence and the connect back-off. Everything in the library goes through
@@ -48,8 +48,10 @@ See [docs/api/session.md](docs/api/session.md).
 - **A failed or timed-out handshake puts that identity into a back-off window**, and
   further attempts inside it fail immediately with `InBackoff` rather than queueing
   behind a socket timeout.
-- **Expired-password recovery is attempted once per identity** and reported when it
-  happens.
+- **An expired password is reported, not fixed.** A fresh container's "password change
+  required" state raises `PasswordExpired` carrying the driver's error and a hint:
+  preconfigure the container (`ChangePassword=0`) or create it with iris-devtester. The
+  library runs no `docker exec` and no `UnExpireUserPasswords`.
 - **Rows outlive their cursor.** `session.execute()` copies values out and releases
   the cursor in a `finally`, on success and on failure, so the `DataRow is
 inaccessible` failure that follows `cursor.close()` cannot happen.

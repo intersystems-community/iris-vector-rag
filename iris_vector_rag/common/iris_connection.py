@@ -144,7 +144,7 @@ def get_iris_connection(
 ) -> Any:
     """The session's connection for these parameters. Deprecated since 0.15.
 
-    The socket precheck, the bounded handshake, the expired-password recovery and
+    The socket precheck, the bounded handshake and
     the module-level cache this function used to own are the session's now, so a
     caller that has not migrated still gets all of them -- and shares one
     connection with the callers that have, which a second cache would not.

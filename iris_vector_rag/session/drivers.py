@@ -17,7 +17,6 @@ from __future__ import annotations
 import logging
 import os
 import socket
-import subprocess
 import threading
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
@@ -61,9 +60,6 @@ class Driver(Protocol):
 
     def password_expired(self, error: BaseException) -> bool:
         """Is this failure the expired-default-password state?"""
-
-    def recover_password(self, identity: SessionIdentity) -> bool:
-        """Clear that state. True if the attempt was made successfully."""
 
 
 def _import_iris() -> Any:
@@ -174,9 +170,6 @@ class EmbeddedDriver:
         # A process running inside the instance is already past authentication.
         return False
 
-    def recover_password(self, identity: SessionIdentity) -> bool:
-        return False
-
 
 class NetworkDriver:
     """IRIS reached over the SuperServer port, with the hardening this took.
@@ -284,56 +277,6 @@ class NetworkDriver:
     def password_expired(self, error: BaseException) -> bool:
         text = str(error).lower()
         return "password change required" in text or "expired" in text
-
-    def recover_password(self, identity: SessionIdentity) -> bool:
-        """Clear the "password change required" state a fresh container ships with.
-
-        ``UnExpireUserPasswords`` is the documented, version-stable way to do it,
-        and running it beats waiting out the container's own 55-second delay.
-        """
-        container = self._container_publishing(identity.port)
-        if not container:
-            return False
-        logger.info("clearing expired password state in container %s", container)
-        script = 'Do ##class(Security.Users).UnExpireUserPasswords("*")\nHalt\n'
-        try:
-            subprocess.run(
-                [
-                    "docker",
-                    "exec",
-                    "-i",
-                    container,
-                    "iris",
-                    "session",
-                    "IRIS",
-                    "-U",
-                    "%SYS",
-                ],
-                input=script.encode(),
-                capture_output=True,
-                timeout=15,
-            )
-            return True
-        except Exception as exc:
-            logger.debug("password recovery failed: %s: %s", type(exc).__name__, exc)
-            return False
-
-    def _container_publishing(self, port: int) -> Optional[str]:
-        try:
-            listed = subprocess.run(
-                ["docker", "ps", "--format", "{{.Names}}\\t{{.Ports}}"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-        except Exception:
-            return None
-        if listed.returncode != 0:
-            return None
-        for line in listed.stdout.splitlines():
-            if str(port) in line and "tcp" in line:
-                return line.split("\t")[0].strip()
-        return None
 
 
 def select_driver(

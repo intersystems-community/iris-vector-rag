@@ -182,7 +182,6 @@ class TestDriverContract:
             "ping",
             "close",
             "password_expired",
-            "recover_password",
         ],
     )
     def test_the_protocol_names_its_operation(self, operation):

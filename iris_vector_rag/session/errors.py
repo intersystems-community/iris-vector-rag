@@ -67,7 +67,7 @@ class NoUsableDriver(SessionError):
 
 
 class PasswordExpired(SessionError):
-    """The account password is expired and recovery did not clear it."""
+    """The account password is expired; the library recognises this and does not clear it."""
 
     opens_backoff = False
 

@@ -207,7 +207,6 @@ class TestTheEmbeddedDriverConnects:
         assert (
             driver.password_expired(RuntimeError("Password change required")) is False
         )
-        assert driver.recover_password(fake_identity()) is False
 
 
 class TestTheNetworkDriversTimeout:
@@ -355,82 +354,6 @@ class TestTheExpiredPasswordAFreshContainerShipsWith:
 
     def test_an_unrelated_failure_is_not_that_state(self):
         assert NetworkDriver().password_expired(RuntimeError("Access Denied")) is False
-
-    def test_with_no_container_publishing_the_port_there_is_nothing_to_run(
-        self, monkeypatch
-    ):
-        driver = NetworkDriver()
-        monkeypatch.setattr(driver, "_container_publishing", lambda port: None)
-
-        assert driver.recover_password(fake_identity()) is False
-
-    def test_the_documented_class_method_is_what_gets_run(self, monkeypatch, caplog):
-        calls = {}
-
-        def record(command, input=None, capture_output=None, timeout=None):
-            calls["command"] = command
-            calls["input"] = input
-            return types.SimpleNamespace(returncode=0)
-
-        monkeypatch.setattr(subprocess, "run", record)
-        driver = NetworkDriver()
-        monkeypatch.setattr(driver, "_container_publishing", lambda port: "some-iris")
-
-        with caplog.at_level(logging.INFO, logger=drivers_module.__name__):
-            assert driver.recover_password(fake_identity()) is True
-
-        assert calls["command"][:3] == ["docker", "exec", "-i"]
-        assert "some-iris" in calls["command"]
-        assert b"UnExpireUserPasswords" in calls["input"]
-        assert "some-iris" in caplog.text
-
-    def test_a_docker_that_will_not_run_is_reported_as_no_recovery(self, monkeypatch):
-        def refuse(*args, **kwargs):
-            raise FileNotFoundError("docker")
-
-        monkeypatch.setattr(subprocess, "run", refuse)
-        driver = NetworkDriver()
-        monkeypatch.setattr(driver, "_container_publishing", lambda port: "some-iris")
-
-        assert driver.recover_password(fake_identity()) is False
-
-
-class TestFindingTheContainerBehindAPort:
-    def _docker_ps(self, monkeypatch, returncode=0, stdout="", explode=False):
-        def run(command, capture_output=None, text=None, timeout=None):
-            if explode:
-                raise OSError("docker socket is gone")
-            return types.SimpleNamespace(returncode=returncode, stdout=stdout)
-
-        monkeypatch.setattr(subprocess, "run", run)
-
-    def test_the_name_comes_from_the_line_publishing_the_port(self, monkeypatch):
-        self._docker_ps(
-            monkeypatch,
-            stdout=(
-                "other-iris\t0.0.0.0:1972->1972/tcp\n"
-                "iris-vector-rag-iris\t0.0.0.0:51972->1972/tcp\n"
-            ),
-        )
-
-        assert (
-            NetworkDriver()._container_publishing(51972) == "iris-vector-rag-iris"
-        ), "the container that publishes the port is the one to run the fix in"
-
-    def test_no_matching_line_means_no_container(self, monkeypatch):
-        self._docker_ps(monkeypatch, stdout="other-iris\t0.0.0.0:1972->1972/tcp\n")
-
-        assert NetworkDriver()._container_publishing(51972) is None
-
-    def test_a_failed_docker_ps_means_no_container(self, monkeypatch):
-        self._docker_ps(monkeypatch, returncode=1, stdout="")
-
-        assert NetworkDriver()._container_publishing(51972) is None
-
-    def test_no_docker_at_all_means_no_container(self, monkeypatch):
-        self._docker_ps(monkeypatch, explode=True)
-
-        assert NetworkDriver()._container_publishing(51972) is None
 
 
 def test_the_precheck_timeout_is_short_enough_to_be_a_precheck():
