@@ -125,31 +125,113 @@ STANDARD_TABLES = (
     "EntityRelationships",
     "Communities",
 )
+#: The files exempt from `inline-standard-ddl`, because owning this DDL is their job.
+#: `schema_manager.py` is the only `.py` owner — every other module that creates one of
+#: the standard tables is a second account of its layout. `sql/schema.sql` is the DDL the
+#: installation docs hand to a DBA; it was listed here while `.sql` files were not walked
+#: at all, so the exemption read as scoping and did nothing. Every path in this set has to
+#: be a file the detector actually reaches — `inline_standard_ddl_files` is that set, and
+#: a test asserts the containment.
 DDL_OWNER = {"iris_vector_rag/storage/schema_manager.py", "sql/schema.sql"}
+
+#: `CREATE TABLE [IF NOT EXISTS] <target>`, where the target is read as far as the
+#: whitespace or `(` that ends it. Reading the target rather than matching a table name
+#: outright is what makes an interpolated name visible instead of invisible.
+DDL_TARGET = re.compile(
+    r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<target>[^\s(]+)", re.I
+)
+
+#: A name assembled at runtime: an f-string field, a `%s`, or ObjectScript's `_`
+#: concatenation around a string literal. The detector cannot say which table this is.
+INTERPOLATED_NAME = re.compile(r"\{[^}]*\}|%s|\"_|_\"|\'_|_\'")
+
+
+def _opens_a_column_list(rest: str, following: list[str]) -> bool:
+    """Whether a `(` follows the table name, on this line or the next non-blank one.
+
+    A statement that creates a table has a column list; `f"Failed to create table
+    {name}: {err}"` has a colon. Without this the widened detector reported three log
+    messages — `vector_store_iris.py:426`, `orchestrator.py:339`, `validator.py:175` —
+    as inline DDL, which is the kind of noise that gets a gate turned off. A column list
+    opening two or more lines below the name is knowingly missed.
+    """
+    if "(" in rest:
+        return True
+    for line in following:
+        if line.strip():
+            return line.lstrip().startswith("(")
+    return False
+
+
+def _standard_table(target: str) -> str | None:
+    """The standard table `target` names, or None. The schema half is ignored: it may be
+    `RAG.`, `{self.schema}.` or `"_schema_".`, and the table is standard either way."""
+    name = target.rstrip("(\"'`,;").split(".")[-1].strip("\"'`")
+    for table in STANDARD_TABLES:
+        if name.lower() == table.lower():
+            return table
+    return None
+
+
+def standard_ddl(path: str, source: str) -> list[Finding]:
+    """The pure half of `inline-standard-ddl`: one file's source, its findings.
+
+    Two kinds of finding, because an honest report of what the detector cannot resolve is
+    worth more than silence: DDL naming one of the standard tables, and DDL whose table
+    name is assembled at runtime. The second says so — the name may be configured to
+    something else entirely, and claiming it is standard would be a guess.
+    """
+    if path in DDL_OWNER:
+        return []
+    out = []
+    lines = source.splitlines()
+    for number, line in enumerate(lines, start=1):
+        for match in DDL_TARGET.finditer(line):
+            if not _opens_a_column_list(line[match.end() :], lines[number:]):
+                continue
+            target = match.group("target")
+            table = _standard_table(target)
+            if table:
+                out.append(
+                    Finding(
+                        "inline-standard-ddl",
+                        f"{path}:{number}",
+                        f"DDL for the standard RAG table {table} outside SchemaManager: "
+                        f"{line.strip()[:60]}",
+                    )
+                )
+            elif INTERPOLATED_NAME.search(target):
+                out.append(
+                    Finding(
+                        "inline-standard-ddl",
+                        f"{path}:{number}",
+                        f"DDL whose table name the detector cannot resolve ({target}); "
+                        "it may or may not be a standard RAG table",
+                    )
+                )
+    return out
+
+
+def inline_standard_ddl_files() -> list[pathlib.Path]:
+    """Every file that can carry DDL: the package's `.py` and `.sql`, the `sql/`
+    directory, and the ObjectScript classes that build their DDL as strings. The detector
+    shipped reading `.py` alone, which is why `sql/schema.sql` and `RAG.SDK.Schema` — the
+    two largest pieces of DDL in the repo — were invisible to it."""
+    return (
+        list(files(PKG, ".py"))
+        + list(files(PKG, ".sql"))
+        + list(files("sql/", ".sql"))
+        + list(files("iris_src/", ".cls"))
+    )
 
 
 def inline_standard_ddl() -> list[Finding]:
     """Shipped: SetupOrchestrator carried its own CREATE TABLE RAG.SourceDocuments
     (id INTEGER IDENTITY, filename, ...) alongside SchemaManager's canonical DDL.
     First-run ingest failed with SQLCODE -104 and vector search with -254."""
-    pat = re.compile(
-        r"CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(RAG\.|\{[^}]*\})?\s*("
-        + "|".join(STANDARD_TABLES)
-        + r")\b",
-        re.I,
-    )
     out = []
-    for p in files(PKG, ".py"):
-        if rel(p) in DDL_OWNER:
-            continue
-        for n, line in grep(p, pat):
-            out.append(
-                Finding(
-                    "inline-standard-ddl",
-                    f"{rel(p)}:{n}",
-                    f"DDL for a standard RAG table outside SchemaManager: {line.strip()[:60]}",
-                )
-            )
+    for p in inline_standard_ddl_files():
+        out.extend(standard_ddl(rel(p), read(p)))
     return out
 
 
@@ -371,6 +453,93 @@ def catalog_read_outside_shape() -> list[Finding]:
     return out
 
 
+#: Where the type is declared once, named in every finding so the fix is not a guess.
+CANONICAL_TYPE_OWNER = "CANONICAL_VECTOR_TYPE in iris_vector_rag/storage/table_shape.py"
+
+
+#: A literal element type inside a vector construction: `VECTOR(FLOAT, n)` as a column
+#: is declared, `TO_VECTOR(?, FLOAT, n)` as a value is converted. The element types IRIS
+#: accepts, not every SQL type — `VECTOR(VARCHAR, n)` is not a thing this repo creates.
+VECTOR_TYPE_LITERAL = re.compile(
+    r"\b(?:TO_VECTOR\s*\(\s*[^,()]*,\s*|VECTOR\s*\(\s*)"
+    r"(?P<type>FLOAT|DOUBLE|DECIMAL|INTEGER|BIGINT|SMALLINT|TINYINT)\b",
+    re.I,
+)
+
+#: `embedding VECTOR(FLOAT, 384),` — a column declaration, where the name in front of
+#: the type is what distinguishes DDL from a sentence about DDL.
+DECLARED_VECTOR_COLUMN = re.compile(r"\w\s+VECTOR\s*\(", re.I)
+
+#: Comment introducers for the three languages walked. A comment that quotes DDL is
+#: prose: `validation/orchestrator.py:276` explains the canonical layout that way.
+COMMENT_MARKERS = ("#", "--", "//")
+
+
+def hardcoded_vector_types(path: str, source: str) -> list[Finding]:
+    """The pure half of `hardcoded-vector-type`: one file's source, its findings.
+
+    A match counts only with SQL around it on the same line — `CREATE TABLE`, `ALTER
+    TABLE`, `TO_VECTOR(`, or a column name in front of the type on a line that
+    continues (`,`) or constrains (`NULL`) like DDL does. The package describes vector
+    columns in prose in several docstrings, and a detector that reported those would be
+    switched off within a day; the line-local rule is what separates the two.
+
+    Line-local also means a declaration wrapped onto its own line under an `ALTER TABLE`
+    is missed. No such statement is in the tree, and the alternative — looking back for a
+    `CREATE TABLE` several lines up — reports the docstrings that quote one.
+    """
+    out = []
+    for number, line in enumerate(source.splitlines(), start=1):
+        for match in VECTOR_TYPE_LITERAL.finditer(line):
+            before = line[: match.start()]
+            if any(marker in before for marker in COMMENT_MARKERS):
+                continue
+            upper = line.upper()
+            is_sql = (
+                "CREATE TABLE" in upper
+                or "ALTER TABLE" in upper
+                or "TO_VECTOR" in upper
+                or (
+                    DECLARED_VECTOR_COLUMN.search(line)
+                    and (
+                        line.rstrip().endswith(",")
+                        or line.rstrip().upper().endswith("NULL")
+                    )
+                )
+            )
+            if not is_sql:
+                continue
+            out.append(
+                Finding(
+                    "hardcoded-vector-type",
+                    f"{path}:{number}",
+                    f"names the vector element type {match.group('type').upper()} in SQL; "
+                    f"declare it once ({CANONICAL_TYPE_OWNER}) or resolve it from the column",
+                )
+            )
+    return out
+
+
+def hardcoded_vector_type() -> list[Finding]:
+    """Shipped: `RAG.SDK.Schema` created `VECTOR(DOUBLE, n)` while every Python path
+    created `VECTOR(FLOAT, n)`, and `RAG.SDK.Pipeline` wrote `TO_VECTOR(?,DOUBLE,384)`
+    into whichever of the two it was given. IRIS refuses to compare vectors of different
+    element types (SQLCODE -259), so a row written by one path was a row the other could
+    not search — and the width was wrong too, because 384 was a literal (feature 086).
+
+    Each site here decides on its own which tables the rest of the repo can search. The
+    baseline holds the known ones; a new one has to be argued for in review."""
+    out = []
+    for p in (
+        list(files(PKG, ".py"))
+        + list(files(PKG, ".sql"))
+        + list(files("sql/", ".sql"))
+        + list(files("iris_src/", ".cls"))
+    ):
+        out.extend(hardcoded_vector_types(rel(p), read(p)))
+    return out
+
+
 CHECKS: dict[str, Callable[[], list[Finding]]] = {
     "legacy-fk-target": legacy_fk_target,
     "inline-standard-ddl": inline_standard_ddl,
@@ -382,6 +551,7 @@ CHECKS: dict[str, Callable[[], list[Finding]]] = {
     "services-iris-container": services_iris_container,
     "stale-deselect-entry": stale_deselect_entry,
     "catalog-read-outside-shape": catalog_read_outside_shape,
+    "hardcoded-vector-type": hardcoded_vector_type,
 }
 
 # Checks that carry no baseline and must stay at zero: each fails open when

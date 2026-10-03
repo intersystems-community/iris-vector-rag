@@ -60,57 +60,54 @@ rewriting a version line from inside an unrelated commit is exactly the wrong wa
 the claim. Note that `:67`'s example (`VALUES (?, TO_VECTOR(?, FLOAT, 384));`) is the same
 pattern entry 4 below wants a detector for — reconciling the two is part of the job.
 
-## 3. Seven pre-existing failures in `tests/test_enterprise_storage.py`
+## 3. Six pre-existing failures in `tests/test_enterprise_storage.py`
 
-Re-pointing that file's stale patch targets (this commit) took it from 10 failures to 7. The
-remaining seven were failing before and after, for reasons unrelated to module paths:
+Re-pointing that file's stale patch targets took it from 10 failures to 7, and feature 086's
+`initialize_schema` rewrite settled the seventh: `test_initialize_schema_fallback` asserted
+`table_name == "SourceDocuments"`, the mutation FR-014 deletes, so it was rewritten against the
+delegating behaviour rather than repaired. Six remain, failing before and after, for reasons
+unrelated to module paths:
 
-| Test                                     | Failure                                                      |
-| ---------------------------------------- | ------------------------------------------------------------ |
-| `test_initialize_schema_fallback`        | `AssertionError: 'RAG.SourceDocuments' != 'SourceDocuments'` |
-| `test_retrieve_documents_by_ids`         | `ValueError: too many values to unpack (expected 3)`         |
-| `test_vector_search`                     | `AssertionError: 0 != 1`                                     |
-| `test_vector_search_empty_vector`        | `AssertionError: ValueError not raised`                      |
-| `test_error_handling_in_store_documents` | `AssertionError: Exception not raised`                       |
-| `test_bulk_operations_performance`       | `StopIteration` (mock `side_effect` list exhausted)          |
-| `test_typical_document_lifecycle`        | `StopIteration` (same)                                       |
+| Test                                     | Failure                                              |
+| ---------------------------------------- | ---------------------------------------------------- |
+| `test_retrieve_documents_by_ids`         | `ValueError: too many values to unpack (expected 3)` |
+| `test_vector_search`                     | `AssertionError: 0 != 1`                             |
+| `test_vector_search_empty_vector`        | `AssertionError: ValueError not raised`              |
+| `test_error_handling_in_store_documents` | `AssertionError: Exception not raised`               |
+| `test_bulk_operations_performance`       | `StopIteration` (mock `side_effect` list exhausted)  |
+| `test_typical_document_lifecycle`        | `StopIteration` (same)                               |
 
 These are test/implementation drift: the schema is qualified now, rows carry more columns
 than the mocks supply, and error paths that used to raise now log. None is in
 `tests/contract/ci_known_failures.txt`.
 
-`test_initialize_schema_fallback` should be picked up by the `initialize_schema` rewrite
-(entry 5) rather than separately — that test asserts against DDL the rewrite deletes.
+## 4. Vector element type is hardcoded at 24 baselined sites
 
-## 4. Vector element type is hardcoded at 11 call sites
-
-`grep -rnE "TO_VECTOR\([^)]*(FLOAT|DOUBLE|DECIMAL)" --include='*.py' iris_vector_rag` → 11
-hits, identical on `master` and `082-table-shape`:
-
-```text
-iris_vector_rag/pipelines/colbert_iris/ingest.py:150
-iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:70,117,142
-iris_vector_rag/storage/enterprise_storage.py:271,307,453
-iris_vector_rag/storage/relation_embedding_store.py:24
-iris_vector_rag/services/storage.py:352,391
-iris_vector_rag/services/batch_entity_processor.py:176
-```
+The original count of 11 came from one grep — `TO_VECTOR(` in `.py` only. Feature 086's
+`hardcoded-vector-type` detector also reads the package's `.sql`, `sql/**/*.sql` and
+`iris_src/**/*.cls`, and counts a column's own declared type as well as a conversion, which is
+what the 24 baselined entries in `scripts/gates/antipatterns-baseline.txt` are. Read them from
+that file rather than from a list here; the earlier list had already gone stale
+(`services/storage.py:352,391` are now `:439,478`, and `enterprise_storage.py:271,307,453` are
+now `:254,290,436`).
 
 IRIS refuses to compare vectors of different element types (SQLCODE -259), so a literal
 `FLOAT` in the query is a bet that the column is `FLOAT`. `iris_vector_rag/storage/table_shape.py`
 resolves the real type from `%Dictionary.CompiledProperty.Parameters` at runtime and
-`vector_store_iris.py` threads it through — these 11 sites bypass that and re-hardcode.
+`vector_store_iris.py` threads it through — every baselined site bypasses that and re-hardcodes.
 
-**Deferred deliberately:** the next feature baselines all 11 behind a new
-`hardcoded-vector-type` detector so no _new_ ones appear, and rewrites none of them.
-Rewriting a site means proving which table it targets and that the shape lookup is reachable
-there; eleven of those is a feature, not a gate change.
+**Deferred deliberately** — deferral (c) in `specs/086-canonical-vector-type/spec.md`. Feature 086
+baselines all 24 so no _new_ one can ship unnoticed, and rewrites none of them. The gate holds the
+count; it does not reduce it. Rewriting a site means proving which table it targets and that the
+shape lookup is reachable there; two dozen of those is a feature, not a gate change.
 
 ## 5. `needs_migration` cannot see a column's physical element type
 
-Same feature's other deferral. A `DOUBLE` column and a `FLOAT` column of the same width look
-identical to the migration check, so a table created by `RAG.SDK.Schema` (DOUBLE) is never
-reported as needing migration to the canonical `FLOAT`
+Deferral (d) in `specs/086-canonical-vector-type/spec.md`, and the boundary of what that feature
+claims: every creation path now _declares_ the canonical type, but nothing _reports_ an existing
+non-canonical table as needing migration. A `DOUBLE` column and a `FLOAT` column of the same width
+look identical to the migration check, so a table created by an older `RAG.SDK.Schema` (DOUBLE) is
+never reported as needing migration to the canonical `FLOAT`
 (`table_shape.py:52 CANONICAL_VECTOR_TYPE = "FLOAT"`,
 `:478-483 ShapeKind.DOUBLE_VECTOR` — informational only). Fixing it means comparing declared
 type against canonical and deciding what a mismatch obliges the caller to do, which is a

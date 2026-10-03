@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS RAG.SourceDocuments (
     title        VARCHAR(500),
     text_content LONGVARCHAR,
     metadata     LONGVARCHAR,
-    embedding    VECTOR(DOUBLE, 384),
+    embedding    VECTOR(FLOAT, 384),
     PRIMARY KEY (doc_id)
 )
 GO
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS RAG.DocumentChunks (
     chunk_id       VARCHAR(64)               NOT NULL,
     source_doc_id  VARCHAR(64),
     chunk_text     LONGVARCHAR,
-    chunk_embedding VECTOR(DOUBLE, 384),
+    chunk_embedding VECTOR(FLOAT, 384),
     PRIMARY KEY (chunk_id)
 )
 GO
