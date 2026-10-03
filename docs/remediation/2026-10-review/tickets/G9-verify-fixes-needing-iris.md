@@ -48,7 +48,10 @@ Settled with the maintainer on 2026-10-02: **option 3, a prerequisite feature
    cleanly, restart it, wait until healthy, make the warm-up connection. It takes the container
    and port from the declaration in `CLAUDE.md` (as `scripts/ci/start-iris.sh` does), so it
    cannot be pointed at another project's container; only CI's throwaway container is passed
-   explicitly. The Makefile gains the target; the maintainer or any session runs it.
+   explicitly. The Makefile gains the target; the maintainer or any session runs it. Implementation
+   note: iris-devtester already provides `idt container restart`, `status`, `test-connection` and
+   `reset-password`, so the target wraps those and adds the warm-up connection rather than
+   reimplementing them.
 4. **The `los-iris` fixtures are this repository's bug to fix** (OS-28). `iris_database_config`
    and `iris_test_session` in `tests/conftest.py` attach to `los-iris`, which belongs to
    `productivity-framework`, and run `DROP TABLE IF EXISTS` cleanup there. They are removed and
