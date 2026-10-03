@@ -29,11 +29,6 @@ def shared_connection():
         yield connection
 
 
-def test_check_table_exists_leaves_the_shared_connection_open(shared_connection):
-    IRISSQLUtils.check_table_exists(shared_connection, "RAG.SourceDocuments")
-    shared_connection.close.assert_not_called()
-
-
 def test_check_index_exists_leaves_the_shared_connection_open(shared_connection):
     IRISSQLUtils.check_index_exists(
         shared_connection,
@@ -50,5 +45,5 @@ def test_get_table_columns_leaves_the_shared_connection_open(shared_connection):
 
 def test_helpers_still_close_the_cursors_they_open(shared_connection):
     """Cursors are this code's own; only the connection belongs to the session."""
-    IRISSQLUtils.check_table_exists(shared_connection, "RAG.SourceDocuments")
+    IRISSQLUtils.get_table_columns(shared_connection, "RAG.SourceDocuments")
     shared_connection.cursor.return_value.close.assert_called()

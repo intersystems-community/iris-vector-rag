@@ -1,14 +1,12 @@
 # antipatterns baseline: findings that existed when each detector was written.
 # A line here silences ONE known instance. Remove lines as instances are fixed;
 # the gate fails on stale entries so this list only shrinks. Format: <check>\t<path:line>
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:157
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:194
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:247
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:257
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:300
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:310
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:358
-catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:407
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:162
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:172
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:215
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:225
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:273
+catalog-read-outside-shape	iris_vector_rag/common/iris_sql_utils.py:322
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:194
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:211
 catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:153
@@ -31,9 +29,6 @@ hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:60
 hardcoded-vector-type	iris_vector_rag/services/batch_entity_processor.py:176
 hardcoded-vector-type	iris_vector_rag/services/storage.py:439
 hardcoded-vector-type	iris_vector_rag/services/storage.py:478
-hardcoded-vector-type	iris_vector_rag/storage/enterprise_storage.py:254
-hardcoded-vector-type	iris_vector_rag/storage/enterprise_storage.py:290
-hardcoded-vector-type	iris_vector_rag/storage/enterprise_storage.py:436
 hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:13
 hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:24
 hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:1281

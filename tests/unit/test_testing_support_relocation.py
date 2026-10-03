@@ -1,6 +1,6 @@
 """VM-16: test-only harness code does not ship in the wheel.
 
-The backend-mode harness, the fake session driver and the devtools bridge live in
+The backend-mode harness and the fake session driver live in
 `tests/support/`. Only the test embedder belongs in `iris_vector_rag/testing/`.
 """
 
@@ -18,7 +18,6 @@ MOVED = [
     "connection_pool",
     "exceptions",
     "validators",
-    "iris_devtools_bridge",
     "fake_driver",
     "backend_modes",
 ]

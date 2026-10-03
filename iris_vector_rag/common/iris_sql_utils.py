@@ -121,91 +121,6 @@ class IRISSQLUtils:
                 return False
 
     @staticmethod
-    def check_table_exists(connection: Any, table_name: str) -> bool:
-        """Check if a table exists using IRIS-compatible syntax."""
-        # Use self-managed connection to avoid interference with other operations
-        if _session_connection is None:
-            logger.warning(
-                "Self-managed connections not available, falling back to provided connection"
-            )
-            return IRISSQLUtils._check_table_exists_with_connection(
-                connection, table_name
-            )
-
-        shared_connection = None
-        cursor = None
-        try:
-            shared_connection = _session_connection()
-            if not shared_connection:
-                logger.error(
-                    "Failed to obtain temporary connection for table existence check"
-                )
-                return False
-
-            # Split schema and table name
-            if "." in table_name:
-                schema, table = table_name.split(".", 1)
-            else:
-                schema = "USER"  # Default schema
-                table = table_name
-
-            cursor = shared_connection.cursor()
-            # Use IRIS system tables to check existence
-            cursor.execute(
-                """
-                SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-            """,
-                [schema, table],
-            )
-
-            result = cursor.fetchone()
-            return result[0] > 0
-
-        except Exception as e:
-            logger.error(f"Failed to check table existence for {table_name}: {e}")
-            return False
-        finally:
-            # The cursor is ours to close; the connection is the session's, and it
-            # stays open for the rest of this thread's work.
-            if cursor:
-                try:
-                    cursor.close()
-                except Exception:
-                    pass
-
-    @staticmethod
-    def _check_table_exists_with_connection(connection: Any, table_name: str) -> bool:
-        """Fallback method using provided connection for table existence check."""
-        try:
-            # Split schema and table name
-            if "." in table_name:
-                schema, table = table_name.split(".", 1)
-            else:
-                schema = "USER"  # Default schema
-                table = table_name
-
-            cursor = connection.cursor()
-            # Use IRIS system tables to check existence
-            cursor.execute(
-                """
-                SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-            """,
-                [schema, table],
-            )
-
-            result = cursor.fetchone()
-            cursor.close()
-            return result[0] > 0
-
-        except Exception as e:
-            logger.error(f"Failed to check table existence for {table_name}: {e}")
-            return False
-
-    @staticmethod
     def check_index_exists(
         connection: Any, index_name: str, table_name: Optional[str] = None
     ) -> bool:
@@ -548,10 +463,6 @@ def test_iris_sql_utils():
     try:
         # Test with self-managed connections (pass None as connection since functions will create their own)
         utils = IRISSQLUtils()
-
-        # Test table existence check
-        exists = utils.check_table_exists(None, "RAG.SourceDocuments")
-        print(f"✓ Table existence check: {exists}")
 
         # Test column information
         columns = utils.get_table_columns(None, "RAG.SourceDocuments")
