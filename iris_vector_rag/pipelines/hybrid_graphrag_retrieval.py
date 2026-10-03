@@ -237,7 +237,9 @@ class HybridRetrievalMethods:
             except Exception as e:
                 logger.warning(f"Could not get vector statistics: {e}")
 
-        # Add standard GraphRAG stats
+        # Add standard GraphRAG stats. The connection belongs to the session (it is
+        # shared, not ours to close); the cursor is ours and is closed on every path.
+        cursor = None
         try:
             connection = connection_manager.get_connection()
             cursor = connection.cursor()
@@ -247,10 +249,11 @@ class HybridRetrievalMethods:
 
             cursor.execute("SELECT COUNT(*) FROM RAG.EntityRelationships")
             stats["relationship_count"] = cursor.fetchone()[0]
-
-            cursor.close()
         except Exception as e:
             logger.warning(f"Could not get GraphRAG statistics: {e}")
+        finally:
+            if cursor is not None:
+                cursor.close()
 
         return stats
 

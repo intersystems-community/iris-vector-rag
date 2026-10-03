@@ -107,7 +107,8 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         """Import PyLate components; return True on success, else False."""
         try:
             global models, rank
-            from pylate import models as _models, rank as _rank
+            from pylate import models as _models
+            from pylate import rank as _rank
 
             models = _models
             rank = _rank
@@ -146,6 +147,16 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
                 - embeddings_generated: Number of embeddings generated
                 - documents_failed: Number of documents that failed to load
         """
+        # The parent's first positional parameter is a path, so a string (or path)
+        # handed in as `documents` is the path. Left alone it was iterated character
+        # by character and stored as a "document list".
+        if isinstance(documents, (str, os.PathLike)):
+            if documents_path is not None:
+                raise ValueError(
+                    "Pass a path as documents_path or as the first argument, not both"
+                )
+            documents, documents_path = None, os.fspath(documents)
+
         # Validation: require either documents or documents_path
         if documents is None and documents_path is None:
             raise ValueError(

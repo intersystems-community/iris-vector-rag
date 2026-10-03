@@ -256,3 +256,29 @@ entry: feature, question, choice, why.
   default, not `RAG.SourceDocuments`, and falls back to `LIKE` on any error. The
   E2E points it at a table of its own. Whether the engine should name the vector
   store's table is a separate question (not in CR-01..03).
+- **pipelines-fix (GraphRAG, ColBERT): HNSW candidates.** PL-03 left open whether
+  HNSW mode should use the parent's candidates or drop `rerank_factor`. Chose to skip
+  the dense candidate retrieval in HNSW mode and document `rerank_factor` as applying
+  to the bulk-fetch path only: the per-token ANN search scans the whole token index,
+  so restricting it to candidates would change recall, and skipping the retrieval
+  changes no result. The id-less fallback (`page_content[:64]`) was dead code, since a
+  `Document` always has an id; removed.
+- **pipelines-fix (GraphRAG, ColBERT): ColBERT atomicity needs autocommit off.** The
+  driver connection autocommits, so a rollback alone undid nothing (the E2E showed the
+  orphan row surviving). Ingest now sets `autocommit = False` for its duration and
+  restores the caller's value; one commit per document, not per batch.
+- **pipelines-fix (GraphRAG, ColBERT): PL-07 connection.** The connection comes from
+  the session and is shared, so it is not closed; only the cursor leaked and is now
+  closed on every path.
+- **pipelines-fix (GraphRAG, ColBERT): PL-10 failure mode.** An entity no document
+  holds returns `None` (the result converters skip falsy content); a database error
+  raises, and the converters log and skip that result rather than invent content.
+- **pipelines-fix (GraphRAG, ColBERT): test_graphrag_vector_search.py.** The test was
+  wrong, not the pipeline: `query()` returns a dict. It also assumed a 2,376-document
+  corpus and a live LLM; it now loads twelve documents and injects a stub LLM. Its six
+  quarantine entries are removed. `test_pylate_colbert_pipeline.py` patched the old
+  `iris_rag` module name and mocked `similarity_search`, which the parent no longer
+  calls (`search_by_text`); fixed in the tests. Three contract tests on PyLate stay
+  quarantined (dict documents reach `BasicRAGPipeline`, `metadata["sources"]` versus
+  the top-level `sources` key, and a patch target that no longer exists): they turn on
+  `BasicRAGPipeline`'s input and response shape, which the sibling half owns.

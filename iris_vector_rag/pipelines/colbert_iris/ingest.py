@@ -4,20 +4,21 @@ ColBERT ingestion: tokenise + embed documents, store in IRIS.
 Design choices:
   • Token dimension fixed at 128 (GTE-ModernColBERT-v1 projects to 128-d)
   • Vectors L2-normalised at ingestion (dot product == cosine at query time)
-  • Commit every COMMIT_BATCH rows to bound transaction size
+  • One transaction per document: the document row and its token rows commit
+    together or not at all (a failed token insert rolls the document back)
   • No HNSW index during ingest — caller creates it after load completes
 """
 
 import json
 import logging
 import time
+from contextlib import contextmanager
 from typing import Any, Dict, List
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
-COMMIT_BATCH = 500
 TOKEN_DIM = 128
 
 
@@ -29,6 +30,25 @@ class ColBERTIngestor:
 
     def set_model(self, model) -> None:
         self._model = model
+
+    @contextmanager
+    def _transactional(self):
+        """Run with autocommit off, so `rollback()` can take back a failed document.
+
+        The driver connection autocommits by default: each INSERT is durable the
+        moment it runs and a rollback undoes nothing, which is how a failed token
+        insert used to leave its document row behind (PL-04). The previous mode is
+        restored afterwards, including on error.
+        """
+        if not hasattr(self._conn, "autocommit"):
+            yield
+            return
+        previous = self._conn.autocommit
+        self._conn.autocommit = False
+        try:
+            yield
+        finally:
+            self._conn.autocommit = previous
 
     def ingest_documents(
         self,
@@ -53,26 +73,36 @@ class ColBERTIngestor:
         vecindex_count = 0
         failed = 0
 
-        for i in range(0, len(docs), batch_size):
-            batch = docs[i : i + batch_size]
-            texts = [d["text"] for d in batch]
-            token_embeddings = self._encode_batch(texts)
+        with self._transactional():
+            for i in range(0, len(docs), batch_size):
+                batch = docs[i : i + batch_size]
+                texts = [d["text"] for d in batch]
+                token_embeddings = self._encode_batch(texts)
 
-            for doc, tok_embs in zip(batch, token_embeddings):
-                try:
-                    self._insert_doc(doc)
-                    self._insert_tokens(doc["doc_id"], tok_embs)
+                for doc, tok_embs in zip(batch, token_embeddings):
+                    try:
+                        self._insert_doc(doc)
+                        self._insert_tokens(doc["doc_id"], tok_embs)
+                        doc_vecindex = 0
+                        if use_vecindex and vecindex_searcher is not None:
+                            for pos, vec in enumerate(tok_embs):
+                                vecindex_searcher._fast_insert(doc["doc_id"], pos, vec)
+                                doc_vecindex += 1
+                        self._conn.commit()
+                    except Exception as e:
+                        # Undo the document row along with whatever tokens were written,
+                        # so a failure never leaves an orphan ColBERTDocuments row that
+                        # total_docs would count (PL-04).
+                        self._conn.rollback()
+                        logger.warning(f"Failed to ingest doc {doc.get('doc_id')}: {e}")
+                        failed += 1
+                        continue
                     total_tokens += len(tok_embs)
-                    if use_vecindex and vecindex_searcher is not None:
-                        for pos, vec in enumerate(tok_embs):
-                            vecindex_searcher._fast_insert(doc["doc_id"], pos, vec)
-                            vecindex_count += 1
-                except Exception as e:
-                    logger.warning(f"Failed to ingest doc {doc.get('doc_id')}: {e}")
-                    failed += 1
+                    vecindex_count += doc_vecindex
 
-            self._conn.commit()
-            logger.debug(f"Ingested batch {i // batch_size + 1} ({len(batch)} docs)")
+                logger.debug(
+                    f"Ingested batch {i // batch_size + 1} ({len(batch)} docs)"
+                )
 
         elapsed = time.perf_counter() - t0
         stats: Dict[str, Any] = {

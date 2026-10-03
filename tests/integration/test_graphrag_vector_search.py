@@ -10,6 +10,7 @@ Tests end-to-end vector search functionality including:
 """
 
 import pytest
+
 from iris_vector_rag import create_pipeline
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.embeddings.manager import EmbeddingManager
@@ -30,8 +31,32 @@ class TestGraphRAGVectorSearchIntegration:
 
     @pytest.fixture
     def graphrag_pipeline(self):
-        """Create GraphRAG pipeline with validation."""
-        return create_pipeline("graphrag", validate_requirements=True)
+        """GraphRAG pipeline over a corpus this test loads itself.
+
+        `query()` returns a dict (`contexts`, `answer`, `retrieved_documents`,
+        `metadata`), not an object: the tests read it as one. They used to assume a
+        2,376-document corpus already sat in the database and a live LLM; the corpus
+        is loaded here and the LLM is a stub, so the test runs on any IRIS.
+        """
+        from iris_vector_rag.core.models import Document
+
+        pipeline = create_pipeline(
+            "graphrag",
+            validate_requirements=True,
+            llm_func=lambda prompt: "Symptoms include thirst and fatigue.",
+        )
+        pipeline.load_documents(
+            "",
+            documents=[
+                Document(
+                    id=f"gvs-{i}",
+                    page_content=f"Diabetes note {i}: symptoms, diagnosis and treatment.",
+                    metadata={"title": f"gvs {i}"},
+                )
+                for i in range(12)
+            ],
+        )
+        return pipeline
 
     def test_graphrag_vector_search_retrieval(self, graphrag_pipeline):
         """
@@ -46,44 +71,39 @@ class TestGraphRAGVectorSearchIntegration:
 
         # Should retrieve documents
         assert (
-            len(result.contexts) > 0
+            len(result["contexts"]) > 0
         ), f"GraphRAG vector search returned 0 results for query: {query}"
 
         # Should have answer generated
         assert (
-            len(result.answer) > 0
+            len(result["answer"]) > 0
         ), "GraphRAG should generate answer from retrieved contexts"
 
         # Answer should not be default "No relevant documents"
         assert (
-            "No relevant documents" not in result.answer
+            "No relevant documents" not in result["answer"]
         ), "GraphRAG answer indicates no retrieval occurred"
 
-    def test_graphrag_top_k_configuration(self, config_manager):
+    def test_graphrag_top_k_configuration(self, graphrag_pipeline):
         """
-        FR-006: GraphRAG MUST respect configurable top-K parameter.
+        FR-006: GraphRAG MUST respect the top-K parameter.
 
-        Given: Custom top_k configuration
-        When: Query executed
-        Then: Returned documents <= top_k
+        Given: a corpus larger than K
+        When: query executed with the default and with top_k=5
+        Then: returned documents <= top_k
         """
-        # Test default K=10
-        pipeline_default = create_pipeline("graphrag")
         query = "What are the symptoms of diabetes?"
-        result_default = pipeline_default.query(query)
+        result_default = graphrag_pipeline.query(query)
 
         assert (
-            len(result_default.contexts) <= 10
-        ), f"Default top_k=10 violated: {len(result_default.contexts)} documents returned"
+            len(result_default["contexts"]) <= 10
+        ), f"Default top_k=10 violated: {len(result_default['contexts'])} documents returned"
 
-        # Test custom K=5
-        config_manager.update_config({"retrieval": {"top_k": 5}})
-        pipeline_custom = create_pipeline("graphrag", config_manager=config_manager)
-        result_custom = pipeline_custom.query(query)
+        result_custom = graphrag_pipeline.query(query, top_k=5)
 
         assert (
-            len(result_custom.contexts) <= 5
-        ), f"Custom top_k=5 violated: {len(result_custom.contexts)} documents returned"
+            0 < len(result_custom["contexts"]) <= 5
+        ), f"Custom top_k=5 violated: {len(result_custom['contexts'])} documents returned"
 
     def test_graphrag_dimension_validation(self, graphrag_pipeline, embedding_manager):
         """
@@ -108,7 +128,7 @@ class TestGraphRAGVectorSearchIntegration:
 
         # If retrieval works, dimension validation passed
         assert isinstance(
-            result.contexts, list
+            result["contexts"], list
         ), "GraphRAG query should succeed with matching dimensions"
 
     def test_graphrag_diagnostic_logging(self, graphrag_pipeline, caplog):
@@ -134,7 +154,7 @@ class TestGraphRAGVectorSearchIntegration:
         assert len(log_messages) > 0, "No log messages emitted during GraphRAG query"
 
         # If 0 results, should have diagnostic info
-        if len(result.contexts) == 0:
+        if len(result["contexts"]) == 0:
             assert any(
                 "0 results" in msg or "no documents" in msg.lower()
                 for msg in log_messages
@@ -159,7 +179,7 @@ class TestGraphRAGVectorSearchIntegration:
 
         # If retrieval works, embeddings are consistent
         assert (
-            len(result.contexts) >= 0
+            len(result["contexts"]) >= 0
         ), "GraphRAG should execute without dimension mismatch errors"
 
     def test_graphrag_multiple_queries_consistency(self, graphrag_pipeline):
@@ -181,12 +201,12 @@ class TestGraphRAGVectorSearchIntegration:
 
             # Each query should retrieve documents
             assert (
-                len(result.contexts) > 0
+                len(result["contexts"]) > 0
             ), f"GraphRAG failed to retrieve documents for query: {query}"
 
             # Each query should generate answer
             assert (
-                len(result.answer) > 0
+                len(result["answer"]) > 0
             ), f"GraphRAG failed to generate answer for query: {query}"
 
     def test_graphrag_relevance_scoring(self, graphrag_pipeline):
@@ -200,18 +220,17 @@ class TestGraphRAGVectorSearchIntegration:
         query = "What are the symptoms of diabetes?"
         result = graphrag_pipeline.query(query)
 
-        if len(result.contexts) < 2:
+        if len(result["contexts"]) < 2:
             pytest.skip("Need at least 2 documents to test sorting")
 
         # Extract similarity scores
         scores = [
-            doc.similarity_score
-            for doc in result.contexts
-            if hasattr(doc, "similarity_score")
+            doc.metadata["similarity_score"]
+            for doc in result["retrieved_documents"]
+            if "similarity_score" in doc.metadata
         ]
 
-        if not scores:
-            pytest.skip("Documents missing similarity_score attribute")
+        assert scores, "retrieved documents carry no similarity_score in metadata"
 
         # Verify descending order
         for i in range(len(scores) - 1):

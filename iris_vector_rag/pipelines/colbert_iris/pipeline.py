@@ -84,25 +84,27 @@ class IRISColBERTPipeline(BasicRAGPipeline):
 
         t0 = time.perf_counter()
 
-        initial_k = min(top_k * self._rerank_factor, 100)
-        parent_kwargs = dict(kwargs, generate_answer=False)
-        parent_result = super().query(query, top_k=initial_k, **parent_kwargs)
-        candidate_docs = parent_result.get("retrieved_documents", [])
-
         q_vecs = self._encode_query(query)
 
+        candidate_docs: List[Document] = []
         if self._use_hnsw:
+            # The per-token ANN search scans the whole token index, so dense
+            # candidates would be paid for and discarded (PL-03): not retrieved.
+            # `rerank_factor` sizes the candidate pool of the bulk-fetch path only.
             scored = self._maxsim.indb_maxsim(
                 q_vecs, top_k=top_k, k_per_token=self._k_per_token
             )
         else:
-            candidate_ids = [
-                d.id if hasattr(d, "id") and d.id else d.page_content[:64]
-                for d in candidate_docs
-            ]
+            initial_k = min(top_k * self._rerank_factor, 100)
+            parent_kwargs = dict(kwargs, generate_answer=False)
+            parent_result = super().query(query, top_k=initial_k, **parent_kwargs)
+            candidate_docs = parent_result.get("retrieved_documents", [])
+            # Candidates are matched to ColBERT rows by document id. (The old
+            # fallback, the first 64 characters of the text, matched nothing and
+            # could not run: a Document always has an id.)
+            candidate_ids = [d.id for d in candidate_docs]
             scored = self._maxsim.bulk_fetch_maxsim(q_vecs, candidate_ids, top_k=top_k)
 
-        scored_ids = {doc_id for doc_id, _ in scored}
         final_docs = self._fetch_docs_by_ids([d for d, _ in scored])
 
         generate_answer = kwargs.get("generate_answer", True)

@@ -11,9 +11,9 @@ validation, and monitoring.
 """
 
 import logging
-import time
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -23,6 +23,7 @@ from ..core.connection import ConnectionManager
 from ..core.exceptions import RAGException
 from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
+from ..storage.table_shape import CANONICAL_VECTOR_TYPE
 
 logger = logging.getLogger(__name__)
 
@@ -302,8 +303,6 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
 
     def _store_document_sql(self, doc: Document, embedding: List[float]):
         """Store document in SQL table for vector search."""
-        from sqlalchemy import text
-
         # Extract metadata
         metadata = doc.metadata or {}
         title = metadata.get("title", doc.id)
@@ -313,28 +312,38 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
         authors = metadata.get("authors", "")
         combined = f"{title} {abstract}"
 
-        # Insert into paper_content table
-        sql = text("""
-            INSERT INTO paper_content
-            (docid, title, abstract, url, published, authors, combined, paper_vector)
-            VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR(?))
-        """)
+        # Insert into paper_content through the DBAPI cursor. `sqlalchemy.text()` takes
+        # named parameters and rejects `?` with a positional list, so load_documents
+        # failed on every call (PL-05). TO_VECTOR needs its type and dimension.
+        sql = (
+            "INSERT INTO paper_content "
+            "(docid, title, abstract, url, published, authors, combined, paper_vector) "
+            f"VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR(?, {CANONICAL_VECTOR_TYPE}, {len(embedding)}))"
+        )
+        params = [
+            doc.id,
+            title,
+            abstract,
+            url,
+            published,
+            authors,
+            combined,
+            ",".join(str(float(value)) for value in embedding),
+        ]
 
-        with self.iris_engine.connect() as conn:
-            with conn.begin():
-                conn.execute(
-                    sql,
-                    [
-                        doc.id,
-                        title,
-                        abstract,
-                        url,
-                        published,
-                        authors,
-                        combined,
-                        str(embedding),
-                    ],
-                )
+        connection = self.iris_engine.raw_connection()
+        try:
+            cursor = connection.cursor()
+            try:
+                cursor.execute(sql, params)
+            finally:
+                cursor.close()
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
 
     def _store_graph_content(self, doc: Document):
         """Store graph content in IRIS globals."""

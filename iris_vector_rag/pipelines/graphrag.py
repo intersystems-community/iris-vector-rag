@@ -279,19 +279,47 @@ class GraphRAGPipeline(RAGPipeline):
 
         entity_ids: List[str] = []
         for entity in entities:
-            try:
-                rows = self._execute_sql(
-                    "SELECT entity_id FROM RAG.Entities WHERE entity_name LIKE ?",
-                    [f"%{entity.text}%"],
-                )
-                for row in rows:
-                    eid = row.get("entity_id") or row.get("ENTITY_ID")
-                    if eid and eid not in entity_ids:
-                        entity_ids.append(eid)
-            except Exception:
-                pass
+            # A failed lookup raises: swallowing it returned "no seed entities" and
+            # the query quietly fell back to vector search with no trace (PL-06).
+            rows = self._execute_sql(
+                "SELECT entity_id FROM RAG.Entities WHERE entity_name LIKE ?",
+                [f"%{entity.text}%"],
+            )
+            for row in rows:
+                eid = row.get("entity_id") or row.get("ENTITY_ID")
+                if eid and eid not in entity_ids:
+                    entity_ids.append(eid)
 
         return entity_ids
+
+    #: Nodes per `IN (...)` list. The query binds each node twice, so this keeps
+    #: a statement well under the driver's parameter limit.
+    NEIGHBORHOOD_CHUNK_SIZE = 200
+
+    def _neighbors_of(self, nodes: List[str]) -> Set[str]:
+        """Entities one relationship away from `nodes`, in `IN`-list sized chunks."""
+        neighbors: Set[str] = set()
+        size = self.NEIGHBORHOOD_CHUNK_SIZE
+        for offset in range(0, len(nodes), size):
+            chunk = nodes[offset : offset + size]
+            placeholders = ",".join(["?" for _ in chunk])
+            sql = (
+                f"SELECT DISTINCT target_entity_id FROM RAG.EntityRelationships "
+                f"WHERE source_entity_id IN ({placeholders}) "
+                f"UNION "
+                f"SELECT DISTINCT source_entity_id FROM RAG.EntityRelationships "
+                f"WHERE target_entity_id IN ({placeholders})"
+            )
+            for row in self._execute_sql(sql, chunk + chunk):
+                val = (
+                    row.get("target_entity_id")
+                    or row.get("TARGET_ENTITY_ID")
+                    or row.get("source_entity_id")
+                    or row.get("SOURCE_ENTITY_ID")
+                )
+                if val:
+                    neighbors.add(val)
+        return neighbors
 
     def _expand_neighborhood(self, start_nodes: Set[str], depth: int) -> Set[str]:
         visited = set(start_nodes)
@@ -300,32 +328,11 @@ class GraphRAGPipeline(RAGPipeline):
         for _ in range(depth):
             if not frontier:
                 break
-            placeholders = ",".join(["?" for _ in frontier])
-            sql = (
-                f"SELECT DISTINCT target_entity_id FROM RAG.EntityRelationships "
-                f"WHERE source_entity_id IN ({placeholders}) "
-                f"UNION "
-                f"SELECT DISTINCT source_entity_id FROM RAG.EntityRelationships "
-                f"WHERE target_entity_id IN ({placeholders})"
-            )
-            try:
-                params = list(frontier) + list(frontier)
-                rows = self._execute_sql(sql, params)
-                neighbors: Set[str] = set()
-                for row in rows:
-                    val = (
-                        row.get("target_entity_id")
-                        or row.get("TARGET_ENTITY_ID")
-                        or row.get("source_entity_id")
-                        or row.get("SOURCE_ENTITY_ID")
-                    )
-                    if val:
-                        neighbors.add(val)
-                new_nodes = neighbors - visited
-                visited.update(new_nodes)
-                frontier = new_nodes
-            except Exception:
-                break
+            # Errors propagate: stopping the expansion silently returned a smaller
+            # neighbourhood as if it were the whole one (PL-06).
+            new_nodes = self._neighbors_of(sorted(frontier)) - visited
+            visited.update(new_nodes)
+            frontier = new_nodes
 
         return visited
 

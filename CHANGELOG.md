@@ -70,6 +70,38 @@ ST-16 to ST-18).
   relationship ID matches no row, and uses the configured schema (`schema_prefix`) rather
   than a literal `RAG.`.
 
+### Changed: GraphRAG and ColBERT pipelines stop swallowing failures
+
+- **GraphRAG graph expansion raises.** `_find_seed_entities` and `_expand_neighborhood`
+  no longer catch every exception: a failed lookup used to look like "no seed entities"
+  and the query fell back to vector search with no trace, and an expansion error quietly
+  returned a smaller neighbourhood. The `IN (...)` list is now split into chunks of 200
+  nodes, so a large frontier no longer hits the driver limit.
+- **`HybridGraphRAGPipeline`**: the entity-to-content lookup uses `SELECT TOP 1` and the
+  vector store's table shape instead of `LIMIT 1` and a hard-coded `RAG.SourceDocuments`,
+  returns `None` for an entity no document holds, and raises on a database error. It no
+  longer returns a made-up `"Entity: <id>"` string as if it were content.
+  `delete_node` raises one error naming both failures when the graph delete and the
+  vector delete that follows it both fail, chained to the graph error. Hybrid
+  `get_performance_statistics` closes its cursor on every path.
+- **`IRISGlobalGraphRAGPipeline.load_documents` works.** It passed `?` placeholders and a
+  positional list to `sqlalchemy.text()`, which rejects that before any SQL is sent, so
+  every load failed. It now inserts through the DBAPI cursor with a typed
+  `TO_VECTOR(?, FLOAT, <dimension>)` and commits or rolls back.
+- **ColBERT ingest is atomic per document.** A document row and its token rows commit
+  together; a failed token insert rolls the document back instead of leaving an orphan
+  `ColBERTDocuments` row. The driver connection autocommits, so ingest turns autocommit
+  off for its duration and restores the caller's setting.
+- **`IRISColBERTPipeline.query` with `use_hnsw=True` no longer runs the dense candidate
+  retrieval** whose result it discarded; `rerank_factor` now sizes the candidate pool
+  only on the bulk-fetch path (`use_hnsw=False`), where candidates are matched by id.
+- **`ColBERTSchema.drop_tables` reports failures.** A table that is already gone is still
+  fine; any other DROP error is raised after the rest were tried, and the cursor is
+  closed on every path. The unused `token_dim` argument of `create_hnsw_index` is gone.
+- **`PyLateColBERTPipeline.load_documents("path")`** treats a string or path as the
+  documents path, as the parent's first positional parameter does, instead of iterating
+  it character by character.
+
 ### Changed: fusion keeps real content and sane scores
 
 `retrieval="text"`, `"hybrid"` and `"rrf"` (and the weighted form of `"mix"`) return
