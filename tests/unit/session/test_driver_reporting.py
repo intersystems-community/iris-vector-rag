@@ -13,7 +13,7 @@ import pytest
 from iris_vector_rag.session import IRISSession
 from iris_vector_rag.session.drivers import EmbeddedDriver, NetworkDriver, select_driver
 from iris_vector_rag.session.errors import NoUsableDriver
-from iris_vector_rag.testing.fake_driver import FakeDriver, fake_identity
+from tests.support.fake_driver import FakeDriver, fake_identity
 
 
 @pytest.fixture
@@ -74,7 +74,7 @@ def test_a_substituted_driver_means_no_selection_at_all(monkeypatch):
 
 def test_the_dbapi_entry_point_hands_out_the_sessions_connection(monkeypatch):
     from iris_vector_rag.common import iris_dbapi_connector
-    from iris_vector_rag.testing.fake_driver import fake_session
+    from tests.support.fake_driver import fake_session
 
     session = fake_session()
     monkeypatch.setattr("iris_vector_rag.session.session_for", lambda *a, **k: session)

@@ -7,7 +7,7 @@ import pytest
 
 from iris_vector_rag.session import SessionIdentity, session_for
 from iris_vector_rag.session.registry import open_sessions, reset_sessions_for_tests
-from iris_vector_rag.testing.fake_driver import FakeDriver
+from tests.support.fake_driver import FakeDriver
 
 
 def identity(**overrides):
@@ -126,7 +126,7 @@ def test_reset_closes_what_it_clears():
 
 def test_a_borrowed_connection_session_is_not_registered():
     from iris_vector_rag.session import IRISSession
-    from iris_vector_rag.testing.fake_driver import FakeConnection
+    from tests.support.fake_driver import FakeConnection
 
     borrowed = IRISSession.from_connection(FakeConnection(FakeDriver()))
 

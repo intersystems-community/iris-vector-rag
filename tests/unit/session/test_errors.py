@@ -123,7 +123,7 @@ def test_a_session_error_is_never_retried_on_a_fresh_connection():
         IRISUnreachable,
         looks_like_lost_connection,
     )
-    from iris_vector_rag.testing.fake_driver import fake_identity
+    from tests.support.fake_driver import fake_identity
 
     assert looks_like_lost_connection(IRISUnreachable(fake_identity(), "no")) is False
     assert looks_like_lost_connection(InBackoff(fake_identity(), "later")) is False

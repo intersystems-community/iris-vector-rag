@@ -9,7 +9,7 @@ Feature: 035-make-2-modes
 
 from enum import Enum
 
-from iris_vector_rag.testing.exceptions import ConfigurationError
+from tests.support.exceptions import ConfigurationError
 
 
 class BackendMode(Enum):
@@ -49,8 +49,7 @@ class BackendMode(Enum):
             return cls(value.lower())
         except ValueError:
             raise ConfigurationError(
-                f"Invalid backend mode: {value}\n"
-                "Valid values: community, enterprise"
+                f"Invalid backend mode: {value}\n" "Valid values: community, enterprise"
             )
 
 

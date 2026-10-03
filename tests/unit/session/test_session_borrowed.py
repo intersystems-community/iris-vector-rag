@@ -7,7 +7,7 @@ import pytest
 
 from iris_vector_rag.session import IRISSession
 from iris_vector_rag.session.errors import CallerConnectionBroken
-from iris_vector_rag.testing.fake_driver import FakeConnection, FakeDriver
+from tests.support.fake_driver import FakeConnection, FakeDriver
 
 
 def borrowed(**kwargs):

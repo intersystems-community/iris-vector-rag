@@ -91,7 +91,7 @@ def test_the_real_drivers_satisfy_the_protocol():
 
 
 def test_the_fake_driver_satisfies_the_protocol_without_importing_a_real_one():
-    from iris_vector_rag.testing.fake_driver import FakeDriver
+    from tests.support.fake_driver import FakeDriver
 
     assert isinstance(FakeDriver(), Driver)
 

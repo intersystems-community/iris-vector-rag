@@ -15,15 +15,14 @@ from typing import Optional
 
 import yaml
 
-from iris_vector_rag.config.backend_modes import (
+from tests.support.backend_modes import (
     BackendMode,
     ConfigSource,
     ConfigurationError,
     ExecutionStrategy,
 )
-from iris_vector_rag.testing.exceptions import EditionMismatchError
-from iris_vector_rag.testing.validators import IRISEdition
-from iris_vector_rag.testing.exceptions import IrisDevtoolsMissingError
+from tests.support.exceptions import EditionMismatchError, IrisDevtoolsMissingError
+from tests.support.validators import IRISEdition
 
 # Default configuration file path
 DEFAULT_CONFIG_PATH = Path(".specify/config/backend_modes.yaml")

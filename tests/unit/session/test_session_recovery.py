@@ -11,7 +11,7 @@ import pytest
 
 from iris_vector_rag.session.drivers import Driver, NetworkDriver
 from iris_vector_rag.session.errors import PasswordExpired
-from iris_vector_rag.testing.fake_driver import FakeDriver, fake_identity, fake_session
+from tests.support.fake_driver import FakeDriver, fake_identity, fake_session
 
 
 def test_an_expired_password_raises_the_drivers_error_with_a_hint():

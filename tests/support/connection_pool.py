@@ -16,8 +16,8 @@ import warnings
 from contextlib import contextmanager
 from typing import Any, Dict, Generator
 
-from iris_vector_rag.testing.backend_manager import BackendMode
-from iris_vector_rag.testing.exceptions import ConnectionPoolTimeout
+from tests.support.backend_manager import BackendMode
+from tests.support.exceptions import ConnectionPoolTimeout
 
 
 class ConnectionPool:

@@ -3,7 +3,7 @@
 Feature: 083-iris-session (FR-008, SC-002, US2)
 """
 
-from iris_vector_rag.testing.fake_driver import fake_session
+from tests.support.fake_driver import fake_session
 
 
 def test_a_hundred_operations_inside_one_interval_pay_for_one_probe():

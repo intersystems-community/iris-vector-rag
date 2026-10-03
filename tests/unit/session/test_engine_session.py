@@ -10,7 +10,7 @@ import pytest
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.engine import IRISVectorEngine
-from iris_vector_rag.testing.fake_driver import FakeConnection, FakeDriver, fake_session
+from tests.support.fake_driver import FakeConnection, FakeDriver, fake_session
 
 
 @pytest.fixture

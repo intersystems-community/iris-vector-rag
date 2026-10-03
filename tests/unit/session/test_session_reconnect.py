@@ -7,7 +7,7 @@ import pytest
 
 from iris_vector_rag.session import IRISSession
 from iris_vector_rag.session.errors import ConnectionLost
-from iris_vector_rag.testing.fake_driver import FakeDriver, fake_identity, fake_session
+from tests.support.fake_driver import FakeDriver, fake_identity, fake_session
 
 
 def test_a_dropped_connection_is_replaced_and_the_statement_succeeds():

@@ -5,7 +5,7 @@ Feature: 083-iris-session (FR-011, FR-012, US3)
 
 import pytest
 
-from iris_vector_rag.testing.fake_driver import fake_session
+from tests.support.fake_driver import fake_session
 
 
 def test_values_survive_the_cursor():

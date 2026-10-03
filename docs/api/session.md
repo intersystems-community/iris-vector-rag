@@ -149,7 +149,7 @@ module allowed to call a driver's own connect; the antipatterns gate enforces th
 ## Testing against a session
 
 ```python
-from iris_vector_rag.testing.fake_driver import fake_session
+from tests.support.fake_driver import fake_session
 
 def test_something():
     session = fake_session(columns=("doc_id",), rows=[("d1",)])

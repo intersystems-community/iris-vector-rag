@@ -391,10 +391,7 @@ def backend_configuration():
     Returns:
         BackendConfiguration instance
     """
-    from iris_vector_rag.testing.backend_manager import (
-        load_configuration,
-        log_session_start,
-    )
+    from tests.support.backend_manager import load_configuration, log_session_start
 
     config = load_configuration()
     log_session_start(config)
@@ -424,7 +421,7 @@ def connection_pool(backend_configuration):
     Returns:
         ConnectionPool instance
     """
-    from iris_vector_rag.testing.connection_pool import ConnectionPool
+    from tests.support.connection_pool import ConnectionPool
 
     return ConnectionPool(mode=backend_configuration.mode)
 
@@ -443,7 +440,7 @@ def iris_devtools_bridge(backend_configuration):
     Raises:
         IrisDevtoolsMissingError: If iris-devtools not available
     """
-    from iris_vector_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
+    from tests.support.iris_devtools_bridge import IrisDevToolsBridge
 
     return IrisDevToolsBridge(
         iris_devtools_path=backend_configuration.iris_devtools_path

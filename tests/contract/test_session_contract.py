@@ -19,7 +19,7 @@ from iris_vector_rag.session import (
     session_for,
 )
 from iris_vector_rag.session.errors import SessionError
-from iris_vector_rag.testing.fake_driver import (
+from tests.support.fake_driver import (
     FakeConnection,
     FakeDriver,
     fake_identity,
