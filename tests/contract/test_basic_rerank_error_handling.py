@@ -32,6 +32,9 @@ class TestBasicRerankRAGErrorHandling:
         """
         # Mock environment to remove API key
         mocker.patch.dict(os.environ, {}, clear=True)
+        # The scenario is "no key and no LLM to fall back on": an injected
+        # llm_func needs no key (PL-02), so the pipeline under test has none.
+        mocker.patch.object(basic_rerank_pipeline, "llm_func", None)
 
         # Attempt query - should raise configuration error
         with pytest.raises(Exception) as exc_info:
@@ -172,6 +175,9 @@ class TestBasicRerankRAGErrorHandling:
         """
         # Mock critical config to be missing
         mocker.patch.dict(os.environ, {}, clear=True)
+        # The scenario is "no key and no LLM to fall back on": an injected
+        # llm_func needs no key (PL-02), so the pipeline under test has none.
+        mocker.patch.object(basic_rerank_pipeline, "llm_func", None)
 
         with pytest.raises(Exception) as exc_info:
             basic_rerank_pipeline.query("test query")

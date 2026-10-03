@@ -138,6 +138,9 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 - query_text: Alias for ``query`` (deprecated; use ``query``).
                 - include_sources: Whether to include source information (default: True)
                 - custom_prompt: Custom prompt template
+                - allow_rerank_fallback: When True, a failing reranker keeps the
+                  retrieval order and the error is recorded in
+                  metadata['rerank_error'] (reranked=False); default False raises
                 - generate_answer: Whether to generate LLM answer (default: True)
                 - retrieval: Retrieval mode override
                 - weights: Fusion weights for hybrid retrieval
@@ -181,12 +184,8 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
 
         generate_answer = kwargs.get("generate_answer", True)
 
-        # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
-        if generate_answer and not os.environ.get("OPENAI_API_KEY"):
-            raise ValueError(
-                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
-                "or configure your API key before running BasicRerankRAG queries."
-            )
+        self._require_llm_for_answer(generate_answer, "BasicRerankRAG")
+        allow_rerank_fallback = bool(kwargs.pop("allow_rerank_fallback", False))
 
         # Calculate how many documents to retrieve for reranking pool
         initial_k = min(top_k * self.rerank_factor, 100)  # Cap at 100 for performance
@@ -201,6 +200,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         parent_result = super().query(query, top_k=initial_k, **parent_kwargs)
         candidate_documents = parent_result.get("retrieved_documents", [])
 
+        rerank_error = None
         # Always rerank if we have multiple candidates and a reranker (fixes the logic issue!)
         if len(candidate_documents) > 1 and self.reranker:
             try:
@@ -212,9 +212,12 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 )
                 reranked = True
             except Exception as e:
+                if not allow_rerank_fallback:
+                    raise
                 logger.warning(f"Reranking failed, falling back to original order: {e}")
                 final_documents = candidate_documents[:top_k]
                 reranked = False
+                rerank_error = f"{type(e).__name__}: {e}"
         else:
             # Single document or no reranker - just return what we have
             final_documents = candidate_documents[:top_k]
@@ -268,6 +271,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 "generated_answer": generate_answer and answer is not None,
                 "retrieval_method": retrieval_method,
                 "context_count": len(contexts_list),
+                **({"rerank_error": rerank_error} if rerank_error else {}),
             },
         }
 
@@ -290,32 +294,26 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         Returns:
             Reranked list of top-k documents
         """
-        try:
-            logger.debug(
-                f"Reranking {len(documents)} documents for query: {query_text[:50]}..."
-            )
+        logger.debug(
+            f"Reranking {len(documents)} documents for query: {query_text[:50]}..."
+        )
 
-            reranked_results = self.reranker.rerank(query_text, documents)
+        # A failure propagates: returning the input order here would let the caller
+        # report a rerank that never happened.
+        reranked_results = self.reranker.rerank(query_text, documents)
 
-            # Sort by score (descending)
-            reranked_results = sorted(
-                reranked_results, key=lambda x: x[1], reverse=True
-            )
+        # Sort by score (descending)
+        reranked_results = sorted(reranked_results, key=lambda x: x[1], reverse=True)
 
-            # Log reranking results
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Post-reranking document order:")
-                for i, (doc, score) in enumerate(reranked_results[:top_k]):
-                    source = doc.metadata.get("source", "Unknown")
-                    logger.debug(f"  [{i}] {source} (score: {score:.4f})")
+        # Log reranking results
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Post-reranking document order:")
+            for i, (doc, score) in enumerate(reranked_results[:top_k]):
+                source = doc.metadata.get("source", "Unknown")
+                logger.debug(f"  [{i}] {source} (score: {score:.4f})")
 
-            # Return top_k documents
-            return [doc for doc, score in reranked_results[:top_k]]
-
-        except Exception as e:
-            logger.error(f"Reranking failed: {e}")
-            # Fallback to original order
-            return documents[:top_k]
+        # Return top_k documents
+        return [doc for doc, score in reranked_results[:top_k]]
 
     def get_pipeline_info(self) -> Dict[str, Any]:
         """

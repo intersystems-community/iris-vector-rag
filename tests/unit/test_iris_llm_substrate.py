@@ -46,8 +46,7 @@ def test_get_llm_func_iris_llm_provider():
     # Reset the module-level LLM cache
     import iris_vector_rag.common.utils as utils_mod
 
-    utils_mod._llm_instance = None
-    utils_mod._current_llm_key = None
+    utils_mod._llm_instances.clear()
 
     with (
         patch.dict(
@@ -71,8 +70,7 @@ def test_get_llm_func_iris_llm_missing_raises_import_error():
     """get_llm_func(provider='iris_llm') without wheel raises ImportError, not ValueError."""
     import iris_vector_rag.common.utils as utils_mod
 
-    utils_mod._llm_instance = None
-    utils_mod._current_llm_key = None
+    utils_mod._llm_instances.clear()
 
     with patch.dict(sys.modules, {"iris_llm": None, "iris_llm.langchain": None}):
         from iris_vector_rag.common.utils import get_llm_func
@@ -87,8 +85,7 @@ def test_get_llm_func_iris_llm_missing_key_raises_value_error():
 
     import iris_vector_rag.common.utils as utils_mod
 
-    utils_mod._llm_instance = None
-    utils_mod._current_llm_key = None
+    utils_mod._llm_instances.clear()
 
     import os
 
@@ -204,6 +201,7 @@ def test_import_iris_vector_rag_without_iris_llm():
     """Core package imports cleanly without iris_llm present."""
     with patch.dict(sys.modules, {"iris_llm": None, "iris_llm.langchain": None}):
         import importlib
+
         import iris_vector_rag
 
         importlib.reload(iris_vector_rag)

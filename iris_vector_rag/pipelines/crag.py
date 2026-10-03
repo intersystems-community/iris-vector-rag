@@ -344,14 +344,20 @@ class CRAGPipeline(RAGPipeline):
         logger.info(f"CRAG: Processing query: '{query_text[:50]}...'")
 
         # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
-        if generate_answer and not os.environ.get("OPENAI_API_KEY"):
+        # An injected llm_func is the answer source; the key matters only without one.
+        if (
+            generate_answer
+            and not self.llm_func
+            and not os.environ.get("OPENAI_API_KEY")
+        ):
             logger.error(
                 "Missing OPENAI_API_KEY for CRAG query. "
                 "Pipeline=crag, operation=query, state=missing_api_key."
             )
             raise ValueError(
-                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
-                "or configure your API key before running CRAG queries."
+                "OPENAI_API_KEY not set and no llm_func was provided. Set/export "
+                "OPENAI_API_KEY in your environment or pass llm_func before running "
+                "CRAG queries."
             )
 
         if not self.vector_store:
@@ -533,6 +539,72 @@ class CRAGPipeline(RAGPipeline):
                 "Fix: reconfigure embedding model to produce the expected dimension."
             )
 
+    def _embed_query(self, query: str) -> List[float]:
+        """Embed one query. The embedder contract is a list of texts in, a list of
+        vectors out, so the query goes in as ``[query]`` and the first vector comes
+        back; anything else is an error naming the function, not a guess.
+        """
+        vectors = self.embedding_func([query])
+        try:
+            vector = vectors[0]
+            ok = (
+                hasattr(vector, "__len__")
+                and len(vector) > 0
+                and not isinstance(vector, (str, bytes))
+                and all(
+                    isinstance(x, (int, float)) or hasattr(x, "__float__")
+                    for x in vector
+                )
+            )
+        except (TypeError, IndexError, KeyError):
+            ok = False
+        if not ok:
+            raise TypeError(
+                "embedding_func must take a list of texts and return a list of "
+                f"vectors; called with [query] it returned {type(vectors).__name__}: "
+                f"{str(vectors)[:80]}"
+            )
+        return [float(x) for x in vector]
+
+    def _chunk_shape(self, connection):
+        """The shape of the chunk table, read from the catalog rather than assumed."""
+        from ..storage.catalog import IRISCatalogReader
+        from ..storage.shape_resolver import TableShapeResolver
+
+        schema_manager = getattr(self.vector_store, "schema_manager", None)
+        schema = getattr(schema_manager, "schema_prefix", None) or "RAG"
+        return TableShapeResolver(IRISCatalogReader(connection)).resolve(
+            schema, "DocumentChunks"
+        )
+
+    @staticmethod
+    def _chunk_search_sql(shape, query_embedding: List[float], top_k: int) -> str:
+        """Ranked chunk search written from the chunk table's own column names."""
+        from ..common.vector_sql_utils import validate_vector_string
+        from ..exceptions import DimensionMismatchError
+        from ..storage.table_shape import ColumnRole
+
+        vector = shape.vector_spec()
+        embedding = shape.column_for(ColumnRole.EMBEDDING)
+        identifier = shape.column_for(ColumnRole.IDENTIFIER)
+        text = shape.column_for(ColumnRole.TEXT)
+        if len(query_embedding) != vector.dimension:
+            raise DimensionMismatchError(
+                len(query_embedding),
+                vector.dimension,
+                f"{shape.qualified_name}.{embedding.name} (query)",
+            )
+        vector_string = "[" + ",".join(f"{x:.10f}" for x in query_embedding) + "]"
+        if not validate_vector_string(vector_string):
+            raise ValueError("query embedding holds a non-finite value")
+        return (
+            f"SELECT TOP {int(top_k)} {identifier.name}, {text.name}, "
+            f"VECTOR_COSINE({embedding.name}, "
+            f"TO_VECTOR('{vector_string}', {vector.element_type}, {vector.dimension})) "
+            f"AS similarity_score FROM {shape.qualified_name} "
+            f"WHERE {embedding.name} IS NOT NULL ORDER BY similarity_score DESC"
+        )
+
     def _initial_retrieval(self, query: str, top_k: int) -> List[Document]:
         """
         Perform initial document retrieval using vector store.
@@ -547,7 +619,7 @@ class CRAGPipeline(RAGPipeline):
         logger.debug(f"CRAG _initial_retrieval() entry: query='{query}', top_k={top_k}")
 
         # Generate query embedding
-        query_embedding = self.embedding_func([query])[0]
+        query_embedding = self._embed_query(query)
         logger.debug(
             f"CRAG _initial_retrieval() generated embedding: length={len(query_embedding)}"
         )
@@ -656,33 +728,11 @@ class CRAGPipeline(RAGPipeline):
         cursor = connection.cursor()
 
         try:
-            vector_dim = getattr(self.vector_store, "vector_dimension", 384)
-            vector_data_type = "FLOAT"
-            if self.vector_store and hasattr(
-                self.vector_store, "_get_vector_data_type"
-            ):
-                vector_data_type = self.vector_store._get_vector_data_type()
-
-            # Generate query embedding
-            query_embedding = self.embedding_func([query])[0]
-            # Format embedding for IRIS SQL - must embed directly in SQL with brackets
-            query_embedding_str = (
-                "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
+            query_embedding = self._embed_query(query)
+            chunk_sql = self._chunk_search_sql(
+                self._chunk_shape(connection), query_embedding, top_k
             )
-
-            # Try chunk-based retrieval with parameterized query
-            chunk_sql = f"""
-                SELECT TOP {top_k}
-                    doc_id,
-                    chunk_text,
-                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?, {vector_data_type}, {vector_dim})) as similarity_score
-                FROM RAG.DocumentChunks
-                WHERE chunk_embedding IS NOT NULL
-                ORDER BY similarity_score DESC
-            """
-
-            # Execute with embedding as parameter
-            cursor.execute(chunk_sql, [query_embedding_str])
+            cursor.execute(chunk_sql)
             chunk_results = cursor.fetchall()
             logger.debug(
                 f"CRAG _enhance_retrieval() chunk-based query returned {len(chunk_results)} chunks"
@@ -746,110 +796,32 @@ class CRAGPipeline(RAGPipeline):
             f"CRAG _knowledge_base_expansion() entry: query='{query}', top_k={top_k}"
         )
 
-        # For disoriented cases, try broader search strategies
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
+        # For disoriented cases, widen the vector search. It goes through the vector
+        # store, which knows the document table's name and columns; there is no
+        # second, hand-written query against them here.
+        query_embedding = self._embed_query(query)
+        results = self._retrieve_documents_by_vector(
+            query_embedding=query_embedding, top_k=top_k * 2
+        )
+        logger.debug(
+            f"CRAG _knowledge_base_expansion() vector search returned {len(results)} documents"
+        )
 
-        try:
-            vector_dim = getattr(self.vector_store, "vector_dimension", 384)
-            vector_data_type = "FLOAT"
-            if self.vector_store and hasattr(
-                self.vector_store, "_get_vector_data_type"
-            ):
-                vector_data_type = self.vector_store._get_vector_data_type()
-
-            # ADDED: Log sample text_content from DB for comparison (moved to top)
-            try:
-                sample_docs_sql = (
-                    "SELECT TOP 3 doc_id, %ID, text_content FROM RAG.SourceDocuments"
-                )
-                sample_cursor = connection.cursor()  # Create a new cursor for this
-                sample_cursor.execute(sample_docs_sql)
-                sample_db_docs = sample_cursor.fetchall()
-                logger.debug(
-                    f"CRAG _knowledge_base_expansion() sample DB text_content (ID, RowID, Content): {sample_db_docs}"
-                )
-                sample_cursor.close()
-            except Exception as e_sample:
-                logger.error(
-                    f"CRAG _knowledge_base_expansion(): Error fetching sample docs for logging: {e_sample}"
-                )
-
-            # Use semantic search instead of keyword search for better results
-            # This avoids IRIS stream field limitations with LIKE operations
-            try:
-                # Generate query embedding
-                query_embedding = self.embedding_func(query)
-                if isinstance(query_embedding, list) and len(query_embedding) > 0:
-                    if isinstance(query_embedding[0], list):
-                        query_embedding = query_embedding[0]
-                # Use working pattern from archived CRAG V2 (lines 50-59) - add brackets for TO_VECTOR
-                query_embedding_str = (
-                    "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
-                )
-                logger.debug(
-                    f"CRAG _knowledge_base_expansion() generated embedding for semantic search: length={len(query_embedding)}"
-                )
-
-                # Use semantic search with parameterized query
-                sql = f"""
-                    SELECT TOP {top_k * 2}
-                        doc_id,
-                        text_content,
-                        VECTOR_COSINE(embedding, TO_VECTOR(?, {vector_data_type}, {vector_dim})) as similarity_score
-                    FROM RAG.SourceDocuments
-                    WHERE embedding IS NOT NULL
-                    ORDER BY similarity_score DESC
-                """
-
-                like_params = [query_embedding_str]
-
-            except Exception as e:
-                logger.warning(
-                    f"CRAG _knowledge_base_expansion(): Semantic search failed, using simple retrieval: {e}"
-                )
-                # Fallback: just get some documents
-                sql = f"""
-                    SELECT TOP {top_k * 2}
-                        doc_id,
-                        text_content,
-                        0.5 as similarity_score
-                    FROM RAG.SourceDocuments
-                    WHERE text_content IS NOT NULL
-                    ORDER BY doc_id
-                """
-                like_params = []
-
-            # Execute with parameters
-            cursor.execute(sql, like_params)
-            results = cursor.fetchall()
-            logger.debug(
-                f"CRAG _knowledge_base_expansion() database query returned {len(results)} rows"
+        expanded_docs = []
+        for doc, similarity_score in results:
+            doc.metadata.update(
+                {
+                    "similarity_score": float(similarity_score),
+                    "retrieval_method": "knowledge_base_expansion",
+                }
             )
+            expanded_docs.append(doc)
 
-            expanded_docs = []
-            for row in results:
-                # VectorStore guarantees string content
-                page_content = str(row[1])
-
-                doc = Document(
-                    id=row[0],
-                    page_content=page_content,
-                    metadata={
-                        "similarity_score": float(row[2]),
-                        "retrieval_method": "knowledge_base_expansion",
-                    },
-                )
-                expanded_docs.append(doc)
-
-            final_docs = expanded_docs[:top_k]
-            logger.debug(
-                f"CRAG _knowledge_base_expansion() exit: returning {len(final_docs)} documents (limited from {len(expanded_docs)})"
-            )
-            return final_docs
-
-        finally:
-            cursor.close()
+        final_docs = expanded_docs[:top_k]
+        logger.debug(
+            f"CRAG _knowledge_base_expansion() exit: returning {len(final_docs)} documents (limited from {len(expanded_docs)})"
+        )
+        return final_docs
 
     def _generate_answer(
         self, query: str, documents: List[Document], status: RetrievalStatus

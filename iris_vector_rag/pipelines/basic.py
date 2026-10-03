@@ -560,16 +560,7 @@ class BasicRAGPipeline(RAGPipeline):
             similarity_threshold,
         )
 
-        # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
-        if generate_answer and not os.environ.get("OPENAI_API_KEY"):
-            logger.error(
-                "Missing OPENAI_API_KEY for BasicRAG query. "
-                "Pipeline=basic_rag, operation=query, state=missing_api_key."
-            )
-            raise ValueError(
-                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
-                "or configure your API key before running BasicRAG queries."
-            )
+        self._require_llm_for_answer(generate_answer, "BasicRAG")
 
         if not self.vector_store:
             logger.error(
@@ -744,6 +735,25 @@ class BasicRAGPipeline(RAGPipeline):
             rerank_degraded,
         )
         return response
+
+    def _require_llm_for_answer(self, generate_answer: bool, label: str) -> None:
+        """Fail loudly when an answer is asked for and nothing can produce it.
+
+        An injected `llm_func` is the answer source, so the OpenAI key is required
+        only when there is none: a caller running a local model has no such key.
+        """
+        if not generate_answer or self.llm_func is not None:
+            return
+        if os.environ.get("OPENAI_API_KEY"):
+            return
+        logger.error(
+            "Missing OPENAI_API_KEY for %s query. state=missing_api_key.", label
+        )
+        raise ValueError(
+            "OPENAI_API_KEY not set and no llm_func was provided. Set/export "
+            f"OPENAI_API_KEY in your environment or pass llm_func before running "
+            f"{label} queries."
+        )
 
     def _validate_embedding_dimension(self, embedding: List[float]) -> None:
         """Validate embedding dimension matches expected model output."""
