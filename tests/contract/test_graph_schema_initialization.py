@@ -316,16 +316,16 @@ def schema_manager():
 
 
 @pytest.fixture
-def schema_manager_with_db(iris_connection):
+def schema_manager_with_db(iris_target):
     """
     Fixture providing SchemaManager with real database connection.
 
-    Requires iris_connection fixture from conftest.py
+    Requires iris_target fixture from conftest.py
     """
     from iris_vector_rag.storage.schema_manager import SchemaManager
 
     manager = SchemaManager(
-        connection_string=iris_connection.connection_string,
+        connection_string=iris_target.connection_string,
         base_embedding_dimension=384,
     )
 

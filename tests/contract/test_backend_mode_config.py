@@ -17,7 +17,7 @@ from unittest.mock import patch
 import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
-from iris_vector_rag.testing.backend_manager import (
+from tests.support.backend_manager import (
     BackendConfiguration,
     BackendMode,
     ConfigSource,
@@ -27,8 +27,8 @@ from iris_vector_rag.testing.backend_manager import (
     log_session_start,
     validate_configuration,
 )
-from iris_vector_rag.testing.exceptions import EditionMismatchError
-from iris_vector_rag.testing.validators import IRISEdition
+from tests.support.exceptions import EditionMismatchError
+from tests.support.validators import IRISEdition
 
 
 @pytest.mark.contract
@@ -72,9 +72,7 @@ class TestBackendConfigurationLoading:
         config_file = tmp_path / "backend_modes.yaml"
         config_file.write_text("backend_mode: community\n")
 
-        with patch(
-            "iris_vector_rag.testing.backend_manager.DEFAULT_CONFIG_PATH", config_file
-        ):
+        with patch("tests.support.backend_manager.DEFAULT_CONFIG_PATH", config_file):
             config = load_configuration()
 
         assert config.mode.value == "community"
@@ -99,7 +97,7 @@ class TestBackendConfigurationLoading:
         nonexistent_config = tmp_path / "nonexistent.yaml"
 
         with patch(
-            "iris_vector_rag.testing.backend_manager.DEFAULT_CONFIG_PATH",
+            "tests.support.backend_manager.DEFAULT_CONFIG_PATH",
             nonexistent_config,
         ):
             config = load_configuration()

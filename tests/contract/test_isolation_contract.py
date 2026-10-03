@@ -74,10 +74,8 @@ def test_transaction_rollback_available():
 
     content = conftest_path.read_text()
 
-    # Should have mock database session fixture
-    assert (
-        "mock_database_session" in content or "iris_test_session" in content
-    ), "Should have database session fixtures"
+    # Should have the real-database connection fixture (never a mock session)
+    assert "def iris_connection" in content, "Should have the iris_connection fixture"
 
     # Should use yield for teardown
     assert "yield" in content, "Fixtures should use yield for teardown"

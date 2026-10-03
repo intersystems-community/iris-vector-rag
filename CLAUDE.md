@@ -27,6 +27,10 @@ a result, the column is correctly typed.
 
 Never skip integration tests because "IRIS is unavailable" — start the container.
 
+Tests get their IRIS from the `iris_connection` fixture: `IRIS_CONTAINER_NAME=iris-vector-rag-iris pytest`
+pins the project container; unset, the suite starts and removes an ephemeral one. An unreachable IRIS
+fails the test with a hint. If the container is wedged, run `make iris-reset`.
+
 ## Build and Test
 
 ```bash

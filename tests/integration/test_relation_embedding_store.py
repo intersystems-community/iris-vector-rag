@@ -10,16 +10,6 @@ import pytest
 pytestmark = pytest.mark.integration
 
 
-# Override the autouse iris_connection fixture from integration/conftest.py.
-# That conftest probes only SQLAlchemy-compatible ports; this project uses
-# iris.dbapi on port 51972.  Provide a no-op override so cleanup_test_data
-# does not skip our tests.
-@pytest.fixture(autouse=True)
-def iris_connection():  # noqa: F811
-    """Override integration-conftest iris_connection to prevent skip cascade."""
-    yield None
-
-
 @pytest.fixture(scope="module")
 def conn_mgr():
     from iris_vector_rag.core.connection import ConnectionManager

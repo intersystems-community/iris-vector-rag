@@ -28,7 +28,7 @@ from iris_vector_rag.session.errors import (
     NoUsableDriver,
     SessionError,
 )
-from iris_vector_rag.testing.fake_driver import fake_identity
+from tests.support.fake_driver import fake_identity
 
 
 def stub_iris(monkeypatch, module):

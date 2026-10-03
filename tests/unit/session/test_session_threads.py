@@ -5,7 +5,7 @@ Feature: 083-iris-session (FR-003, US3)
 
 import threading
 
-from iris_vector_rag.testing.fake_driver import fake_session
+from tests.support.fake_driver import fake_session
 
 
 def test_each_thread_gets_its_own_connection():

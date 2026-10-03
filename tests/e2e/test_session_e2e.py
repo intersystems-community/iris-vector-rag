@@ -311,7 +311,7 @@ class TestUserStory4DriverChoiceIsADecision:
         assert "network" in str(caught.value)
 
     def test_a_substituted_driver_reaches_no_instance_at_all(self):
-        from iris_vector_rag.testing.fake_driver import FakeDriver
+        from tests.support.fake_driver import FakeDriver
 
         # Nothing is listening on this port. A session given a driver never asks.
         nowhere = SessionIdentity(

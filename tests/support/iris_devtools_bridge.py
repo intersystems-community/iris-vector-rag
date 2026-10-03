@@ -11,8 +11,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from iris_vector_rag.testing.exceptions import IrisDevtoolsMissingError
-from iris_vector_rag.testing.validators import IRISEdition
+from tests.support.exceptions import IrisDevtoolsMissingError
+from tests.support.validators import IRISEdition
 
 
 class IrisDevToolsBridge:

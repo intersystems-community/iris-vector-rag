@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
-from iris_vector_rag.testing.validators import (
+from tests.support.validators import (
     EditionDetectionError,
     IRISEdition,
     detect_iris_edition,

@@ -12,7 +12,7 @@ from iris_vector_rag.session.errors import (
     InBackoff,
     IRISUnreachable,
 )
-from iris_vector_rag.testing.fake_driver import FakeDriver, fake_identity, fake_session
+from tests.support.fake_driver import FakeDriver, fake_identity, fake_session
 
 
 def test_acquiring_a_session_does_not_connect():

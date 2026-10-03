@@ -15,7 +15,7 @@ import threading
 import pytest
 
 from iris_vector_rag.common.connection_pool import _session_pool
-from iris_vector_rag.testing.fake_driver import FakeDriver, fake_identity
+from tests.support.fake_driver import FakeDriver, fake_identity
 
 
 @pytest.fixture

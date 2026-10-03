@@ -13,7 +13,7 @@ import warnings
 import pytest
 
 from iris_vector_rag.session import registry
-from iris_vector_rag.testing.fake_driver import FakeDriver, fake_identity
+from tests.support.fake_driver import FakeDriver, fake_identity
 
 
 @pytest.fixture

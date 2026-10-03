@@ -10,9 +10,7 @@ Feature: 035-make-2-modes
 from enum import Enum
 from typing import Any
 
-from iris_vector_rag.testing.exceptions import (
-    EditionDetectionError,
-)
+from tests.support.exceptions import EditionDetectionError
 
 
 class IRISEdition(Enum):
