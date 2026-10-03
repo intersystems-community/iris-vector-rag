@@ -13,5 +13,5 @@ Use these environment variables to configure IRIS connections for local developm
 ## Test Execution Notes
 
 - Tests are expected to run against **live IRIS** via **iris-devtester**.
-- Do **not** hardcode ports; always resolve via `IRISContainer.attach("los-iris").get_exposed_port(1972)` when needed.
+- Do **not** hardcode ports; always resolve via `IRISContainer.attach("iris-vector-rag-iris").get_exposed_port(1972)` when needed.
 - `SKIP_IRIS_TESTS` defaults to `false` and should not be set to `true` in normal runs.

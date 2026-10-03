@@ -312,7 +312,7 @@ python -c "import iris_vector_rag; print(iris_rag.__file__)"
 **Solution:**
 
 - Check that mock fixtures in `tests/conftest.py` are properly configured
-- Ensure test is using the correct fixture (e.g., `mock_vector_store` vs `iris_test_session`)
+- Ensure test is using the correct fixture (e.g., `mock_vector_store` vs `iris_connection`)
 - Review test markers - unit tests should use mocks, integration tests use real connections
 
 ### Coverage Report Errors

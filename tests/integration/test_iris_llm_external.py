@@ -72,7 +72,7 @@ def test_graphrag_toolset_live_iris():
 
     from iris_vector_rag.tools import GraphRAGToolSet
 
-    port = IRISContainer.attach("los-iris").get_exposed_port(1972)
+    port = IRISContainer.attach("iris-vector-rag-iris").get_exposed_port(1972)
 
     class LiveExecutor:
         def __init__(self):

@@ -82,69 +82,6 @@ def coverage_context():
 
 
 @pytest.fixture
-def iris_database_config():
-    """IRIS database configuration for coverage testing per constitutional requirements."""
-    try:
-        import importlib
-
-        module = importlib.import_module("iris_devtester")
-        iris_container = module.IRISContainer.attach("los-iris")
-        port = iris_container.get_exposed_port(1972)
-        return {
-            "host": "localhost",
-            "port": port,
-            "username": "_SYSTEM",
-            "password": "SYS",
-            "namespace": "USER",
-            "connection_string": f"iris://_SYSTEM:SYS@localhost:{port}/USER",
-        }
-    except Exception:
-        # No IRIS instance found, return mock config for unit tests
-        return {
-            "host": "localhost",
-            "port": 1972,
-            "username": "_SYSTEM",
-            "password": "SYS",
-            "namespace": "USER",
-            "connection_string": "iris://_SYSTEM:SYS@localhost:1972/USER",
-            "mock": True,
-        }
-
-
-@pytest.fixture
-def iris_test_session(iris_database_config):
-    """Create IRIS database session for testing with constitutional compliance."""
-    if iris_database_config.get("mock", False):
-        # Return mock session for unit tests when IRIS not available
-        yield Mock()
-        return
-
-    try:
-        from sqlalchemy import create_engine
-
-        engine = create_engine(iris_database_config["connection_string"])
-
-        # Test connection
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-
-        yield engine
-
-        # Cleanup: Drop any test tables created during testing
-        with engine.connect() as conn:
-            try:
-                conn.execute(text("DROP TABLE IF EXISTS test_coverage_data"))
-                conn.execute(text("DROP TABLE IF EXISTS test_module_coverage"))
-                conn.commit()
-            except Exception:
-                pass  # Ignore cleanup errors
-
-    except Exception:
-        # Fall back to mock for unit tests
-        yield Mock()
-
-
-@pytest.fixture
 def temp_dir() -> Generator[Path, None, None]:
     """Create a temporary directory for tests."""
     with tempfile.TemporaryDirectory() as tmp_dir:
