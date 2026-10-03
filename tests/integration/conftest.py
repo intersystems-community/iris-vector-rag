@@ -231,8 +231,12 @@ def loaded_test_documents(iris_sql_connection):
                 "🔄 [FIXTURE] Migrating table schema to VECTOR datatype...",
                 file=sys.stderr,
             )
+            # The fixture deletes this table's rows on the next lines anyway.
             schema_mgr.migrate_table(
-                "SourceDocuments", preserve_data=False, pipeline_type="basic"
+                "SourceDocuments",
+                preserve_data=False,
+                pipeline_type="basic",
+                allow_destructive=True,
             )
             print("✅ [FIXTURE] Schema migrated", file=sys.stderr)
         else:

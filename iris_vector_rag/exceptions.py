@@ -376,6 +376,23 @@ class DimensionMismatchError(VectorStoreDataError, ValueError):
         self.expected = expected
 
 
+class DestructiveMigrationError(VectorStoreError):
+    """`SchemaManager.migrate_table` would drop a table that holds rows.
+
+    Every `_migrate_*` rebuilds its table with DROP and CREATE, and DDL autocommits, so
+    nothing can be rolled back. Pass `allow_destructive=True` to `migrate_table` to say
+    the rows may go; `preserve_data=True` does not (it was never implemented).
+    """
+
+
+class SchemaIndexError(VectorStoreError):
+    """An index the schema needs could not be ensured, or was asked for badly."""
+
+
+class RelationNotFoundError(VectorStoreDataError, LookupError):
+    """A relationship ID names no row, so there is nothing to attach an embedding to."""
+
+
 class VectorStoreCLOBError(VectorStoreError):
     """Raised when CLOB-to-string conversion fails for a retrieved document."""
 

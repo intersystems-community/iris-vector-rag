@@ -36,6 +36,40 @@ cycle.
   vector-dimension default as the source of the schema's width. See the dimension entry
   below.
 
+### Changed: storage stops losing data and reporting what did not happen
+
+Feature `storage-correctness` of the 2026-10 review (ST-04 to ST-07, ST-10 to ST-12,
+ST-16 to ST-18).
+
+- **`SchemaManager.migrate_table` refuses to drop a populated table.** It raises
+  `DestructiveMigrationError` unless `allow_destructive=True` is passed; `preserve_data`
+  never did anything and does not unlock it. Migrating `SourceDocuments` also checks
+  `DocumentChunks`. Empty and absent tables migrate as before. A migration that fails
+  returns `False` instead of retrying on a bare table name, and the `rdf_*` and
+  `kg_NodeEmbeddings_optimized` migrations now create and drop their tables in the
+  manager's schema, not the connecting user's.
+- **Index ensuring reports what happened.** `IRISCatalogReader.index_names` takes the
+  schema, so an index in one schema no longer hides a missing one in another.
+  `ensure_all_vector_indexes` raises `SchemaIndexError` naming every failed index (it used
+  to log, roll back and return `None`) and returns the names it ensured; a table without
+  the vector column (the standard `Entities`) is left out. `_ensure_index` creates plain
+  indexes, sends `HNSW` to `ensure_vector_hnsw_index`, and raises on a configuration it
+  cannot act on; `ensure_pipeline_schema` returns `False` for a required index that was
+  not made.
+- **DDL conforms.** New `Entities.description` and `EntityRelationships.metadata` are
+  `VARCHAR(4000)`, not `TEXT`. Existing tables are not altered.
+- **`table_exists("X")` looks in the manager's schema**, not the literal `RAG`, and
+  `SchemaMetadata` is only ever created there (no copy in the connecting user's schema).
+- **Valid names are accepted.** Table names such as `RAG.Descriptions` and `RAG.Forecasts`
+  and filter keys such as `category`, `priority`, `organization` and `brand` were rejected
+  for containing "script", "cast", "or" or "and". The identifier pattern stays; only a
+  whole keyword is refused.
+- **`process_document_row` keeps types.** Only streams and bytes become strings;
+  `chunk_index` 3 stays 3 in metadata dicts.
+- **`RelationEmbeddingStore.embed_and_store` raises `RelationNotFoundError`** when the
+  relationship ID matches no row, and uses the configured schema (`schema_prefix`) rather
+  than a literal `RAG.`.
+
 ### Changed: no fake vectors, and one embedding dimension
 
 Failures that used to produce fake vectors now raise. This follows the connection-settings

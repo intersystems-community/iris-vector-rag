@@ -14,6 +14,7 @@ import time
 import warnings
 from typing import Any, Dict, List, Optional, cast
 
+from iris_vector_rag.exceptions import DestructiveMigrationError, SchemaIndexError
 from iris_vector_rag.integrations.ivg import (
     IVG_REQUIRED_TABLES,
     IVG_SCHEMA,
@@ -79,6 +80,57 @@ def _drop_column_overrides(config: Dict[str, Any], table_name: str) -> Dict[str,
         stacklevel=3,
     )
     return {key: value for key, value in config.items() if key not in stale}
+
+
+def validate_schema_prefix(prefix: str) -> None:
+    """
+    Validate schema prefix against [A-Za-z][A-Za-z0-9_]* pattern.
+
+    Raises:
+        ValueError: If prefix is empty or contains invalid characters.
+    """
+    if not prefix:
+        raise ValueError("Schema prefix cannot be empty")
+    if not re.match(r"^[A-Za-z][A-Za-z0-9_]*$", prefix):
+        raise ValueError(
+            f"Invalid schema prefix '{prefix}': must match [A-Za-z][A-Za-z0-9_]*"
+        )
+    logger.debug(f"Schema prefix '{prefix}' validated successfully")
+
+
+def resolve_schema_prefix(ctor_arg: Optional[str], config_manager) -> str:
+    """
+    Resolve schema prefix using priority: explicit argument > config_manager > env > 'RAG'.
+
+    One rule for every class that names tables, so the schema manager and the stores
+    beside it cannot disagree about where the tables are.
+
+    Returns:
+        Validated schema prefix string.
+    """
+    if ctor_arg is not None:
+        validate_schema_prefix(ctor_arg)
+        return ctor_arg
+
+    # Config manager reads IRIS_SCHEMA_PREFIX env var and config file
+    if config_manager is not None:
+        try:
+            prefix = config_manager.get_schema_prefix()
+            if prefix and isinstance(prefix, str) and prefix != "RAG":
+                validate_schema_prefix(prefix)
+                return prefix
+            elif prefix and isinstance(prefix, str) and prefix == "RAG":
+                return "RAG"
+        except AttributeError:
+            pass  # Config manager doesn't have get_schema_prefix yet
+
+    # Check env var directly as fallback
+    env_prefix = os.environ.get("IRIS_SCHEMA_PREFIX")
+    if env_prefix:
+        validate_schema_prefix(env_prefix)
+        return env_prefix
+
+    return "RAG"
 
 
 class SchemaManager:
@@ -168,13 +220,7 @@ class SchemaManager:
         Raises:
             ValueError: If prefix is empty or contains invalid characters.
         """
-        if not prefix:
-            raise ValueError("Schema prefix cannot be empty")
-        if not re.match(r"^[A-Za-z][A-Za-z0-9_]*$", prefix):
-            raise ValueError(
-                f"Invalid schema prefix '{prefix}': must match [A-Za-z][A-Za-z0-9_]*"
-            )
-        logger.debug(f"Schema prefix '{prefix}' validated successfully")
+        validate_schema_prefix(prefix)
 
     def _resolve_schema_prefix(self, ctor_arg: Optional[str], config_manager) -> str:
         """
@@ -183,30 +229,7 @@ class SchemaManager:
         Returns:
             Validated schema prefix string.
         """
-        # Constructor argument takes highest precedence
-        if ctor_arg is not None:
-            self._validate_schema_prefix(ctor_arg)
-            return ctor_arg
-
-        # Config manager reads IRIS_SCHEMA_PREFIX env var and config file
-        if config_manager is not None:
-            try:
-                prefix = config_manager.get_schema_prefix()
-                if prefix and isinstance(prefix, str) and prefix != "RAG":
-                    self._validate_schema_prefix(prefix)
-                    return prefix
-                elif prefix and isinstance(prefix, str) and prefix == "RAG":
-                    return "RAG"
-            except AttributeError:
-                pass  # Config manager doesn't have get_schema_prefix yet
-
-        # Check env var directly as fallback
-        env_prefix = os.environ.get("IRIS_SCHEMA_PREFIX")
-        if env_prefix:
-            self._validate_schema_prefix(env_prefix)
-            return env_prefix
-
-        return "RAG"
+        return resolve_schema_prefix(ctor_arg, config_manager)
 
     def _qn(self, table_name: str) -> str:
         """
@@ -278,7 +301,7 @@ class SchemaManager:
             return False
 
     def table_exists(self, table_name: str) -> bool:
-        """Check whether a table exists, defaulting to the RAG schema.
+        """Check whether a table exists, defaulting to this manager's schema.
 
         The name is matched without regard to case: callers spell it the way their
         configuration does, IRIS stores it the way the DDL declared it, and feature 074
@@ -287,7 +310,7 @@ class SchemaManager:
         if "." in table_name:
             schema, table = table_name.split(".", 1)
         else:
-            schema, table = "RAG", table_name
+            schema, table = self.schema_prefix, table_name
 
         return self._snapshot(table, schema=schema) is not None
 
@@ -684,13 +707,9 @@ class SchemaManager:
 
         try:
             # Try different schema approaches in order of preference
-            schema_attempts = [
-                (self.schema_prefix, self._qn("SchemaMetadata")),
-                (
-                    "current user",
-                    "SchemaMetadata",
-                ),  # No schema prefix = current user's schema
-            ]
+            # One place only. Every reader and writer names the table through `_qn`, so a
+            # copy in the connecting user's schema would never be read.
+            schema_attempts = [(self.schema_prefix, self._qn("SchemaMetadata"))]
 
             for schema_name, table_name in schema_attempts:
                 try:
@@ -722,8 +741,8 @@ class SchemaManager:
                         -1
                     ]:  # Last schema attempt
                         # Instead of raising, log warning and continue without metadata table
-                        logger.warning(
-                            "Schema metadata table creation failed in all schemas. Continuing without metadata table."
+                        logger.error(
+                            f"Schema metadata table creation failed in {schema_name}. Continuing without metadata table."
                         )
                         logger.warning(
                             "This may affect schema versioning but basic functionality will work."
@@ -1102,20 +1121,77 @@ class SchemaManager:
         table_name: str,
         preserve_data: bool = False,
         pipeline_type: Optional[str] = None,
+        allow_destructive: bool = False,
     ) -> bool:
         """
         Migrate table to match expected configuration.
 
+        Every migration rebuilds its table with DROP and CREATE, and DDL autocommits, so
+        a failed or refused step cannot be rolled back. A table that holds rows is
+        therefore not touched unless the caller says the rows may go.
+
         Args:
             table_name: Name of table to migrate
-            preserve_data: Whether to attempt data preservation (not implemented yet)
+            preserve_data: Not implemented, and does not unlock a populated table.
+            pipeline_type: Pipeline whose requirements shape the expected columns.
+            allow_destructive: Permit dropping a table that holds rows.
 
         Returns:
             True if migration successful, False otherwise
+
+        Raises:
+            DestructiveMigrationError: a table the migration would drop holds rows and
+                `allow_destructive` is not True.
         """
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
 
+        try:
+            # The chunk migrator leaves an existing table alone when asked to preserve data.
+            leaves_alone = preserve_data and table_name.lower() == "documentchunks"
+            if not allow_destructive and not leaves_alone:
+                self._refuse_populated(cursor, table_name)
+            return self._migrate_table_unguarded(
+                connection, cursor, table_name, pipeline_type, preserve_data
+            )
+        finally:
+            cursor.close()
+
+    #: Tables each migration drops, by lower-cased request name.
+    _MIGRATION_DROPS = {
+        "sourcedocuments": ("SourceDocuments", "DocumentChunks"),
+        "documentchunks": ("DocumentChunks",),
+        "entities": ("Entities",),
+        "entityrelationships": ("EntityRelationships",),
+        "rdf_labels": ("rdf_labels",),
+        "rdf_props": ("rdf_props",),
+        "rdf_edges": ("rdf_edges",),
+        "kg_nodeembeddings_optimized": ("kg_NodeEmbeddings_optimized",),
+    }
+
+    def _refuse_populated(self, cursor, table_name: str) -> None:
+        """Raise `DestructiveMigrationError` if migrating would drop a table with rows.
+
+        `SourceDocuments` also takes `DocumentChunks` with it (its foreign key). A table
+        that cannot be read is not assumed empty: the failure is raised as it is.
+        """
+        for target in self._MIGRATION_DROPS.get(table_name.lower(), ()):
+            if self._snapshot(target) is None:
+                continue
+            qualified = self._qn(target)
+            cursor.execute(f"SELECT TOP 1 1 FROM {qualified}")
+            if cursor.fetchone() is not None:
+                raise DestructiveMigrationError(
+                    f"migrate_table({table_name!r}) would drop {qualified}, which holds "
+                    f"rows, and DDL cannot be rolled back. Pass allow_destructive=True "
+                    f"to say the rows may go.",
+                    table=qualified,
+                )
+
+    def _migrate_table_unguarded(
+        self, connection, cursor, table_name, pipeline_type, preserve_data
+    ) -> bool:
+        """Dispatch to the table's migration; the caller has already cleared it."""
         try:
             expected_config = self._get_expected_schema_config(
                 table_name, pipeline_type
@@ -1211,8 +1287,6 @@ class SchemaManager:
             logger.error(f"Migration failed for {table_name}: {e}")
             connection.rollback()
             return False
-        finally:
-            cursor.close()
 
     def _migrate_source_documents_table(
         self, cursor, expected_config: Dict[str, Any], preserve_data: bool
@@ -1600,10 +1674,9 @@ class SchemaManager:
             vector_data_type = expected_config.get("vector_data_type", "FLOAT")
 
             # Try multiple table name approaches
-            table_attempts = [
-                self._qn("Entities"),  # Preferred
-                "Entities",  # Fallback
-            ]
+            # One name, the qualified one. A retry on the bare name would create the table
+            # in the connecting user's schema, where nothing reads it.
+            table_attempts = [self._qn("Entities")]
 
             # Ensure SourceDocuments.doc_id is unique so Entities FK can reference it
             try:
@@ -1634,7 +1707,7 @@ class SchemaManager:
                         entity_name VARCHAR(1000) NOT NULL,
                         entity_type VARCHAR(255) NOT NULL,
                         source_doc_id VARCHAR(255) NOT NULL,
-                        description TEXT NULL,
+                        description VARCHAR(4000) NULL,
                         embedding VECTOR({vector_data_type}, {vector_dim}) NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (source_doc_id) REFERENCES {self._qn("SourceDocuments")}(doc_id) ON DELETE CASCADE
@@ -1690,10 +1763,7 @@ class SchemaManager:
         """Migrate EntityRelationships table with proper schema and foreign keys."""
         try:
             # Try multiple table name approaches
-            table_attempts = [
-                self._qn("EntityRelationships"),  # Preferred
-                "EntityRelationships",  # Fallback
-            ]
+            table_attempts = [self._qn("EntityRelationships")]
 
             for table_name in table_attempts:
                 try:
@@ -1712,7 +1782,7 @@ class SchemaManager:
                         source_entity_id VARCHAR(255) NOT NULL,
                         target_entity_id VARCHAR(255) NOT NULL,
                         relationship_type VARCHAR(255) NOT NULL,
-                        metadata TEXT NULL,
+                        metadata VARCHAR(4000) NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (source_entity_id) REFERENCES {self._qn("Entities")}(entity_id) ON DELETE CASCADE,
                         FOREIGN KEY (target_entity_id) REFERENCES {self._qn("Entities")}(entity_id) ON DELETE CASCADE
@@ -1779,7 +1849,10 @@ class SchemaManager:
         """
         try:
             reader = IRISCatalogReader(self.connection_manager.get_connection())
-            existing = reader.index_names(table.split(".")[-1], cursor=cursor)
+            schema, _, bare = table.rpartition(".")
+            existing = reader.index_names(
+                schema or self.schema_prefix, bare, cursor=cursor
+            )
 
             if index_name.upper() in existing:
                 logger.debug(
@@ -1823,18 +1896,25 @@ class SchemaManager:
             # Caller can decide whether to continue or abort based on business logic
             raise
 
-    def ensure_all_vector_indexes(self) -> None:
+    def ensure_all_vector_indexes(self) -> List[str]:
         """
         Ensure all required vector indexes exist at startup.
 
         Creates HNSW indexes (with ACORN=1 when available) for all vector columns
         across the RAG system.
+
+        Returns:
+            The names of the indexes that now exist (created or already there). A table
+            without the vector column is left out, not reported as indexed.
+
+        Raises:
+            SchemaIndexError: one or more indexes could not be ensured. Nothing is
+                committed, and the message names every index that failed.
         """
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
 
         try:
-            # Define vector indexes to ensure
             vector_indexes = [
                 {
                     "table": self._qn("SourceDocuments"),
@@ -1850,9 +1930,27 @@ class SchemaManager:
 
             logger.info("Ensuring HNSW vector indexes...")
             errors = []
+            ensured: List[str] = []
 
             for index_def in vector_indexes:
                 try:
+                    bare = index_def["table"].rpartition(".")[2]
+                    snapshot = self._snapshot(bare)
+                    if snapshot is None:
+                        raise SchemaIndexError(
+                            f"{index_def['table']} does not exist", table=bare
+                        )
+                    if index_def["column"].upper() not in {
+                        str(c["COLUMN_NAME"]).upper() for c in snapshot.columns
+                    }:
+                        # The standard Entities table carries no vector column (entity
+                        # embeddings live in iris-vector-graph), so there is nothing to
+                        # index; leaving it out of the result says so.
+                        logger.info(
+                            f"{index_def['table']} has no {index_def['column']} "
+                            f"column; no vector index to ensure"
+                        )
+                        continue
                     self.ensure_vector_hnsw_index(
                         cursor,
                         index_def["table"],
@@ -1860,23 +1958,27 @@ class SchemaManager:
                         index_def["index_name"],
                         try_acorn=True,
                     )
+                    ensured.append(index_def["index_name"])
                 except Exception as index_error:
-                    # Collect error but continue with other indexes
-                    error_msg = f"Failed to create index {index_def['index_name']}: {index_error}"
-                    errors.append(error_msg)
-                    logger.error(error_msg)
+                    # Keep going so the message names every failure, then raise.
+                    errors.append(f"{index_def['index_name']}: {index_error}")
+                    logger.error(
+                        f"Failed to ensure index {index_def['index_name']}: {index_error}"
+                    )
 
             if errors:
-                # If any errors occurred, raise a comprehensive exception
-                all_errors = "; ".join(errors)
-                raise Exception(f"Vector index creation errors: {all_errors}")
+                raise SchemaIndexError(
+                    "Vector index creation failed for " + "; ".join(errors),
+                    failed=[e.split(":", 1)[0] for e in errors],
+                )
 
             connection.commit()
             logger.info("✅ Vector index ensure process completed")
+            return ensured
 
-        except Exception as e:
-            logger.error(f"Error during vector index ensure process: {e}")
+        except Exception:
             connection.rollback()
+            raise
         finally:
             cursor.close()
 
@@ -1917,12 +2019,12 @@ class SchemaManager:
             logger.info("🔧 Migrating rdf_labels table for IRIS Graph Core")
 
             # Drop existing table if it exists (for now - data preservation not implemented)
-            cursor.execute("DROP TABLE IF EXISTS rdf_labels")
+            cursor.execute(f"DROP TABLE IF EXISTS {self._qn('rdf_labels')}")
             logger.info("Dropped existing rdf_labels table")
 
             # Create table with proper schema
-            create_sql = """
-            CREATE TABLE rdf_labels (
+            create_sql = f"""
+            CREATE TABLE {self._qn('rdf_labels')} (
                 s      VARCHAR(256) NOT NULL,
                 label  VARCHAR(128) NOT NULL
             )
@@ -1932,8 +2034,8 @@ class SchemaManager:
 
             # Create indexes for GraphRAG performance
             indexes = [
-                "CREATE INDEX idx_labels_label_s ON rdf_labels(label, s)",
-                "CREATE INDEX idx_labels_s_label ON rdf_labels(s, label)",
+                f"CREATE INDEX idx_labels_label_s ON {self._qn('rdf_labels')}(label, s)",
+                f"CREATE INDEX idx_labels_s_label ON {self._qn('rdf_labels')}(s, label)",
             ]
             for index_sql in indexes:
                 try:
@@ -1963,12 +2065,12 @@ class SchemaManager:
             logger.info("🔧 Migrating rdf_props table for IRIS Graph Core")
 
             # Drop existing table if it exists
-            cursor.execute("DROP TABLE IF EXISTS rdf_props")
+            cursor.execute(f"DROP TABLE IF EXISTS {self._qn('rdf_props')}")
             logger.info("Dropped existing rdf_props table")
 
             # Create table with proper schema
-            create_sql = """
-            CREATE TABLE rdf_props (
+            create_sql = f"""
+            CREATE TABLE {self._qn('rdf_props')} (
                 s      VARCHAR(256) NOT NULL,
                 key    VARCHAR(128) NOT NULL,
                 val    VARCHAR(4000)
@@ -1979,8 +2081,8 @@ class SchemaManager:
 
             # Create indexes for property lookup performance
             indexes = [
-                "CREATE INDEX idx_props_s_key ON rdf_props(s, key)",
-                "CREATE INDEX idx_props_key_val ON rdf_props(key, val)",
+                f"CREATE INDEX idx_props_s_key ON {self._qn('rdf_props')}(s, key)",
+                f"CREATE INDEX idx_props_key_val ON {self._qn('rdf_props')}(key, val)",
             ]
             for index_sql in indexes:
                 try:
@@ -2010,13 +2112,13 @@ class SchemaManager:
             logger.info("🔧 Migrating rdf_edges table for IRIS Graph Core")
 
             # Drop existing table if it exists
-            cursor.execute("DROP TABLE IF EXISTS rdf_edges")
+            cursor.execute(f"DROP TABLE IF EXISTS {self._qn('rdf_edges')}")
             logger.info("Dropped existing rdf_edges table")
 
             # Create table with proper schema including JSON qualifiers
             # IRIS uses IDENTITY instead of GENERATED BY DEFAULT AS IDENTITY
-            create_sql = """
-            CREATE TABLE rdf_edges (
+            create_sql = f"""
+            CREATE TABLE {self._qn('rdf_edges')} (
                 edge_id    BIGINT IDENTITY PRIMARY KEY,
                 s          VARCHAR(256) NOT NULL,
                 p          VARCHAR(128) NOT NULL,
@@ -2029,9 +2131,9 @@ class SchemaManager:
 
             # Create indexes for graph traversal performance
             indexes = [
-                "CREATE INDEX idx_edges_s_p ON rdf_edges(s, p)",
-                "CREATE INDEX idx_edges_p_oid ON rdf_edges(p, o_id)",
-                "CREATE INDEX idx_edges_s ON rdf_edges(s)",
+                f"CREATE INDEX idx_edges_s_p ON {self._qn('rdf_edges')}(s, p)",
+                f"CREATE INDEX idx_edges_p_oid ON {self._qn('rdf_edges')}(p, o_id)",
+                f"CREATE INDEX idx_edges_s ON {self._qn('rdf_edges')}(s)",
             ]
             for index_sql in indexes:
                 try:
@@ -2066,12 +2168,14 @@ class SchemaManager:
             )
 
             # Drop existing table if it exists
-            cursor.execute("DROP TABLE IF EXISTS kg_NodeEmbeddings_optimized")
+            cursor.execute(
+                f"DROP TABLE IF EXISTS {self._qn('kg_NodeEmbeddings_optimized')}"
+            )
             logger.info("Dropped existing kg_NodeEmbeddings_optimized table")
 
             # Create table with optimized VECTOR column
             create_sql = f"""
-            CREATE TABLE kg_NodeEmbeddings_optimized (
+            CREATE TABLE {self._qn('kg_NodeEmbeddings_optimized')} (
                 id   VARCHAR(256) PRIMARY KEY,
                 emb  VECTOR({vector_data_type}, {vector_dim}) NOT NULL
             )
@@ -2083,14 +2187,15 @@ class SchemaManager:
             try:
                 self.ensure_vector_hnsw_index(
                     cursor,
-                    "kg_NodeEmbeddings_optimized",
+                    self._qn("kg_NodeEmbeddings_optimized"),
                     "emb",
                     "HNSW_NodeEmb_Optimized",
                     try_acorn=True,
                 )
                 logger.info("✅ HNSW index created for optimized vector table")
             except Exception as index_error:
-                logger.warning(f"HNSW index creation failed: {index_error}")
+                logger.error(f"HNSW index creation failed: {index_error}")
+                return False
 
             # Update schema metadata
             try:
@@ -2167,15 +2272,20 @@ class SchemaManager:
             # Create required indexes
             required_indexes = schema_requirements.get("indexes", [])
             for index_config in required_indexes:
-                if not self._ensure_index(index_config):
+                try:
+                    ensured = self._ensure_index(index_config)
+                except SchemaIndexError as index_error:
+                    logger.error(f"Index not created: {index_error}")
+                    ensured = False
+                if not ensured:
                     if index_config.get("required", True):
                         logger.error(
-                            f"Failed to create required index: {index_config['name']}"
+                            f"Failed to create required index: {index_config.get('name')}"
                         )
                         return False
                     else:
-                        logger.info(
-                            f"Optional index not created: {index_config['name']}"
+                        logger.warning(
+                            f"Optional index not created: {index_config.get('name')}"
                         )
 
             logger.info(f"✅ Schema ensured successfully for {pipeline_type}")
@@ -2476,30 +2586,81 @@ class SchemaManager:
             logger.error(f"Failed to create DocumentChunks table: {e}")
             return False
 
+    _IDENTIFIER = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+
     def _ensure_index(self, index_config: Dict[str, Any]) -> bool:
-        """Create an index based on configuration."""
-        try:
-            conn = self.connection_manager.get_connection()
-            cursor = conn.cursor()
+        """Ensure the index `index_config` describes exists, in this manager's schema.
 
-            index_name = index_config.get("name")
-            index_config.get("table")
-            index_type = index_config.get("type", "BTREE")
+        `index_config` carries `name`, `table` (unqualified) and `columns` (or `column`); `type`
+        defaults to a plain index, and `HNSW` goes through `ensure_vector_hnsw_index`.
 
-            # Basic index creation - could be enhanced for specific types
-            if index_type == "HNSW":
-                # HNSW indexes require special handling
-                logger.info(f"HNSW index {index_name} requires specialized creation")
-                cursor.close()
-                return not index_config.get(
-                    "required", True
-                )  # Optional indexes return True
+        Returns:
+            True if the index exists afterwards; False if the database refused it.
 
-            cursor.close()
-            return True
-
-        except Exception as e:
-            logger.error(
-                f"Failed to create index {index_config.get('name', 'unknown')}: {e}"
+        Raises:
+            SchemaIndexError: the configuration is incomplete or names an unsafe
+                identifier. A configuration that cannot be acted on is not "ensured".
+        """
+        name = index_config.get("name")
+        table = index_config.get("table")
+        columns = index_config.get("columns") or index_config.get("column")
+        if isinstance(columns, str):
+            columns = [columns]
+        if not table:
+            raise SchemaIndexError(
+                f"Index {name!r} names no table", config=index_config
             )
+        if not columns:
+            raise SchemaIndexError(
+                f"Index {name!r} on {table!r} names no columns", config=index_config
+            )
+        for identifier in (name, table, *columns):
+            if not isinstance(identifier, str) or not self._IDENTIFIER.match(
+                identifier
+            ):
+                raise SchemaIndexError(
+                    f"Unsafe or missing identifier {identifier!r} in index "
+                    f"configuration",
+                    config=index_config,
+                )
+
+        if index_config.get("parameters"):
+            raise SchemaIndexError(
+                f"Index {name!r} asks for parameters {index_config['parameters']} that "
+                f"this manager cannot pass on; creating it without them would build a "
+                f"different index than the one configured",
+                config=index_config,
+            )
+        index_type = str(index_config.get("type", "BTREE")).upper()
+        qualified = self._qn(table)
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        try:
+            if index_type == "HNSW":
+                if len(columns) != 1:
+                    raise SchemaIndexError(
+                        f"HNSW index {name!r} takes one vector column, got {columns}",
+                        config=index_config,
+                    )
+                self.ensure_vector_hnsw_index(
+                    cursor, qualified, columns[0], name, try_acorn=True
+                )
+            else:
+                existing = IRISCatalogReader(connection).index_names(
+                    self.schema_prefix, table, cursor=cursor
+                )
+                if name.upper() not in existing:
+                    cursor.execute(
+                        f"CREATE INDEX {name} ON {qualified} ({', '.join(columns)})"
+                    )
+            connection.commit()
+            return True
+        except SchemaIndexError:
+            connection.rollback()
+            raise
+        except Exception as e:
+            connection.rollback()
+            logger.error(f"Failed to create index {name} on {qualified}: {e}")
             return False
+        finally:
+            cursor.close()

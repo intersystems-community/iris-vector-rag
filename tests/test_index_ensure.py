@@ -17,6 +17,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.exceptions import SchemaIndexError
+from iris_vector_rag.storage.catalog import CatalogSnapshot
 from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
@@ -36,8 +38,8 @@ class RecordedIndexes:
         self.connection = connection
         return self
 
-    def index_names(self, table: str, cursor=None) -> set[str]:
-        self.asked.append((table, cursor))
+    def index_names(self, schema: str, table: str, cursor=None) -> set[str]:
+        self.asked.append((schema, table, cursor))
         return set(self.names)
 
 
@@ -86,9 +88,14 @@ def manager():
     yields a `Mock` dimension, which the constructor now rejects outright.
     """
     with patch.object(SchemaManager, "ensure_schema_metadata_table"):
-        return SchemaManager(
+        schema_manager = SchemaManager(
             Mock(), ConfigurationManager(), base_embedding_dimension=384
         )
+    # Both vector tables exist and carry their vector column; the catalog is not under test.
+    schema_manager._snapshot = lambda table, **kwargs: CatalogSnapshot(
+        schema="RAG", table=table, columns=[{"COLUMN_NAME": "embedding"}]
+    )
+    return schema_manager
 
 
 class TestEnsureHNSWIndex:
@@ -106,9 +113,9 @@ class TestEnsureHNSWIndex:
             )
 
         assert cursor.statements == []
-        # The unqualified name, and the caller's own cursor: the answer has to come
-        # from inside the transaction the DDL will run in.
-        assert catalog.asked == [("SourceDocuments", cursor)]
+        # The table's own schema, and the caller's own cursor: the answer has to come
+        # from inside the transaction the DDL will run in (ST-05).
+        assert catalog.asked == [("RAG", "SourceDocuments", cursor)]
 
     def test_acorn_is_tried_first(self, manager):
         """A missing index is created with the ACORN=1 optimisation."""
@@ -217,7 +224,8 @@ class TestEnsureAllVectorIndexes:
         assert cursor.statements == []
         assert connection.commits == 1
 
-    def test_a_failure_rolls_back_and_closes(self, manager):
+    def test_a_failure_rolls_back_closes_and_reaches_the_caller(self, manager):
+        """ST-06: it used to log, roll back and return None, so nobody learned."""
         cursor = RecordingCursor(fail_on="CREATE INDEX")
         connection = RecordingConnection(cursor)
         manager.connection_manager.get_connection.return_value = connection
@@ -226,7 +234,8 @@ class TestEnsureAllVectorIndexes:
             "iris_vector_rag.storage.schema_manager.IRISCatalogReader",
             RecordedIndexes(),
         ):
-            manager.ensure_all_vector_indexes()
+            with pytest.raises(SchemaIndexError):
+                manager.ensure_all_vector_indexes()
 
         assert connection.rollbacks == 1
         assert connection.commits == 0

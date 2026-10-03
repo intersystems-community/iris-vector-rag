@@ -64,13 +64,28 @@ def convert_clob_to_string(value: Any) -> str:
         raise VectorStoreCLOBError(f"Failed to convert value to string: {e}")
 
 
+def _is_clob_like(value: Any) -> bool:
+    """A stream or bytes: the values that need reading before they mean anything."""
+    return isinstance(value, bytes) or (
+        hasattr(value, "read") and callable(getattr(value, "read"))
+    )
+
+
+def _keep_or_convert(value: Any) -> Any:
+    """Read a CLOB-like value into a string; hand every other value back unchanged."""
+    if _is_clob_like(value):
+        return convert_clob_to_string(value)
+    return value
+
+
 def process_document_row(row_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
     Process a database row dictionary to convert CLOB fields to strings.
 
     This function recursively processes a dictionary representing a database row,
-    converting any CLOB-like values to strings. It's particularly useful for
-    processing metadata dictionaries that might contain nested CLOB values.
+    reading any CLOB-like values (streams, bytes) into strings. Every other value keeps
+    its type: `chunk_index` 3 stays 3, `None` stays `None`. The dictionary is what the
+    caller has, and stringifying its numbers would quietly change what they compare to.
 
     Args:
         row_dict: Dictionary representing a database row
@@ -82,35 +97,16 @@ def process_document_row(row_dict: Dict[str, Any]) -> Dict[str, Any]:
         VectorStoreCLOBError: If CLOB conversion fails critically
     """
     if not isinstance(row_dict, dict):
-        return convert_clob_to_string(row_dict)
+        return _keep_or_convert(row_dict)
 
     processed_row = {}
     for key, value in row_dict.items():
-        try:
-            if isinstance(value, dict):
-                # Recursively process nested dictionaries
-                processed_row[key] = process_document_row(value)
-            elif isinstance(value, (list, tuple)):
-                # Process lists/tuples of values
-                processed_row[key] = [
-                    (
-                        process_document_row(item)
-                        if isinstance(item, dict)
-                        else convert_clob_to_string(item)
-                    )
-                    for item in value
-                ]
-            else:
-                # Convert individual values
-                processed_row[key] = convert_clob_to_string(value)
-        except VectorStoreCLOBError:
-            # Re-raise CLOB errors
-            raise
-        except Exception as e:
-            logger.warning(f"Error processing field '{key}': {e}")
-            # For non-critical errors, use a fallback value
-            processed_row[key] = f"[Error Processing Field: {e}]"
-
+        if isinstance(value, dict):
+            processed_row[key] = process_document_row(value)
+        elif isinstance(value, (list, tuple)):
+            processed_row[key] = [process_document_row(item) for item in value]
+        else:
+            processed_row[key] = _keep_or_convert(value)
     return processed_row
 
 

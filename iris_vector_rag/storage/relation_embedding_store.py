@@ -6,19 +6,21 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from iris_vector_rag.common.db_vector_utils import normalize_vector
+from iris_vector_rag.exceptions import RelationNotFoundError
+from iris_vector_rag.storage.schema_manager import resolve_schema_prefix
 
 logger = logging.getLogger(__name__)
 
-_ALTER_SQL = "ALTER TABLE RAG.EntityRelationships ADD relation_embedding VECTOR(FLOAT, {dimension}) NULL"
+_ALTER_SQL = (
+    "ALTER TABLE {table} ADD relation_embedding VECTOR(FLOAT, {dimension}) NULL"
+)
 _INDEX_SQL = (
-    "CREATE INDEX idx_hnsw_rel_embedding ON RAG.EntityRelationships (relation_embedding)"
+    "CREATE INDEX idx_hnsw_rel_embedding ON {table} (relation_embedding)"
     " AS HNSW(M=16, efConstruction=200, Distance='COSINE')"
 )
-_COUNT_SQL = (
-    "SELECT COUNT(*) FROM RAG.EntityRelationships WHERE relation_embedding IS NOT NULL"
-)
+_COUNT_SQL = "SELECT COUNT(*) FROM {table} WHERE relation_embedding IS NOT NULL"
 _UPDATE_EMBEDDING_SQL = (
-    "UPDATE RAG.EntityRelationships "
+    "UPDATE {table} "
     "SET relation_embedding = TO_VECTOR(?, FLOAT, {dimension}) "
     "WHERE relationship_id = ?"
 )
@@ -28,18 +30,30 @@ _ALREADY_EXISTS_CODES = {-306, -201, -324}  # -324 = index already defined
 
 
 class RelationEmbeddingStore:
-    """Manages relation embeddings in RAG.EntityRelationships.
+    """Manages relation embeddings in `<schema>.EntityRelationships`.
 
     Extends the existing KG table with a VECTOR(FLOAT, N) column (N is the embedding
     manager's dimension) and HNSW index so that relationship descriptions can be retrieved by semantic
     similarity at query time (Feature 081 global/mix modes).
     """
 
-    def __init__(self, connection_manager: Any, config_manager: Any) -> None:
+    def __init__(
+        self,
+        connection_manager: Any,
+        config_manager: Any,
+        schema_prefix: Optional[str] = None,
+    ) -> None:
         self._conn_mgr = connection_manager
         self._cfg_mgr = config_manager
         self._schema_ensured = False
         self._dimension: Optional[int] = None
+        # The schema the rest of the package uses (`SchemaManager._qn`), not a literal.
+        self._schema_prefix = resolve_schema_prefix(schema_prefix, config_manager)
+
+    @property
+    def table(self) -> str:
+        """The qualified name of the relationships table, in the configured schema."""
+        return f"{self._schema_prefix}.EntityRelationships"
 
     @property
     def dimension(self) -> int:
@@ -58,11 +72,11 @@ class RelationEmbeddingStore:
         cursor = conn.cursor()
         try:
             try:
-                cursor.execute(_ALTER_SQL.format(dimension=self.dimension))
-                conn.commit()
-                logger.debug(
-                    "Added relation_embedding column to RAG.EntityRelationships"
+                cursor.execute(
+                    _ALTER_SQL.format(table=self.table, dimension=self.dimension)
                 )
+                conn.commit()
+                logger.debug("Added relation_embedding column to %s", self.table)
             except Exception as exc:
                 code = getattr(exc, "errorCode", None) or getattr(exc, "sqlcode", None)
                 if (
@@ -78,7 +92,7 @@ class RelationEmbeddingStore:
                     raise
 
             try:
-                cursor.execute(_INDEX_SQL)
+                cursor.execute(_INDEX_SQL.format(table=self.table))
                 conn.commit()
                 logger.debug("Created HNSW index idx_hnsw_rel_embedding")
             except Exception as exc:
@@ -148,9 +162,18 @@ class RelationEmbeddingStore:
             # insert_vector builds a bare INSERT that fails on NOT NULL columns (SQLCODE -108)
             # when the row already exists and IRIS doesn't raise a UNIQUE error.
             cursor.execute(
-                _UPDATE_EMBEDDING_SQL.format(dimension=self.dimension),
+                _UPDATE_EMBEDDING_SQL.format(
+                    table=self.table, dimension=self.dimension
+                ),
                 [embedding_str, relationship_id],
             )
+            if cursor.rowcount == 0:
+                raise RelationNotFoundError(
+                    f"No relationship with relationship_id={relationship_id!r} in "
+                    f"{self.table}: the embedding was not stored. Write the "
+                    f"relationship row before embedding it.",
+                    relationship_id=relationship_id,
+                )
             conn.commit()
             logger.debug("Embedded relationship_id=%s", relationship_id)
         except Exception:
@@ -183,7 +206,7 @@ class RelationEmbeddingStore:
             # and the function filters by score ranking.
             results = vector_similarity_search(
                 cursor=cursor,
-                table_name="RAG.EntityRelationships",
+                table_name=self.table,
                 vector_column="relation_embedding",
                 query_vector=query_embedding,
                 top_k=top_k,
@@ -218,7 +241,7 @@ class RelationEmbeddingStore:
         """Return count of rows with a non-NULL relation_embedding."""
         cursor = self._get_cursor()
         try:
-            cursor.execute(_COUNT_SQL)
+            cursor.execute(_COUNT_SQL.format(table=self.table))
             row = cursor.fetchone()
             return int(row[0]) if row else 0
         finally:
