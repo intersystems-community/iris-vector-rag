@@ -434,3 +434,77 @@ entry: feature, question, choice, why.
   (schema_manager.py around line 1708) emits an `Entities` DDL with no
   `confidence` column, unlike the ensure path. Owner: `storage-correctness`
   follow-up or `validation-truthfulness`.
+
+## validation-truthfulness
+
+- **validation-truthfulness: `.required`.** The flag decides what gates a pipeline
+  (`ValidationReport.required_names`), whichever list a requirement is in. A
+  `required=False` entry of `required_tables` keeps the key `<name>_optional`, as
+  the optional lists do, and setup does not create it.
+- **validation-truthfulness: missing vs count failure (VM-11).** On a failed `COUNT`
+  the validator asks the catalog (`IRISCatalogReader`, injectable). Absent: "does not
+  exist" with `error_kind` `missing_table`. Present or catalog unreadable:
+  `count_failed`, with `table_exists` True or None; the message says it could not
+  confirm existence in the second case.
+- **validation-truthfulness: fake rows and entity extraction (VM-02).** Both minimal
+  row inserters are deleted. Extraction needs an LLM: `SetupOrchestrator(llm_func=)`,
+  `setup_pipeline(llm_func=)`, and `create_pipeline(llm_func=)` passes its own. With
+  none, a `SetupError` is recorded and nothing is written; the report stays invalid.
+  `EntityExtractionService` has no non-LLM method (`pattern_only` is gone), so there
+  is no honest offline extraction to fall back to.
+- **validation-truthfulness: co-occurrence relationships.** The old code meant to link
+  the entities of a document and called a method that does not exist. Kept the
+  intent: `co_occurrence` edges at confidence 0.5 among a document's ten most
+  confident entities (not all pairs, which is quadratic), skipping pairs whose names
+  are equal. Without them a graph pipeline never reaches `min_rows=1` on
+  `EntityRelationships`, because the service extracts no relationships itself.
+- **validation-truthfulness: setup records, factory stays lenient.** Steps that cannot
+  do their job raise `SetupError` or are appended to `setup_errors`, which the final
+  report carries. `create_pipeline(auto_setup=True)` still builds the pipeline when
+  the report is invalid and logs a warning (now with the setup errors), because
+  `tests/e2e/test_engine_e2e.py` builds a `basic` pipeline over an empty database
+  that way and an empty pipeline is usable once documents are ingested. Revisit if
+  callers should get an exception instead.
+- **validation-truthfulness: CRAG setup.** It only embedded documents and never
+  created tables, unlike `basic`; all pipelines now go through the one generic path.
+- **validation-truthfulness: VM-07.** The `RAG.Entities.entity_embeddings`
+  requirement is removed, not repointed: the standard `Entities` table has no vector
+  column (entity-services-fix) and nothing writes one. `DocumentChunks.embedding`
+  became `chunk_embedding`.
+- **validation-truthfulness: VM-14/15.** Standard tables only through `SchemaManager`
+  (with `schema_prefix` from the requirement's schema). A table it does not own raises
+  `SetupError`. The chunk table and the chunk INSERT follow `CANONICAL_CHUNK_SHAPE`
+  (`doc_id`, `document_id`, `chunk_text`, `chunk_embedding`, `metadata`); the old
+  INSERT named `id, chunk_id, chunk_index`, so every chunk failed on the canonical
+  table and the failures were counted and logged. Baseline lines for the orchestrator
+  (catalog read, hard-coded vector type, inline DDL) are removed from the
+  antipatterns baseline.
+- **validation-truthfulness: `migrate_table("Entities")`.** Fixed here: the
+  one-line `confidence DOUBLE DEFAULT 1.0` the storage adapter writes. It is not on
+  the auto-setup path (that uses `ensure_table_schema`), so this is storage's
+  leftover closed by the validation agent. Still inconsistent, not fixed: the
+  migrate DDL has an `embedding` column and `created_at`, the create DDL has neither
+  and uses `created_timestamp`. Owner: whoever next settles the canonical `Entities`
+  layout (storage).
+- **validation-truthfulness: read-through of orchestrator.py 752-1466.** Further
+  defects found there: (1) `heal_token_embeddings` and its five helpers wrote
+  `(doc_id, token_index, token_text, token_embedding)` into a table whose columns are
+  `(doc_id, tok_pos, tok_text, tok_vec, centroid_id)`, embedded whitespace words as
+  "tokens", read `abstract` for the text, and logged every failure at debug level;
+  nobody calls it. Now raises `NotImplementedError` naming the ColBERT ingest.
+  (2) `_get_target_document_set` and `_generate_document_chunks` fell back to
+  `SELECT id, filename AS content`, embedding and chunking file names. Removed; the
+  text column comes from the shape. (3) the chunk INSERT and `_create_chunks_table`
+  described above (hard-coded 384, FK to `RAG.SourceDocuments(doc_id)`, non-canonical
+  columns). (4) `_validate_embeddings_after_generation` only logged (VM-12).
+  (5) `_identify_missing_token_embeddings` built an f-string SQL it never ran and
+  ran one `COUNT` per document. (6) `_split_text_into_chunks` can loop forever when
+  `overlap >= chunk_size`: not fixed, config-dependent (default 1000/200 is safe);
+  logged here. (7) `_fulfill_embedding_requirement` called `_ensure_token_embeddings`,
+  which does not exist. (8) `_generate_missing_document_embeddings` embeds `""` for a
+  document with no text, giving it a vector that means nothing; left, since the
+  validator counts such a row as embedded and changing one changes the other.
+- **validation-truthfulness: tests.** The new unit tests were written against the
+  stated defects before the code; the e2e tests run on the session's own ephemeral
+  IRIS and drop the `RAG` tables around each test (the `RAG` schema is fixed in the
+  requirements, so there is no prefix to isolate with).

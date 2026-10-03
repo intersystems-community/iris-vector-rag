@@ -1708,6 +1708,7 @@ class SchemaManager:
                         entity_type VARCHAR(255) NOT NULL,
                         source_doc_id VARCHAR(255) NOT NULL,
                         description VARCHAR(4000) NULL,
+                        confidence DOUBLE DEFAULT 1.0,
                         embedding VECTOR({vector_data_type}, {vector_dim}) NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (source_doc_id) REFERENCES {self._qn("SourceDocuments")}(doc_id) ON DELETE CASCADE

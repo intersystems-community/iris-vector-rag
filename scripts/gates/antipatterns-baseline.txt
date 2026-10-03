@@ -13,8 +13,6 @@ catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:173
 catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:185
 catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:111
 catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:122
-catalog-read-outside-shape	iris_vector_rag/validation/orchestrator.py:1269
-catalog-read-outside-shape	iris_vector_rag/validation/orchestrator.py:262
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:13
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:134
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:31
@@ -28,9 +26,6 @@ hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:63
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:71
 hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:15
 hardcoded-vector-type	iris_vector_rag/storage/relation_embedding_store.py:24
-hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:1281
-hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:368
-hardcoded-vector-type	iris_vector_rag/validation/orchestrator.py:379
 hardcoded-vector-type	sql/schema.sql:18
 hardcoded-vector-type	sql/schema.sql:9
 inline-standard-ddl	iris_src/src/RAG/SDK/Schema.cls:50
@@ -42,8 +37,3 @@ inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:68
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:9
 inline-standard-ddl	iris_vector_rag/common/llm_cache_iris.py:143
 inline-standard-ddl	iris_vector_rag/storage/table_shape.py:600
-inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:1276
-inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:347
-inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:360
-inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:385
-inline-standard-ddl	iris_vector_rag/validation/orchestrator.py:397
