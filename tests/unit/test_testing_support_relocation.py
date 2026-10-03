@@ -43,14 +43,18 @@ def test_package_testing_directory_holds_no_harness():
     assert stray == []
 
 
-def test_production_code_does_not_import_the_testing_package():
+def test_production_code_imports_only_the_test_embedder_from_the_testing_package():
+    """`embeddings.provider: stub` is the one way production code reaches test support."""
     pattern = re.compile(
         r"iris_vector_rag\.testing|from iris_vector_rag import testing"
+    )
+    sanctioned = re.compile(
+        r"(iris_vector_rag\.testing\.embedder|from \.\.testing\.embedder import)"
     )
     offenders = [
         str(p.relative_to(REPO))
         for p in PACKAGE.rglob("*.py")
         if "testing" not in p.relative_to(PACKAGE).parts
-        and pattern.search(p.read_text())
+        and pattern.search(sanctioned.sub("", p.read_text()))
     ]
     assert offenders == []

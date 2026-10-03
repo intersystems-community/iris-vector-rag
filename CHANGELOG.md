@@ -24,6 +24,68 @@ cycle.
 - **The pure-SQL fallbacks in `iris_vector_rag.common.db_vector_utils`.** The module now
   only re-exports `iris_vector_graph.dbapi_utils`, which is a hard dependency; the
   fallback `insert_vector` took different arguments than its call sites passed.
+- **Both copies of `StubSentenceTransformer`** (in `embeddings/manager.py` and
+  `embeddings/iris_embedding.py`), the `unittest.mock` detection branch that swapped a
+  stub in when a cached model looked like a Mock, the MD5 "simple fallback" embeddings
+  (`EmbeddingManager._create_fallback_function`), the `[0.0] * 384` zero vector in
+  `RetrievalEngine._embed_text_for_search`, and the Mock sniffing in
+  `IRISVectorStore.similarity_search`. A model that will not load, or every backend
+  failing, used to produce random or hash-derived vectors that were stored and searched
+  as if real (OE-01, OE-02, CR-09).
+- **`HybridGraphRAGPipeline._ivg_embedding_dimension()`** and the `cloud_config`
+  vector-dimension default as the source of the schema's width. See the dimension entry
+  below.
+
+### Changed: no fake vectors, and one embedding dimension
+
+Failures that used to produce fake vectors now raise. This follows the connection-settings
+decision in the same release and is not a major bump. Decision record:
+`docs/remediation/2026-10-review/tickets/G6-fake-embedding-policy.md`.
+
+- **A model that will not load raises.** `EmbeddingManager` tries the primary backend,
+  then each configured `fallback_backends` entry in order, then raises `EmbeddingError`
+  naming every backend and why it failed, with a hint about offline mode. Nothing failed
+  is cached. If you depended on the old behaviour on a host that cannot reach the model
+  hub, set `HF_HUB_OFFLINE=1` and point `embeddings.sentence_transformers.model_name` at
+  a model on disk. (OE-01, OE-02)
+- **The test embedder is reached only by name:** `embeddings: {provider: stub, dimension:
+N}` (or `primary_backend: stub`). It lives in `iris_vector_rag.testing.embedder`,
+  produces normalised deterministic vectors of the configured dimension, logs one warning
+  per process, and cannot be a fallback. Its embedding identity is `stub`. Tests that
+  relied on the implicit stub must ask for it (the `use_test_embedder` fixture does).
+  `get_embedding_func(provider="stub")` returns it too.
+- **A query-side embedding failure raises** instead of searching with a zero vector
+  (relation search, `IRISVectorStore.similarity_search`) or falling back to text-only
+  retrieval (HybridGraphRAG `hybrid_fusion` and `rrf`). CRAG no longer falls back to a
+  stub embedder when the real one cannot be built. (CR-09, CR-11)
+- **One dimension.** `EmbeddingManager.get_embedding_dimension()` is the active backend's
+  real output width, computed once (sentence-transformers from the model, HuggingFace from
+  its config, OpenAI from a model table or a one-time probe). `embeddings.dimension` (or
+  `VECTOR_DIMENSION`) is an override that is checked against it and raises on
+  disagreement. `SchemaManager`, the relation-embedding table, the ivg engine and
+  `IRISVectorEngine.embedding_dimension` all read that value; `EntityRelationships` and
+  the relation embedding column are no longer fixed at 384, and the
+  `base_embedding_dimension` constructor argument is honoured by the first `SchemaManager`
+  too. Resolution happens on first use, so constructing a `SchemaManager` or a store still
+  loads no model. An OpenAI primary now reports 1536, not 384. (OE-03, ST-08, ST-09,
+  ST-16)
+- **A wrong-sized vector raises `DimensionMismatchError`** (a `VectorStoreDataError` and a
+  `ValueError`, in ivg's wording) on insert and on query. `normalize_vector` and
+  `insert_vector` in `common.db_vector_utils` no longer truncate or zero-pad. A failed
+  `insert_vector` aborts the batch instead of being logged, skipped and committed with a
+  partial id list. (ST-13, ST-23)
+- **Writes through ivg carry the model.** `integrations.ivg.store_embedding` and
+  `store_embeddings` pass the active model's name as `model_key`, so ivg refuses to mix
+  stub and real vectors, or two models, without `force`. IVR's own tables do not record
+  an embedding identity yet.
+- **Embedding manager fixes.** The HuggingFace backend masks padding and normalises, so a
+  text's vector no longer depends on its batch neighbours: **HuggingFace vectors change
+  value, and vectors stored with the old pooling are stale; re-embed them.** (OE-04) The
+  `batch_size` setting is applied by `iris_embedding.embed_texts` (and `embeddings.batch_size`
+  by the manager). (OE-10) `clear_cache(config)` clears whatever device key the model was
+  cached under, and the average embedding time divides by timed calls. (OE-13) The OpenAI
+  client has a timeout (`embeddings.openai.timeout`, default 60 s), chunks its input
+  (`embeddings.openai.batch_size`, default 256) and rejects a short response. (OE-14)
 
 ### CI gates for the first time
 

@@ -240,6 +240,9 @@ def test_mix_docs_have_retrieval_source_metadata():
     ]
 
     opts = QueryOptions(query="test", retrieval="mix", top_k=5)
+    # Embedding the query is injected: an engine with no configuration manager raises
+    # rather than searching relations with a zero vector.
+    engine._embed_text_for_search = MagicMock(return_value=[0.1, 0.2, 0.3])
 
     with patch(
         "iris_vector_rag.retrieval.engine.RelationEmbeddingStore",

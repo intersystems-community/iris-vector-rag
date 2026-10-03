@@ -9,6 +9,7 @@ FR-014: explicit entry points each return one documented shape.
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 from iris_vector_rag.core.models import Document
@@ -20,7 +21,6 @@ def _make_store():
     with patch.object(IRISVectorStore, "__init__", lambda self, *a, **kw: None):
         store = IRISVectorStore.__new__(IRISVectorStore)
     store.config_manager = MagicMock()
-    store.config_manager._spec = None  # not a mock in the "is Mock" sense
     store.vector_dimension = 3
     store.logger = MagicMock()
 
@@ -154,8 +154,11 @@ class TestLegacySimilaritySearch:
     def test_text_branch_returns_enriched_documents(self):
         """similarity_search('text', k) still returns List[Document] with score in metadata."""
         store, stub_doc = _make_store()
-        store.config_manager._spec = "mocked"  # triggers mock-detection branch
-        results = store.similarity_search("hello world", 1)
+        # The query embedder is injected explicitly; production code no longer notices a
+        # Mock config and makes up a zero vector.
+        embedder = MagicMock()
+        embedder.embed_query.return_value = [0.1, 0.2, 0.3]
+        results = store.similarity_search("hello world", 1, embedding_func=embedder)
         assert isinstance(results, list)
         for item in results:
             assert isinstance(item, Document)

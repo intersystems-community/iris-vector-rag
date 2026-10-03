@@ -326,6 +326,11 @@ markers = [
 filterwarnings = [
     # A dependency deprecating something we call must fail the run, not scroll by.
     "error",
+    # transformers < 4.44 passes `resume_download` to huggingface_hub >= 0.26, which warns
+    # on every model download. The pin allows transformers 4.41, and before the test
+    # embedder stopped standing in for a model that would not load, this error was
+    # swallowed and the suite ran on noise. Not ours to fix; delete when the floor moves.
+    "ignore:.resume_download. is deprecated:FutureWarning",
     # Below: only our own deprecations, and only where a test exercises the
     # deprecated surface deliberately. Each one goes away with the code it names,
     # so delete the entry when the API is removed rather than adding to the list.

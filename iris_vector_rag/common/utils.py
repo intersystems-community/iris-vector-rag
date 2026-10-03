@@ -12,6 +12,8 @@ from typing import Any, Callable, Dict, List, Optional  # Added Tuple
 import numpy as np
 import yaml  # Added for config loading
 
+from iris_vector_rag.exceptions import EmbeddingError
+
 logger = logging.getLogger(__name__)  # Added for logger usage
 
 # --- Config Loading ---
@@ -225,13 +227,16 @@ def get_embedding_func(
     )
 
     if mock or provider == "stub" or effective_model_name == "stub":
-        logger.info(f"Using stub embedding function with dimension {dimension}.")
+        # Asked for by name: the test embedder, never a substitute for a failed load.
+        from iris_vector_rag.testing.embedder import TestEmbedder
 
-        def stub_embed_texts(texts) -> List[List[float]]:
-            # Handle both single string and list of strings
+        logger.info(f"Using the test embedder with dimension {dimension}.")
+        test_embedder = TestEmbedder(dimension=int(dimension))
+
+        def stub_embed_texts(texts):
             if isinstance(texts, str):
-                return [(len(texts) % 100) * 0.01] * dimension
-            return [[(len(text) % 100) * 0.01] * dimension for text in texts]
+                return test_embedder.embed_texts([texts])[0]
+            return test_embedder.embed_texts(texts)
 
         return stub_embed_texts
 
@@ -243,7 +248,13 @@ def get_embedding_func(
         if isinstance(texts, str):
             # Single string input - return single embedding
             result = base_embedder([texts])
-            return result[0] if result else [0.0] * dimension
+            if not result:
+                raise EmbeddingError(
+                    f"The embedder returned no vector for the text "
+                    f"(model {effective_model_name})",
+                    model_name=effective_model_name,
+                )
+            return result[0]
         else:
             # List input - return list of embeddings
             return base_embedder(texts)

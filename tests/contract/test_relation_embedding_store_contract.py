@@ -18,6 +18,7 @@ def test_embed_and_store_uses_update_sql_with_to_vector():
     fake_vec = [0.1] * 384
     mock_emb_mgr = MagicMock()
     mock_emb_mgr.embed_text.return_value = fake_vec
+    mock_emb_mgr.get_embedding_dimension.return_value = 384
 
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
@@ -93,6 +94,7 @@ def test_embed_and_store_no_raise_on_second_call():
     fake_vec = [0.0] * 384
     mock_emb_mgr = MagicMock()
     mock_emb_mgr.embed_text.return_value = fake_vec
+    mock_emb_mgr.get_embedding_dimension.return_value = 384
 
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
