@@ -60,36 +60,20 @@ rewriting a version line from inside an unrelated commit is exactly the wrong wa
 the claim. Note that `:67`'s example (`VALUES (?, TO_VECTOR(?, FLOAT, 384));`) is the same
 pattern entry 4 below wants a detector for — reconciling the two is part of the job.
 
-## 3. Six pre-existing failures in `tests/test_enterprise_storage.py`
+## 3. (removed)
 
-Re-pointing that file's stale patch targets took it from 10 failures to 7, and feature 086's
-`initialize_schema` rewrite settled the seventh: `test_initialize_schema_fallback` asserted
-`table_name == "SourceDocuments"`, the mutation FR-014 deletes, so it was rewritten against the
-delegating behaviour rather than repaired. Six remain, failing before and after, for reasons
-unrelated to module paths:
+The failing `tests/test_enterprise_storage.py` went with `IRISStorage`, which
+`remove-dead-code` deleted. The number stays so the other entries keep theirs.
 
-| Test                                     | Failure                                              |
-| ---------------------------------------- | ---------------------------------------------------- |
-| `test_retrieve_documents_by_ids`         | `ValueError: too many values to unpack (expected 3)` |
-| `test_vector_search`                     | `AssertionError: 0 != 1`                             |
-| `test_vector_search_empty_vector`        | `AssertionError: ValueError not raised`              |
-| `test_error_handling_in_store_documents` | `AssertionError: Exception not raised`               |
-| `test_bulk_operations_performance`       | `StopIteration` (mock `side_effect` list exhausted)  |
-| `test_typical_document_lifecycle`        | `StopIteration` (same)                               |
-
-These are test/implementation drift: the schema is qualified now, rows carry more columns
-than the mocks supply, and error paths that used to raise now log. None is in
-`tests/contract/ci_known_failures.txt`.
-
-## 4. Vector element type is hardcoded at 24 baselined sites
+## 4. Vector element type is hardcoded at 21 baselined sites
 
 The original count of 11 came from one grep — `TO_VECTOR(` in `.py` only. Feature 086's
 `hardcoded-vector-type` detector also reads the package's `.sql`, `sql/**/*.sql` and
 `iris_src/**/*.cls`, and counts a column's own declared type as well as a conversion, which is
-what the 24 baselined entries in `scripts/gates/antipatterns-baseline.txt` are. Read them from
+what the 21 baselined entries in `scripts/gates/antipatterns-baseline.txt` are. Read them from
 that file rather than from a list here; the earlier list had already gone stale
-(`services/storage.py:352,391` are now `:439,478`, and `enterprise_storage.py:271,307,453` are
-now `:254,290,436`).
+(`services/storage.py:352,391` are now `:439,478`). The three `enterprise_storage.py` sites
+went when `IRISStorage` was deleted, which took the count from 24 to 21.
 
 IRIS refuses to compare vectors of different element types (SQLCODE -259), so a literal
 `FLOAT` in the query is a bet that the column is `FLOAT`. `iris_vector_rag/storage/table_shape.py`
@@ -97,7 +81,7 @@ resolves the real type from `%Dictionary.CompiledProperty.Parameters` at runtime
 `vector_store_iris.py` threads it through — every baselined site bypasses that and re-hardcodes.
 
 **Deferred deliberately** — deferral (c) in `specs/086-canonical-vector-type/spec.md`. Feature 086
-baselines all 24 so no _new_ one can ship unnoticed, and rewrites none of them. The gate holds the
+baselined 24 so no _new_ one can ship unnoticed, and rewrites none of them. The gate holds the
 count; it does not reduce it. Rewriting a site means proving which table it targets and that the
 shape lookup is reachable there; two dozen of those is a feature, not a gate change.
 
@@ -129,7 +113,7 @@ attributes and no submodules. That is why this rot is invisible: the bare name i
 and only `patch("iris_rag.storage.…")` fails — on the submodule, with `ModuleNotFoundError`,
 or on the attribute, with `AttributeError`.
 
-`tests/test_enterprise_storage.py` (8 sites) and `tests/conftest.py` (2) are fixed. The rest
+`tests/conftest.py` (2 sites) is fixed. The rest
 are not:
 
 | File                                                             | Sites |
@@ -147,7 +131,7 @@ None of these files appears in `tests/contract/ci_known_failures.txt`, so this i
 red rather than accepted red.
 
 **Why deferred:** re-pointing a target un-masks whatever the collection error was hiding. The
-eight sites fixed here turned 3 failures into passes and left 7 real ones (entry 3) — a ratio
+eight sites fixed here turned 3 failures into passes and left 7 real ones (the `IRISStorage` tests, since deleted) — a ratio
 that says the other 35 sites will surface real assertions too, in files
 (`tests_api/`, `future_tests_not_ready/`) nobody has looked at. That is open-ended debugging
 and belongs in a feature with a spec, not in a housekeeping commit.

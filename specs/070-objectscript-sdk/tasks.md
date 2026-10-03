@@ -47,7 +47,7 @@ also blocks `EvaluateTest` and any fix to `Evaluate.cls`.
 - [X] T001 Create directory `iris_src/src/RAG/SDK/` for ObjectScript class files
 - [X] T002 Create directory `tests/objectscript/RAG/SDK/Test/` for %UnitTest classes
 - [X] T003 Create `sql/schema.sql` with `CREATE TABLE IF NOT EXISTS` DDL for RAG.SourceDocuments (doc_id VARCHAR(64) PK, title VARCHAR(500), text_content LONGVARCHAR, metadata LONGVARCHAR, embedding VECTOR(DOUBLE, 384)), RAG.DocumentChunks (chunk_id VARCHAR(64) PK, source_doc_id VARCHAR(64) FK, chunk_text LONGVARCHAR, chunk_embedding VECTOR(DOUBLE, 384)), and RAG.Entities (entity_id VARCHAR(64) PK, entity_name VARCHAR(500), entity_type VARCHAR(100), source_doc_id VARCHAR(64) FK) — statements separated by GO delimiters, all IF NOT EXISTS
-- [ ] T004 Refactor Python IVR's schema creation to read DDL from `sql/schema.sql` instead of hardcoded strings — update `iris_vector_rag/storage/enterprise_storage.py` and any other file with inline CREATE TABLE statements for RAG tables to use `open("sql/schema.sql").read()` and execute each GO-delimited statement
+- [X] T004 (dropped: `enterprise_storage.py` was deleted by remove-dead-code) Refactor Python IVR's schema creation to read DDL from `sql/schema.sql` instead of hardcoded strings — update `iris_vector_rag/storage/enterprise_storage.py` and any other file with inline CREATE TABLE statements for RAG tables to use `open("sql/schema.sql").read()` and execute each GO-delimited statement
 
 **Checkpoint**: Directory structure exists, sql/schema.sql is the single DDL source, Python IVR reads from it.
 

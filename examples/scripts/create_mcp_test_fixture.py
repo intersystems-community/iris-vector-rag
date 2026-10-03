@@ -10,11 +10,12 @@ This script:
 
 import json
 from pathlib import Path
+
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline
-from iris_vector_rag.core.connection import ConnectionManager
-from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
+
 
 def create_mcp_test_fixture():
     """Create MCP test fixture with 5 documents."""
@@ -38,23 +39,27 @@ def create_mcp_test_fixture():
     documents = [
         Document(
             page_content="Diabetes is a chronic disease that affects how your body processes blood sugar. Common symptoms include increased thirst, frequent urination, extreme fatigue, and blurred vision.",
-            metadata={"source": "test_medical.pdf", "page": 1, "topic": "diabetes"}
+            metadata={"source": "test_medical.pdf", "page": 1, "topic": "diabetes"},
         ),
         Document(
             page_content="Type 2 diabetes symptoms often develop slowly over several years. Many people don't notice symptoms at first. Early signs include increased hunger, dry mouth, and slow-healing sores.",
-            metadata={"source": "test_medical.pdf", "page": 2, "topic": "diabetes"}
+            metadata={"source": "test_medical.pdf", "page": 2, "topic": "diabetes"},
         ),
         Document(
             page_content="IRIS database provides native vector search capabilities with HNSW indexing. This enables high-performance semantic search for RAG applications.",
-            metadata={"source": "test_technical.pdf", "page": 1, "topic": "database"}
+            metadata={"source": "test_technical.pdf", "page": 1, "topic": "database"},
         ),
         Document(
             page_content="RAG pipelines combine retrieval and generation. The retrieval step uses vector similarity search to find relevant documents.",
-            metadata={"source": "test_technical.pdf", "page": 2, "topic": "rag"}
+            metadata={"source": "test_technical.pdf", "page": 2, "topic": "rag"},
         ),
         Document(
             page_content="Knowledge graphs represent entities and relationships. Entity extraction identifies important concepts from text documents.",
-            metadata={"source": "test_graph.pdf", "page": 1, "topic": "knowledge_graph"}
+            metadata={
+                "source": "test_graph.pdf",
+                "page": 1,
+                "topic": "knowledge_graph",
+            },
         ),
     ]
 
@@ -77,29 +82,20 @@ def create_mcp_test_fixture():
     fixture_dir = Path("tests/fixtures/dat/mcp-basic-rag-5docs")
     fixture_dir.mkdir(parents=True, exist_ok=True)
 
-    # Use iris-devtools to export
-    bridge = IrisDevToolsBridge()
+    # Export RAG.SourceDocuments through IRIS itself
+    export_path = fixture_dir / "RAG_SourceDocuments.dat"
+    cursor = conn.cursor()
+    export_sql = f"""
+    DO $SYSTEM.OBJ.Export("RAG.SourceDocuments.GBL", "{export_path}")
+    """
     try:
-        # Export RAG.SourceDocuments table
-        export_path = fixture_dir / "RAG_SourceDocuments.dat"
-        bridge.export_table("RAG.SourceDocuments", str(export_path))
+        cursor.execute(export_sql)
+        conn.commit()
         print(f"   ✅ Exported to {export_path}")
     except Exception as e:
-        print(f"   ⚠️  Export failed: {e}")
-        print("   📝 Attempting manual export...")
-        # Fallback: use IRIS SQL export
-        cursor = conn.cursor()
-        export_sql = f"""
-        DO $SYSTEM.OBJ.Export("RAG.SourceDocuments.GBL", "{export_path}")
-        """
-        try:
-            cursor.execute(export_sql)
-            conn.commit()
-            print("   ✅ Manual export succeeded")
-        except Exception as e2:
-            print(f"   ❌ Manual export also failed: {e2}")
-        finally:
-            cursor.close()
+        print(f"   ❌ Export failed: {e}")
+    finally:
+        cursor.close()
 
     # Create metadata
     print("\n📋 Creating fixture metadata...")
@@ -116,12 +112,12 @@ def create_mcp_test_fixture():
         "test_queries": [
             "What are the symptoms of diabetes?",
             "How does IRIS database support RAG?",
-            "What are knowledge graphs?"
-        ]
+            "What are knowledge graphs?",
+        ],
     }
 
     metadata_path = fixture_dir / "metadata.json"
-    with open(metadata_path, 'w') as f:
+    with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=2)
     print(f"   ✅ Created {metadata_path}")
 
@@ -133,8 +129,9 @@ def create_mcp_test_fixture():
 
     print("\n💡 Usage in tests:")
     print('   @pytest.mark.dat_fixture("mcp-basic-rag-5docs")')
-    print('   def test_example(loaded_test_documents):')
-    print('       # Test with 5 pre-loaded documents')
+    print("   def test_example(loaded_test_documents):")
+    print("       # Test with 5 pre-loaded documents")
+
 
 if __name__ == "__main__":
     create_mcp_test_fixture()

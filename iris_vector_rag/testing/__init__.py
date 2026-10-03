@@ -30,7 +30,6 @@ from iris_vector_rag.testing.exceptions import (
     IrisDevtoolsImportError,
     IrisDevtoolsMissingError,
 )
-from iris_vector_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
 from iris_vector_rag.testing.validators import IRISEdition, detect_iris_edition
 
 __all__ = [
@@ -42,7 +41,6 @@ __all__ = [
     # Classes
     "BackendConfiguration",
     "ConnectionPool",
-    "IrisDevToolsBridge",
     # Functions
     "load_configuration",
     "validate_configuration",

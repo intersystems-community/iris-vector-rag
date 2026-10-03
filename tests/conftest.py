@@ -492,27 +492,6 @@ def connection_pool(backend_configuration):
     return ConnectionPool(mode=backend_configuration.mode)
 
 
-@pytest.fixture(scope="session")
-def iris_devtools_bridge(backend_configuration):
-    """
-    Session-scoped iris-devtools bridge fixture.
-
-    Provides access to iris-devtools container lifecycle and
-    database state management operations.
-
-    Returns:
-        IrisDevToolsBridge instance
-
-    Raises:
-        IrisDevtoolsMissingError: If iris-devtools not available
-    """
-    from iris_vector_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
-
-    return IrisDevToolsBridge(
-        iris_devtools_path=backend_configuration.iris_devtools_path
-    )
-
-
 @pytest.fixture
 def iris_connection(connection_pool):
     """

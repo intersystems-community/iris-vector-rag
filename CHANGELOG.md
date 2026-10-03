@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+### Removed
+
+Dead code with no production caller and a hazard attached. No deprecation release:
+none of it was documented, and waiting would ship a known data-loss path for one more
+cycle.
+
+- **`IRISStorage`** (`iris_vector_rag.storage.enterprise_storage`) and its re-export from
+  `iris_vector_rag.storage`. It duplicated `IRISVectorStore`, could drop a populated
+  table, and formatted metadata filter keys into SQL. Use `IRISVectorStore`.
+- **`IrisDevToolsBridge`** (`iris_vector_rag.testing.iris_devtools_bridge`) and its
+  re-export from `iris_vector_rag.testing`. It ran `DROP NAMESPACE` with no container
+  guard and imported `iris_devtools`, which is not a declared dependency. Tests that need
+  a container use `iris-devtester` directly. The `iris_devtools_bridge` pytest fixture is
+  gone with it.
+- **`iris_vector_rag.embeddings.entity_extractor`**, the regex entity extractor that
+  labelled any two capitalised words a `Person`. The LLM-backed services in
+  `iris_vector_rag.services` are unchanged.
+- **`IRISSQLUtils.check_table_exists`**, which returned `False` for an unreachable
+  database as readily as for a missing table. Nothing called it.
+- **The pure-SQL fallbacks in `iris_vector_rag.common.db_vector_utils`.** The module now
+  only re-exports `iris_vector_graph.dbapi_utils`, which is a hard dependency; the
+  fallback `insert_vector` took different arguments than its call sites passed.
+
 ### iris-vector-graph 4.1
 
 IVR now requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 re-keyed `Graph_KG`
@@ -13,7 +36,7 @@ migrated once. See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md).
   layout in a new `legacy_layout_tables` field, and validation fails with the call
   that fixes it.
 - **`SchemaManager.upgrade_iris_vector_graph_storage(dry_run=False, **options)`**
-  runs ivg's `initialize_schema()` and then `upgrade_to_4_0_0`. The dry run writes
+  runs ivg's `initialize_schema()`and then`upgrade_to_4_0_0`. The dry run writes
   nothing and skips `initialize_schema()`; a step ivg cannot predict on a 2.x install
   comes back with `blocked_because`.
 - **Graph-scoped search.** The RRF, text and HNSW retrieval methods accept

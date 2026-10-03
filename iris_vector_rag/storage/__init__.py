@@ -10,11 +10,9 @@ from .clob_handler import (
     ensure_string_content,
     process_document_row,
 )
-from .enterprise_storage import IRISStorage
 from .vector_store_iris import IRISVectorStore
 
 __all__ = [
-    "IRISStorage",
     "IRISVectorStore",
     "convert_clob_to_string",
     "process_document_row",
