@@ -105,6 +105,12 @@ ticket is open. Executing the fixes is **not** part of this map.
   skipping, a scripted `make iris-reset`, and the `los-iris` fixtures removed as the first task.
   Logic-only fixes need unit tests alone; storage, schema, migrations, ObjectScript, connections
   and ingestion need the IRIS gate.
+- [Decide the CI repair scope](tickets/G10-ci-repair-scope.md): feature `ci-honesty` in two
+  stages. Stage 1, right after `integrate-branches` and parallel to `test-environment`: make
+  `ci.yml` real (master and PR triggers, no `|| true`, Python 3.11 and 3.12, unit tests on every
+  PR). Stage 2, after `test-environment`: integration tests and the packaging and release items.
+  Already-failing tests are quarantined with an owner feature, not fixed first; new failures
+  block.
 - Destination, tracker, ledger, scope and the support-status approach were settled with the
   maintainer when this map was charted (2026-10-02): plan rather than fix; local-markdown
   tracker committed on its own branch; all findings recorded before any planning;
@@ -118,7 +124,6 @@ Maintained by hand; recompute after each close. All the fate and policy tickets 
 these graduated from the fog on 2026-10-02. 95 of 161 findings still have no Fate.
 
 - [Settle the feature grouping and order](tickets/G7-settle-feature-grouping.md) (grilling, HITL)
-- [Decide the CI repair scope](tickets/G10-ci-repair-scope.md) (grilling, HITL)
 
 ## Not yet specified
 
