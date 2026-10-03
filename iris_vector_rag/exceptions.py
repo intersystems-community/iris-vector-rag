@@ -353,6 +353,29 @@ class VectorStoreDataError(VectorStoreError):
     """Raised when document data is malformed or a filter value has an invalid type."""
 
 
+class DimensionMismatchError(VectorStoreDataError, ValueError):
+    """A vector's width is not the width the column (or the embedding model) declares.
+
+    Raised on insert and on query. IRIS enforces a declared VECTOR width at INSERT, so
+    padding or truncating would store a vector that means something else: the fix is to
+    migrate the column or write at the declared width, never to resize the vector.
+    """
+
+    def __init__(self, got: int, expected: int, where: str = "", **details: Any):
+        target = f" for {where}" if where else ""
+        super().__init__(
+            f"dimension mismatch{target}: the vector has {got} dimensions but "
+            f"{expected} are declared. IRIS enforces the declared width at insert, so "
+            f"migrate the column to {got} or write a vector of {expected} dimensions; "
+            f"a vector is never padded or truncated to fit.",
+            got=got,
+            expected=expected,
+            **details,
+        )
+        self.got = got
+        self.expected = expected
+
+
 class VectorStoreCLOBError(VectorStoreError):
     """Raised when CLOB-to-string conversion fails for a retrieved document."""
 

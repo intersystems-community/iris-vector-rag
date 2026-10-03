@@ -8,6 +8,7 @@ Extended for Feature 051: IRIS EMBEDDING support with cache statistics tracking.
 """
 
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass, field
@@ -480,9 +481,13 @@ class EmbeddingManager:
                 continue
             if width:
                 configured = self.embedding_config.get("dimension")
+                source = "embeddings.dimension"
+                if not configured and os.environ.get("VECTOR_DIMENSION"):
+                    configured = os.environ["VECTOR_DIMENSION"]
+                    source = "VECTOR_DIMENSION"
                 if configured and int(configured) != width:
                     raise EmbeddingError(
-                        f"embeddings.dimension is {configured} but backend "
+                        f"{source} is {configured} but backend "
                         f"{backend_name} ({self._backend_models.get(backend_name)}) "
                         f"produces {width}-dimensional vectors. Remove the setting or "
                         f"set it to {width}.",

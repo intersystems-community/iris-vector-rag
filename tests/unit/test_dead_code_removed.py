@@ -51,10 +51,13 @@ def test_db_vector_utils_has_no_pure_sql_fallbacks():
     """iris-vector-graph is a hard dependency, so the module re-exports it and nothing else."""
     source = inspect.getsource(db_vector_utils)
     assert "except ImportError" not in source
-    for name in ("insert_vector", "create_hnsw_index", "vector_similarity_search"):
+    for name in ("create_hnsw_index", "vector_similarity_search"):
         assert getattr(db_vector_utils, name).__module__ == (
             "iris_vector_graph.dbapi_utils"
         )
+    # The two writers are wrapped so a wrong-width vector is refused (ST-23), not padded.
+    for name in ("insert_vector", "normalize_vector"):
+        assert getattr(db_vector_utils, name).__module__ == db_vector_utils.__name__
 
 
 def test_check_table_exists_swallowing_helper_is_gone():

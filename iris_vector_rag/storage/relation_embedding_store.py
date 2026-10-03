@@ -5,13 +5,11 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from iris_vector_rag.common.db_vector_utils import insert_vector  # noqa: E402
+from iris_vector_rag.common.db_vector_utils import normalize_vector
 
 logger = logging.getLogger(__name__)
 
-_ALTER_SQL = (
-    "ALTER TABLE RAG.EntityRelationships ADD relation_embedding VECTOR(FLOAT, 384) NULL"
-)
+_ALTER_SQL = "ALTER TABLE RAG.EntityRelationships ADD relation_embedding VECTOR(FLOAT, {dimension}) NULL"
 _INDEX_SQL = (
     "CREATE INDEX idx_hnsw_rel_embedding ON RAG.EntityRelationships (relation_embedding)"
     " AS HNSW(M=16, efConstruction=200, Distance='COSINE')"
@@ -21,7 +19,7 @@ _COUNT_SQL = (
 )
 _UPDATE_EMBEDDING_SQL = (
     "UPDATE RAG.EntityRelationships "
-    "SET relation_embedding = TO_VECTOR(?, FLOAT, 384) "
+    "SET relation_embedding = TO_VECTOR(?, FLOAT, {dimension}) "
     "WHERE relationship_id = ?"
 )
 
@@ -32,8 +30,8 @@ _ALREADY_EXISTS_CODES = {-306, -201, -324}  # -324 = index already defined
 class RelationEmbeddingStore:
     """Manages relation embeddings in RAG.EntityRelationships.
 
-    Extends the existing KG table with a VECTOR(FLOAT, 384) column and HNSW
-    index so that relationship descriptions can be retrieved by semantic
+    Extends the existing KG table with a VECTOR(FLOAT, N) column (N is the embedding
+    manager's dimension) and HNSW index so that relationship descriptions can be retrieved by semantic
     similarity at query time (Feature 081 global/mix modes).
     """
 
@@ -41,6 +39,14 @@ class RelationEmbeddingStore:
         self._conn_mgr = connection_manager
         self._cfg_mgr = config_manager
         self._schema_ensured = False
+        self._dimension: Optional[int] = None
+
+    @property
+    def dimension(self) -> int:
+        """The width of the relation_embedding column: the embedding manager's."""
+        if self._dimension is None:
+            self._dimension = self._get_embedding_manager().get_embedding_dimension()
+        return self._dimension
 
     # ------------------------------------------------------------------
     # Schema
@@ -52,7 +58,7 @@ class RelationEmbeddingStore:
         cursor = conn.cursor()
         try:
             try:
-                cursor.execute(_ALTER_SQL)
+                cursor.execute(_ALTER_SQL.format(dimension=self.dimension))
                 conn.commit()
                 logger.debug(
                     "Added relation_embedding column to RAG.EntityRelationships"
@@ -132,6 +138,7 @@ class RelationEmbeddingStore:
 
         emb_mgr = self._get_embedding_manager()
         vec: List[float] = emb_mgr.embed_text(text)
+        normalize_vector(vec, self.dimension)  # a wrong-width vector raises here
         embedding_str = "[" + ",".join(map(str, vec)) + "]"
 
         conn = self._conn_mgr.get_connection("iris")
@@ -140,7 +147,10 @@ class RelationEmbeddingStore:
             # UPDATE is preferred: relationship rows are always written before embedding.
             # insert_vector builds a bare INSERT that fails on NOT NULL columns (SQLCODE -108)
             # when the row already exists and IRIS doesn't raise a UNIQUE error.
-            cursor.execute(_UPDATE_EMBEDDING_SQL, [embedding_str, relationship_id])
+            cursor.execute(
+                _UPDATE_EMBEDDING_SQL.format(dimension=self.dimension),
+                [embedding_str, relationship_id],
+            )
             conn.commit()
             logger.debug("Embedded relationship_id=%s", relationship_id)
         except Exception:

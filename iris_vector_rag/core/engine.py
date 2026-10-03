@@ -231,26 +231,12 @@ class IRISVectorEngine:
     def embedding_dimension(self) -> int:
         """Get the embedding dimension.
 
-        The schema is asked first, then the configuration. There is no invented
-        default: a project configured for 384 that reported 1536 built a table it
-        could not query (Feature 083, FR-014).
+        The one dimension the schema manager holds: the embedding model's real output
+        width. There is no default and no second source; it raises `EmbeddingError`
+        when nothing can say (a project configured for 384 that reported 1536 built a
+        table it could not query, Feature 083, FR-014).
 
         Returns:
             Embedding dimension for the configured embedding model.
         """
-        try:
-            dim = self.vector_store.schema_manager.get_embedding_dimension()
-            return int(dim)
-        except (AttributeError, Exception):
-            return self._configured_dimension()
-
-    def _configured_dimension(self) -> int:
-        """The dimension the configuration determines, from the model if need be."""
-        for key in ("embeddings.dimension", "embedding_model.dimension"):
-            try:
-                value = self._config.get(key, None)
-            except Exception:
-                continue
-            if isinstance(value, (int, str)) and str(value).isdigit():
-                return int(value)
-        return int(self._config.get_embedding_config()["dimension"])
+        return int(self.vector_store.schema_manager.base_embedding_dimension)

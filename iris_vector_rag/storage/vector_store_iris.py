@@ -18,6 +18,7 @@ from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..core.vector_store import VectorStore
 from ..exceptions import (
+    DimensionMismatchError,
     EmbeddingError,
     VectorStoreCLOBError,
     VectorStoreConfigurationError,
@@ -126,10 +127,7 @@ class IRISVectorStore(VectorStore):
                 self.connection_manager,
                 self.config_manager,
             )
-        _, table_short_name = self._schema_and_table()
-        self.vector_dimension = self.schema_manager.get_vector_dimension(
-            table_short_name
-        )
+        self._vector_dimension: Optional[int] = None
 
         # Validate table name for security
         self._validate_table_name(self.table_name)
@@ -171,6 +169,24 @@ class IRISVectorStore(VectorStore):
     # ========================================================================
     # Table shape (Feature 082)
     # ========================================================================
+
+    @property
+    def vector_dimension(self) -> int:
+        """The embedding width this store's table is created at: the schema manager's.
+
+        Resolved on first use, because the schema manager takes it from the embedding
+        model and constructing a store must not load one.
+        """
+        if self._vector_dimension is None:
+            _, table_short_name = self._schema_and_table()
+            self._vector_dimension = self.schema_manager.get_vector_dimension(
+                table_short_name
+            )
+        return self._vector_dimension
+
+    @vector_dimension.setter
+    def vector_dimension(self, dimension: int) -> None:
+        self._vector_dimension = dimension
 
     def _schema_and_table(self, table_name: Optional[str] = None) -> Tuple[str, str]:
         """Split a table name; unqualified means the schema this store writes to.
@@ -787,13 +803,16 @@ class IRISVectorStore(VectorStore):
                         additional_columns=values,
                         dtype=vector.element_type,
                     )
-                    if success:
-                        added_ids.append(doc.id)
-                        logger.debug(
-                            f"Successfully upserted document {doc.id} with vector"
+                    if not success:
+                        # ivg has logged the cause. Carrying on would commit the rest of
+                        # the batch and return a partial id list as if it were whole.
+                        raise VectorStoreDataError(
+                            f"Failed to store document {doc.id} with its vector; "
+                            f"the batch was not committed",
+                            document_id=doc.id,
                         )
-                    else:
-                        logger.error(f"Failed to upsert document {doc.id} with vector")
+                    added_ids.append(doc.id)
+                    logger.debug(f"Successfully upserted document {doc.id} with vector")
                     continue
 
                 check_sql = (
@@ -833,7 +852,7 @@ class IRISVectorStore(VectorStore):
             logger.info(f"Successfully stored {len(added_ids)} documents")
             return added_ids
 
-        except TableShapeError:
+        except (TableShapeError, DimensionMismatchError, VectorStoreDataError):
             # The shape errors already name the table and the real cause; wrapping
             # them in a storage failure is what used to send callers looking a
             # layer away for a problem in their own schema.
@@ -1077,13 +1096,14 @@ class IRISVectorStore(VectorStore):
         metadata_column = shape.optional_column_for(ColumnRole.METADATA)
 
         if len(query_embedding) != vector.dimension:
-            error_msg = (
-                f"query embedding has {len(query_embedding)} dimensions but "
+            error = DimensionMismatchError(
+                len(query_embedding),
+                vector.dimension,
                 f"{shape.qualified_name}.{shape.column_for(ColumnRole.EMBEDDING).name} "
-                f"holds {vector.dimension}"
+                f"(query)",
             )
-            logger.error(error_msg)
-            raise VectorStoreDataError(error_msg)
+            logger.error(str(error))
+            raise error
 
         connection = self._get_connection()
         cursor = connection.cursor()
@@ -1469,22 +1489,15 @@ class IRISVectorStore(VectorStore):
                 else kwargs.get("filter") or kwargs.get("metadata_filter")
             )
 
-            # Mock embedding generation for tests (when config_manager is mocked)
-            if hasattr(self.config_manager, "_spec"):
-                # This is a Mock object, return mock embedding
-                query_embedding = [0.0] * (
-                    self.vector_dimension if hasattr(self, "vector_dimension") else 384
-                )
-            else:
-                # Get embedding function for text query
-                embedding_func = kwargs.get("embedding_func")
-                if not embedding_func:
-                    from ..embeddings.manager import EmbeddingManager
+            # Get embedding function for text query
+            embedding_func = kwargs.get("embedding_func")
+            if not embedding_func:
+                from ..embeddings.manager import EmbeddingManager
 
-                    embedding_manager = EmbeddingManager(self.config_manager)
-                    query_embedding = embedding_manager.embed_text(query)
-                else:
-                    query_embedding = embedding_func.embed_query(query)
+                embedding_manager = EmbeddingManager(self.config_manager)
+                query_embedding = embedding_manager.embed_text(query)
+            else:
+                query_embedding = embedding_func.embed_query(query)
 
             # Call our implementation and add scores to document metadata
             results = self.similarity_search_by_embedding(

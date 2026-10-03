@@ -53,26 +53,28 @@ def test_a_caller_supplied_connection_is_borrowed_never_closed():
     assert connection.closed is False
 
 
-def test_the_embedding_dimension_is_the_configured_one_not_a_guess():
+def test_the_embedding_dimension_is_the_schema_managers_not_a_guess():
     # A project configured for 384 that reported 1536 built a table it could not
-    # query (083 research, FR-014).
+    # query (083 research, FR-014). The one authority is the schema manager's, which
+    # takes it from the embedding model (G6 point 5).
+    engine = IRISVectorEngine(
+        FakeConnection(FakeDriver()), config_manager=ConfigurationManager()
+    )
+    store = MagicMock()
+    store.schema_manager.base_embedding_dimension = 768
+    engine._vector_store = store
+
+    assert engine.embedding_dimension == 768
+
+
+def test_there_is_no_second_source_for_the_embedding_dimension():
     engine = IRISVectorEngine(
         FakeConnection(FakeDriver()), config_manager=ConfigurationManager()
     )
     engine._vector_store = object()  # no schema manager to ask
 
-    assert engine.embedding_dimension == 384
-
-
-def test_the_schema_is_asked_before_the_configuration():
-    engine = IRISVectorEngine(
-        FakeConnection(FakeDriver()), config_manager=ConfigurationManager()
-    )
-    store = MagicMock()
-    store.schema_manager.get_embedding_dimension.return_value = 768
-    engine._vector_store = store
-
-    assert engine.embedding_dimension == 768
+    with pytest.raises(AttributeError):
+        engine.embedding_dimension
 
 
 def test_the_retrieval_engine_is_handed_a_connection_that_exists(registered):
