@@ -774,3 +774,21 @@ entry: feature, question, choice, why.
   container: 164 failed / 43 errors. On the same container shape phase 4 added
   only two failing tests (`test_graph_rag_pipeline` and the stub-artefact test
   above); after this branch only the stub artefact remains.
+
+## Final gate
+
+- **Test pollution in a combined session.** 31 integration and e2e tests fail
+  when `tests/integration`, `tests/e2e` and `tests/test_*.py` run as one session
+  on one database, and pass when run alone. The polluting test was not isolated;
+  by the shape of the failures (a `RAG.Entities` that another test has dropped
+  or recreated) the suspects are the e2e tests that create and drop `RAG`
+  tables. Not quarantined, because they pass alone and in CI's layout.
+- **Pinned dev database.** The final gate ran on `iris-vector-rag-iris`, which
+  `ensure_confidence_column` altered in place (non-destructive).
+- **Duplicate run.** A failed `sed` left a stray second integration run against
+  the same database; both were killed and one rerun, so the numbers come from a
+  single run.
+- **CM-11** (lock held across a connect) was not listed by the
+  `connection-settings` agent; the global `_cache_lock` it names no longer
+  exists after `083`, and the session's connect lock is per session, so it is
+  closed.
