@@ -19,6 +19,16 @@ cycle.
 - **`iris_vector_rag.embeddings.entity_extractor`**, the regex entity extractor that
   labelled any two capitalised words a `Person`. The LLM-backed services in
   `iris_vector_rag.services` are unchanged.
+- **The REST API** (`iris_vector_rag.api`, the FastAPI service), its tests (`tests_api/`,
+  `tests/integration/api/`), `config/api_config.yaml`, the `api` extra (`fastapi`,
+  `uvicorn`, `python-multipart`, `websockets`, `redis`, `bcrypt`, `python-jose`,
+  `email-validator`) and the `bcrypt` and `email-validator` installs in `release.yml`.
+  Deprecated in 0.15 ([ADR 0001](docs/adr/0001-retire-the-rest-api.md)); it could not
+  serve a request as built and its upload endpoint stored nothing. Use the MCP server
+  (`iris-vector-rag[mcp]`) or call the pipelines from Python. If you used `[api]`, pin
+  `iris-vector-rag<0.16` or take the code from the git tag `archive/rest-api-v1`. The
+  design is kept in [docs/archived/rest-api/](docs/archived/rest-api/README.md). Findings
+  AP-01 to AP-24 are closed by deletion.
 - **`IRISSQLUtils.check_table_exists`**, which returned `False` for an unreachable
   database as readily as for a missing table. Nothing called it.
 - **The pure-SQL fallbacks in `iris_vector_rag.common.db_vector_utils`.** The module now
@@ -470,30 +480,6 @@ N}` (or `primary_backend: stub`). It lives in `iris_vector_rag.testing.embedder`
   `except` (bare, `Exception`, `BaseException`) in `iris_vector_rag/` that never raises
   fails the gate unless `antipatterns-baseline.txt` lists it. The baseline holds the 302
   instances that exist today; fixing one means deleting its line.
-
-### Changed: the REST API is deprecated (0.15), removed in 0.16
-
-`iris_vector_rag.api` (the FastAPI service) is deprecated and will be removed in 0.16
-([ADR 0001](docs/adr/0001-retire-the-rest-api.md)). It cannot serve a request as built,
-its upload endpoint stores nothing, and no code or CI job runs it. Nothing is patched in
-this release.
-
-- **Importing `iris_vector_rag.api` emits one `DeprecationWarning`** that names the
-  removal release and the archive tag.
-- **The `api` extra is deprecated and no longer part of `all`.** `pip install
-iris-vector-rag[all]` no longer brings in `redis`, `bcrypt`, `python-jose`,
-  `email-validator` or `python-multipart`; `fastapi`, `uvicorn` and `websockets` stay
-  because the `mcp` extra needs them. `pip install iris-vector-rag[api]` still works
-  for this release. CI (`ci.yml`, `security.yml`) no longer installs `--extra api`.
-- **Code and design are kept.** The last commit containing the code and its tests is
-  the git tag `archive/rest-api-v1`. The architecture, routes, auth and rate-limit
-  model, WebSocket protocol, data model, configuration and a list of what a second
-  version must do differently are in [docs/archived/rest-api/](docs/archived/rest-api/README.md).
-- **If you use `[api]`:** pin `iris-vector-rag<0.16`, or take the code from the tag.
-- `tests/contract/test_mcp_bridge_contract.py::TestMCPBridgeIntegration::test_bridge_imports_pipeline_manager`
-  needs `bcrypt`, which CI no longer installs, so it joins `ci_known_failures.txt`. It
-  is settled with the fate of `mcp/` (its import of `api.services` is dead).
-  \
 
 ### Ontology retirement (deprecation)
 

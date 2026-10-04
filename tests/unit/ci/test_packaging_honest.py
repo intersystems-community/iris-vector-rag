@@ -210,3 +210,14 @@ def test_claude_md_keeps_the_declaration_lines_scripts_parse():
     text = (ROOT / "CLAUDE.md").read_text()
     assert re.search(r"^IRIS_CONTAINER: iris-vector-rag-iris$", text, re.M)
     assert re.search(r"^IRIS_PORT: 51972$", text, re.M)
+
+
+# -- removed packages stay out of the wheel (retire-rest-api, ontology-retirement) --
+
+
+@pytest.mark.parametrize("package", ["api", "ontology"])
+def test_wheel_ships_no_removed_package(wheel, package):
+    leaked = [
+        n for n in wheel.namelist() if n.startswith(f"iris_vector_rag/{package}/")
+    ]
+    assert not leaked, leaked

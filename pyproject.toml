@@ -111,19 +111,6 @@ dev = [
 mcp = [
     "mcp>=1.9.0,<2"
 ]
-# DEPRECATED in 0.15, removed in 0.16: the REST API (iris_vector_rag.api) is retired.
-# No longer part of `all` or the CI install. Code and tests stay at git tag
-# archive/rest-api-v1; see docs/adr/0001-retire-the-rest-api.md.
-api = [
-    "fastapi>=0.104.0",
-    "uvicorn[standard]>=0.24.0",
-    "python-multipart>=0.0.6",
-    "websockets>=12.0",
-    "redis>=5.0.0",
-    "bcrypt>=4.0.0",
-    "python-jose[cryptography]>=3.3.0",
-    "email-validator>=2.0.0"
-]
 dspy = [
     "dspy-ai>=2.4.0"
 ]
@@ -336,10 +323,6 @@ filterwarnings = [
     # tests/contract/test_iris_connection_contract.py is the contract for
     # get_iris_connection() itself, deprecated in 0.15 and removed in 0.16.
     "ignore:get_iris_connection\\(\\) is deprecated:DeprecationWarning",
-    # Importing iris_vector_rag.api warns (deprecated 0.15, removed 0.16); the
-    # api tests import it on purpose.
-    # Delete this entry with the package.
-    "ignore:iris_vector_rag\\.api \\(the REST API\\) is deprecated:DeprecationWarning",
     # tests/test_ontology_*.py exercise the deprecated iris_vector_rag.ontology
     # package until it is removed; its import warning is the deprecation itself.
     "ignore:iris_vector_rag.ontology is deprecated:DeprecationWarning",

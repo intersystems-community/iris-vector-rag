@@ -11,7 +11,7 @@
     strategies -- basic, basic_rerank, CRAG, GraphRAG/HybridGraphRAG,
     multi-query RRF, and ColBERT/PyLate -- share a single unified interface and
     response shape, swappable with one factory call. Includes RAGAS evaluation,
-    LangChain integration, MCP server, REST API, and embedded-mode support via
+    LangChain integration, MCP server, and embedded-mode support via
     iris-embedded-python-wrapper. No external vector database required.
   </Description>
   <Keywords>rag,vector-search,llm,langchain,ragas,graphrag,colbert,embeddings,retrieval-augmented-generation</Keywords>

@@ -105,7 +105,7 @@ contract test that depends on how many rows some other test left behind is not a
 test — but it needs a fixture that creates, ingests into, and drops a table per module, which
 is more machinery than the flake justifies today.
 
-## 7. 35 stale `iris_rag.*` / `common.*` patch targets across 7 files
+## 7. 22 stale `iris_rag.*` / `common.*` patch targets across 6 files
 
 `iris_rag/` and `common/` contain nothing but `__pycache__`. Python 3 still resolves each as
 a **namespace package**, so `import iris_rag` succeeds and returns a module with no
@@ -119,9 +119,7 @@ are not:
 | File                                                             | Sites |
 | ---------------------------------------------------------------- | ----- |
 | `tests/test_ontology_loader.py`                                  | 10    |
-| `tests_api/test_routes_query.py`                                 | 9     |
 | `tests/test_schema_manager_bugs.py`                              | 7     |
-| `tests_api/test_service_pipeline_manager.py`                     | 4     |
 | `tests/future_tests_not_ready/test_core_models_comprehensive.py` | 2     |
 | `tests/test_hybrid_graphrag_functional.py`                       | 1     |
 | `tests/test_entity_extraction_service.py`                        | 1     |
@@ -132,8 +130,8 @@ red rather than accepted red.
 
 **Why deferred:** re-pointing a target un-masks whatever the collection error was hiding. The
 eight sites fixed here turned 3 failures into passes and left 7 real ones (the `IRISStorage` tests, since deleted) — a ratio
-that says the other 35 sites will surface real assertions too, in files
-(`tests_api/`, `future_tests_not_ready/`) nobody has looked at. That is open-ended debugging
+that says the other 22 sites will surface real assertions too, in files
+(`future_tests_not_ready/`) nobody has looked at. That is open-ended debugging
 and belongs in a feature with a spec, not in a housekeeping commit.
 
 `iris_rag/` and `common/` are deliberately left on disk. Deleting them is correctness-neutral
