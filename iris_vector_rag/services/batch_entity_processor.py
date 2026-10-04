@@ -27,6 +27,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from ..core.connection import ConnectionManager
 from ..core.models import Entity, Relationship
+from ..storage.legacy_columns import ensure_confidence_column
 from ..storage.table_shape import CANONICAL_VECTOR_TYPE
 
 logger = logging.getLogger(__name__)
@@ -74,6 +75,7 @@ class BatchEntityProcessor:
         self.source_document_resolver = source_document_resolver
         self.config = config
         self.batch_size = batch_size
+        self._confidence_ensured: set = set()
 
         # Get table names from config
         storage_config = config.get("entity_extraction", {}).get("storage", {})
@@ -86,6 +88,12 @@ class BatchEntityProcessor:
             f"BatchEntityProcessor initialized (batch_size={batch_size}, "
             f"tables: {self.entities_table}, {self.relationships_table})"
         )
+
+    def _ensure_confidence(self, conn: Any, table: str) -> None:
+        """Add `confidence` to a table from an older release, once per table."""
+        if table not in self._confidence_ensured:
+            ensure_confidence_column(conn, table)
+            self._confidence_ensured.add(table)
 
     def store_entities_batch(
         self, entities: List[Entity], validate_count: bool = True
@@ -137,6 +145,7 @@ class BatchEntityProcessor:
 
         try:
             conn = self.connection_manager.get_connection()
+            self._ensure_confidence(conn, self.entities_table)
             cursor = conn.cursor()
 
             distinct: Dict[str, Entity] = {str(e.id): e for e in entities}
@@ -382,6 +391,7 @@ class BatchEntityProcessor:
 
         try:
             conn = self.connection_manager.get_connection()
+            self._ensure_confidence(conn, self.relationships_table)
             cursor = conn.cursor()
 
             # Validate foreign keys if requested (prevents orphaned relationships)

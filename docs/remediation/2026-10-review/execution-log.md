@@ -700,3 +700,77 @@ entry: feature, question, choice, why.
   (`> > > > > > >`), removed with it.
 - **removals: hook noise.** The pre-commit YAML formatter reformatted
   `config/memory_config.yaml` while a one-word comment was edited in it.
+- **Kept:** `ColBERTSearch.cls` (`RAG.ColBERTSearch`) only. **Deleted:** the
+  other 13 (`Algorithms`, `BM25Index`, `EdgeScan`, `IVFIndex`, `Meta`,
+  `NKGAccel`, `PLAIDSearch`, `PageRank`, `Snapshot`, `Subgraph`, `Traversal`,
+  `VecIndex`, `UserExec`). The comparison is by declared class name against
+  every `.cls` in the installed ivg 4.1.1, which ships all of them, `User.Exec`
+  included. The review's "UserExec exists nowhere else" was wrong; the file is
+  `User.Exec`, byte-identical to ivg's (OS-14 R2 already said so).
+- **No Python caller** references `sp/` or `RAG.ColBERTSearch`, so nothing
+  deploys the class automatically. The plan assumes nothing deploys by hand
+  either; the class ships as package data for whoever loads it (spec 067's
+  quickstart does it with `docker cp`). No loader was added: out of scope for
+  this row.
+- **OS-11 fixed** in the kept class (bound parameters for doc ids, integer
+  coercion).
+- **Gate:** `tests/integration/test_colbert_vendored_objectscript_iris.py` loads
+  the class into a module-private ephemeral container, builds the three tables
+  and calls `RAG.ColBERTSearch_Search` with an apostrophe doc_id. SQL
+  upper-cases the returned ids, so the test compares lower-cased.
+- `tests/integration/test_pylate_colbert_e2e.py` fails 5/5 identically on the
+  base (`'dict' object has no attribute 'page_content'`); unrelated to this
+  feature.
+- Process note: `git stash` is repository-global across worktrees. Two agents
+  stashing at once swapped their stashes on pop; repaired from the dangling
+  stash commits. Use no `git stash` in these worktrees.
+
+## integration-fixes
+
+- **Legacy `RAG.Entities` without `confidence`: add the column, do not write
+  around it.** Choice: `storage/legacy_columns.ensure_confidence_column` reads
+  the catalog (`IRISCatalogReader`) and runs
+  `ALTER TABLE ... ADD confidence DOUBLE DEFAULT 1.0` only when absent. Called
+  from `EntityStorageAdapter._ensure_kg_tables` (entities and relationships
+  tables) and, once per table per instance, from both `BatchEntityProcessor`
+  write methods, which do not go through the adapter. Why: a write path that
+  silently omits a column makes stored confidences disappear and gives two
+  shapes of truth; the ALTER is additive and the first write after an upgrade
+  repairs the table. A failed ALTER raises (the batch processor reports it in
+  `error`). Existing rows stay NULL: IRIS applies a DEFAULT to new rows only,
+  and backfilling would rewrite data the old release wrote; readers already map
+  NULL to 0.0.
+- **Not addressed: a legacy table whose `id` is a required column with no
+  default.** Reproduced with `id VARCHAR(255) PRIMARY KEY`: inserts without `id`
+  fail. That is not the shape the dev database reported (it wrote fine before
+  `confidence` was added), so it is left alone.
+- **The ~60 new dev-database failures were three causes, not one.** (1) Legacy
+  `RAG.Entities` without `confidence`: 17 failures and 23 errors on an ephemeral
+  container with a legacy-shaped table pre-created (145 failed / 66 errors
+  before, 125 / 43 after); fixed in the write path. (2)
+  `tests/test_comprehensive_pipeline_validation_e2e.py::test_graph_rag_pipeline`:
+  GraphRAG now fails loudly when it has no `llm_func` (entity-services-fix), and
+  the validator built every pipeline with no arguments. The validator now takes
+  constructor kwargs and gives GraphRAG a deterministic extraction function. The
+  same file only worked after some other module had pointed `IRIS_*` at the test
+  IRIS (it sits outside the autouse directories), so it now requests
+  `iris_target` itself; its CRAG call passed `documents` twice and now uses
+  `documents_path=`; a test returning a dict is now a plain test. (3) The
+  graphrag_vector_search, graph/colbert e2e and graphrag e2e errors were the
+  legacy table alone: they pass on a fresh container and on a legacy-shaped one
+  once the column is added. No shared-state interaction between the
+  core-contracts `clear()` and validation-truthfulness DDL was found in these
+  files.
+- **Stub embedder is not for retrieval-relevance tests.**
+  `test_mcp_stdio_e2e.py::test_story_2` ranks by meaning. Under
+  `RAG_EMBEDDINGS__PROVIDER=stub` the ingesting process and the server
+  subprocess (which does not inherit the variable) embed differently; passing
+  the variable through only makes the ranking deterministic noise, so it still
+  fails by chance. It passes with the real model. A pass-through change was
+  tried and reverted (two revert commits). Run it without the stub variables.
+- **Comparing ephemeral runs with the dev-database lists.** The phase 3 and
+  phase 4 lists in /tmp came from the dev database, whose failures differ from a
+  fresh container's. The honest baseline is phase 3 (`cba0986d`) on an ephemeral
+  container: 164 failed / 43 errors. On the same container shape phase 4 added
+  only two failing tests (`test_graph_rag_pipeline` and the stub-artefact test
+  above); after this branch only the stub artefact remains.

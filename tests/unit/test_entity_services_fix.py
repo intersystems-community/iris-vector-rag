@@ -165,6 +165,21 @@ def test_the_base_class_no_longer_offers_a_method_that_cannot_work():
 # --------------------------------------------------------------------------- batch processor
 
 
+@pytest.fixture(autouse=True)
+def _no_catalog(monkeypatch):
+    """The recording cursors here cannot answer catalog queries.
+
+    The legacy-table repair (`ensure_confidence_column`) has its own unit tests and a
+    live one in tests/integration/test_legacy_entities_table.py; these tests are about
+    the SQL the writers send.
+    """
+    for module in (
+        "iris_vector_rag.services.batch_entity_processor",
+        "iris_vector_rag.services.storage",
+    ):
+        monkeypatch.setattr(f"{module}.ensure_confidence_column", lambda *a, **k: False)
+
+
 class FakeCursor:
     """Records statements and answers the processor's reads from `db_ids`."""
 

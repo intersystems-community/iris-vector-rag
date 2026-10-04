@@ -14,6 +14,7 @@ from ..core.connection import ConnectionManager
 from ..core.models import Entity, Relationship
 from ..exceptions import RAGException
 from ..storage.catalog import IRISCatalogReader
+from ..storage.legacy_columns import ensure_confidence_column
 from ..storage.schema_manager import SchemaManager
 from ..storage.shape_resolver import TableShapeResolver
 from ..storage.table_shape import (
@@ -173,6 +174,11 @@ class EntityStorageAdapter:
 
             # Ensure Entities columns exist for legacy schemas
             self._ensure_entity_columns()
+
+            # Both writers INSERT `confidence`; tables from older releases lack it.
+            connection = self.connection_manager.get_connection()
+            ensure_confidence_column(connection, self.entities_table)
+            ensure_confidence_column(connection, self.relationships_table)
 
             # Set flag to cache that tables are created (prevents redundant checks)
             self._tables_ensured = True
