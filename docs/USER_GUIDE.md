@@ -94,7 +94,6 @@ python examples/compare_pipelines.py --pipelines basic,basic_rerank
 ```bash
 pip install iris-vector-rag[colbert]     # ColBERT/PyLate support
 pip install iris-vector-rag[evaluation]  # Full RAGAS evaluation framework
-pip install iris-vector-rag[api]         # REST API server (FastAPI + Redis)
 pip install iris-vector-rag[mcp]         # MCP server for Claude/AI tools
 ```
 

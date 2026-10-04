@@ -171,7 +171,6 @@ This index provides organized access to all documentation by topic and user jour
 
 - [MCP Integration](MCP_INTEGRATION.md) - Model Context Protocol
 - [Custom Reranker Guide](guides/custom_reranker_guide.md) - Custom models
-- [Ontology Integration](ontology_integration_guide.md) - Domain ontologies
 
 **Production & Quality**:
 

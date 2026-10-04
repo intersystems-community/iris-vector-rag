@@ -1,5 +1,8 @@
 # GraphRAG General-Purpose Ontology Integration Analysis
 
+> **Archived.** Describes `iris_vector_rag.ontology`, removed in 0.16 (git tag
+> `archive/ontology-v1`). See [README.md](README.md).
+
 ## Executive Summary
 
 The IRIS RAG framework now includes a comprehensive general-purpose ontology integration system that works with **ANY domain** automatically. This system eliminates the need for hardcoded domain-specific implementations and instead provides a universal ontology plugin that can automatically adapt to medical, legal, financial, scientific, or any other domain ontology.

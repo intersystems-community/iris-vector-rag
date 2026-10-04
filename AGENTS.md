@@ -16,7 +16,7 @@ Six swappable pipeline strategies share one interface and one response shape —
 a single factory call. IRIS replaces an external VectorDB; no Pinecone/Weaviate/pgvector needed.
 
 **Stack:** Python 3.10+ | IRIS Vector Search (HNSW index) | iris-vector-graph (optional, GraphRAG) |
-LangChain / LlamaIndex adapters | sentence-transformers | RAGAS evaluation | FastAPI MCP server
+LangChain / LlamaIndex adapters | sentence-transformers | RAGAS evaluation | MCP server (stdio)
 
 **Package name:** `iris_vector_rag` (`iris_rag/` is a thin backward-compat shim — do not add code there)
 
@@ -38,7 +38,6 @@ iris_vector_rag/           # Main package
   validation/              # Pre-flight validators, SetupOrchestrator
   services/                # Entity extraction, storage adapters
   mcp/                     # MCP server (stdio, 6 tools — rag_basic … rag_health_check)
-  api/                     # Optional REST API (FastAPI + Redis)
   common/                  # Shared utilities, LLM cache, SQL executor
 
 tests/
@@ -93,7 +92,7 @@ examples/                  # compare_pipelines.py and usage examples
 
 ```bash
 # Install
-pip install -e ".[dev]"                     # Dev; add ,evaluation,colbert,mcp,api as needed
+pip install -e ".[dev]"                     # Dev; add ,evaluation,colbert,mcp as needed
 pip install -e ".[mcp]"                     # With MCP server
 pip install -e ".[dspy]"                    # Experimental DSPy modules (spec 073)
 

@@ -1,12 +1,9 @@
 # General-Purpose Ontology Integration Guide for IRIS RAG
 
-> **Deprecated.** `iris_vector_rag.ontology` is deprecated and is removed in the next
-> release (last version at git tag `archive/ontology-v1`). Importing it emits a
-> `DeprecationWarning`. Entity extraction no longer uses it, and the `ontology:`
-> configuration section is a no-op: it is accepted so existing config files load,
-> but no code reads it and no key in it changes behaviour. `OntologyAwareEntityExtractor`
-> ignores `ontology_sources`. Use the ontology classes directly only if you must,
-> and plan to vendor them from the tag.
+> **Archived.** `iris_vector_rag.ontology` was removed in 0.16 (last version at git tag
+> `archive/ontology-v1`). Nothing below describes shipped behaviour: the module paths,
+> classes and the `ontology:` configuration section no longer exist. Kept as design
+> history; see [README.md](README.md).
 
 ## Overview
 

@@ -52,31 +52,6 @@ def test_the_legacy_manager_is_reachable_under_its_new_name():
     assert isinstance(connection_manager.LegacyConnectionManager, type)
 
 
-# The WebSocket registry is checked in the source rather than by import: it needs
-# FastAPI, which the library does not require, so an import-based check would only
-# ever run where the API extra is installed.
-WEBSOCKET_FILES = [
-    "api/websocket/connection.py",
-    "api/websocket/__init__.py",
-    "api/websocket/handlers.py",
-    "api/websocket/routes.py",
-]
-
-
-@pytest.mark.parametrize("relative", WEBSOCKET_FILES)
-def test_the_websocket_registry_is_renamed_everywhere(relative):
-    """It registers browsers, not databases; sharing the name misled readers."""
-    text = (PACKAGE / relative).read_text()
-
-    bare = [
-        line
-        for line in text.splitlines()
-        if "ConnectionManager" in line and "WebSocketConnectionManager" not in line
-    ]
-
-    assert bare == [], f"{relative} still says ConnectionManager: {bare}"
-
-
 def _classes_in_package():
     """Every class the package defines, as name -> the files defining it."""
     found: dict[str, list[str]] = {}

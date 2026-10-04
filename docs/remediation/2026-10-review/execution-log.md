@@ -627,23 +627,76 @@ entry: feature, question, choice, why.
 
 ## colbert-vendored-objectscript
 
-- **Kept:** `ColBERTSearch.cls` (`RAG.ColBERTSearch`) only. **Deleted:** the other 13
-  (`Algorithms`, `BM25Index`, `EdgeScan`, `IVFIndex`, `Meta`, `NKGAccel`, `PLAIDSearch`,
-  `PageRank`, `Snapshot`, `Subgraph`, `Traversal`, `VecIndex`, `UserExec`). The comparison
-  is by declared class name against every `.cls` in the installed ivg 4.1.1, which ships
-  all of them, `User.Exec` included. The review's "UserExec exists nowhere else" was
-  wrong; the file is `User.Exec`, byte-identical to ivg's (OS-14 R2 already said so).
-- **No Python caller** references `sp/` or `RAG.ColBERTSearch`, so nothing deploys the class
-  automatically. The plan assumes nothing deploys by hand either; the class ships as package
-  data for whoever loads it (spec 067's quickstart does it with `docker cp`). No loader was
-  added: out of scope for this row.
-- **OS-11 fixed** in the kept class (bound parameters for doc ids, integer coercion).
-- **Gate:** `tests/integration/test_colbert_vendored_objectscript_iris.py` loads the class
-  into a module-private ephemeral container, builds the three tables and calls
-  `RAG.ColBERTSearch_Search` with an apostrophe doc_id. SQL upper-cases the returned ids,
-  so the test compares lower-cased.
-- `tests/integration/test_pylate_colbert_e2e.py` fails 5/5 identically on the base
-  (`'dict' object has no attribute 'page_content'`); unrelated to this feature.
-- Process note: `git stash` is repository-global across worktrees. Two agents stashing at
-  once swapped their stashes on pop; repaired from the dangling stash commits. Use no
-  `git stash` in these worktrees.
+- **Kept:** `ColBERTSearch.cls` (`RAG.ColBERTSearch`) only. **Deleted:** the
+  other 13 (`Algorithms`, `BM25Index`, `EdgeScan`, `IVFIndex`, `Meta`,
+  `NKGAccel`, `PLAIDSearch`, `PageRank`, `Snapshot`, `Subgraph`, `Traversal`,
+  `VecIndex`, `UserExec`). The comparison is by declared class name against
+  every `.cls` in the installed ivg 4.1.1, which ships all of them, `User.Exec`
+  included. The review's "UserExec exists nowhere else" was wrong; the file is
+  `User.Exec`, byte-identical to ivg's (OS-14 R2 already said so).
+- **No Python caller** references `sp/` or `RAG.ColBERTSearch`, so nothing
+  deploys the class automatically. The plan assumes nothing deploys by hand
+  either; the class ships as package data for whoever loads it (spec 067's
+  quickstart does it with `docker cp`). No loader was added: out of scope for
+  this row.
+- **OS-11 fixed** in the kept class (bound parameters for doc ids, integer
+  coercion).
+- **Gate:** `tests/integration/test_colbert_vendored_objectscript_iris.py` loads
+  the class into a module-private ephemeral container, builds the three tables
+  and calls `RAG.ColBERTSearch_Search` with an apostrophe doc_id. SQL
+  upper-cases the returned ids, so the test compares lower-cased.
+- `tests/integration/test_pylate_colbert_e2e.py` fails 5/5 identically on the
+  base (`'dict' object has no attribute 'page_content'`); unrelated to this
+  feature.
+- Process note: `git stash` is repository-global across worktrees. Two agents
+  stashing at once swapped their stashes on pop; repaired from the dangling
+  stash commits. Use no `git stash` in these worktrees.
+
+## removals
+
+- **removals: one tag per feature.** `archive/rest-api-v1` was left where it is.
+  `archive/ontology-v1` is on the commit before the ontology removal (the last
+  commit containing `iris_vector_rag/ontology/` and its tests). Both are local.
+- **removals: ontology docs archived, not deleted.**
+  `docs/ontology_integration_guide.md` and
+  `docs/architecture/graphrag_ontology_integration_analysis.md` describe the
+  design (formats, plugin, reasoning, config) and are useful history. Both moved
+  to `docs/archived/ontology/` with a README naming the tag; their deprecation
+  banners became "Archived" banners.
+- **removals: `OntologyAwareEntityExtractor` keeps its name.** It is a public
+  class with an ignored `ontology_sources` argument and contract tests pin the
+  signature; `extract_with_ontology()` stays as the deprecated alias from
+  `entity-services-fix`. Renaming either is an interface change the records do
+  not settle; left for a later release.
+- **removals: wrong-editable-install trap.** The shared venv's editable install
+  maps `iris_vector_rag.api` into the main checkout, so
+  `importlib.util.find_spec` finds a package after the worktree deleted it. The
+  removal tests look modules up on the checkout's own `iris_vector_rag.__path__`
+  instead.
+- **removals: tests deleted with their code.**
+  `tests/unit/session/test_removals.py` lost its WebSocket-registry rename check
+  (its subject, `api/websocket/*`, is gone); `tests/future_tests_not_ready` lost
+  the ontology model test classes. `tests/unit/test_rest_api_deprecation.py` was
+  replaced by `test_rest_api_removal.py`; `test_ontology_retirement.py` was
+  renamed to `test_ontology_removal.py`, keeping its behaviour tests (a leftover
+  `ontology:` section in a user's config is ignored) and replacing the warning
+  test.
+- **removals: `default_config.yaml`.** Besides `ontology:` the file carried
+  `graphrag.ontology_integration`,
+  `graphrag.visualization.highlight_ontology_concepts` and five commented
+  example blocks; nothing reads them, all removed. The `ontology_hybrid` method
+  name is dropped from the comment that lists methods.
+- **removals: scripts.** `scripts/verify_entity_extraction.py` lost its ontology
+  status check; the `demo_ontology_support.py` entries in `scripts/testing/`
+  pointed at a script that does not exist and were removed.
+- **removals: `ci_known_failures.txt`.** No entry named a deleted test (the
+  `test_bridge_imports_pipeline_manager` entry had already left with the mcp
+  work), so the file is unchanged.
+- **removals: DEBT entry 7.** The `tests_api/` rows (13 sites) and the
+  `test_ontology_loader.py` row (10) are gone: 35 sites across 8 files is now 12
+  across 5.
+- **removals: CHANGELOG.** The two "deprecation" sections were replaced by
+  entries under `Removed`. The ontology section carried stray merge-marker lines
+  (`> > > > > > >`), removed with it.
+- **removals: hook noise.** The pre-commit YAML formatter reformatted
+  `config/memory_config.yaml` while a one-word comment was edited in it.

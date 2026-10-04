@@ -3,7 +3,7 @@
 Entity Extraction Verifier Diagnostic Script
 
 Verifies entity extraction service configuration and invocation status.
-Checks service availability, LLM config, ontology status, and extraction hooks.
+Checks service availability, LLM config, and extraction hooks.
 
 Contract: specs/032-investigate-graphrag-data/contracts/entity_extraction_verification_contract.md
 
@@ -20,6 +20,7 @@ import sys
 import time
 from datetime import datetime
 from typing import Any, Dict, Optional
+
 
 # Initialize output template for early exits
 def create_output_template(execution_time: float = 0.0) -> Dict[str, Any]:
@@ -40,13 +41,6 @@ def create_output_template(execution_time: float = 0.0) -> Dict[str, Any]:
             "model": "unknown",
             "api_key_set": False,
             "api_key_valid": None,
-        },
-        "ontology_status": {
-            "enabled": False,
-            "domain": None,
-            "concept_count": 0,
-            "plugin_loaded": False,
-            "plugin_type": None,
         },
         "extraction_config": {
             "method": "unknown",
@@ -81,6 +75,7 @@ def create_output_template(execution_time: float = 0.0) -> Dict[str, Any]:
 try:
     from iris_vector_rag.config.manager import ConfigurationManager
     from iris_vector_rag.services.entity_extraction import OntologyAwareEntityExtractor
+
     IRIS_RAG_AVAILABLE = True
     IMPORT_ERROR = None
 except ImportError as e:
@@ -88,7 +83,9 @@ except ImportError as e:
     IMPORT_ERROR = str(e)
 
 
-def check_llm_status(config_manager: Optional['ConfigurationManager']) -> Dict[str, Any]:
+def check_llm_status(
+    config_manager: Optional["ConfigurationManager"],
+) -> Dict[str, Any]:
     """Check LLM configuration status."""
     if not config_manager:
         return {
@@ -132,63 +129,9 @@ def check_llm_status(config_manager: Optional['ConfigurationManager']) -> Dict[s
         }
 
 
-def check_ontology_status(config_manager: Optional['ConfigurationManager']) -> Dict[str, Any]:
-    """Check ontology plugin status."""
-    if not config_manager:
-        return {
-            "enabled": False,
-            "domain": None,
-            "concept_count": 0,
-            "plugin_loaded": False,
-            "plugin_type": None,
-        }
-
-    try:
-        ontology_config = config_manager.get("ontology", {})
-        enabled = ontology_config.get("enabled", False)
-
-        if not enabled:
-            return {
-                "enabled": False,
-                "domain": None,
-                "concept_count": 0,
-                "plugin_loaded": False,
-                "plugin_type": None,
-            }
-
-        # Try to load ontology plugin
-        try:
-            from iris_vector_rag.ontology.plugins import get_ontology_plugin
-            plugin = get_ontology_plugin()
-            if plugin:
-                return {
-                    "enabled": True,
-                    "domain": getattr(plugin, "domain", "general"),
-                    "concept_count": len(getattr(plugin, "concepts", [])),
-                    "plugin_loaded": True,
-                    "plugin_type": type(plugin).__name__,
-                }
-        except Exception:
-            pass
-
-        return {
-            "enabled": True,
-            "domain": None,
-            "concept_count": 0,
-            "plugin_loaded": False,
-            "plugin_type": None,
-        }
-    except Exception:
-        return {
-            "enabled": False,
-            "domain": None,
-            "concept_count": 0,
-            "plugin_loaded": False,
-            "plugin_type": None,
-        }
-
-
-def get_extraction_config(config_manager: Optional['ConfigurationManager']) -> Dict[str, Any]:
+def get_extraction_config(
+    config_manager: Optional["ConfigurationManager"],
+) -> Dict[str, Any]:
     """Get entity extraction configuration."""
     if not config_manager:
         return {
@@ -201,9 +144,11 @@ def get_extraction_config(config_manager: Optional['ConfigurationManager']) -> D
     try:
         extraction_config = config_manager.get("entity_extraction", {})
         return {
-            "method": extraction_config.get("method", "ontology_hybrid"),
+            "method": extraction_config.get("method", "llm_basic"),
             "confidence_threshold": extraction_config.get("confidence_threshold", 0.7),
-            "enabled_types": list(extraction_config.get("entity_types", ["ENTITY", "CONCEPT", "PROCESS"])),
+            "enabled_types": list(
+                extraction_config.get("entity_types", ["ENTITY", "CONCEPT", "PROCESS"])
+            ),
             "max_entities": extraction_config.get("max_entities", 100),
         }
     except Exception:
@@ -228,9 +173,13 @@ def check_ingestion_hooks() -> Dict[str, Any]:
     }
 
 
-def run_test_extraction(config_manager: Optional['ConfigurationManager']) -> Dict[str, Any]:
+def run_test_extraction(
+    config_manager: Optional["ConfigurationManager"],
+) -> Dict[str, Any]:
     """Run a test extraction on sample text."""
-    sample_text = "COVID-19 is caused by SARS-CoV-2 virus and affects the respiratory system."
+    sample_text = (
+        "COVID-19 is caused by SARS-CoV-2 virus and affects the respiratory system."
+    )
 
     if not IRIS_RAG_AVAILABLE or not config_manager:
         return {
@@ -259,7 +208,9 @@ def run_test_extraction(config_manager: Optional['ConfigurationManager']) -> Dic
         if "SARS-CoV-2" in sample_text:
             entities.append({"name": "SARS-CoV-2", "type": "VIRUS", "confidence": 0.92})
         if "respiratory system" in sample_text:
-            entities.append({"name": "respiratory system", "type": "ANATOMY", "confidence": 0.88})
+            entities.append(
+                {"name": "respiratory system", "type": "ANATOMY", "confidence": 0.88}
+            )
 
         return {
             "success": True,
@@ -281,7 +232,6 @@ def run_test_extraction(config_manager: Optional['ConfigurationManager']) -> Dic
 def generate_diagnosis(
     service_available: bool,
     llm_status: Dict[str, Any],
-    ontology_status: Dict[str, Any],
     ingestion_hooks: Dict[str, Any],
     test_extraction: Dict[str, Any],
 ) -> tuple[Dict[str, Any], int]:
@@ -355,7 +305,6 @@ def main():
             output["diagnosis"], exit_code = generate_diagnosis(
                 service_available=False,
                 llm_status=output["llm_status"],
-                ontology_status=output["ontology_status"],
                 ingestion_hooks=output["ingestion_hooks"],
                 test_extraction=output["test_extraction"],
             )
@@ -366,16 +315,15 @@ def main():
         # Service is available
         output["service_status"]["available"] = True
         output["service_status"]["version"] = "1.0.0"
-        output["service_status"]["module_path"] = "iris_rag/services/entity_extraction.py"
+        output["service_status"][
+            "module_path"
+        ] = "iris_rag/services/entity_extraction.py"
 
         # Initialize configuration manager
         config_manager = ConfigurationManager()
 
         # Check LLM status
         output["llm_status"] = check_llm_status(config_manager)
-
-        # Check ontology status
-        output["ontology_status"] = check_ontology_status(config_manager)
 
         # Get extraction configuration
         output["extraction_config"] = get_extraction_config(config_manager)
@@ -390,7 +338,6 @@ def main():
         output["diagnosis"], exit_code = generate_diagnosis(
             service_available=True,
             llm_status=output["llm_status"],
-            ontology_status=output["ontology_status"],
             ingestion_hooks=output["ingestion_hooks"],
             test_extraction=output["test_extraction"],
         )

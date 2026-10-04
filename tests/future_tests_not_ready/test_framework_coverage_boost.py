@@ -25,7 +25,6 @@ from iris_vector_rag.core.models import (
     RelationshipTypes,
 )
 from iris_vector_rag.memory import models as memory_models
-from iris_vector_rag.ontology import models as ontology_models
 
 # High-value modules to boost coverage
 from iris_vector_rag.validation import requirements
@@ -175,36 +174,6 @@ class TestValidationRequirements(unittest.TestCase):
         self.assertTrue(hasattr(requirements, "__name__"))
 
 
-class TestOntologyModels(unittest.TestCase):
-    """Test ontology models to boost coverage."""
-
-    def test_ontology_models_import(self):
-        """Test that ontology models can be imported."""
-        self.assertTrue(hasattr(ontology_models, "__file__"))
-
-        # Check for common model classes
-        model_attrs = dir(ontology_models)
-        self.assertIsInstance(model_attrs, list)
-
-    def test_ontology_enums_and_classes(self):
-        """Test ontology enums and classes."""
-        # Test for common ontology components
-        if hasattr(ontology_models, "ConceptType"):
-            concept_type = ontology_models.ConceptType
-            self.assertTrue(hasattr(concept_type, "__members__"))
-
-        if hasattr(ontology_models, "Concept"):
-            # Test Concept creation if it exists
-            try:
-                concept = ontology_models.Concept(
-                    id="test_concept", label="Test Concept"
-                )
-                self.assertEqual(concept.id, "test_concept")
-            except TypeError:
-                # Constructor might require different parameters
-                pass
-
-
 class TestMemoryModels(unittest.TestCase):
     """Test memory models to boost coverage."""
 
@@ -321,12 +290,6 @@ class TestHighValueModules(unittest.TestCase):
         from iris_vector_rag.validation import factory
 
         self.assertTrue(hasattr(factory, "__file__"))
-
-    def test_ontology_module(self):
-        """Test ontology module components."""
-        from iris_vector_rag import ontology
-
-        self.assertTrue(hasattr(ontology, "__path__"))
 
 
 class TestCommonModules(unittest.TestCase):
