@@ -647,3 +647,21 @@ entry: feature, question, choice, why.
 - Process note: `git stash` is repository-global across worktrees. Two agents stashing at
   once swapped their stashes on pop; repaired from the dangling stash commits. Use no
   `git stash` in these worktrees.
+
+## integration-fixes
+
+- **Legacy `RAG.Entities` without `confidence`: add the column, do not write around
+  it.** Choice: `storage/legacy_columns.ensure_confidence_column` reads the catalog
+  (`IRISCatalogReader`) and runs `ALTER TABLE ... ADD confidence DOUBLE DEFAULT 1.0`
+  only when absent. Called from `EntityStorageAdapter._ensure_kg_tables` (entities and
+  relationships tables) and, once per table per instance, from both
+  `BatchEntityProcessor` write methods, which do not go through the adapter. Why: a
+  write path that silently omits a column makes stored confidences disappear and gives
+  two shapes of truth; the ALTER is additive and the first write after an upgrade
+  repairs the table. A failed ALTER raises (the batch processor reports it in `error`).
+  Existing rows stay NULL: IRIS applies a DEFAULT to new rows only, and backfilling
+  would rewrite data the old release wrote; readers already map NULL to 0.0.
+- **Not addressed: a legacy table whose `id` is a required column with no default.**
+  Reproduced with `id VARCHAR(255) PRIMARY KEY`: inserts without `id` fail. That is not
+  the shape the dev database reported (it wrote fine before `confidence` was added), so
+  it is left alone.

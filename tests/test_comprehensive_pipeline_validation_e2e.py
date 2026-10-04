@@ -17,6 +17,8 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import pytest
+
 from iris_vector_rag.core.models import Document
 
 # Use the ACTUAL pipeline implementations we verified
@@ -26,6 +28,11 @@ from iris_vector_rag.pipelines.crag import CRAGPipeline
 from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 logger = logging.getLogger(__name__)
+
+# This file sits outside tests/integration|e2e|contract, so the autouse IRIS wiring in
+# conftest does not reach it; without this it only worked after another module had
+# pointed the environment at the test IRIS.
+pytestmark = pytest.mark.usefixtures("iris_target")
 
 
 @dataclass
@@ -81,9 +88,9 @@ class ComprehensivePipelineValidator:
             Document(
                 id="doc1",
                 page_content="""
-                Cardiovascular disease (CVD) remains one of the leading causes of death worldwide. 
-                The primary risk factors include high blood pressure, high cholesterol, smoking, 
-                diabetes, obesity, and lack of physical activity. Prevention strategies focus on 
+                Cardiovascular disease (CVD) remains one of the leading causes of death worldwide.
+                The primary risk factors include high blood pressure, high cholesterol, smoking,
+                diabetes, obesity, and lack of physical activity. Prevention strategies focus on
                 lifestyle modifications including regular exercise, healthy diet, and smoking cessation.
                 """,
                 metadata={"source": "test_cardiology.txt", "category": "cardiology"},
@@ -128,7 +135,7 @@ class ComprehensivePipelineValidator:
                 page_content="""
                 Mental health disorders affect millions worldwide, including depression, anxiety,
                 bipolar disorder, and schizophrenia. Treatment approaches include psychotherapy,
-                medication, lifestyle changes, and social support. Early intervention and 
+                medication, lifestyle changes, and social support. Early intervention and
                 reducing stigma are crucial for improving outcomes. Access to mental health
                 services remains a significant challenge in many regions.
                 """,
@@ -137,13 +144,16 @@ class ComprehensivePipelineValidator:
         ]
         return documents
 
-    def validate_pipeline(self, pipeline_class, pipeline_name: str) -> PipelineMetrics:
+    def validate_pipeline(
+        self, pipeline_class, pipeline_name: str, **pipeline_kwargs
+    ) -> PipelineMetrics:
         """
         Validate a single pipeline completely.
 
         Args:
             pipeline_class: The pipeline class to test
             pipeline_name: Name for reporting
+            **pipeline_kwargs: Passed to the pipeline constructor
 
         Returns:
             Complete metrics for the pipeline
@@ -172,7 +182,7 @@ class ComprehensivePipelineValidator:
         # Test 1: Initialization
         try:
             start_time = time.time()
-            pipeline = pipeline_class()
+            pipeline = pipeline_class(**pipeline_kwargs)
             metrics.initialization_time = time.time() - start_time
             metrics.initialization_success = True
             logger.info(
@@ -186,7 +196,7 @@ class ComprehensivePipelineValidator:
         # Test 2: Document Ingestion
         try:
             start_time = time.time()
-            pipeline.load_documents("", documents=self.test_documents)
+            pipeline.load_documents(documents_path="", documents=self.test_documents)
             metrics.ingestion_time = time.time() - start_time
             metrics.documents_ingested = len(self.test_documents)
             metrics.document_ingestion_success = True
@@ -263,10 +273,10 @@ class ComprehensivePipelineValidator:
     def validate_all_pipelines(self) -> Dict[str, PipelineMetrics]:
         """Validate all 4 ACTUAL pipelines."""
         pipelines_to_test = [
-            (BasicRAGPipeline, "BasicRAG"),
-            (CRAGPipeline, "CRAG"),
-            (BasicRAGRerankingPipeline, "BasicRAGReranking"),
-            (GraphRAGPipeline, "GraphRAG"),
+            (BasicRAGPipeline, "BasicRAG", {}),
+            (CRAGPipeline, "CRAG", {}),
+            (BasicRAGRerankingPipeline, "BasicRAGReranking", {}),
+            (GraphRAGPipeline, "GraphRAG", {"llm_func": _graphrag_llm}),
         ]
 
         logger.info("🚀 STARTING COMPREHENSIVE PIPELINE VALIDATION")
@@ -274,9 +284,9 @@ class ComprehensivePipelineValidator:
             f"📊 Testing {len(pipelines_to_test)} pipelines with {len(self.test_documents)} documents"
         )
 
-        for pipeline_class, pipeline_name in pipelines_to_test:
+        for pipeline_class, pipeline_name, kwargs in pipelines_to_test:
             self.results[pipeline_name] = self.validate_pipeline(
-                pipeline_class, pipeline_name
+                pipeline_class, pipeline_name, **kwargs
             )
 
         return self.results
@@ -402,10 +412,28 @@ def test_basic_rag_reranking_pipeline():
     ), f"BasicRAGReranking not working: {metrics.overall_status}"
 
 
+def _graphrag_llm(prompt: str) -> str:
+    """A deterministic LLM: entity extraction gets JSON, everything else gets prose.
+
+    GraphRAG fails loudly without an LLM (it has no way to extract entities), so this
+    test supplies one instead of relying on the pipeline to carry on without.
+    """
+    if "entities" in prompt.lower() and "json" in prompt.lower():
+        return json.dumps(
+            [
+                {"text": "diabetes", "type": "DISEASE"},
+                {"text": "insulin", "type": "TREATMENT"},
+            ]
+        )
+    return "Diabetes is managed with insulin and lifestyle changes."
+
+
 def test_graph_rag_pipeline():
     """Test GraphRAG pipeline end-to-end."""
     validator = ComprehensivePipelineValidator()
-    metrics = validator.validate_pipeline(GraphRAGPipeline, "GraphRAG")
+    metrics = validator.validate_pipeline(
+        GraphRAGPipeline, "GraphRAG", llm_func=_graphrag_llm
+    )
 
     assert (
         metrics.initialization_success
@@ -446,8 +474,6 @@ def test_comprehensive_validation():
     assert (
         len(report["summary"]["working_pipeline_names"]) > 0
     ), "No working pipelines found!"
-
-    return report
 
 
 if __name__ == "__main__":

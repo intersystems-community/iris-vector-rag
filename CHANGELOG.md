@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Changed: an entity table from an older release is upgraded in place
+
+- **The entity writers add a missing `confidence` column.** `EntityStorageAdapter` and
+  `BatchEntityProcessor` always INSERT `confidence`; a `RAG.Entities` (or
+  `RAG.EntityRelationships`) created by an older release has none, and every write
+  failed with SQLCODE -29. They now ask the catalog which columns exist and run
+  `ALTER TABLE ... ADD confidence DOUBLE DEFAULT 1.0` when it is absent, logging a
+  warning. Nothing is dropped or rewritten: rows written by the old release keep a NULL
+  `confidence` (IRIS applies a column DEFAULT to new rows only), and a failed ALTER
+  raises.
+
 ### Changed: only the ObjectScript that exists nowhere else ships
 
 - **The wheel now ships `RAG.ColBERTSearch`** (`pipelines/colbert_iris/sp/ColBERTSearch.cls`)
