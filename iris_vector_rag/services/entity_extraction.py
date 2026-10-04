@@ -57,8 +57,8 @@ class OntologyAwareEntityExtractor:
             config_manager: Configuration manager instance
             connection_manager: Optional connection manager for storage integration
             embedding_manager: Optional embedding manager
-            ontology_sources: Ignored. The ontology package is deprecated and
-                no longer consulted; kept for signature compatibility
+            ontology_sources: Ignored. The ontology package was removed; kept for
+                signature compatibility
             optimized_program_path: Optional path to an optimized program file
             llm_func: Optional LLM function override
         """

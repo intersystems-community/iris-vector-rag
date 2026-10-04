@@ -74,14 +74,6 @@ examples:
     interactive: true
     features: ["visualization", "graph_export"]
 
-  "demo_ontology_support.py":
-    timeout: 400
-    expected_outputs: ["ontology_stats", "entity_mapping"]
-    performance_bounds:
-      max_execution_time: 250
-      max_memory_mb: 768
-    features: ["ontology", "entity_extraction"]
-
 # Global validation rules
 validation:
   answer:

@@ -251,7 +251,6 @@ class E2EIntegrationTestSuite:
 
         demo_scripts = {
             "Graph Visualization": "scripts.demo_graph_visualization",
-            "Ontology Support": "scripts.demo_ontology_support",
         }
 
         demo_results = {}

@@ -29,6 +29,17 @@ cycle.
   `iris-vector-rag<0.16` or take the code from the git tag `archive/rest-api-v1`. The
   design is kept in [docs/archived/rest-api/](docs/archived/rest-api/README.md). Findings
   AP-01 to AP-24 are closed by deletion.
+- **The ontology package** (`iris_vector_rag.ontology`: loader, reasoner, models and the
+  general plugin), `tests/test_ontology_support.py`, `tests/test_ontology_loader.py` and
+  the `ontology:` section (and `graphrag.ontology_integration`) of `default_config.yaml`.
+  Deprecated in 0.15; entity extraction stopped consulting it then, so the config section
+  had no effect, and a leftover `ontology:` section in your own config still loads and is
+  ignored. `OntologyAwareEntityExtractor` keeps its name and its ignored
+  `ontology_sources` argument, and `EntityExtractionService.extract_with_ontology()` stays
+  as a deprecated alias of `extract_entities_basic()`. If you used the package, take it
+  from the git tag `archive/ontology-v1`. The guide and the architecture analysis moved
+  to [docs/archived/ontology/](docs/archived/ontology/README.md). Findings OE-08, OE-09,
+  OE-11 and OE-17 are closed by deletion.
 - **`IRISSQLUtils.check_table_exists`**, which returned `False` for an unreachable
   database as readily as for a missing table. Nothing called it.
 - **The pure-SQL fallbacks in `iris_vector_rag.common.db_vector_utils`.** The module now
@@ -480,23 +491,6 @@ N}` (or `primary_backend: stub`). It lives in `iris_vector_rag.testing.embedder`
   `except` (bare, `Exception`, `BaseException`) in `iris_vector_rag/` that never raises
   fails the gate unless `antipatterns-baseline.txt` lists it. The baseline holds the 302
   instances that exist today; fixing one means deleting its line.
-
-### Ontology retirement (deprecation)
-
-- **`iris_vector_rag.ontology` is deprecated.** Importing it emits one
-  `DeprecationWarning`. The package is removed in the next release; its last version
-  stays at the git tag `archive/ontology-v1`.
-- **Entity extraction no longer imports the ontology package.** The module-level
-  ontology imports and the dead ontology branch are gone from
-  `services/entity_extraction.py`. `extract_with_ontology()` and the
-  `ontology_sources` argument stay for compatibility and are ignored. The attributes
-  `ontology_config`, `ontology_enabled`, `reasoning_enabled`, `auto_detect_domain`,
-  `ontology_plugin` and `reasoner` on `OntologyAwareEntityExtractor` are removed.
-- **The `ontology:` config section is a no-op.** No code reads it. Existing config
-  files still load. See [docs/ontology_integration_guide.md](docs/ontology_integration_guide.md).
-
-> > > > > > > remediation/ontology-retirement
-> > > > > > > \=======
 
 ### Changed
 

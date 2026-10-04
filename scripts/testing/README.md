@@ -156,7 +156,6 @@ pytest tests/ && python scripts/testing/run_example_tests.py
 ### Demonstration Scripts
 
 - `demo_graph_visualization.py`: Interactive graph visualization
-- `demo_ontology_support.py`: Entity extraction and mapping
 - Output file and artifact validation
 
 ### Reranking Examples

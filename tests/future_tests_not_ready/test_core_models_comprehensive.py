@@ -20,9 +20,7 @@ from iris_vector_rag.core.exceptions import (
 )
 
 # Core model imports
-from iris_vector_rag.core.models import (
-    Document,
-)
+from iris_vector_rag.core.models import Document
 
 # Memory model imports
 from iris_vector_rag.memory.models import (
@@ -32,17 +30,6 @@ from iris_vector_rag.memory.models import (
     TemporalQuery,
     TemporalWindow,
     TemporalWindowConfig,
-)
-
-# Ontology model imports
-from iris_vector_rag.ontology.models import (
-    Concept,
-    ConceptHierarchy,
-    ConceptType,
-    OntologyMetadata,
-    RelationType,
-    SemanticRelation,
-    ValidationLevel,
 )
 
 # Validation imports
@@ -255,69 +242,6 @@ class TestValidationRequirements(unittest.TestCase):
         result = validate_dependencies(dependencies)
 
         self.assertIsInstance(result, dict)
-
-
-class TestOntologyModels(unittest.TestCase):
-    """Test ontology model classes."""
-
-    def test_concept_creation(self):
-        """Test Concept model creation."""
-        concept = Concept(
-            id="concept_1",
-            label="Machine Learning",
-            definition="A method of data analysis",
-            concept_type=ConceptType.CLASS,
-            synonyms=["ML", "statistical learning"],
-            properties={"domain": "computer_science"},
-        )
-
-        self.assertEqual(concept.id, "concept_1")
-        self.assertEqual(concept.label, "Machine Learning")
-        self.assertEqual(concept.concept_type, ConceptType.CLASS)
-        self.assertIn("ML", concept.synonyms)
-
-    def test_concept_hierarchy_creation(self):
-        """Test ConceptHierarchy model."""
-        hierarchy = ConceptHierarchy(
-            parent_id="parent_1",
-            child_id="child_1",
-            relation_type=RelationType.IS_A,
-            confidence=0.9,
-        )
-
-        self.assertEqual(hierarchy.parent_id, "parent_1")
-        self.assertEqual(hierarchy.child_id, "child_1")
-        self.assertEqual(hierarchy.relation_type, RelationType.IS_A)
-        self.assertEqual(hierarchy.confidence, 0.9)
-
-    def test_semantic_relation_creation(self):
-        """Test SemanticRelation model."""
-        relation = SemanticRelation(
-            source_id="concept_1",
-            target_id="concept_2",
-            relation_type=RelationType.RELATED_TO,
-            weight=0.8,
-            properties={"context": "research"},
-        )
-
-        self.assertEqual(relation.source_id, "concept_1")
-        self.assertEqual(relation.target_id, "concept_2")
-        self.assertEqual(relation.weight, 0.8)
-
-    def test_ontology_metadata_creation(self):
-        """Test OntologyMetadata model."""
-        metadata = OntologyMetadata(
-            name="Test Ontology",
-            version="1.0",
-            description="Test ontology for unit tests",
-            author="Test Author",
-            created_at=datetime.now(),
-            validation_level=ValidationLevel.BASIC,
-        )
-
-        self.assertEqual(metadata.name, "Test Ontology")
-        self.assertEqual(metadata.version, "1.0")
-        self.assertEqual(metadata.validation_level, ValidationLevel.BASIC)
 
 
 class TestMemoryModels(unittest.TestCase):

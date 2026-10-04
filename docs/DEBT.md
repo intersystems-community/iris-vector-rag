@@ -105,7 +105,7 @@ contract test that depends on how many rows some other test left behind is not a
 test — but it needs a fixture that creates, ingests into, and drops a table per module, which
 is more machinery than the flake justifies today.
 
-## 7. 22 stale `iris_rag.*` / `common.*` patch targets across 6 files
+## 7. 12 stale `iris_rag.*` / `common.*` patch targets across 5 files
 
 `iris_rag/` and `common/` contain nothing but `__pycache__`. Python 3 still resolves each as
 a **namespace package**, so `import iris_rag` succeeds and returns a module with no
@@ -118,7 +118,6 @@ are not:
 
 | File                                                             | Sites |
 | ---------------------------------------------------------------- | ----- |
-| `tests/test_ontology_loader.py`                                  | 10    |
 | `tests/test_schema_manager_bugs.py`                              | 7     |
 | `tests/future_tests_not_ready/test_core_models_comprehensive.py` | 2     |
 | `tests/test_hybrid_graphrag_functional.py`                       | 1     |
@@ -130,7 +129,7 @@ red rather than accepted red.
 
 **Why deferred:** re-pointing a target un-masks whatever the collection error was hiding. The
 eight sites fixed here turned 3 failures into passes and left 7 real ones (the `IRISStorage` tests, since deleted) — a ratio
-that says the other 22 sites will surface real assertions too, in files
+that says the other 12 sites will surface real assertions too, in files
 (`future_tests_not_ready/`) nobody has looked at. That is open-ended debugging
 and belongs in a feature with a spec, not in a housekeeping commit.
 
