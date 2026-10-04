@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Changed: only the ObjectScript that exists nowhere else ships
+
+- **The wheel now ships `RAG.ColBERTSearch`** (`pipelines/colbert_iris/sp/ColBERTSearch.cls`)
+  through package data. `package-data` listed no `*.cls`, so no release ever contained
+  it (OS-13).
+- **Removed thirteen vendored copies** of iris-vector-graph classes from
+  `iris_vector_rag/pipelines/colbert_iris/sp/` (`Algorithms`, `BM25Index`, `EdgeScan`,
+  `IVFIndex`, `Meta`, `NKGAccel`, `PLAIDSearch`, `PageRank`, `Snapshot`, `Subgraph`,
+  `Traversal`, `VecIndex`, `UserExec`). ivg 4.1.1 ships every one of them, several of
+  the copies were stale, and none was packaged or referenced (OS-12, OS-14). `User.Exec.Run`,
+  which runs `Xecute` on its argument, is therefore not in this repository or its wheel;
+  ivg still provides it.
+- **`RAG.ColBERTSearch.Search` no longer builds SQL from document ids**: candidate ids are
+  bound parameters and `topK` / `nProbe` are coerced to integers, so an apostrophe in a
+  `doc_id` is searched rather than breaking the query (OS-11).
+
 ### Removed
 
 Dead code with no production caller and a hazard attached. No deprecation release:
