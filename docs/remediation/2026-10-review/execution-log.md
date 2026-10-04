@@ -665,3 +665,32 @@ entry: feature, question, choice, why.
   Reproduced with `id VARCHAR(255) PRIMARY KEY`: inserts without `id` fail. That is not
   the shape the dev database reported (it wrote fine before `confidence` was added), so
   it is left alone.
+- **The ~60 new dev-database failures were three causes, not one.** (1) Legacy
+  `RAG.Entities` without `confidence`: 17 failures and 23 errors on an ephemeral
+  container with a legacy-shaped table pre-created (145 failed / 66 errors before,
+  125 / 43 after); fixed in the write path. (2)
+  `tests/test_comprehensive_pipeline_validation_e2e.py::test_graph_rag_pipeline`:
+  GraphRAG now fails loudly when it has no `llm_func` (entity-services-fix), and the
+  validator built every pipeline with no arguments. The validator now takes
+  constructor kwargs and gives GraphRAG a deterministic extraction function. The same
+  file only worked after some other module had pointed `IRIS_*` at the test IRIS (it
+  sits outside the autouse directories), so it now requests `iris_target` itself; its
+  CRAG call passed `documents` twice and now uses `documents_path=`; a test returning a
+  dict is now a plain test. (3) The graphrag_vector_search, graph/colbert e2e and
+  graphrag e2e errors were the legacy table alone: they pass on a fresh container and
+  on a legacy-shaped one once the column is added. No shared-state interaction between
+  the core-contracts `clear()` and validation-truthfulness DDL was found in these
+  files.
+- **Stub embedder is not for retrieval-relevance tests.**
+  `test_mcp_stdio_e2e.py::test_story_2` ranks by meaning. Under
+  `RAG_EMBEDDINGS__PROVIDER=stub` the ingesting process and the server subprocess (which
+  does not inherit the variable) embed differently; passing the variable through only
+  makes the ranking deterministic noise, so it still fails by chance. It passes with the
+  real model. A pass-through change was tried and reverted (two revert commits). Run it
+  without the stub variables.
+- **Comparing ephemeral runs with the dev-database lists.** The phase 3 and phase 4
+  lists in /tmp came from the dev database, whose failures differ from a fresh
+  container's. The honest baseline is phase 3 (`cba0986d`) on an ephemeral container:
+  164 failed / 43 errors. On the same container shape phase 4 added only two failing
+  tests (`test_graph_rag_pipeline` and the stub-artefact test above); after this branch
+  only the stub artefact remains.
