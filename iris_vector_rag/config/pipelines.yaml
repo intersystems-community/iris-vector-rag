@@ -114,8 +114,7 @@ pipelines:
       graph_relations_global: "GraphRelations"
       enable_visualization: true
       enable_comparison_ui: true
-      project_path: null  # Auto-discovery or set via config
-
+      project_path: null # Auto-discovery or set via config
 
 # Framework dependencies (shared across all pipelines)
 framework:

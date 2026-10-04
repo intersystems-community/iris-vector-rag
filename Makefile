@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install iris-up iris-down iris-logs iris-reset test-unit lint format-check doctor
+.PHONY: help setup-env install test-community test-enterprise iris-up iris-down iris-logs iris-reset test-unit lint format-check doctor
 
 help: ## Show available targets
 	@echo ""
@@ -9,8 +9,11 @@ help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 
-install: ## Install package and dev dependencies (includes experimental dspy)
-	pip install -e ".[dev,dspy]"
+setup-env: ## Create the project virtual environment (.venv) with uv
+	uv venv .venv
+
+install: ## Install package and dev dependencies into the active or .venv environment (includes experimental dspy)
+	uv pip install -e ".[dev,dspy]"
 
 iris-up: ## Start IRIS container via docker compose
 	docker compose up -d
@@ -26,6 +29,12 @@ iris-reset: ## Recover a wedged project IRIS container (stop, restart, wait, war
 
 test-unit: ## Run unit tests (no database required)
 	python -m pytest tests/unit/ --timeout=30 -q
+
+test-community: ## Run the suite in Community Edition mode (one connection)
+	IRIS_BACKEND_MODE=community python -m pytest tests/ -q
+
+test-enterprise: ## Run the suite in Enterprise Edition mode
+	IRIS_BACKEND_MODE=enterprise python -m pytest tests/ -q
 
 lint: ## Run ruff linting checks
 	python -m ruff check iris_vector_rag/ --select=E9,F63,F7,F82

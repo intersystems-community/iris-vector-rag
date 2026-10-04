@@ -66,7 +66,7 @@ The IRIS Global GraphRAG pipeline integrates the core functionality from the ext
    git clone https://github.com/your-colleague/IRIS-Global-GraphRAG.git
    ```
 
-2. **Configure Pipeline** in `config/pipelines.yaml`:
+2. **Configure Pipeline** in `iris_vector_rag/config/pipelines.yaml`:
 
    ```yaml
    - name: "IRISGlobalGraphRAG"

@@ -30,7 +30,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -99,6 +98,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "pytest-dotenv>=0.5.2",
     "pytest-mock>=3.12.0",
+    "pytest-timeout>=2.2.0",
     "iris-devtester>=1.11.1",
     "black>=23.0.0",
     "isort>=5.12.0",
@@ -133,6 +133,7 @@ all = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.12.0",
+    "pytest-timeout>=2.2.0",
     "iris-devtester>=1.11.1",
     "black>=23.0.0",
     "isort>=5.12.0",
@@ -179,7 +180,6 @@ Repository = "https://github.com/intersystems-community/iris-vector-rag"
 Changelog = "https://github.com/intersystems-community/iris-vector-rag/blob/main/CHANGELOG.md"
 
 [project.scripts]
-rag-templates = "iris_vector_rag.cli:main"
 iris-vector-rag-mcp = "iris_vector_rag.mcp.__main__:main"
 
 [tool.setuptools.packages.find]

@@ -85,7 +85,7 @@ jobs:
         env:
           SKIP_IRIS_CONTAINER: "1"
         run: |
-          DESELECT=$(sed 's/^/--deselect=/' tests/contract/ci_known_failures.txt | tr '\n' ' ')
+          DESELECT=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_known_failures.txt | sed 's/^/--deselect=/' | tr '\n' ' ')
           uv run pytest tests/unit/ $DESELECT \
             --timeout=60 \
             --tb=short \
@@ -98,4 +98,61 @@ jobs:
         with:
           name: test-results-unit-${{ matrix.python-version }}
           path: test-results-unit.xml
+          if-no-files-found: ignore
+
+  # The integration tests run against a real IRIS on the same `iris_connection`
+  # fixture the contract suite uses. CI pins its throwaway container by name
+  # (IRIS_CONTAINER_NAME=iris); the fixture refuses any other name unless CI is set.
+  # A failure listed in tests/contract/ci_known_failures.txt is quarantined; any
+  # other failure turns this job red.
+  integration-tests:
+    name: Integration Tests (IRIS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+
+      - name: Start IRIS
+        run: bash scripts/ci/start-iris.sh --container iris --port 1972 --recreate
+
+      - name: Install dependencies
+        run: |
+          # CPU-only torch first: avoids ~5 GB of nvidia CUDA wheels on a 14 GB runner
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,mcp]"
+
+      - name: Run integration tests
+        env:
+          IRIS_HOST: localhost
+          IRIS_CONTAINER_NAME: iris
+          IRIS_PORT: "1972"
+          IRIS_USERNAME: _SYSTEM
+          IRIS_PASSWORD: SYS
+          IRIS_NAMESPACE: USER
+          # Fixtures need a key present to construct an LLM func; a placeholder
+          # keeps the run free of real LLM calls.
+          OPENAI_API_KEY: sk-ci-placeholder
+        run: |
+          DESELECT=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_known_failures.txt | sed 's/^/--deselect=/' | tr '\n' ' ')
+          python -m pytest tests/integration/ $DESELECT \
+            --ignore=tests/integration/test_ivg_4x_upgrade_e2e.py \
+            --timeout=120 \
+            --timeout-method=thread \
+            --tb=short \
+            --junit-xml=test-results-integration.xml \
+            -q
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: test-results-integration
+          path: test-results-integration.xml
           if-no-files-found: ignore

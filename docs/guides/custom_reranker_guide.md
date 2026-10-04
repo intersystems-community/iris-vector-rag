@@ -92,7 +92,7 @@ def my_reranker(query: str, docs: List[Document]) -> List[Tuple[Document, float]
 Rerankers integrate seamlessly with the pipeline configuration system:
 
 ```yaml
-# config/pipelines.yaml
+# iris_vector_rag/config/pipelines.yaml
 pipelines:
   - name: "CustomReranking"
     module: "my_pipelines.custom_rerank"
@@ -523,10 +523,10 @@ def create_medical_reranker():
 
 ### Step 1: Update Pipeline Configuration
 
-Add your custom pipeline to [`config/pipelines.yaml`](config/pipelines.yaml):
+Add your custom pipeline to [`iris_vector_rag/config/pipelines.yaml`](iris_vector_rag/config/pipelines.yaml):
 
 ```yaml
-# config/pipelines.yaml
+# iris_vector_rag/config/pipelines.yaml
 pipelines:
   # ... existing pipelines ...
 

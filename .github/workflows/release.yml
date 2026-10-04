@@ -14,10 +14,32 @@ env:
   PYTHON_DEFAULT_VERSION: "3.12"
 
 jobs:
+  check-tag:
+    name: Tag matches the package version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # A tag that disagrees with pyproject.toml publishes the wrong version to PyPI,
+      # and PyPI never lets a version be published twice. Fail before anything else.
+      - name: Check the tag against pyproject.toml
+        run: |
+          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "${RELEASE_TAG}" != "v${VERSION}" ]; then
+            echo "::error::tag ${RELEASE_TAG} does not match pyproject.toml version ${VERSION} (expected v${VERSION})"
+            exit 1
+          fi
+          echo "tag ${RELEASE_TAG} matches version ${VERSION}"
+
   test:
     name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    needs: check-tag
     strategy:
       fail-fast: true
       matrix:
@@ -87,13 +109,13 @@ jobs:
           IRIS_NAMESPACE: USER
           # Pipeline fixtures need a key present to construct an LLM func; a
           # placeholder keeps contract tests free of real LLM calls (no cost, no
-          # network hangs). LLM-dependent suites (CRAG) are ignored below.
+          # network hangs).
           OPENAI_API_KEY: sk-ci-placeholder
         run: |
           # tests/contract/ci_known_failures.txt lists pre-existing failures that
           # need a pre-populated corpus or are stale against current pipeline
           # contracts. They are tracked there rather than silently skipped.
-          DESELECT=$(sed 's/^/--deselect=/' tests/contract/ci_known_failures.txt | tr '\n' ' ')
+          DESELECT=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_known_failures.txt | sed 's/^/--deselect=/' | tr '\n' ' ')
           python -m pytest tests/contract/ $DESELECT \
             --timeout=30 \
             --timeout-method=thread \
@@ -101,12 +123,7 @@ jobs:
             -q \
             --ignore=tests/contract/test_coverage_contract.py \
             --ignore=tests/contract/test_coverage_warning_contract.py \
-            --ignore=tests/contract/test_mcp_tool_schemas.py \
             --ignore=tests/contract/test_smoke.py \
-            --ignore=tests/contract/test_crag_contract.py \
-            --ignore=tests/contract/test_crag_error_handling.py \
-            --ignore=tests/contract/test_crag_fallback_mechanism.py \
-            --ignore=tests/contract/test_crag_dimension_validation.py \
             --ignore=tests/contract/test_ragas_validation_contract.py
 
   build:
@@ -153,7 +170,7 @@ jobs:
           path: dist/
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.14.2
 
   github-release:
     name: Create GitHub Release

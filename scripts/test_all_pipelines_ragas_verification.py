@@ -222,7 +222,7 @@ class ComprehensivePipelineRAGASTest:
             # Test pipeline registration in YAML config
             import yaml
 
-            config_path = "config/pipelines.yaml"
+            config_path = "iris_vector_rag/config/pipelines.yaml"
 
             if not os.path.exists(config_path):
                 return {"error": "Pipeline config file not found"}
