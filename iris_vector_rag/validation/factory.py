@@ -6,7 +6,7 @@ before creating pipeline instances.
 """
 
 import logging
-from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
@@ -17,7 +17,7 @@ from ..pipelines.basic_rerank import BasicRAGRerankingPipeline
 from ..pipelines.crag import CRAGPipeline
 from ..pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 from .orchestrator import SetupOrchestrator
-from .requirements import get_pipeline_requirements
+from .requirements import PIPELINE_REQUIREMENTS_REGISTRY, get_pipeline_requirements
 from .validator import PreConditionValidator
 
 logger = logging.getLogger(__name__)
@@ -88,12 +88,18 @@ class ValidatedPipelineFactory:
 
         # Validate requirements if requested
         if validate_requirements:
-            validation_report = self._validate_and_setup(pipeline_type, auto_setup)
+            validation_report = self._validate_and_setup(
+                pipeline_type, auto_setup, llm_func
+            )
 
             if not validation_report.overall_valid:
                 error_msg = f"Pipeline {pipeline_type} validation failed: {validation_report.summary}"
                 if validation_report.setup_suggestions:
                     error_msg += f"\nSuggestions: {'; '.join(validation_report.setup_suggestions)}"
+                if validation_report.setup_errors:
+                    error_msg += (
+                        f"\nSetup errors: {'; '.join(validation_report.setup_errors)}"
+                    )
 
                 if not auto_setup:
                     raise PipelineValidationError(error_msg)
@@ -105,7 +111,12 @@ class ValidatedPipelineFactory:
         # Create pipeline instance
         return self._create_pipeline_instance(pipeline_type, llm_func, **kwargs)
 
-    def _validate_and_setup(self, pipeline_type: str, auto_setup: bool):
+    def _validate_and_setup(
+        self,
+        pipeline_type: str,
+        auto_setup: bool,
+        llm_func: Optional[Callable[[str], str]] = None,
+    ):
         """Validate requirements and optionally set up missing components."""
         requirements = get_pipeline_requirements(pipeline_type)
         validation_report = self.validator.validate_pipeline_requirements(requirements)
@@ -115,7 +126,7 @@ class ValidatedPipelineFactory:
                 f"Auto-setup enabled, attempting to fix issues for {pipeline_type}"
             )
             validation_report = self.orchestrator.setup_pipeline(
-                pipeline_type, auto_fix=True
+                pipeline_type, auto_fix=True, llm_func=llm_func
             )
 
         return validation_report
@@ -145,9 +156,9 @@ class ValidatedPipelineFactory:
             **kwargs,
         }
 
-        # For pipelines that accept schema_manager, pass it
-        # Currently only HybridGraphRAG explicitly accepts schema_manager
-        if pipeline_type == "hybrid_graphrag":
+        # Both graph types are built by HybridGraphRAGPipeline, which takes the
+        # schema manager that ensured their tables.
+        if pipeline_type in ("graphrag", "hybrid_graphrag"):
             pipeline_kwargs["schema_manager"] = schema_manager
 
         if pipeline_type == "basic":
@@ -156,7 +167,7 @@ class ValidatedPipelineFactory:
             return CRAGPipeline(**pipeline_kwargs)
         elif pipeline_type == "basic_rerank":
             return BasicRAGRerankingPipeline(**pipeline_kwargs)
-        elif pipeline_type == "graphrag":
+        elif pipeline_type in ("graphrag", "hybrid_graphrag"):
             return HybridGraphRAGPipeline(**pipeline_kwargs)
         elif pipeline_type == "pylate_colbert":
             from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
@@ -165,13 +176,7 @@ class ValidatedPipelineFactory:
 
             return PyLateColBERTPipeline(**pipeline_kwargs)
         else:
-            available_types = [
-                "basic",
-                "basic_rerank",
-                "crag",
-                "graphrag",
-                "pylate_colbert",
-            ]
+            available_types = list(PIPELINE_REQUIREMENTS_REGISTRY)
             raise ValueError(
                 f"Unknown pipeline type: {pipeline_type}. Available: {available_types}"
             )
@@ -318,8 +323,9 @@ class ValidatedPipelineFactory:
                         **validation_report.table_validations,
                         **validation_report.embedding_validations,
                     }.items()
-                    if not result.is_valid
+                    if not result.is_valid and name in validation_report.required_names
                 ],
+                "setup_errors": list(validation_report.setup_errors),
             }
 
         except Exception as e:
@@ -339,10 +345,7 @@ class ValidatedPipelineFactory:
         Returns:
             Dictionary of pipeline types and their status
         """
-        pipeline_types = [
-            "basic",
-            "crag",
-        ]
+        pipeline_types = list(PIPELINE_REQUIREMENTS_REGISTRY)
         results = {}
 
         for pipeline_type in pipeline_types:

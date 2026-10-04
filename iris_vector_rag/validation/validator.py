@@ -6,13 +6,17 @@ data and dependencies before execution.
 """
 
 import logging
-from dataclasses import dataclass
-from typing import Any, Dict, List
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set
 
 from ..core.connection import ConnectionManager
+from ..storage.catalog import CatalogReader, IRISCatalogReader
 from .requirements import EmbeddingRequirement, PipelineRequirements, TableRequirement
 
 logger = logging.getLogger(__name__)
+
+# The share of rows that must carry an embedding for the requirement to be met.
+MIN_EMBEDDING_COMPLETENESS = 0.95
 
 
 @dataclass
@@ -35,6 +39,13 @@ class ValidationReport:
     embedding_validations: Dict[str, ValidationResult]
     summary: str
     setup_suggestions: List[str]
+    # What a setup run could not do, in the words of the error. Empty for a plain
+    # validation; `SetupOrchestrator.setup_pipeline` fills it so a report that is still
+    # invalid says why instead of leaving the reason in a log.
+    setup_errors: List[str] = field(default_factory=list)
+    # The keys of `table_validations` and `embedding_validations` that gate
+    # `overall_valid`: in the requirements' required lists and flagged `required`.
+    required_names: Set[str] = field(default_factory=set)
 
 
 class PreConditionValidator:
@@ -47,14 +58,22 @@ class PreConditionValidator:
     - Data integrity and completeness
     """
 
-    def __init__(self, connection_manager: ConnectionManager):
+    def __init__(
+        self,
+        connection_manager: ConnectionManager,
+        catalog: Optional[CatalogReader] = None,
+    ):
         """
         Initialize the validator.
 
         Args:
             connection_manager: Database connection manager
+            catalog: Reader used to tell a missing table from a failed query. One is
+                built over the connection when not supplied; pass a recorded one in a
+                test.
         """
         self.connection_manager = connection_manager
+        self._catalog = catalog
         self.logger = logging.getLogger(__name__)
 
     def validate_pipeline_requirements(
@@ -71,47 +90,53 @@ class PreConditionValidator:
         """
         self.logger.info(f"Validating requirements for {requirements.pipeline_name}")
 
-        # Validate required tables
-        table_validations = {}
+        table_validations: Dict[str, ValidationResult] = {}
+        embedding_validations: Dict[str, ValidationResult] = {}
+        # `.required` decides what gates the pipeline, not which list a requirement
+        # sits in: GraphRAG lists `Communities` among its required tables with
+        # `required=False`, and that flag is the truth.
+        required_names: Set[str] = set()
+
         for table_req in requirements.required_tables:
-            result = self._validate_table_requirement(table_req)
-            table_validations[table_req.name] = result
+            key = table_req.name if table_req.required else f"{table_req.name}_optional"
+            table_validations[key] = self._validate_table_requirement(table_req)
+            if table_req.required:
+                required_names.add(key)
 
-        # Validate optional tables (for informational purposes)
         for table_req in requirements.optional_tables:
-            result = self._validate_table_requirement(table_req)
-            table_validations[f"{table_req.name}_optional"] = result
+            table_validations[f"{table_req.name}_optional"] = (
+                self._validate_table_requirement(table_req)
+            )
 
-        # Validate required embeddings
-        embedding_validations = {}
         for embedding_req in requirements.required_embeddings:
-            result = self._validate_embedding_requirement(embedding_req)
-            embedding_validations[embedding_req.name] = result
+            key = (
+                embedding_req.name
+                if embedding_req.required
+                else f"{embedding_req.name}_optional"
+            )
+            embedding_validations[key] = self._validate_embedding_requirement(
+                embedding_req
+            )
+            if embedding_req.required:
+                required_names.add(key)
 
-        # Validate optional embeddings (for informational purposes)
         for embedding_req in requirements.optional_embeddings:
-            result = self._validate_embedding_requirement(embedding_req)
-            embedding_validations[f"{embedding_req.name}_optional"] = result
+            embedding_validations[f"{embedding_req.name}_optional"] = (
+                self._validate_embedding_requirement(embedding_req)
+            )
 
-        # Determine overall validity (only based on required components)
-        required_table_valid = all(
+        overall_valid = all(
             result.is_valid
-            for name, result in table_validations.items()
-            if not name.endswith("_optional")
+            for validations in (table_validations, embedding_validations)
+            for name, result in validations.items()
+            if name in required_names
         )
-        required_embedding_valid = all(
-            result.is_valid
-            for name, result in embedding_validations.items()
-            if not name.endswith("_optional")
-        )
-        overall_valid = required_table_valid and required_embedding_valid
 
-        # Generate summary and suggestions
         summary = self._generate_summary(
-            overall_valid, table_validations, embedding_validations
+            overall_valid, table_validations, embedding_validations, required_names
         )
         setup_suggestions = self._generate_setup_suggestions(
-            requirements, table_validations, embedding_validations
+            requirements, table_validations, embedding_validations, required_names
         )
 
         return ValidationReport(
@@ -121,7 +146,21 @@ class PreConditionValidator:
             embedding_validations=embedding_validations,
             summary=summary,
             setup_suggestions=setup_suggestions,
+            required_names=required_names,
         )
+
+    def _catalog_reader(self, connection) -> CatalogReader:
+        return self._catalog or IRISCatalogReader(connection)
+
+    def _table_is_present(self, connection, schema: str, name: str) -> Optional[bool]:
+        """Whether the catalog lists the table; None if the catalog cannot say."""
+        try:
+            return self._catalog_reader(connection).snapshot(schema, name) is not None
+        except Exception as exc:  # noqa: BLE001 - "cannot say" is the answer
+            self.logger.warning(
+                f"Could not read the catalog for {schema}.{name}: {exc}"
+            )
+            return None
 
     def _validate_table_requirement(
         self, table_req: TableRequirement
@@ -155,6 +194,7 @@ class PreConditionValidator:
                         details={
                             "row_count": row_count,
                             "min_required": table_req.min_rows,
+                            "error_kind": "below_min_rows",
                         },
                         suggestions=[f"Load more data into {table_name}"],
                     )
@@ -167,13 +207,37 @@ class PreConditionValidator:
                 )
 
             except Exception as e:
+                # The count failed. Whether the table is missing is a different
+                # question, asked of the catalog: a dropped connection or a timeout
+                # also fails a COUNT, and "create the table" is wrong advice for it.
+                present = self._table_is_present(
+                    connection, table_req.schema, table_req.name
+                )
+                if present is False:
+                    return ValidationResult(
+                        is_valid=False,
+                        message=f"Table {table_name} does not exist: {e}",
+                        details={"error": str(e), "error_kind": "missing_table"},
+                        suggestions=[
+                            f"Create table {table_name}",
+                            "Check database permissions",
+                        ],
+                    )
                 return ValidationResult(
                     is_valid=False,
-                    message=f"Table {table_name} does not exist or is not accessible: {e}",
-                    details={"error": str(e)},
+                    message=(
+                        f"Could not count the rows of {table_name}"
+                        f"{'' if present else ' (and could not confirm whether it exists)'}"
+                        f": {e}"
+                    ),
+                    details={
+                        "error": str(e),
+                        "error_kind": "count_failed",
+                        "table_exists": present,
+                    },
                     suggestions=[
-                        f"Create table {table_name}",
-                        "Check database permissions",
+                        f"Check that {table_name} is readable by this user",
+                        "Check the database connection",
                     ],
                 )
 
@@ -181,7 +245,7 @@ class PreConditionValidator:
             return ValidationResult(
                 is_valid=False,
                 message=f"Database connection error: {e}",
-                details={"error": str(e)},
+                details={"error": str(e), "error_kind": "connection_error"},
                 suggestions=[
                     "Check database connection",
                     "Verify connection configuration",
@@ -209,7 +273,7 @@ class PreConditionValidator:
 
             # Check if embedding column has data
             sql = f"""
-                SELECT 
+                SELECT
                     COUNT(*) as total_rows,
                     COUNT({embedding_req.column}) as rows_with_embeddings
                 FROM {embedding_req.table}
@@ -238,7 +302,7 @@ class PreConditionValidator:
 
             # Check embedding completeness
             completeness_ratio = rows_with_embeddings / total_rows
-            if completeness_ratio < 0.95:  # Less than 95% complete
+            if completeness_ratio < MIN_EMBEDDING_COMPLETENESS:
                 return ValidationResult(
                     is_valid=False,
                     message=f"Embeddings incomplete: {rows_with_embeddings}/{total_rows} ({completeness_ratio:.1%})",
@@ -325,25 +389,26 @@ class PreConditionValidator:
         overall_valid: bool,
         table_validations: Dict[str, ValidationResult],
         embedding_validations: Dict[str, ValidationResult],
+        required_names: Set[str],
     ) -> str:
-        """Generate a summary of validation results."""
+        """Summarise the result; only what gates the pipeline is called an issue."""
         if overall_valid:
             return "All requirements satisfied. Pipeline ready for execution."
 
         issues = []
 
-        # Table issues
         failed_tables = [
-            name for name, result in table_validations.items() if not result.is_valid
+            name
+            for name, result in table_validations.items()
+            if name in required_names and not result.is_valid
         ]
         if failed_tables:
             issues.append(f"Table issues: {', '.join(failed_tables)}")
 
-        # Embedding issues
         failed_embeddings = [
             name
             for name, result in embedding_validations.items()
-            if not result.is_valid
+            if name in required_names and not result.is_valid
         ]
         if failed_embeddings:
             issues.append(f"Embedding issues: {', '.join(failed_embeddings)}")
@@ -355,27 +420,37 @@ class PreConditionValidator:
         requirements: PipelineRequirements,
         table_validations: Dict[str, ValidationResult],
         embedding_validations: Dict[str, ValidationResult],
+        required_names: Set[str],
     ) -> List[str]:
         """Generate setup suggestions based on validation results."""
         suggestions = []
 
-        # Collect all suggestions from individual validations
         for result in table_validations.values():
             suggestions.extend(result.suggestions)
 
         for result in embedding_validations.values():
             suggestions.extend(result.suggestions)
 
-        # Add pipeline-specific suggestions
-        if not all(result.is_valid for result in table_validations.values()):
+        # Pipeline-level advice only when something that gates the pipeline failed.
+        if not all(
+            result.is_valid
+            for name, result in table_validations.items()
+            if name in required_names
+        ):
             suggestions.append(
                 f"Run setup orchestrator for {requirements.pipeline_name}"
             )
 
-        if not all(result.is_valid for result in embedding_validations.values()):
-            suggestions.append("Use SetupOrchestrator.generate_missing_embeddings()")
+        if not all(
+            result.is_valid
+            for name, result in embedding_validations.items()
+            if name in required_names
+        ):
+            suggestions.append(
+                "Run SetupOrchestrator.setup_pipeline("
+                f"{requirements.pipeline_name!r}) to generate missing embeddings"
+            )
 
-        # Remove duplicates while preserving order
         unique_suggestions = []
         for suggestion in suggestions:
             if suggestion not in unique_suggestions:

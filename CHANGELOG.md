@@ -46,6 +46,54 @@ cycle.
   vector-dimension default as the source of the schema's width. See the dimension entry
   below.
 
+### Changed: validation and auto-setup report what is true
+
+- **`.required` is honoured.** `PreConditionValidator` decides what gates a pipeline
+  from each requirement's `required` flag, not from which list it sits in. GraphRAG is
+  valid without the `Communities` table it flags `required=False`; it is reported under
+  `Communities_optional`. Summaries and the "run the setup orchestrator" suggestion no
+  longer blame optional components. `ValidationReport` gains `required_names` and
+  `setup_errors`.
+- **A failed count is not a missing table.** When `SELECT COUNT(*)` fails the validator
+  asks the catalog: `details["error_kind"]` is `missing_table` (suggest creating it),
+  `count_failed` (a dropped connection, a permission; `details["table_exists"]` says
+  what the catalog answered) or `below_min_rows`. The schema of each requirement is
+  honoured.
+- **No rows invented.** Auto-setup no longer inserts `test_entity_1`, `test_rel_1` or a
+  `test_document_marker.txt` document so that a minimum is met.
+  `SetupOrchestrator._perform_entity_extraction` built `EntityExtractionService` with
+  arguments it does not take (`TypeError`), read the file name instead of the text, and
+  on failure fell back to the fake rows. It now extracts from each document's text with
+  the LLM given to `SetupOrchestrator(llm_func=...)`, `setup_pipeline(llm_func=...)` or
+  `create_pipeline(..., llm_func=...)`; with none it records a setup error and writes
+  nothing. Each document's most confident ten entities are linked by `co_occurrence`
+  relationships.
+- **Setup raises or records what it could not do.** `_validate_embeddings_after_generation`
+  raises `SetupError` for zero, incomplete (below the validator's 95%) or
+  wrongly-formatted embeddings instead of logging and returning; an unverifiable count
+  is no longer assumed to be success; a table that cannot be created, a requirement setup
+  has no generator for and a chunk that cannot be stored are listed in
+  `ValidationReport.setup_errors`. `print()` is gone from library code.
+- **Standard tables only through `SchemaManager`.** The inline DDL and index lists in
+  the orchestrator (which disagreed with the canonical layout) are removed, the chunk
+  table is created and filled in the canonical layout at the configured width (the old
+  path hard-coded 384 and inserted non-canonical columns, so every chunk failed), and
+  the `filename` fallback that chunked and embedded file names is gone. CRAG setup now
+  creates missing tables like the other document pipelines.
+- **Requirements name real columns.** `RAG.DocumentChunks.embedding` is
+  `chunk_embedding`; the never-satisfiable `RAG.Entities.entity_embeddings` requirement
+  (the standard table has no vector column) is removed; the suggestion names
+  `SetupOrchestrator.setup_pipeline(...)`, which exists.
+- **Factory.** `hybrid_graphrag` builds (it was "Unknown pipeline type") and both graph
+  types receive the schema manager; `list_available_pipelines` lists every registered
+  type, not two.
+- **`SchemaManager.migrate_table("Entities")`** keeps the `confidence` column the
+  storage adapter writes.
+- **`SetupOrchestrator.heal_token_embeddings`** raises `NotImplementedError`: it
+  embedded each word of a document into columns `RAG.DocumentTokenEmbeddings` does not
+  have and logged every failure at debug level. Token embeddings are written by the
+  ColBERT ingest.
+
 ### Changed: the MCP server is Python over stdio, the Node server is removed
 
 Feature `mcp-stdio-server` of the 2026-10 review

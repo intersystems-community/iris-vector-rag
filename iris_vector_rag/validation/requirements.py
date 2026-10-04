@@ -128,7 +128,7 @@ class BasicRAGRequirements(PipelineRequirements):
             EmbeddingRequirement(
                 name="chunk_embeddings",
                 table="RAG.DocumentChunks",
-                column="embedding",
+                column="chunk_embedding",
                 description="Chunk-level embeddings for enhanced retrieval (optional)",
                 required=False,
             )
@@ -184,7 +184,7 @@ class CRAGRequirements(PipelineRequirements):
             EmbeddingRequirement(
                 name="chunk_embeddings",
                 table="RAG.DocumentChunks",
-                column="embedding",
+                column="chunk_embedding",
                 description="Chunk-level embeddings for enhanced retrieval (optional)",
                 required=False,
             )
@@ -240,7 +240,7 @@ class BasicRAGRerankingRequirements(PipelineRequirements):
             EmbeddingRequirement(
                 name="chunk_embeddings",
                 table="RAG.DocumentChunks",
-                column="embedding",
+                column="chunk_embedding",
                 description="Chunk-level embeddings for enhanced retrieval (optional)",
                 required=False,
             )
@@ -311,18 +311,9 @@ class GraphRAGRequirements(PipelineRequirements):
             )
         ]
 
-    @property
-    def optional_embeddings(self) -> List[EmbeddingRequirement]:
-        """Optional embeddings for enhanced functionality."""
-        return [
-            EmbeddingRequirement(
-                name="entity_embeddings",
-                table="RAG.Entities",
-                column="entity_embeddings",
-                description="Entity-level embeddings for semantic entity search (optional)",
-                required=False,
-            )
-        ]
+    # No entity-embedding requirement: the standard RAG.Entities table has no vector
+    # column, and nothing in the package writes one, so the requirement that used to be
+    # here (a column named "entity_embeddings") could never be met.
 
 
 class HybridGraphRAGRequirements(PipelineRequirements):
@@ -416,13 +407,6 @@ class HybridGraphRAGRequirements(PipelineRequirements):
         """Optional enhanced embeddings for hybrid capabilities."""
         return [
             EmbeddingRequirement(
-                name="entity_embeddings",
-                table="RAG.Entities",
-                column="entity_embeddings",
-                description="Entity-level embeddings for semantic entity search",
-                required=False,
-            ),
-            EmbeddingRequirement(
                 name="hnsw_optimized_embeddings",
                 table="SQLUSER.kg_NodeEmbeddings_optimized",
                 column="embedding",
@@ -481,7 +465,7 @@ class PyLateColBERTRequirements(PipelineRequirements):
             EmbeddingRequirement(
                 name="chunk_embeddings",
                 table="RAG.DocumentChunks",
-                column="embedding",
+                column="chunk_embedding",
                 description="Chunk-level embeddings for reranking (optional)",
                 required=False,
             )
