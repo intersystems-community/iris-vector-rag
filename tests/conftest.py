@@ -8,7 +8,6 @@ Note: pytest-randomly has been disabled due to incompatibility with thinc/numpy
 random seeding (ValueError: Seed must be between 0 and 2**32 - 1).
 """
 
-import importlib.util
 import os
 import subprocess
 import sys
@@ -17,10 +16,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Generator
 from unittest.mock import AsyncMock, Mock
-
-collect_ignore_glob = []
-if importlib.util.find_spec("redis") is None:
-    collect_ignore_glob.append("**/api/test_*.py")
 
 # No IVR test needs the ivg classes written in embedded Python (Communities, PyOps,
 # CypherEngine). ivg 4.1.1 probes for embedded Python with `%SYS.Python.Import` over the
