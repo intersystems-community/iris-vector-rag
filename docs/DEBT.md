@@ -85,6 +85,11 @@ baselined 24 so no _new_ one can ship unnoticed, and rewrites none of them. The 
 count; it does not reduce it. Rewriting a site means proving which table it targets and that the
 shape lookup is reachable there; two dozen of those is a feature, not a gate change.
 
+Also in this family (PL-14): `pipelines/colbert_iris/maxsim_indb.py` inlines its query vector as a
+`TO_VECTOR('{vec_str}', FLOAT, …)` literal built with an f-string, while ingest, CRAG and the
+pipeline bind `TO_VECTOR(?, …)`. The inputs are floats, so there is no injection; it is
+inconsistent, and it hardcodes `FLOAT` like the baselined sites.
+
 ## 5. `needs_migration` cannot see a column's physical element type
 
 Deferral (d) in `specs/086-canonical-vector-type/spec.md`, and the boundary of what that feature
@@ -142,32 +147,11 @@ Also stale, harmless, same root: `iris_vector_rag/mcp/technique_handlers.py:143`
 directory (`pyproject.toml:191 include = ["iris_vector_rag*"]`, and there is no
 `.coveragerc`, `setup.cfg`, or `MANIFEST.in`).
 
-## 8. Every option in `pytest.ini` is inert
+## 8. (removed)
 
-Already tracked, not newly found: `scripts/gates/antipatterns.py` has an
-`inert-pytest-ini` detector for exactly this, and the instance is baselined at
-`scripts/gates/antipatterns-baseline.txt:20`. The baseline records the fact; this entry
-records the consequence, because the one thing that block was relied on for is cited as
-a guarantee elsewhere in the tree.
-
-The file's section header is `[tool:pytest]` (`pytest.ini:1`). That name is only
-recognised in `setup.cfg`; in a file called `pytest.ini` the section must be `[pytest]`.
-pytest still reports `configfile: pytest.ini`, so the file looks live, but nothing in it
-is read — not the 19-line `addopts` block, not the `markers` list.
-
-Proof from the block's own contents: it asks for `--verbose`, `--doctest-modules`,
-`--cov=iris_rag` and `--cov-fail-under=80`. A `-q` run prints quiet output, no coverage
-report is produced, and no run fails the 80% gate. `--strict-markers` is likewise not in
-force. The `-p no:randomly` at `:34` is the line that matters here: it is the suite's
-only stated defence against random ordering, and it does nothing
-(`tests/KNOWN_ORDER_DEPENDENCIES.md`).
-
-**Why deferred:** fixing the header turns 19 options on at once. `--cov-fail-under=80`
-alone would fail every run until coverage is measured and met, `--doctest-modules` would
-start collecting doctests across the package, `--strict-markers` would reject any marker
-not in the list, and `--cov=iris_rag` names the directory that no longer holds code
-(entry 7). Renaming the section is a one-character change with a suite-wide blast radius;
-it needs its own change, with each option turned on deliberately.
+`pytest.ini` is gone and the suite's options live in `pyproject.toml`, so the
+`inert-pytest-ini` baseline line and this entry no longer apply. The number stays so the other
+entries keep theirs.
 
 ## 9. A second, pre-4.0 `kg_NodeEmbeddings_optimized` in SQLUSER
 
@@ -234,3 +218,47 @@ bump (`class_deploy.fingerprint(sources)` over the selected set).
 ivg 4.1.1 fixed what 4.1.0 left open: the dry run no longer raises on a 2.x install,
 the wheel ships the `.cls` files, `delete_node` reaches routed vector tables, and the
 `SyntaxWarning` in `schema.py` is gone.
+
+## 11. Structural smells awaiting a refactor
+
+Found by the October 2026 code review (type `S`), none of which is a defect today; each makes the
+next change in that area harder. Not scheduled. Checked against the tree after the remediation.
+
+- **PL-15** `pipelines/colbert_iris/plaid.py` `search_via_sp` ignores its `conn` argument.
+- **PL-16** `pipelines/iris_global_graphrag.py` has a no-op statement, `metadata.get("entities", [])`.
+- **PL-17** the "answer or fallback string" branching is repeated in `crag.py`, `basic_rerank.py`
+  and `colbert_iris/pipeline.py`.
+- **ST-19** `storage/schema_manager.py` is now 2,667 lines and is the package's divergence hotspot.
+  Separable parts: dimension and model authority; metadata versioning and `needs_migration`;
+  canonical DDL; the `_migrate_*` family (which repeats one commit/rollback block eight times);
+  ivg orchestration; index management.
+- **ST-21** duplicated storage helpers: the filter-name regexes in `constants.py` and
+  `metadata_filter_manager.py`, and two `VectorStoreCLOBError` classes (`exceptions.py` and
+  `core/exceptions.py`).
+- **CM-15** `config/manager.py`: `load_config` does a shallow `update` while `_merge_configuration`
+  deep-merges.
+- **CR-15** `core/models.py` carries about 80 lines of stream-of-consciousness comments in
+  `Document`, and the coverage models (`CoverageReport`, `ModuleCoverage`) do not belong with the
+  RAG domain models.
+- **CR-18** `retrieval/modes.py` and `core/composable_query.py` hardcode the `RAG` schema while the
+  adapter's table is configurable, repeat two near-identical SQL branches, and share a mutable
+  class attribute `supported_retrieval_modes = ["vector"]` across subclasses.
+- **OE-15, OE-16** what is left in `dspy_modules/` and `embeddings/`: dead attributes and stubs,
+  copied JSON-repair code and a repeated IT entity-type list. The ontology half went with the
+  package, and the duplicate `StubSentenceTransformer` went with `embedding-integrity`.
+
+## 12. Test doubles in production code
+
+What the review found (ST-22, CR-16, OE-18) and what is still there:
+
+- `core/engine.py` sniffs for a mock with `_mock_methods` to decide whether it was handed a
+  `ConnectionManager`. Tests should pass a real one or a declared fake.
+- `embeddings/iris_embedding.py` keeps an unlocked, unbounded module-level `_CONFIG_STORE`.
+- `storage/schema_manager.py` `needs_migration` says "class-level caching" in its docstring; the
+  cache is per instance.
+- `retrieval/engine.py` `_retrieve_global` and `_retrieve_mix` repeat the relation-hit-to-document
+  loop, and carry dead `getattr(self, "llm_func"/"_conn_mgr")` lookups and a redundant
+  `except (AttributeError, Exception)`.
+
+The mock detection in `embeddings/manager.py` and the in-memory `_ENTITY_STORE` and
+`_RELATIONSHIP_STORE` dictionaries were removed by the remediation.
