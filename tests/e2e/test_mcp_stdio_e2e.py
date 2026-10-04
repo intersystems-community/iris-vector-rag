@@ -31,18 +31,7 @@ pytestmark = [pytest.mark.e2e, pytest.mark.mcp]
 
 # The SDK's client starts the server with a minimal environment. The answer step of the
 # pipelines needs the LLM key, and offline model settings must reach the server too.
-# So must the embedder choice: the fixture below ingests in this process, and a server
-# that embeds the query with a different embedder (a test run that injects the stub one
-# through RAG_EMBEDDINGS__*) ranks the documents by a different geometry.
-_PASS_THROUGH = (
-    "OPENAI_API_KEY",
-    "HF_HUB_OFFLINE",
-    "HF_HOME",
-    "TRANSFORMERS_OFFLINE",
-    "RAG_EMBEDDINGS__PROVIDER",
-    "RAG_EMBEDDINGS__DIMENSION",
-    "RAG_EMBEDDINGS__MODEL",
-)
+_PASS_THROUGH = ("OPENAI_API_KEY", "HF_HUB_OFFLINE", "HF_HOME", "TRANSFORMERS_OFFLINE")
 
 
 class _Server:
