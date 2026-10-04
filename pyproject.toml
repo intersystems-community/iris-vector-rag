@@ -191,7 +191,8 @@ iris_vector_rag = [
     "config/*.json",
     "templates/*.yaml",
     "templates/*.json",
-    "mcp/*.json"
+    "mcp/*.json",
+    "pipelines/colbert_iris/sp/ColBERTSearch.cls"
 ]
 
 [tool.black]

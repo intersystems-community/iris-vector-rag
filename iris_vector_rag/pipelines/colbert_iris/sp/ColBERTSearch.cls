@@ -6,6 +6,8 @@ ClassMethod Search(qVecsJson As %String, topK As %Integer, nProbe As %Integer) A
     import iris, json, time
 
     t0 = time.perf_counter()
+    topK = int(topK)
+    nProbe = int(nProbe)
     q_vecs = json.loads(qVecsJson)
     n_dim = len(q_vecs[0])
 
@@ -36,12 +38,13 @@ ClassMethod Search(qVecsJson As %String, topK As %Integer, nProbe As %Integer) A
         q_str = "[" + ",".join(f"{v:.4f}" for v in q_vec) + "]"
         for i in range(0, len(candidates), 400):
             batch = candidates[i:i+400]
-            doc_in = ",".join(f"'{d}'" for d in batch)
+            doc_in = ",".join("?" for _ in batch)
             rs3 = iris.sql.exec(
                 f"SELECT doc_id, MAX(VECTOR_DOT_PRODUCT(tok_vec, TO_VECTOR('{q_str}', FLOAT, {n_dim}))) AS ms "
                 f"FROM RAG.DocumentTokenEmbeddings "
                 f"WHERE doc_id IN ({doc_in}) "
-                f"GROUP BY doc_id"
+                f"GROUP BY doc_id",
+                *batch,
             )
             for row in rs3:
                 did = row[0]

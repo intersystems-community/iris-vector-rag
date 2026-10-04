@@ -624,3 +624,26 @@ entry: feature, question, choice, why.
   failure. It is in the `swallowed-error` baseline with this justification.
 - **Stale baseline lines.** Merging `validation-truthfulness` left 27
   orchestrator baseline lines that no longer fire; they are removed.
+
+## colbert-vendored-objectscript
+
+- **Kept:** `ColBERTSearch.cls` (`RAG.ColBERTSearch`) only. **Deleted:** the other 13
+  (`Algorithms`, `BM25Index`, `EdgeScan`, `IVFIndex`, `Meta`, `NKGAccel`, `PLAIDSearch`,
+  `PageRank`, `Snapshot`, `Subgraph`, `Traversal`, `VecIndex`, `UserExec`). The comparison
+  is by declared class name against every `.cls` in the installed ivg 4.1.1, which ships
+  all of them, `User.Exec` included. The review's "UserExec exists nowhere else" was
+  wrong; the file is `User.Exec`, byte-identical to ivg's (OS-14 R2 already said so).
+- **No Python caller** references `sp/` or `RAG.ColBERTSearch`, so nothing deploys the class
+  automatically. The plan assumes nothing deploys by hand either; the class ships as package
+  data for whoever loads it (spec 067's quickstart does it with `docker cp`). No loader was
+  added: out of scope for this row.
+- **OS-11 fixed** in the kept class (bound parameters for doc ids, integer coercion).
+- **Gate:** `tests/integration/test_colbert_vendored_objectscript_iris.py` loads the class
+  into a module-private ephemeral container, builds the three tables and calls
+  `RAG.ColBERTSearch_Search` with an apostrophe doc_id. SQL upper-cases the returned ids,
+  so the test compares lower-cased.
+- `tests/integration/test_pylate_colbert_e2e.py` fails 5/5 identically on the base
+  (`'dict' object has no attribute 'page_content'`); unrelated to this feature.
+- Process note: `git stash` is repository-global across worktrees. Two agents stashing at
+  once swapped their stashes on pop; repaired from the dangling stash commits. Use no
+  `git stash` in these worktrees.
