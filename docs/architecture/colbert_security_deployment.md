@@ -333,7 +333,7 @@ def prepare_hnsw_index():
 **Objective**: Activate ColBERT pipeline
 
 ```yaml
-# Update config/pipelines.yaml to enable ColBERT
+# Update iris_vector_rag/config/pipelines.yaml to enable ColBERT
 pipelines:
   # ... existing pipelines ...
   - name: "ColBERT"
@@ -482,7 +482,7 @@ def production_readiness_check():
 
 # 1. Immediate disable via configuration
 echo "Disabling ColBERT pipeline..."
-sed -i 's/enabled: true/enabled: false/' config/pipelines.yaml
+sed -i 's/enabled: true/enabled: false/' iris_vector_rag/config/pipelines.yaml
 
 # 2. Restart pipeline factory (graceful)
 python -c "

@@ -22,7 +22,7 @@ This document defines how GraphRAG integrates into the existing IRIS RAG framewo
 
 ### 3. Configuration System
 
-- **YAML Configuration**: Pipeline definitions in `config/pipelines.yaml`
+- **YAML Configuration**: Pipeline definitions in `iris_vector_rag/config/pipelines.yaml`
 - **ConfigurationManager**: Structured access to configuration
 - **Pipeline-specific Parameters**: Via `params` section in pipeline definitions
 
@@ -291,7 +291,7 @@ entity_extraction:
 ### 7. Pipeline Definition Configuration
 
 ```yaml
-# config/pipelines.yaml - Pipeline Definitions
+# iris_vector_rag/config/pipelines.yaml - Pipeline Definitions
 pipelines:
   - name: "basic"
     module: "iris_rag.pipelines.basic"

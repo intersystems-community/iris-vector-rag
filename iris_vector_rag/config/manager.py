@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
@@ -14,6 +15,9 @@ from iris_vector_rag.config.entities import (
     TableConfiguration,
     VectorConfiguration,
 )
+
+#: Pipeline definitions, shipped as package data next to this module.
+PIPELINES_CONFIG_PATH = Path(__file__).resolve().parent / "pipelines.yaml"
 
 
 # Define a specific exception for configuration errors
@@ -600,23 +604,25 @@ class ConfigurationManager:
         Returns:
             Dictionary containing pipeline requirements
         """
-        # Load pipeline configurations
-        # Look for config in project root relative to this file
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        pipeline_config_path = os.path.join(project_root, "config", "pipelines.yaml")
-
+        # The file ships inside the package, so this works from a wheel as well as a
+        # checkout. A missing file is an error: it used to fall through to defaults
+        # (`enabled: True`, no schema requirements) and hide a broken install.
+        if not PIPELINES_CONFIG_PATH.is_file():
+            raise FileNotFoundError(
+                f"Pipeline definitions not found at {PIPELINES_CONFIG_PATH}. "
+                "The package data is missing: reinstall iris-vector-rag."
+            )
         pipelines_config = {}
-        if os.path.exists(pipeline_config_path):
-            with open(pipeline_config_path, "r") as f:
-                config_data = yaml.safe_load(f) or {}
-                if "pipelines" in config_data:
-                    # Convert list format to dict format for easier lookup
-                    for pipeline in config_data["pipelines"]:
-                        if isinstance(pipeline, dict) and "name" in pipeline:
-                            # Store with multiple keys for case-insensitive lookup
-                            name = pipeline["name"]
-                            pipelines_config[name] = pipeline
-                            pipelines_config[name.lower()] = pipeline
+        with open(PIPELINES_CONFIG_PATH, "r") as f:
+            config_data = yaml.safe_load(f) or {}
+            if "pipelines" in config_data:
+                # Convert list format to dict format for easier lookup
+                for pipeline in config_data["pipelines"]:
+                    if isinstance(pipeline, dict) and "name" in pipeline:
+                        # Store with multiple keys for case-insensitive lookup
+                        name = pipeline["name"]
+                        pipelines_config[name] = pipeline
+                        pipelines_config[name.lower()] = pipeline
 
         # Look for pipeline configuration (try multiple case variations)
         pipeline_config = {}

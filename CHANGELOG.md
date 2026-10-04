@@ -437,6 +437,40 @@ N}` (or `primary_backend: stub`). It lives in `iris_vector_rag.testing.embedder`
 - **Removed:** the Docker job (no `Dockerfile` exists), the coverage jobs and
   Codecov upload, and the duplicate Trivy job (`security.yml` scans).
 
+### CI gates, packaging and release (stage 2)
+
+- **Added:** an `integration-tests` job in `ci.yml` runs `tests/integration/` on a real
+  IRIS (CI pins its throwaway container with `IRIS_CONTAINER_NAME=iris`). No `|| true`;
+  failures in `tests/contract/ci_known_failures.txt` are deselected, any other failure
+  blocks. The file now carries the first honest integration run (about 70 failures that
+  were hidden behind setup errors), grouped under a comment naming the feature expected
+  to fix each group. `test_ivg_4x_upgrade_e2e.py` is `--ignore`d: it imports a
+  `ConnectionManager` and a test module that no longer exist. (OS-26)
+- **Fixed:** `pipelines.yaml` ships inside the wheel. It lived in a top-level `config/`
+  directory outside the package, so an installed `iris_vector_rag` could not find it and
+  `get_pipeline_requirements` silently returned `enabled: True` with no schema
+  requirements. It is now `iris_vector_rag/config/pipelines.yaml`, and a missing file
+  raises `FileNotFoundError`. (CM-12)
+- **Removed:** the `rag-templates` console script, which pointed at
+  `iris_vector_rag.cli`, a module that does not exist. The only script is
+  `iris-vector-rag-mcp`. (OS-24)
+- **Fixed:** `pytest-timeout` is in the `dev` and `all` extras, so `make test-unit`
+  (which passes `--timeout`) works after `make install`; the Python 3.10 classifier is
+  gone (`requires-python` is `>=3.11`); `pr-integration.yml` no longer installs an
+  `evaluation` extra that does not exist. (OS-06, OS-09, OS-18)
+- **Changed:** `release.yml` checks that the tag equals `v<pyproject version>` before
+  anything else runs; `trufflehog` and `gh-action-pypi-publish` are pinned to release
+  tags instead of `main` and `release/v1`. `release.yml` no longer ignores
+  `test_mcp_tool_schemas.py` (it passes) nor the four CRAG contract files: their four
+  failures are quarantined in `ci_known_failures.txt` instead, so the other CRAG tests
+  gate. (OS-19)
+- **Added:** `make setup-env`, `make test-community` and `make test-enterprise`, the
+  targets `CLAUDE.md` names. `make install` uses `uv pip install`. (OS-20)
+- **Added:** a `swallowed-error` detector in `scripts/gates/antipatterns.py`. A broad
+  `except` (bare, `Exception`, `BaseException`) in `iris_vector_rag/` that never raises
+  fails the gate unless `antipatterns-baseline.txt` lists it. The baseline holds the 302
+  instances that exist today; fixing one means deleting its line.
+
 ### Changed: the REST API is deprecated (0.15), removed in 0.16
 
 `iris_vector_rag.api` (the FastAPI service) is deprecated and will be removed in 0.16

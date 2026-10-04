@@ -703,7 +703,7 @@ class ConfigSchema:
 ### Pipeline Factory Integration
 
 ```python
-# config/pipelines.yaml - ColBERT Configuration
+# iris_vector_rag/config/pipelines.yaml - ColBERT Configuration
 pipelines:
   - name: "ColBERT"
     module: "iris_rag.pipelines.colbert"

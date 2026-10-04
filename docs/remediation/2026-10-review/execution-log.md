@@ -437,74 +437,190 @@ entry: feature, question, choice, why.
 
 ## validation-truthfulness
 
-- **validation-truthfulness: `.required`.** The flag decides what gates a pipeline
-  (`ValidationReport.required_names`), whichever list a requirement is in. A
-  `required=False` entry of `required_tables` keeps the key `<name>_optional`, as
-  the optional lists do, and setup does not create it.
-- **validation-truthfulness: missing vs count failure (VM-11).** On a failed `COUNT`
-  the validator asks the catalog (`IRISCatalogReader`, injectable). Absent: "does not
-  exist" with `error_kind` `missing_table`. Present or catalog unreadable:
-  `count_failed`, with `table_exists` True or None; the message says it could not
-  confirm existence in the second case.
-- **validation-truthfulness: fake rows and entity extraction (VM-02).** Both minimal
-  row inserters are deleted. Extraction needs an LLM: `SetupOrchestrator(llm_func=)`,
-  `setup_pipeline(llm_func=)`, and `create_pipeline(llm_func=)` passes its own. With
-  none, a `SetupError` is recorded and nothing is written; the report stays invalid.
-  `EntityExtractionService` has no non-LLM method (`pattern_only` is gone), so there
-  is no honest offline extraction to fall back to.
-- **validation-truthfulness: co-occurrence relationships.** The old code meant to link
-  the entities of a document and called a method that does not exist. Kept the
-  intent: `co_occurrence` edges at confidence 0.5 among a document's ten most
-  confident entities (not all pairs, which is quadratic), skipping pairs whose names
-  are equal. Without them a graph pipeline never reaches `min_rows=1` on
-  `EntityRelationships`, because the service extracts no relationships itself.
-- **validation-truthfulness: setup records, factory stays lenient.** Steps that cannot
-  do their job raise `SetupError` or are appended to `setup_errors`, which the final
-  report carries. `create_pipeline(auto_setup=True)` still builds the pipeline when
-  the report is invalid and logs a warning (now with the setup errors), because
-  `tests/e2e/test_engine_e2e.py` builds a `basic` pipeline over an empty database
-  that way and an empty pipeline is usable once documents are ingested. Revisit if
-  callers should get an exception instead.
+- **validation-truthfulness: `.required`.** The flag decides what gates a
+  pipeline (`ValidationReport.required_names`), whichever list a requirement is
+  in. A `required=False` entry of `required_tables` keeps the key
+  `<name>_optional`, as the optional lists do, and setup does not create it.
+- **validation-truthfulness: missing vs count failure (VM-11).** On a failed
+  `COUNT` the validator asks the catalog (`IRISCatalogReader`, injectable).
+  Absent: "does not exist" with `error_kind` `missing_table`. Present or catalog
+  unreadable: `count_failed`, with `table_exists` True or None; the message says
+  it could not confirm existence in the second case.
+- **validation-truthfulness: fake rows and entity extraction (VM-02).** Both
+  minimal row inserters are deleted. Extraction needs an LLM:
+  `SetupOrchestrator(llm_func=)`, `setup_pipeline(llm_func=)`, and
+  `create_pipeline(llm_func=)` passes its own. With none, a `SetupError` is
+  recorded and nothing is written; the report stays invalid.
+  `EntityExtractionService` has no non-LLM method (`pattern_only` is gone), so
+  there is no honest offline extraction to fall back to.
+- **validation-truthfulness: co-occurrence relationships.** The old code meant
+  to link the entities of a document and called a method that does not exist.
+  Kept the intent: `co_occurrence` edges at confidence 0.5 among a document's
+  ten most confident entities (not all pairs, which is quadratic), skipping
+  pairs whose names are equal. Without them a graph pipeline never reaches
+  `min_rows=1` on `EntityRelationships`, because the service extracts no
+  relationships itself.
+- **validation-truthfulness: setup records, factory stays lenient.** Steps that
+  cannot do their job raise `SetupError` or are appended to `setup_errors`,
+  which the final report carries. `create_pipeline(auto_setup=True)` still
+  builds the pipeline when the report is invalid and logs a warning (now with
+  the setup errors), because `tests/e2e/test_engine_e2e.py` builds a `basic`
+  pipeline over an empty database that way and an empty pipeline is usable once
+  documents are ingested. Revisit if callers should get an exception instead.
 - **validation-truthfulness: CRAG setup.** It only embedded documents and never
-  created tables, unlike `basic`; all pipelines now go through the one generic path.
+  created tables, unlike `basic`; all pipelines now go through the one generic
+  path.
 - **validation-truthfulness: VM-07.** The `RAG.Entities.entity_embeddings`
-  requirement is removed, not repointed: the standard `Entities` table has no vector
-  column (entity-services-fix) and nothing writes one. `DocumentChunks.embedding`
-  became `chunk_embedding`.
-- **validation-truthfulness: VM-14/15.** Standard tables only through `SchemaManager`
-  (with `schema_prefix` from the requirement's schema). A table it does not own raises
-  `SetupError`. The chunk table and the chunk INSERT follow `CANONICAL_CHUNK_SHAPE`
-  (`doc_id`, `document_id`, `chunk_text`, `chunk_embedding`, `metadata`); the old
-  INSERT named `id, chunk_id, chunk_index`, so every chunk failed on the canonical
-  table and the failures were counted and logged. Baseline lines for the orchestrator
+  requirement is removed, not repointed: the standard `Entities` table has no
+  vector column (entity-services-fix) and nothing writes one.
+  `DocumentChunks.embedding` became `chunk_embedding`.
+- **validation-truthfulness: VM-14/15.** Standard tables only through
+  `SchemaManager` (with `schema_prefix` from the requirement's schema). A table
+  it does not own raises `SetupError`. The chunk table and the chunk INSERT
+  follow `CANONICAL_CHUNK_SHAPE` (`doc_id`, `document_id`, `chunk_text`,
+  `chunk_embedding`, `metadata`); the old INSERT named
+  `id, chunk_id, chunk_index`, so every chunk failed on the canonical table and
+  the failures were counted and logged. Baseline lines for the orchestrator
   (catalog read, hard-coded vector type, inline DDL) are removed from the
   antipatterns baseline.
 - **validation-truthfulness: `migrate_table("Entities")`.** Fixed here: the
-  one-line `confidence DOUBLE DEFAULT 1.0` the storage adapter writes. It is not on
-  the auto-setup path (that uses `ensure_table_schema`), so this is storage's
+  one-line `confidence DOUBLE DEFAULT 1.0` the storage adapter writes. It is not
+  on the auto-setup path (that uses `ensure_table_schema`), so this is storage's
   leftover closed by the validation agent. Still inconsistent, not fixed: the
-  migrate DDL has an `embedding` column and `created_at`, the create DDL has neither
-  and uses `created_timestamp`. Owner: whoever next settles the canonical `Entities`
-  layout (storage).
+  migrate DDL has an `embedding` column and `created_at`, the create DDL has
+  neither and uses `created_timestamp`. Owner: whoever next settles the
+  canonical `Entities` layout (storage).
 - **validation-truthfulness: read-through of orchestrator.py 752-1466.** Further
   defects found there: (1) `heal_token_embeddings` and its five helpers wrote
-  `(doc_id, token_index, token_text, token_embedding)` into a table whose columns are
-  `(doc_id, tok_pos, tok_text, tok_vec, centroid_id)`, embedded whitespace words as
-  "tokens", read `abstract` for the text, and logged every failure at debug level;
-  nobody calls it. Now raises `NotImplementedError` naming the ColBERT ingest.
-  (2) `_get_target_document_set` and `_generate_document_chunks` fell back to
-  `SELECT id, filename AS content`, embedding and chunking file names. Removed; the
-  text column comes from the shape. (3) the chunk INSERT and `_create_chunks_table`
-  described above (hard-coded 384, FK to `RAG.SourceDocuments(doc_id)`, non-canonical
-  columns). (4) `_validate_embeddings_after_generation` only logged (VM-12).
-  (5) `_identify_missing_token_embeddings` built an f-string SQL it never ran and
-  ran one `COUNT` per document. (6) `_split_text_into_chunks` can loop forever when
-  `overlap >= chunk_size`: not fixed, config-dependent (default 1000/200 is safe);
-  logged here. (7) `_fulfill_embedding_requirement` called `_ensure_token_embeddings`,
-  which does not exist. (8) `_generate_missing_document_embeddings` embeds `""` for a
-  document with no text, giving it a vector that means nothing; left, since the
-  validator counts such a row as embedded and changing one changes the other.
-- **validation-truthfulness: tests.** The new unit tests were written against the
-  stated defects before the code; the e2e tests run on the session's own ephemeral
-  IRIS and drop the `RAG` tables around each test (the `RAG` schema is fixed in the
-  requirements, so there is no prefix to isolate with).
+  `(doc_id, token_index, token_text, token_embedding)` into a table whose
+  columns are `(doc_id, tok_pos, tok_text, tok_vec, centroid_id)`, embedded
+  whitespace words as "tokens", read `abstract` for the text, and logged every
+  failure at debug level; nobody calls it. Now raises `NotImplementedError`
+  naming the ColBERT ingest. (2) `_get_target_document_set` and
+  `_generate_document_chunks` fell back to `SELECT id, filename AS content`,
+  embedding and chunking file names. Removed; the text column comes from the
+  shape. (3) the chunk INSERT and `_create_chunks_table` described above
+  (hard-coded 384, FK to `RAG.SourceDocuments(doc_id)`, non-canonical columns).
+  (4) `_validate_embeddings_after_generation` only logged (VM-12). (5)
+  `_identify_missing_token_embeddings` built an f-string SQL it never ran and
+  ran one `COUNT` per document. (6) `_split_text_into_chunks` can loop forever
+  when `overlap >= chunk_size`: not fixed, config-dependent (default 1000/200 is
+  safe); logged here. (7) `_fulfill_embedding_requirement` called
+  `_ensure_token_embeddings`, which does not exist. (8)
+  `_generate_missing_document_embeddings` embeds `""` for a document with no
+  text, giving it a vector that means nothing; left, since the validator counts
+  such a row as embedded and changing one changes the other.
+- **validation-truthfulness: tests.** The new unit tests were written against
+  the stated defects before the code; the e2e tests run on the session's own
+  ephemeral IRIS and drop the `RAG` tables around each test (the `RAG` schema is
+  fixed in the requirements, so there is no prefix to isolate with).
+
+## ci-honesty stage 2
+
+- **Findings taken.** OS-06, OS-09, OS-18 (classifier half), OS-19, OS-20,
+  OS-24, CM-12, and OS-26 for the integration suite. The loose `tests/test_*.py`
+  files are not in CI yet (see "skipped" in the handoff).
+- **OS-24: delete, not implement.** `rag-templates = iris_vector_rag.cli:main`
+  names a module that does not exist and nothing documents a command by that
+  name, so the script is removed. The only console script is
+  `iris-vector-rag-mcp`.
+- **CM-12: move the file, raise on absence.** `config/pipelines.yaml` moved into
+  `iris_vector_rag/config/` (the existing `config/*.yaml` package-data glob then
+  ships it); the manager reads it next to itself. A missing file raises
+  `FileNotFoundError` instead of returning defaults, which is exactly what hid
+  the broken wheel. An unknown pipeline name still gets defaults (unchanged).
+  Doc paths were updated; `scripts/test_all_pipelines_ragas_verification.py`
+  too.
+- **OS-06 and OS-09 were already half fixed.** The `dspy` extra exists
+  (dspy-experimental) and `pytest.ini` is gone, so what remained was
+  `pytest-timeout` in the `dev` and `all` extras and the phantom `evaluation`
+  extra in `pr-integration.yml` (replaced by `dev`). A test now checks that
+  every extra named in the Makefile and any workflow is declared.
+- **OS-20: make the targets exist.** `setup-env` (`uv venv .venv`),
+  `test-community` and `test-enterprise` (`IRIS_BACKEND_MODE=... pytest tests/`,
+  as CONTRIBUTING.md says). `make install` moved from `pip install` to
+  `uv pip install`, because `CLAUDE.md` calls the flow uv-based and `uv venv`
+  makes no `pip`. The `IRIS_CONTAINER` and `IRIS_PORT` lines in `CLAUDE.md` are
+  untouched (a test checks them); `CLAUDE.md` itself needed no edit.
+- **OS-19: tag check and pins.** A `check-tag` job (the others `needs:` it)
+  compares `v<pyproject version>` with the tag (or the `workflow_dispatch`
+  input). Pinned to release tags verified with `git ls-remote --tags`, not SHAs:
+  `trufflehog@v3.97.9`, `gh-action-pypi-publish@v1.14.2`. A test fails any
+  `uses:` whose ref is not a `vN[.N[.N]]` tag or a 40-hex SHA. `security.yml`
+  keeps `continue-on-error` on the TruffleHog step: not touched, it is a scanner
+  step and not a test gate; flagged in the handoff.
+- **release.yml: the handed-over `--ignore`s.** `test_mcp_tool_schemas.py` is no
+  longer ignored (passes). The four CRAG contract files are no longer ignored:
+  on a fresh IRIS 4 tests fail (CRAG swallows dimension-mismatch and
+  missing-config errors into an `error` field, the query result lacks the
+  documented structure), so those four are quarantined in
+  `ci_known_failures.txt` (owner: pipelines-fix leftovers) and the other CRAG
+  tests now gate. Still ignored, not mine to decide:
+  `test_coverage_contract.py`, `test_coverage_warning_contract.py`,
+  `test_smoke.py` (run on its own step) and `test_ragas_validation_contract.py`.
+- **A release-day finding.** `test_diagnostic_logging_contract.py` (9 tests)
+  fails on a fresh IRIS on the integration branch as it stands (it queries
+  `RAG.SourceDocuments` without creating it), so `release.yml`'s contract step
+  would have gone red at the next tag. Quarantined, owner: test-environment
+  leftovers.
+- **Quarantine file gets comments.** The ticket asked for the owning feature
+  next to each entry. The file now has `#` lines naming the owner above each
+  group; the deselect commands in `ci.yml` and `release.yml` drop comment and
+  blank lines (`grep -vE '^(#|[[:space:]]*$)'`), and a test runs that exact
+  command against the real file. Owners are assigned by file, not root-caused
+  per test.
+- **Integration job: what it quarantines.** The first honest CI-style run of
+  `tests/integration/` on a fresh IRIS: 46 and 57 failures in two full runs,
+  plus 20 setup errors, and the failing set differs run to run in the
+  `test_mcp_*` files (they read tables an earlier test may have dropped). The
+  quarantine is the union of three runs: 64 new IDs on top of those already
+  listed. Owners: pipelines-fix leftovers (basic, rerank, CRAG, PyLate e2e),
+  entity-services-fix leftovers (batch extraction and logging), test-environment
+  leftovers (DAT fixtures, deleted devtools bridge, cloud config, connection,
+  cache), mcp-stdio-server follow-up (`test_mcp_*`). If CI shows a new flake
+  there, the honest move is to fix the order dependency, not to grow the list.
+- **`test_ivg_4x_upgrade_e2e.py` is `--ignore`d in the integration job.** A
+  collection error (it imports `ConnectionManager`, which is now
+  `LegacyConnectionManager`, and
+  `tests.integration.test_graph_schema_integration`, which does not exist)
+  cannot be deselected by node ID and would abort the whole run. A test fails if
+  an ignored file is deleted. Owner: whoever next touches ivg 4.x upgrade tests.
+- **Integration job environment.** CPU-only torch and
+  `pip install -e ".[dev,mcp]"`, like `release.yml`; `IRIS_CONTAINER_NAME=iris`
+  (the conftest accepts a non-project container name only when `CI` is set,
+  which GitHub does). No disk-space step (release.yml needs it for the full
+  matrix; this job installs one torch).
+- **Detector: `swallowed-error`.** AST based (not regex). Flags an `except` that
+  is bare, `Exception`, `BaseException` or a tuple naming one, whose body
+  contains no `raise` (a `raise` inside a nested def or class does not count).
+  That covers `pass`, return-a-default and log-and-continue at once, which is
+  what the ticket describes. Scope: tracked `.py` under `iris_vector_rag/`. A
+  file that fails to parse raises, so the gate cannot pass by skipping it.
+  Narrow handlers (`except KeyError`) are out of scope: catching a named error
+  is a decision, catching everything is a swallow. Known over-reach: a handler
+  that raises through a helper (`self._fail(exc)`) or `sys.exit` is reported;
+  use `raise` directly.
+- **Detector: baseline keys are `path::function#n`, not `path:line`.** The other
+  detectors key by line. With 302 entries and six branches editing the same
+  files (validation-truthfulness is in `validation/` as this is written), line
+  keys would go stale on every rebase. The key is the qualified function plus
+  the ordinal of the swallow inside it; the line goes in the message. Removing a
+  swallow in a function that has several shifts the ordinals of the later ones,
+  so that function's lines need re-numbering: run
+  `python3 scripts/gates/antipatterns.py --write-baseline` after a merge and
+  review the diff. Expect baseline conflicts in `antipatterns-baseline.txt` when
+  branches that fix swallows merge; take both sides' removals and regenerate.
+- **Wheel test builds from a copy via `setuptools.build_meta`.**
+  `python -m build --no-isolation` wants the separate `wheel` package, which the
+  dev venv lacks (setuptools >= 70.1 has `bdist_wheel`); an isolated build needs
+  the network. The test copies `pyproject.toml`, `README.md`, `LICENSE` and the
+  package to a temp directory so the checkout gets no `build/` or egg-info.
+
+## Integration (phase 4 and 5 merge)
+
+- **Baselined swallow.** `PreConditionValidator._table_is_present` catches
+  `Exception` on purpose: the catalog read is tri-state ("cannot say" is
+  `None`), logs a warning, and the validator reports the result as a count
+  failure. It is in the `swallowed-error` baseline with this justification.
+- **Stale baseline lines.** Merging `validation-truthfulness` left 27
+  orchestrator baseline lines that no longer fire; they are removed.

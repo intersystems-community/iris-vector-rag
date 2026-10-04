@@ -361,7 +361,7 @@ class ResourceLimiter:
 ### Pipeline Registration
 
 ```yaml
-# config/pipelines.yaml - Add ColBERT configuration
+# iris_vector_rag/config/pipelines.yaml - Add ColBERT configuration
 pipelines:
   # ... existing pipelines ...
   - name: "ColBERT"
@@ -397,7 +397,7 @@ pipelines:
 │  Phase 1: Infrastructure Setup                                 │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │ 1. Deploy code to iris_rag/pipelines/colbert/              ││
-│  │ 2. Add configuration to config/pipelines.yaml              ││
+│  │ 2. Add configuration to pipelines.yaml                     ││
 │  │ 3. Verify HNSW index exists on DocumentTokenEmbeddings     ││
 │  │ 4. Run security validation tests                           ││
 │  │ ✅ No impact on running evaluation (Terminal 4)           ││
@@ -503,7 +503,7 @@ pipelines:
    - [`__init__.py`](iris_rag/pipelines/colbert/__init__.py): Public API exports (≤50 lines)
 
 2. **System Integration**
-   - Update [`config/pipelines.yaml`](config/pipelines.yaml): Add ColBERT configuration
+   - Update [`iris_vector_rag/config/pipelines.yaml`](iris_vector_rag/config/pipelines.yaml): Add ColBERT configuration
    - Verify automatic discovery in evaluation framework
    - HNSW index validation and creation
 

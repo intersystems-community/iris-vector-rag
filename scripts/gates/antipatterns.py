@@ -30,6 +30,7 @@ Exit: 0 = no new findings, 2 = at least one new finding (or a stale baseline ent
 
 from __future__ import annotations
 
+import ast
 import pathlib
 import re
 import subprocess
@@ -556,6 +557,95 @@ def hardcoded_vector_type() -> list[Finding]:
     return out
 
 
+BROAD_EXCEPTIONS = {"Exception", "BaseException"}
+
+
+def _is_broad(handler_type: ast.expr | None) -> bool:
+    """A bare `except:`, `Exception`, `BaseException`, or a tuple naming one."""
+    if handler_type is None:
+        return True
+    if isinstance(handler_type, ast.Name):
+        return handler_type.id in BROAD_EXCEPTIONS
+    if isinstance(handler_type, ast.Attribute):
+        return handler_type.attr in BROAD_EXCEPTIONS
+    if isinstance(handler_type, ast.Tuple):
+        return any(_is_broad(e) for e in handler_type.elts)
+    return False
+
+
+def _handler_raises(handler: ast.ExceptHandler) -> bool:
+    """Whether the handler body can raise. A `raise` inside a nested function or
+    class is a definition, not a re-raise, so it does not count."""
+    todo = list(handler.body)
+    while todo:
+        node = todo.pop()
+        if isinstance(node, ast.Raise):
+            return True
+        if isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)
+        ):
+            continue
+        todo.extend(ast.iter_child_nodes(node))
+    return False
+
+
+def swallowed_errors(path: str, source: str) -> list[Finding]:
+    """The pure half of `swallowed-error`: one file's source, its findings.
+
+    A finding is a broad `except` whose body never raises: whatever it does
+    instead (`pass`, return a default, log and carry on) hides the failure from the
+    caller. Handlers that catch a named, narrow error are out of scope; so are
+    handlers that re-raise or raise a typed error.
+
+    The location is `path::<qualified function>#<n>`, the n-th swallow in that
+    function, not a line number: the baseline must not go stale every time another
+    branch adds an import above it. A file that does not parse raises, so the gate
+    cannot pass by skipping it.
+    """
+    tree = ast.parse(source, filename=path)
+    out: list[Finding] = []
+    counts: dict[str, int] = {}
+
+    def visit(node: ast.AST, scope: tuple[str, ...]) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                visit(child, scope + (child.name,))
+                continue
+            if (
+                isinstance(child, ast.ExceptHandler)
+                and _is_broad(child.type)
+                and not _handler_raises(child)
+            ):
+                name = ".".join(scope) or "<module>"
+                counts[name] = counts.get(name, 0) + 1
+                caught = ast.unparse(child.type) if child.type else "bare except"
+                out.append(
+                    Finding(
+                        "swallowed-error",
+                        f"{path}::{name}#{counts[name]}",
+                        f"line {child.lineno}: `except {caught}` never raises; "
+                        "raise a typed error, or degrade only through a named "
+                        "parameter that defaults to raising",
+                    )
+                )
+            visit(child, scope)
+
+    visit(tree, ())
+    return out
+
+
+def swallowed_error() -> list[Finding]:
+    """Shipped: broad handlers that returned an empty result or logged and carried
+    on hid a failed insert, a model that did not load and a search that found
+    nothing because it had errored (findings PL-01, PL-06, PL-08..PL-11, ST-06,
+    ST-07, CR-10, VM-02, VM-11, VM-12, OS-02, OS-16). Each owning feature fixes its
+    own sites and removes their baseline lines; this detector stops a new one."""
+    out: list[Finding] = []
+    for p in files(PKG, ".py"):
+        out.extend(swallowed_errors(rel(p), read(p)))
+    return out
+
+
 CHECKS: dict[str, Callable[[], list[Finding]]] = {
     "legacy-fk-target": legacy_fk_target,
     "inline-standard-ddl": inline_standard_ddl,
@@ -568,6 +658,7 @@ CHECKS: dict[str, Callable[[], list[Finding]]] = {
     "stale-deselect-entry": stale_deselect_entry,
     "catalog-read-outside-shape": catalog_read_outside_shape,
     "hardcoded-vector-type": hardcoded_vector_type,
+    "swallowed-error": swallowed_error,
 }
 
 # Checks that carry no baseline and must stay at zero: each fails open when
