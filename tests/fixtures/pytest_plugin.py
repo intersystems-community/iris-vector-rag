@@ -75,6 +75,27 @@ def pytest_collection_modifyitems(config, items):
 # ==============================================================================
 
 
+def release_open_transactions(keep=None):
+    """Roll back every live IRIS DBAPI connection in the process except `keep`.
+
+    A pipeline a test built keeps connections that nothing closes, and one holding an
+    open transaction holds its row and table locks until the process ends; the next
+    DDL on those tables (ALTER, CREATE INDEX) then waits for them forever.
+    """
+    for candidate in gc.get_objects():
+        cls = type(candidate)
+        if cls.__name__ != "Connection" or not cls.__module__.startswith(
+            ("iris", "intersystems")
+        ):
+            continue
+        if candidate is keep:
+            continue
+        try:
+            candidate.rollback()
+        except Exception:  # closed or mid-use: nothing to release
+            pass
+
+
 @pytest.fixture(scope="function")
 def dat_fixture_loader(request, backend_configuration):
     """
@@ -112,6 +133,11 @@ def dat_fixture_loader(request, backend_configuration):
 
     def cleanup_fixture():
         try:
+            # A test that built a pipeline leaves its connections to the garbage
+            # collector; one holding an open transaction keeps locks that block the
+            # next DDL (ALTER/CREATE INDEX) on the fixture's tables. Release them first.
+            gc.collect()
+            release_open_transactions(keep=connection)
             manager.cleanup_fixture(fixture_name)
         except Exception as e:  # a failed cleanup must not mask the test's result
             print(f"Warning: Fixture cleanup failed: {e}")

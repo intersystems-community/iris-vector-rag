@@ -8,7 +8,8 @@ Reference: specs/047-create-a-unified/tasks.md (T032)
 """
 
 import pytest
-from tests.fixtures.manager import FixtureManager
+
+from tests.fixtures.manager import FixtureManager, FixtureNotFoundError
 
 # ==============================================================================
 # FIXTURES
@@ -159,20 +160,17 @@ class TestVersionCompatibility:
 
         fixture_name = fixtures[0].name
 
-        # Try to load non-existent version
-        result = fixture_manager.load_fixture(
-            fixture_name=fixture_name,
-            version="99.99.99",  # Non-existent version
-            cleanup_first=True,
-        )
+        # Try to load non-existent version: FixtureManager.load_fixture raises
+        # FixtureNotFoundError for a fixture it cannot resolve (its documented contract)
+        with pytest.raises(FixtureNotFoundError) as exc_info:
+            fixture_manager.load_fixture(
+                fixture_name=fixture_name,
+                version="99.99.99",  # Non-existent version
+                cleanup_first=True,
+            )
 
         # Should fail with clear error message
-        assert not result.success
-        assert result.error_message is not None
-        assert (
-            "not found" in result.error_message.lower()
-            or "version" in result.error_message.lower()
-        )
+        assert "not found" in str(exc_info.value).lower()
 
 
 class TestVersionMetadata:
@@ -334,14 +332,22 @@ class TestVersionErrorHandling:
         ]
 
         for bad_version in malformed_versions:
-            result = fixture_manager.load_fixture(
-                fixture_name=fixture_name,
-                version=bad_version,
-                cleanup_first=True,
-            )
+            if bad_version == "":
+                # An empty version is "no version": the latest loads
+                result = fixture_manager.load_fixture(
+                    fixture_name=fixture_name, version=bad_version, cleanup_first=True
+                )
+                assert result.success or result.error_message is not None
+                continue
 
-            # Should fail gracefully (not crash)
-            assert not result.success or result.error_message is not None
+            # Should fail gracefully (not crash): a version that matches nothing is
+            # a fixture that is not found
+            with pytest.raises(FixtureNotFoundError):
+                fixture_manager.load_fixture(
+                    fixture_name=fixture_name,
+                    version=bad_version,
+                    cleanup_first=True,
+                )
 
     def test_version_none_uses_latest(self, fixture_manager):
         """version=None explicitly uses latest version."""

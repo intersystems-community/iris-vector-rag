@@ -258,7 +258,7 @@ class FixtureManager:
 
             # A JSON fixture with a data file is loaded into real tables: make sure
             # they exist (in the canonical shape, when they do not).
-            if metadata.data_file and self._connection is not None:
+            if metadata.data_file:
                 self._ensure_tables(metadata.tables)
 
             # Cleanup existing data if requested
@@ -586,33 +586,26 @@ class FixtureManager:
         Returns:
             Total rows deleted
         """
-        # An explicit connection (the plugin passes the session's IRIS) is cleaned
-        # directly, child tables first, and the count is the rows actually deleted.
+        # Rows are deleted directly, child tables first, so the count is the rows
+        # actually deleted. An explicit connection is used as given; otherwise the
+        # session's own.
         if self._connection is not None:
             return self._delete_table_rows(self._connection, tables)
 
         # Skip cleanup if no connection available (contract tests)
-        if self._connection is None:
-            try:
-                from iris_vector_rag.session import session_for
+        try:
+            from iris_vector_rag.session import session_for
 
-                conn = session_for().connection_for_adapter()
-            except Exception:
-                # No connection available - skip cleanup (contract tests)
-                return 0
-        else:
-            conn = self._connection
+            conn = session_for().connection_for_adapter()
+        except Exception:
+            # No connection available - skip cleanup (contract tests)
+            return 0
 
         try:
-            from tests.fixtures.idt_cleanup import truncate_tables_schema
-
-            schema = truncate_tables_schema(conn, tables, strict=False)
-            if schema:
-                return 0
+            return self._delete_table_rows(conn, tables)
         except Exception as e:
-            print(f"Warning: idt cleanup failed: {e}", file=sys.stderr)
-
-        return 0
+            print(f"Warning: fixture cleanup failed: {e}", file=sys.stderr)
+            return 0
 
     @staticmethod
     def _ensure_tables(tables: List[str]) -> None:
