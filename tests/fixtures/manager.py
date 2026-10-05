@@ -615,11 +615,20 @@ class FixtureManager:
         from iris_vector_rag.storage.schema_manager import SchemaManager
 
         config = ConfigurationManager()
-        manager = SchemaManager(ConnectionManager(config), config)
-        # SourceDocuments first: Entities has a foreign key to it.
-        for table in ("SourceDocuments", "Entities", "EntityRelationships"):
-            if f"RAG.{table}" in tables and not manager.ensure_table_schema(table):
-                raise FixtureLoadError(table, "could not create the table")
+        connections = ConnectionManager(config)
+        manager = SchemaManager(connections, config)
+        try:
+            # SourceDocuments first: Entities has a foreign key to it.
+            for table in ("SourceDocuments", "Entities", "EntityRelationships"):
+                if f"RAG.{table}" in tables and not manager.ensure_table_schema(table):
+                    raise FixtureLoadError(table, "could not create the table")
+        finally:
+            # The schema manager works on the session's shared connection; whatever
+            # it left uncommitted would hold locks against the next DDL.
+            try:
+                connections.get_connection("iris").commit()
+            except Exception:
+                pass
 
     _KEY_COLUMNS = {
         "RAG.SourceDocuments": "doc_id",

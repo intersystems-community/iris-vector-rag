@@ -24,6 +24,7 @@ Features:
 Reference: specs/047-create-a-unified/tasks.md (T078-T084)
 """
 
+import gc
 from pathlib import Path
 
 import pytest

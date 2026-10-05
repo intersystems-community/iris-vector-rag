@@ -44,11 +44,11 @@ _TYPE_COLUMNS = (
 
 
 def _set_type_collation(connection, collation):
-    """Collate the two type columns `collation`.
+    """Collate the two type columns `collation` (ALTER; rows and indexes are kept).
 
     They use IRIS's default SQLUPPER collation, and GROUP BY / DISTINCT on such a
     column returns the upper-cased values ('DISEASE'), while the medical-20 tests count
-    'Disease'. EXACT makes the grouping see the stored values. Rows and indexes are kept.
+    'Disease'. EXACT makes the grouping see the stored values.
     """
     cursor = connection.cursor()
     try:
@@ -70,8 +70,38 @@ def _set_type_collation(connection, collation):
         cursor.close()
 
 
+@pytest.fixture(scope="session")
+def exact_case_type_columns(iris_target):
+    """RAG.Entities.entity_type and RAG.EntityRelationships.relationship_type, COLLATE EXACT.
+
+    Needs the two tables to exist. The columns stay EXACT for the rest of the session:
+    altering them back after each module leaves the tables on which a later
+    `CREATE INDEX ... AS HNSW` (test_relation_embedding_store) waits for ever, measured
+    both for ALTER-back and for drop-and-recreate. At the end of the session the ALTER
+    back is attempted once, on a daemon thread, so that a wedged lock cannot hold the
+    session up; a throwaway container is removed with it anyway.
+    """
+    import threading
+
+    from tests.support.iris_environment import connect
+
+    connection = connect(iris_target)
+    _set_type_collation(connection, "EXACT")
+    yield
+
+    def restore():
+        try:
+            _set_type_collation(connection, "SQLUPPER")
+        finally:
+            connection.close()
+
+    worker = threading.Thread(target=restore, daemon=True)
+    worker.start()
+    worker.join(timeout=30)
+
+
 @pytest.fixture(scope="module")
-def medical_20_loaded(iris_target):
+def medical_20_loaded(iris_target, request):
     """The `medical-graphrag-20` fixture (3 documents, 21 entities, 15 relationships).
 
     Loaded into RAG.* of the session's IRIS by FixtureManager (tables created in the
@@ -82,6 +112,7 @@ def medical_20_loaded(iris_target):
     from pathlib import Path
 
     from tests.fixtures.manager import FixtureManager
+    from tests.fixtures.pytest_plugin import release_open_transactions
     from tests.support.iris_environment import connect
 
     connection = connect(iris_target)
@@ -89,18 +120,18 @@ def medical_20_loaded(iris_target):
         fixtures_root=Path(__file__).resolve().parents[1] / "fixtures",
         connection=connection,
     )
-    altered = False
     try:
+        # Earlier modules leave pipelines and their connections behind; an open
+        # transaction among them would make the ALTER below wait for ever.
+        release_open_transactions(keep=connection)
         result = manager.load_fixture("medical-graphrag-20", cleanup_first=True)
         assert result.success, result.error_message
-        _set_type_collation(connection, "EXACT")
-        altered = True
+        release_open_transactions(keep=connection)
+        request.getfixturevalue("exact_case_type_columns")
         yield result
     finally:
         try:
             manager.cleanup_fixture("medical-graphrag-20")
-            if altered:
-                _set_type_collation(connection, "SQLUPPER")
         finally:
             connection.close()
 
