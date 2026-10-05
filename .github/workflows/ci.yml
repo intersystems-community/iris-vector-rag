@@ -142,7 +142,6 @@ jobs:
         run: |
           DESELECT=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_known_failures.txt | sed 's/^/--deselect=/' | tr '\n' ' ')
           python -m pytest tests/integration/ $DESELECT \
-            --ignore=tests/integration/test_ivg_4x_upgrade_e2e.py \
             --timeout=120 \
             --timeout-method=thread \
             --tb=short \

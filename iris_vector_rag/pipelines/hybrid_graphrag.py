@@ -322,8 +322,9 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             actual_dim = len(query_vec) if hasattr(query_vec, "__len__") else 0
             if actual_dim > 0 and actual_dim != expected_dim:
                 raise DimensionMismatchError(
-                    f"Query vector dimension ({actual_dim}) does not match "
-                    f"table embedding dimension ({expected_dim})"
+                    actual_dim,
+                    expected_dim,
+                    where=f"the corpus attached as {graph_label}",
                 )
 
     def query(

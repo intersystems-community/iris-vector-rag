@@ -141,6 +141,17 @@ def test_every_ignored_integration_file_still_exists(ci):
         ).is_file(), f"{ignored} no longer exists; drop the --ignore"
 
 
+def test_the_ivg_4x_upgrade_e2e_runs_in_the_integration_job(ci):
+    """It once was ignored because it did not collect; it collects and passes, so it runs."""
+    root = WORKFLOWS.parents[1]
+    job = ci["jobs"]["integration-tests"]
+    run = next(s for s in job["steps"] if "tests/integration" in s.get("run", ""))[
+        "run"
+    ]
+    assert "test_ivg_4x_upgrade_e2e" not in run
+    assert (root / "tests/integration/test_ivg_4x_upgrade_e2e.py").is_file()
+
+
 @pytest.mark.parametrize("workflow", ["ci.yml", "release.yml"])
 def test_the_deselect_command_survives_comments_in_the_known_failures_file(workflow):
     """The owner comments in ci_known_failures.txt must not become --deselect args."""

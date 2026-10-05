@@ -1,40 +1,11 @@
 import logging
-import os
 
 import numpy as np
 import pytest
 
-IRIS_HOST = os.environ.get("IRIS_HOSTNAME", "localhost")
-IRIS_PORT = int(os.environ.get("IRIS_PORT", "1972"))
 TOKEN_DIM = 384
 
 logger = logging.getLogger(__name__)
-
-
-def _get_conn():
-    import iris.dbapi as dbapi
-
-    return dbapi.connect(
-        hostname=IRIS_HOST,
-        port=IRIS_PORT,
-        namespace="USER",
-        username="_SYSTEM",
-        password="SYS",
-    )
-
-
-def _get_engine(conn):
-    import intersystems_iris
-    from iris_vector_graph import IRISGraphEngine
-
-    native = intersystems_iris.connect(
-        hostname=IRIS_HOST,
-        port=IRIS_PORT,
-        namespace="USER",
-        username="_SYSTEM",
-        password="SYS",
-    )
-    return IRISGraphEngine(native)
 
 
 def _create_test_table(conn, table_name, n_rows, dim=TOKEN_DIM):
@@ -90,22 +61,29 @@ def _make_pipeline(conn, engine):
 
 
 @pytest.fixture(scope="module")
-def conn():
-    c = _get_conn()
+def conn(iris_target):
+    """A DBAPI connection to the suite's IRIS.
+
+    `iris_target` is requested explicitly: this file sits outside the directories whose
+    tests get it automatically, so without it the connection went to localhost:1972.
+    """
+    from tests.support.iris_environment import connect
+
+    c = connect(iris_target)
     yield c
     c.close()
 
 
 @pytest.fixture(scope="module")
-def engine(conn):
+def engine(iris_target):
     import intersystems_iris
 
     native = intersystems_iris.connect(
-        hostname=IRIS_HOST,
-        port=IRIS_PORT,
-        namespace="USER",
-        username="_SYSTEM",
-        password="SYS",
+        hostname=iris_target.host,
+        port=iris_target.port,
+        namespace=iris_target.namespace,
+        username=iris_target.username,
+        password=iris_target.password,
     )
     from iris_vector_graph import IRISGraphEngine
 
