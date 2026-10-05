@@ -243,64 +243,14 @@ def get_expected_rag_schema() -> List[SchemaDefinition]:
     """
     Get expected RAG schema definitions.
 
+    The graph tables (`Entities`, `EntityRelationships`) are not described: the library
+    creates them in its own shape on first use, and a second, hand-written account of
+    them is what left `RAG.Entities` unwritable for the rest of a session.
+
     Returns:
-        List of SchemaDefinition for all RAG tables
+        List of SchemaDefinition for the library-owned document tables
     """
     return [
         _definition_from_shape(CANONICAL_DOCUMENT_SHAPE),
         _definition_from_shape(CANONICAL_CHUNK_SHAPE),
-        SchemaDefinition(
-            table_name="Entities",
-            schema_name="RAG",
-            columns=[
-                ColumnDefinition(
-                    "id", ColumnType.VARCHAR, nullable=False, max_length=255
-                ),
-                ColumnDefinition(
-                    "entity_name", ColumnType.VARCHAR, nullable=False, max_length=500
-                ),
-                ColumnDefinition(
-                    "entity_type", ColumnType.VARCHAR, nullable=False, max_length=100
-                ),
-                ColumnDefinition("properties", ColumnType.JSON, nullable=True),
-                ColumnDefinition("created_at", ColumnType.DATETIME, nullable=True),
-                ColumnDefinition(
-                    "test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255
-                ),
-            ],
-            primary_key="id",
-        ),
-        SchemaDefinition(
-            table_name="Relationships",
-            schema_name="RAG",
-            columns=[
-                ColumnDefinition(
-                    "id", ColumnType.VARCHAR, nullable=False, max_length=255
-                ),
-                ColumnDefinition(
-                    "source_entity_id",
-                    ColumnType.VARCHAR,
-                    nullable=False,
-                    max_length=255,
-                ),
-                ColumnDefinition(
-                    "target_entity_id",
-                    ColumnType.VARCHAR,
-                    nullable=False,
-                    max_length=255,
-                ),
-                ColumnDefinition(
-                    "relationship_type",
-                    ColumnType.VARCHAR,
-                    nullable=False,
-                    max_length=100,
-                ),
-                ColumnDefinition("properties", ColumnType.JSON, nullable=True),
-                ColumnDefinition("created_at", ColumnType.DATETIME, nullable=True),
-                ColumnDefinition(
-                    "test_run_id", ColumnType.VARCHAR, nullable=True, max_length=255
-                ),
-            ],
-            primary_key="id",
-        ),
     ]

@@ -13,6 +13,11 @@ from tests.utils.schema_models import (
     get_expected_rag_schema,
 )
 
+# Tables the library creates for itself, on first use, in its own shape. A reset drops
+# them (children first) so none survives in a shape an earlier test left; it never
+# creates them.
+LIBRARY_GRAPH_TABLES = ("EntityRelationships", "Entities")
+
 
 class SchemaResetter:
     """
@@ -42,6 +47,9 @@ class SchemaResetter:
         cursor = conn.cursor()
 
         try:
+            for table in LIBRARY_GRAPH_TABLES:
+                cursor.execute(f"DROP TABLE IF EXISTS RAG.{table}")
+
             # Drop existing tables (in reverse order to handle foreign keys)
             for schema_def in reversed(self.expected_schemas):
                 drop_sql = f"DROP TABLE IF EXISTS {schema_def.schema_name}.{schema_def.table_name}"
