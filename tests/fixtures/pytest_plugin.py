@@ -24,8 +24,9 @@ Features:
 Reference: specs/047-create-a-unified/tasks.md (T078-T084)
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 # ==============================================================================
 # PYTEST HOOKS
@@ -77,97 +78,73 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(scope="function")
 def dat_fixture_loader(request, backend_configuration):
     """
-    Automatically load .DAT fixture if test has @pytest.mark.dat_fixture marker.
+    Load the fixture named by @pytest.mark.dat_fixture into the session's IRIS.
 
-    This fixture:
-    1. Checks if test has @pytest.mark.dat_fixture marker
-    2. Loads the specified fixture using FixtureManager
-    3. Registers cleanup handler with Feature 028
-    4. Provides fixture metadata to test
-
-    Args:
-        request: Pytest request object
-        backend_configuration: Backend mode configuration (Feature 035)
-
-    Yields:
-        FixtureLoadResult or None if no marker present
+    Without the marker this yields None. With it, the fixture is loaded through
+    FixtureManager over a connection to `iris_target` (the ephemeral container, or
+    the pinned one), its checksum is validated, and its rows are deleted afterwards.
+    A fixture that is missing, corrupt or fails to load fails the test's setup with
+    the reason; it is never skipped.
 
     Reference:
         T080 - Implement dat_fixture_loader with backend_configuration integration
         T081 - Integrate with database_cleanup_handlers (Feature 028)
     """
-    from .manager import FixtureManager, FixtureNotFoundError, ChecksumMismatchError
+    from tests.support.iris_environment import connect
+
+    from .manager import ChecksumMismatchError, FixtureManager, FixtureNotFoundError
 
     # Check if test has dat_fixture marker
     if not hasattr(request.node, "dat_fixture_name"):
         yield None
         return
 
-    # Get fixture parameters from marker
     fixture_name = request.node.dat_fixture_name
     version = request.node.dat_fixture_version
     cleanup_first = request.node.dat_fixture_cleanup
-    scope = request.node.dat_fixture_scope
 
-    # Create FixtureManager with backend mode from configuration
     backend_mode = getattr(backend_configuration, "mode", "community")
     fixtures_root = Path(__file__).parent.parent / "fixtures"
-    manager = FixtureManager(fixtures_root=fixtures_root, backend_mode=backend_mode)
+    connection = connect(request.getfixturevalue("iris_target"))
+    manager = FixtureManager(
+        fixtures_root=fixtures_root, backend_mode=backend_mode, connection=connection
+    )
 
-    # Try to load the fixture
+    def cleanup_fixture():
+        try:
+            manager.cleanup_fixture(fixture_name)
+        except Exception as e:  # a failed cleanup must not mask the test's result
+            print(f"Warning: Fixture cleanup failed: {e}")
+        finally:
+            connection.close()
+
+    request.addfinalizer(cleanup_fixture)
+
     try:
         result = manager.load_fixture(
             fixture_name=fixture_name,
             version=version,
             validate_checksum=True,
             cleanup_first=cleanup_first,
-            generate_embeddings=False,  # Assume .DAT already has embeddings
+            generate_embeddings=False,
+        )
+    except FixtureNotFoundError as e:
+        pytest.fail(f"Fixture not found: {e}", pytrace=False)
+    except ChecksumMismatchError as e:
+        pytest.fail(f"Fixture checksum mismatch: {e}", pytrace=False)
+
+    if not result.success:
+        pytest.fail(
+            f"Failed to load fixture '{fixture_name}': {result.error_message}",
+            pytrace=False,
         )
 
-        if not result.success:
-            pytest.fail(
-                f"Failed to load fixture '{fixture_name}': {result.error_message}"
-            )
-
-        # Store result for test to access
-        request.node.dat_fixture_result = result
-
-        # Register cleanup handler (T081 - Feature 028 integration)
-        def cleanup_fixture():
-            """Cleanup fixture data after test."""
-            try:
-                # Use FixtureManager's cleanup_fixture method (T035)
-                manager.cleanup_fixture(fixture_name)
-            except Exception as e:
-                # Log error but don't fail test cleanup
-                print(f"Warning: Fixture cleanup failed: {e}")
-
-        # Register cleanup based on scope
-        if scope == "function":
-            request.addfinalizer(cleanup_fixture)
-        elif scope == "class":
-            request.addfinalizer(cleanup_fixture)  # Will run after class
-        elif scope == "module":
-            request.addfinalizer(cleanup_fixture)  # Will run after module
-        elif scope == "session":
-            request.addfinalizer(cleanup_fixture)  # Will run after session
-
-        yield result
-
-    except FixtureNotFoundError as e:
-        pytest.fail(f"Fixture not found: {e}")
-    except ChecksumMismatchError as e:
-        pytest.fail(f"Fixture checksum mismatch: {e}")
-    except Exception as e:
-        # Check if IRIS connection issue (gracefully skip)
-        if "connection" in str(e).lower() or "iris" in str(e).lower():
-            pytest.skip(f"IRIS connection unavailable: {e}")
-        else:
-            pytest.fail(f"Fixture loading failed: {e}")
+    request.node.dat_fixture_result = result
+    yield result
 
 
 @pytest.fixture(scope="function")
-def fixture_metadata(request):
+def fixture_metadata(request, dat_fixture_loader):
     """
     Provide loaded fixture metadata to test.
 

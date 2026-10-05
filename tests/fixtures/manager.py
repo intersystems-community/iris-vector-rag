@@ -201,6 +201,9 @@ class FixtureManager:
         # Cache flag for scan results
         self._scanned = False
 
+        # fixture name -> the directory its manifest.json was found in
+        self._fixture_dirs: Dict[str, Path] = {}
+
         # Fixture state tracking (session-wide)
         # Maps fixture_name -> TestFixtureState
         self._fixture_states: Dict[str, TestFixtureState] = {}
@@ -252,6 +255,11 @@ class FixtureManager:
             # Validate checksum if requested
             if validate_checksum:
                 self._validate_checksum(fixture_dir, metadata)
+
+            # A JSON fixture with a data file is loaded into real tables: make sure
+            # they exist (in the canonical shape, when they do not).
+            if metadata.data_file and self._connection is not None:
+                self._ensure_tables(metadata.tables)
 
             # Cleanup existing data if requested
             if cleanup_first:
@@ -344,6 +352,7 @@ class FixtureManager:
                             metadata_dict = json.load(f)
                         metadata = FixtureMetadata.from_dict(metadata_dict)
                         self._manifest.register(metadata)
+                        self._fixture_dirs[metadata.name] = fixture_dir
                     except (json.JSONDecodeError, ValueError, KeyError) as e:
                         # Skip corrupted manifests but continue scanning
                         print(
@@ -446,6 +455,9 @@ class FixtureManager:
 
     def _get_fixture_path(self, metadata: FixtureMetadata) -> Path:
         """Get path to fixture directory based on metadata."""
+        scanned = self._fixture_dirs.get(metadata.name)
+        if scanned is not None:
+            return scanned
         if metadata.source_type == FixtureSourceType.DAT.value:
             return self.fixtures_root / "dat" / metadata.name
         elif metadata.source_type == FixtureSourceType.JSON.value:
@@ -485,6 +497,20 @@ class FixtureManager:
         Reference:
             T037 - Implement checksum validation before and after fixture load
         """
+        # JSON fixtures that name their data file are checksummed on it
+        if metadata.source_type == FixtureSourceType.JSON.value and metadata.data_file:
+            data_path = self.fixtures_root / metadata.data_file
+            if not data_path.exists():
+                raise FixtureLoadError(
+                    metadata.name, f"Data file not found: {metadata.data_file}"
+                )
+            actual_checksum = self._compute_checksum(data_path)
+            if actual_checksum != metadata.checksum:
+                raise ChecksumMismatchError(
+                    metadata.name, metadata.checksum, actual_checksum
+                )
+            return
+
         # For .DAT fixtures, compute checksum of data.dat file
         if metadata.source_type == FixtureSourceType.DAT.value:
             dat_file = fixture_dir / "data.dat"
@@ -560,6 +586,11 @@ class FixtureManager:
         Returns:
             Total rows deleted
         """
+        # An explicit connection (the plugin passes the session's IRIS) is cleaned
+        # directly, child tables first, and the count is the rows actually deleted.
+        if self._connection is not None:
+            return self._delete_table_rows(self._connection, tables)
+
         # Skip cleanup if no connection available (contract tests)
         if self._connection is None:
             try:
@@ -582,6 +613,64 @@ class FixtureManager:
             print(f"Warning: idt cleanup failed: {e}", file=sys.stderr)
 
         return 0
+
+    @staticmethod
+    def _ensure_tables(tables: List[str]) -> None:
+        """Create any missing RAG table the fixture loads into (canonical shape)."""
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.storage.schema_manager import SchemaManager
+
+        config = ConfigurationManager()
+        manager = SchemaManager(ConnectionManager(config), config)
+        # SourceDocuments first: Entities has a foreign key to it.
+        for table in ("SourceDocuments", "Entities", "EntityRelationships"):
+            if f"RAG.{table}" in tables and not manager.ensure_table_schema(table):
+                raise FixtureLoadError(table, "could not create the table")
+
+    _KEY_COLUMNS = {
+        "RAG.SourceDocuments": "doc_id",
+        "RAG.Entities": "entity_id",
+        "RAG.EntityRelationships": "relationship_id",
+    }
+
+    # Children before parents: the foreign keys run Entities -> SourceDocuments.
+    _DELETE_ORDER = (
+        "DocumentChunks",
+        "EntityRelationships",
+        "Entities",
+        "DocumentTokenEmbeddings",
+        "SourceDocuments",
+    )
+
+    def _delete_table_rows(self, conn: Any, tables: List[str]) -> int:
+        """DELETE every row of `tables` (qualified names), children first."""
+
+        def rank(qualified: str) -> int:
+            name = qualified.split(".")[-1]
+            return (
+                self._DELETE_ORDER.index(name)
+                if name in self._DELETE_ORDER
+                else len(self._DELETE_ORDER)
+            )
+
+        deleted = 0
+        cursor = conn.cursor()
+        try:
+            for table in sorted(tables, key=rank):
+                try:
+                    cursor.execute(f"DELETE FROM {table}")
+                    deleted += max(cursor.rowcount or 0, 0)
+                except Exception as exc:  # table absent: nothing to delete
+                    if "not found" not in str(exc).lower():
+                        raise
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
+        return deleted
 
     def _load_dat_fixture(self, fixture_dir: Path, metadata: FixtureMetadata) -> int:
         """
@@ -681,14 +770,16 @@ class FixtureManager:
         Reference:
             T058 - Add JSON fixture loading support (backward compatibility)
         """
-        # Find JSON file in fixture directory
-        json_files = list(fixture_dir.glob("*.json"))
-        if not json_files:
-            raise FixtureLoadError(
-                metadata.name, "No JSON file found in fixture directory"
-            )
-
-        json_file = json_files[0]
+        if metadata.data_file:
+            json_file = self.fixtures_root / metadata.data_file
+        else:
+            # Find JSON file in fixture directory
+            json_files = list(fixture_dir.glob("*.json"))
+            if not json_files:
+                raise FixtureLoadError(
+                    metadata.name, "No JSON file found in fixture directory"
+                )
+            json_file = json_files[0]
 
         # Load JSON data
         try:
@@ -703,24 +794,46 @@ class FixtureManager:
         total_rows = 0
 
         try:
-            # Extract documents from JSON
             documents = data.get("documents", [])
+            columns: Dict[str, List[str]] = {}  # table -> column names, filled lazily
 
-            # Insert documents into RAG.SourceDocuments
+            # Documents -> RAG.SourceDocuments
+            for doc in documents:
+                row = {
+                    "doc_id": doc.get("doc_id"),
+                    "title": doc.get("title", ""),
+                    "text_content": doc.get("content", ""),
+                    "content": doc.get("content", ""),  # tables of the older shape
+                    "metadata": json.dumps({"category": doc.get("category", "")}),
+                }
+                total_rows += self._insert_row(
+                    cursor, "RAG.SourceDocuments", columns, row
+                )
+
+            # Entities and relationships: ids are per document in the source
+            # (every document has an "e1"), so they are qualified by doc_id here.
             for doc in documents:
                 doc_id = doc.get("doc_id")
-                title = doc.get("title", "")
-                content = doc.get("content", "")
-                category = doc.get("category", "")
-
-                cursor.execute(
-                    """
-                    INSERT INTO RAG.SourceDocuments (doc_id, title, content, metadata)
-                    VALUES (?, ?, ?, ?)
-                    """,
-                    [doc_id, title, content, json.dumps({"category": category})],
-                )
-                total_rows += 1
+                for entity in doc.get("expected_entities", []):
+                    row = {
+                        "entity_id": f"{doc_id}:{entity['entity_id']}",
+                        "entity_name": entity["name"],
+                        "entity_type": entity["type"],
+                        "source_doc_id": doc_id,
+                        "description": entity["name"],
+                    }
+                    total_rows += self._insert_row(cursor, "RAG.Entities", columns, row)
+                for index, rel in enumerate(doc.get("expected_relationships", [])):
+                    row = {
+                        "relationship_id": f"{doc_id}:r{index + 1}",
+                        "source_entity_id": f"{doc_id}:{rel['source']}",
+                        "target_entity_id": f"{doc_id}:{rel['target']}",
+                        "relationship_type": rel["type"],
+                        "source_document": doc_id,
+                    }
+                    total_rows += self._insert_row(
+                        cursor, "RAG.EntityRelationships", columns, row
+                    )
 
             # Commit changes
             conn.commit()
@@ -733,8 +846,51 @@ class FixtureManager:
         finally:
             cursor.close()
 
+    @staticmethod
+    def _table_columns(cursor: Any, qualified: str) -> List[str]:
+        """Lower-cased column names of `schema.table`."""
+        schema, _, table = qualified.partition(".")
+        cursor.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS "
+            "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?",
+            [schema, table],
+        )
+        return [str(r[0]).lower() for r in cursor.fetchall()]
+
+    @staticmethod
+    def _insert_row(
+        cursor: Any, table: str, columns: Dict[str, List[str]], row: Dict[str, Any]
+    ) -> int:
+        """INSERT `row` into `table`, keeping the columns the table actually has.
+
+        A missing table, or one sharing no column with the row, is a fixture error
+        rather than something to skip quietly.
+        """
+        if table not in columns:
+            columns[table] = FixtureManager._table_columns(cursor, table)
+        present = columns[table]
+        if not present:
+            raise FixtureLoadError(table, "table does not exist")
+        # Loading twice (cleanup_first=False) replaces the row instead of colliding.
+        key = FixtureManager._KEY_COLUMNS.get(table)
+        if key and key in row:
+            cursor.execute(f"DELETE FROM {table} WHERE {key} = ?", [row[key]])
+        names = [name for name in row if name in present]
+        if not names:
+            raise FixtureLoadError(table, "no fixture column exists in the table")
+        cursor.execute(
+            f"INSERT INTO {table} ({', '.join(names)}) "
+            f"VALUES ({', '.join('?' for _ in names)})",
+            [row[name] for name in names],
+        )
+        return 1
+
     def _generate_embeddings(self, metadata: FixtureMetadata) -> None:
         """Generate embeddings for fixture tables."""
+        if metadata.data_file:
+            self._embed_source_documents(metadata)
+            return
+
         # Import EmbeddingGenerator
         from .embedding_generator import EmbeddingGenerator
 
@@ -773,6 +929,48 @@ class FixtureManager:
                     f"Warning: Failed to generate embeddings for {table}: {e}",
                     file=sys.stderr,
                 )
+
+    def _embed_source_documents(self, metadata: FixtureMetadata) -> None:
+        """Give RAG.SourceDocuments the vectors the pipelines' own embedder produces.
+
+        The same EmbeddingManager a pipeline query embeds with, so the fixture's
+        vectors and the query's live in one space, and the same input gives the same
+        vectors. When no embedder can be loaded (an offline machine without the model)
+        the fixture loads without vectors and says so: everything that does not search
+        by vector still works, and anything that does fails at the query, where the
+        same embedder is missing too.
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT doc_id, text_content FROM RAG.SourceDocuments")
+            rows = [(str(r[0]), str(r[1] or "")) for r in cursor.fetchall()]
+            rows = [r for r in rows if r[1]]
+            if not rows:
+                return
+            try:
+                from iris_vector_rag.config.manager import ConfigurationManager
+                from iris_vector_rag.embeddings.manager import EmbeddingManager
+
+                vectors = EmbeddingManager(ConfigurationManager()).embed_texts(
+                    [text for _, text in rows]
+                )
+            except Exception as e:
+                print(
+                    f"Warning: fixture '{metadata.name}' loaded without embeddings: {e}",
+                    file=sys.stderr,
+                )
+                return
+            for (doc_id, _), vector in zip(rows, vectors):
+                cursor.execute(
+                    "UPDATE RAG.SourceDocuments "
+                    f"SET embedding = TO_VECTOR(?, FLOAT, {len(vector)}) "
+                    "WHERE doc_id = ?",
+                    [",".join(repr(float(x)) for x in vector), doc_id],
+                )
+            conn.commit()
+        finally:
+            cursor.close()
 
     def _get_connection(self) -> Any:
         """Get IRIS database connection."""

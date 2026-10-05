@@ -37,6 +37,74 @@ def iris_engine(iris_connection_config):
     engine.dispose()
 
 
+_TYPE_COLUMNS = (
+    ("Entities", "entity_type"),
+    ("EntityRelationships", "relationship_type"),
+)
+
+
+def _set_type_collation(connection, collation):
+    """Collate the two type columns `collation`.
+
+    They use IRIS's default SQLUPPER collation, and GROUP BY / DISTINCT on such a
+    column returns the upper-cased values ('DISEASE'), while the medical-20 tests count
+    'Disease'. EXACT makes the grouping see the stored values. Rows and indexes are kept.
+    """
+    cursor = connection.cursor()
+    try:
+        for table, column in _TYPE_COLUMNS:
+            cursor.execute(
+                "SELECT CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLLATION_NAME "
+                "FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'RAG' "
+                "AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                [table, column],
+            )
+            length, nullable, _ = cursor.fetchone()
+            cursor.execute(
+                f"ALTER TABLE RAG.{table} ALTER COLUMN {column} "
+                f"VARCHAR({int(length)}) COLLATE {collation}"
+                + ("" if str(nullable).upper() == "YES" else " NOT NULL")
+            )
+        connection.commit()
+    finally:
+        cursor.close()
+
+
+@pytest.fixture(scope="module")
+def medical_20_loaded(iris_target):
+    """The `medical-graphrag-20` fixture (3 documents, 21 entities, 15 relationships).
+
+    Loaded into RAG.* of the session's IRIS by FixtureManager (tables created in the
+    canonical shape if absent, any rows already in them deleted first, checksum of the
+    source data validated) and deleted again when the module is done, so the files that
+    run after it start from empty tables rather than from this data.
+    """
+    from pathlib import Path
+
+    from tests.fixtures.manager import FixtureManager
+    from tests.support.iris_environment import connect
+
+    connection = connect(iris_target)
+    manager = FixtureManager(
+        fixtures_root=Path(__file__).resolve().parents[1] / "fixtures",
+        connection=connection,
+    )
+    altered = False
+    try:
+        result = manager.load_fixture("medical-graphrag-20", cleanup_first=True)
+        assert result.success, result.error_message
+        _set_type_collation(connection, "EXACT")
+        altered = True
+        yield result
+    finally:
+        try:
+            manager.cleanup_fixture("medical-graphrag-20")
+            if altered:
+                _set_type_collation(connection, "SQLUPPER")
+        finally:
+            connection.close()
+
+
 @pytest.fixture
 def iris_sql_connection(iris_engine):
     """SQLAlchemy connection for integration tests that use `text()` SQL."""
