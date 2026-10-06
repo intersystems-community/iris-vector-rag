@@ -41,12 +41,6 @@ tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_ve
 tests/contract/test_graphrag_fixtures.py::TestGraphRAGStorageContracts::test_entity_insertion_respects_fk_constraints
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_results_have_scores
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_results_sorted_descending
-tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_diagnostic_logging
-tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_dimension_validation
-tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_embedding_consistency
-tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_multiple_queries_consistency
-tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_relevance_scoring
-tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_vector_search_retrieval
 # pipelines-fix leftovers (first honest integration run; the pipelines' response shape and retrieval against the real store)
 # entity-services-fix leftovers (batch extraction tests that need an LLM or the removed batch surface)
 # test-environment leftovers (DAT fixtures, the deleted devtools bridge, connection and cache tests)

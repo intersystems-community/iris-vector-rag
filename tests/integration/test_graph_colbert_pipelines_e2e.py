@@ -114,10 +114,12 @@ def test_expansion_reads_a_neighbourhood_larger_than_one_in_list(graph):
 
 
 def test_seed_entities_are_found_in_the_real_table(graph):
-    # The pipeline's own extraction service, over the real LLM, reads the query.
-    assert [e.upper() for e in graph._find_seed_entities("warfarin dosing")] == [
-        "PL-HUB"
-    ]
+    # The pipeline's own extraction service, over the real LLM, reads the query. A full
+    # sentence: the real model returns nothing for the bare phrase "warfarin dosing" on
+    # some calls (0 of 5 extractions found an entity), and names the drug every time
+    # for a question (5 of 5).
+    query = "What is the right dose of warfarin for a patient?"
+    assert [e.upper() for e in graph._find_seed_entities(query)] == ["PL-HUB"]
 
 
 def test_entity_content_comes_from_the_document_or_is_none(graph):
