@@ -30,9 +30,11 @@ retries. The caller's own connection is never committed or rolled back by this s
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
-import threading
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence
 
 from .catalog import CatalogSnapshot, IRISCatalogReader
@@ -40,11 +42,17 @@ from .catalog import CatalogSnapshot, IRISCatalogReader
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "ExactCollationError",
     "EXACT_CASE_COLUMNS",
     "ensure_exact_collation",
     "collation_of",
     "columns_needing_exact",
 ]
+
+
+class ExactCollationError(RuntimeError):
+    """A column could not be made COLLATE EXACT; nothing was changed."""
+
 
 #: Table (unqualified) -> the columns whose stored case is part of their meaning.
 EXACT_CASE_COLUMNS: Mapping[str, Sequence[str]] = {
@@ -113,6 +121,7 @@ def ensure_exact_collation(
     columns: Optional[Sequence[str]] = None,
     *,
     timeout: float = DEFAULT_TIMEOUT_SECONDS,
+    raise_on_failure: bool = True,
 ) -> Dict[str, int]:
     """Make the case-bearing columns of `schema.table` EXACT; return those altered.
 
@@ -120,7 +129,9 @@ def ensure_exact_collation(
     missing column or a column already EXACT is left alone. Data is never touched. If
     the ALTER cannot finish within `timeout` seconds (another connection holds an
     lock or unreleased read), the column is left as it is and a warning says why; the next
-    call retries. The call returns within about `timeout` plus a few seconds.
+    call retries. The call returns within about `timeout` plus a few seconds. A failure
+    raises `ExactCollationError`; `raise_on_failure=False` logs it and returns `{}`,
+    for callers (the schema manager) for whom the repair is best effort.
     """
     if columns is None:
         columns = EXACT_CASE_COLUMNS.get(table, ())
@@ -135,7 +146,6 @@ def ensure_exact_collation(
     if not needed:
         return {}
     qualified = f"{snapshot.schema}.{snapshot.table}"
-    failure: list = []
 
     def alter() -> None:
         worker_connection = connection_manager.get_connection()
@@ -152,41 +162,34 @@ def ensure_exact_collation(
                     f"VARCHAR({length}) COLLATE EXACT"
                 )
             worker_connection.commit()
-        except Exception as exc:  # noqa: BLE001 - reported to the caller below
-            failure.append(exc)
-            try:
+        except BaseException:
+            with contextlib.suppress(Exception):
                 worker_connection.rollback()
-            except Exception:  # noqa: BLE001 - the original error is the one to report
-                pass
+            raise
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 cursor.close()
-            except Exception:  # noqa: BLE001 - closing is advisory
-                pass
 
-    worker = threading.Thread(target=alter, name="exact-collation", daemon=True)
-    worker.start()
-    worker.join(timeout + GRACE_SECONDS)
-
-    if worker.is_alive():
-        logger.warning(
-            "%s %s left at the default (case-folding) collation for now: the ALTER to "
-            "COLLATE EXACT is waiting on a lock held by another connection and did "
-            "not finish in %.0fs. No data was changed; the next ensure retries.",
-            qualified,
-            sorted(needed),
-            timeout,
+    executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="exact-collation")
+    try:
+        executor.submit(alter).result(timeout + GRACE_SECONDS)
+    except (FutureTimeout, Exception) as exc:
+        reason = (
+            f"did not finish in {timeout:.0f}s (a lock held by another connection?)"
+            if isinstance(exc, FutureTimeout)
+            else f"failed ({exc})"
         )
-        return {}
-    if failure:
-        logger.warning(
-            "%s %s left at the default (case-folding) collation: ALTER ... COLLATE "
-            "EXACT failed (%s). No data was changed.",
-            qualified,
-            sorted(needed),
-            failure[0],
+        message = (
+            f"{qualified} {sorted(needed)} left at the default (case-folding) "
+            f"collation: ALTER ... COLLATE EXACT {reason}. No data was changed; the "
+            "next ensure retries."
         )
+        if raise_on_failure:
+            raise ExactCollationError(message) from exc
+        logger.warning(message)
         return {}
+    finally:
+        executor.shutdown(wait=False)
 
     logger.warning(
         "%s %s had the default collation (GROUP BY/DISTINCT/= fold case); altered to "

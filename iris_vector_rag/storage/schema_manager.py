@@ -2411,7 +2411,10 @@ class SchemaManager:
                 if table_name in EXACT_CASE_COLUMNS:
                     # A table from an earlier release has the case-folding default.
                     ensure_exact_collation(
-                        self.connection_manager, self.schema_prefix, table_name
+                        self.connection_manager,
+                        self.schema_prefix,
+                        table_name,
+                        raise_on_failure=False,
                     )
 
                 logger.debug(

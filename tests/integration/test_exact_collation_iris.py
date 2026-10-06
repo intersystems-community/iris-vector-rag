@@ -12,7 +12,11 @@ import pytest
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.storage.catalog import IRISCatalogReader
-from iris_vector_rag.storage.collation import collation_of, ensure_exact_collation
+from iris_vector_rag.storage.collation import (
+    ExactCollationError,
+    collation_of,
+    ensure_exact_collation,
+)
 from iris_vector_rag.storage.schema_manager import SchemaManager
 from tests.support.iris_environment import connect
 
@@ -180,10 +184,16 @@ class TestLegacyTable:
             blocker.cursor().execute(f"LOCK TABLE {SCHEMA}.Entities IN EXCLUSIVE MODE")
 
             started = time.time()
-            with caplog.at_level("WARNING"):
-                altered = ensure_exact_collation(legacy, SCHEMA, "Entities", timeout=3)
-            assert altered == {}
+            with pytest.raises(ExactCollationError, match="left at the default"):
+                ensure_exact_collation(legacy, SCHEMA, "Entities", timeout=3)
             assert time.time() - started < 20
+            with caplog.at_level("WARNING"):
+                assert (
+                    ensure_exact_collation(
+                        legacy, SCHEMA, "Entities", timeout=3, raise_on_failure=False
+                    )
+                    == {}
+                )
             assert "left at the default" in caplog.text
         finally:
             blocker.rollback()
