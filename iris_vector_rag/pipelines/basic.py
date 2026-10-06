@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List, Optional
 from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
-from ..core.models import Document
+from ..core.models import Document, coerce_documents
 from ..embeddings.manager import EmbeddingManager
 from ..exceptions import (
     GenerationError,
@@ -145,6 +145,7 @@ class BasicRAGPipeline(RAGPipeline):
         if documents is not None:
             if not isinstance(documents, list):
                 raise ValueError("Documents must be provided as a list")
+            documents = coerce_documents(documents)
         else:
             # Load documents from path
             documents = self._load_documents_from_path(documents_path)

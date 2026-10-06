@@ -8,6 +8,7 @@ Requirements: FR-025, FR-026, FR-027, FR-028
 """
 
 import json
+
 import pytest
 
 
@@ -33,7 +34,7 @@ class TestBasicRAGIntegration:
         documents = docs_data["documents"]
 
         # Execute load_documents
-        load_result = basic_rag_pipeline.load_documents(documents)
+        load_result = basic_rag_pipeline.load_documents(documents=documents)
 
         # Verify loading succeeded
         assert load_result["documents_loaded"] > 0, "Should successfully load documents"
@@ -73,7 +74,7 @@ class TestBasicRAGIntegration:
         expected_count = len(documents)
 
         # Execute load_documents
-        result = basic_rag_pipeline.load_documents(documents)
+        result = basic_rag_pipeline.load_documents(documents=documents)
 
         # Verify all documents loaded
         assert (
@@ -101,7 +102,7 @@ class TestBasicRAGIntegration:
         with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
-        basic_rag_pipeline.load_documents(docs_data["documents"])
+        basic_rag_pipeline.load_documents(documents=docs_data["documents"])
 
         # Execute query
         query = "How is diabetes treated?"
@@ -112,8 +113,8 @@ class TestBasicRAGIntegration:
 
         # Verify source attribution
         metadata = result["metadata"]
-        assert "sources" in metadata, "Metadata should include sources"
-        assert len(metadata["sources"]) > 0, "Should have at least one source"
+        assert "sources" in result, "Response should include sources"
+        assert len(result["sources"]) > 0, "Should have at least one source"
 
         # Verify execution time logged (optional)
         if "execution_time_ms" in metadata:
@@ -163,7 +164,7 @@ class TestBasicRAGIntegration:
         with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
-        basic_rag_pipeline.load_documents(docs_data["documents"])
+        basic_rag_pipeline.load_documents(documents=docs_data["documents"])
 
         # Execute multiple queries
         queries = [

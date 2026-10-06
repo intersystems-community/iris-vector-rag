@@ -14,7 +14,7 @@ import time
 from typing import Any, Callable, Dict, List, Literal, Optional, cast
 
 from ..core.base import RAGPipeline
-from ..core.models import Document
+from ..core.models import Document, coerce_documents
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +208,7 @@ class CRAGPipeline(RAGPipeline):
         if documents is not None:
             if not isinstance(documents, list):
                 raise ValueError("Documents must be provided as a list")
+            documents = coerce_documents(documents)
         else:
             # Load documents from path - basic implementation
             import os

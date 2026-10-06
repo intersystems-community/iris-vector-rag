@@ -13,7 +13,7 @@ import os
 import tempfile
 from typing import Any, Dict, List, Optional
 
-from ...core.models import Document
+from ...core.models import Document, coerce_documents
 from ..basic import BasicRAGPipeline
 
 logger = logging.getLogger(__name__)
@@ -193,7 +193,8 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
                 self.stats["documents_indexed"] = len(docs)
             return result
         else:
-            # List of Document objects
+            # List of Document objects (dicts are converted first)
+            documents = coerce_documents(documents)
             # Store documents for PyLate reranking with metadata
             for i, doc in enumerate(documents):
                 self._document_store[str(i)] = doc

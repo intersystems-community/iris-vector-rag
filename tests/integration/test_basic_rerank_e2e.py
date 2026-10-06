@@ -8,6 +8,7 @@ Requirements: FR-025, FR-026, FR-027, FR-028
 """
 
 import json
+
 import pytest
 
 
@@ -33,7 +34,7 @@ class TestBasicRerankRAGIntegration:
         documents = docs_data["documents"]
 
         # Execute load_documents
-        load_result = basic_rerank_pipeline.load_documents(documents)
+        load_result = basic_rerank_pipeline.load_documents(documents=documents)
 
         assert load_result["documents_loaded"] > 0, "Should successfully load documents"
 
@@ -62,7 +63,7 @@ class TestBasicRerankRAGIntegration:
         documents = docs_data["documents"]
         expected_count = len(documents)
 
-        result = basic_rerank_pipeline.load_documents(documents)
+        result = basic_rerank_pipeline.load_documents(documents=documents)
 
         assert result["documents_loaded"] == expected_count
         assert result["embeddings_generated"] == expected_count
@@ -80,15 +81,15 @@ class TestBasicRerankRAGIntegration:
         with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
-        basic_rerank_pipeline.load_documents(docs_data["documents"])
+        basic_rerank_pipeline.load_documents(documents=docs_data["documents"])
 
         query = "How is diabetes treated?"
         result = basic_rerank_pipeline.query(query)
 
         assert len(result["answer"]) > 10
         metadata = result["metadata"]
-        assert "sources" in metadata
-        assert len(metadata["sources"]) > 0
+        assert "sources" in result
+        assert len(result["sources"]) > 0
 
     def test_reranking_in_query_path(self, basic_rerank_pipeline):
         """
@@ -102,7 +103,7 @@ class TestBasicRerankRAGIntegration:
         with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
-        basic_rerank_pipeline.load_documents(docs_data["documents"])
+        basic_rerank_pipeline.load_documents(documents=docs_data["documents"])
 
         query = "What are diabetes symptoms?"
         result = basic_rerank_pipeline.query(query)
@@ -143,7 +144,7 @@ class TestBasicRerankRAGIntegration:
         with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
-        basic_rerank_pipeline.load_documents(docs_data["documents"])
+        basic_rerank_pipeline.load_documents(documents=docs_data["documents"])
 
         queries = [
             "What are diabetes symptoms?",
