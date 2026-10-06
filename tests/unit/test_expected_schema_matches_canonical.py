@@ -102,3 +102,58 @@ def test_a_long_text_column_satisfies_a_json_expectation():
     assert validator.satisfies(ColumnType.JSON, "longvarchar")
     assert validator.satisfies(ColumnType.JSON, "varchar")
     assert not validator.satisfies(ColumnType.JSON, "integer")
+
+
+def test_the_graph_tables_are_not_described_a_second_time():
+    """`Entities` and `Relationships` were hand-written here, and wrong.
+
+    The library writes `entity_id` / `source_doc_id` / `confidence` and names the
+    second table `EntityRelationships`. The hand-written `Entities` had a required
+    `id` and no `confidence`, so `SchemaResetter` (run for every test class that asked
+    for a clean schema, because `Relationships` never exists and validation always
+    failed) left `RAG.Entities` in a shape every later entity write failed on: the
+    GraphRAG and ColBERT integration tests then errored at setup in a session that
+    had run the contract suite first. The library creates its own graph tables on
+    demand, so the test infrastructure does not describe them at all.
+    """
+    described = {schema_def.table_name for schema_def in get_expected_rag_schema()}
+
+    assert described == {"SourceDocuments", "DocumentChunks"}
+
+
+def test_the_resetter_drops_stale_graph_tables_before_the_document_table():
+    """A graph table left in a non-canonical shape is removed, children first."""
+    statements = []
+
+    class Cursor:
+        def execute(self, sql, *args):
+            statements.append(sql)
+
+    class Connection:
+        def cursor(self):
+            return Cursor()
+
+        def commit(self):
+            pass
+
+        def rollback(self):
+            pass
+
+    import iris_vector_rag.session as session_module
+
+    class Session:
+        def connection_for_adapter(self):
+            return Connection()
+
+    original = session_module.session_for
+    session_module.session_for = lambda *a, **k: Session()
+    try:
+        SchemaResetter().reset_schema()
+    finally:
+        session_module.session_for = original
+
+    drops = [s for s in statements if s.startswith("DROP TABLE")]
+    names = [s.rsplit(" ", 1)[1] for s in drops]
+    assert names.index("RAG.EntityRelationships") < names.index("RAG.Entities")
+    assert names.index("RAG.Entities") < names.index("RAG.SourceDocuments")
+    assert not any(s.startswith("CREATE TABLE RAG.Entit") for s in statements)

@@ -798,22 +798,50 @@ entry: feature, question, choice, why.
 - **`tests/test_attach_corpus.py` (12 errors).** The file sits outside
   `IRIS_TEST_DIRECTORIES`, so `iris_target` was not autouse, and it connected to
   `localhost:1972` with `_SYSTEM`/`SYS` from its own helpers. It now requests
-  `iris_target` in its `conn` and `engine` fixtures and connects with the target's
-  host, port, namespace and credentials. No embedder is involved.
+  `iris_target` in its `conn` and `engine` fixtures and connects with the
+  target's host, port, namespace and credentials. No embedder is involved.
 - **A production bug the fixture errors were hiding.**
   `HybridGraphRAGPipeline._validate_query_dimension` raised
-  `DimensionMismatchError(message)`, but the class takes `(got, expected, where)`
-  since the exceptions work, so a wrong-width query raised `TypeError` instead.
-  Unit test first (`tests/unit/test_hybrid_graphrag_shape.py`), then the call site
-  passes both widths. The assertion in `test_mismatch_raises_error` is unchanged.
-- **`tests/integration/test_ivg_4x_upgrade_e2e.py` (collection error).** It imported
-  the removed `common.connection_manager.ConnectionManager` and two helpers
-  (`ConnectionManagerWrapper`, `MinimalConfigManager`) from
+  `DimensionMismatchError(message)`, but the class takes
+  `(got, expected, where)` since the exceptions work, so a wrong-width query
+  raised `TypeError` instead. Unit test first
+  (`tests/unit/test_hybrid_graphrag_shape.py`), then the call site passes both
+  widths. The assertion in `test_mismatch_raises_error` is unchanged.
+- **`tests/integration/test_ivg_4x_upgrade_e2e.py` (collection error).** It
+  imported the removed `common.connection_manager.ConnectionManager` and two
+  helpers (`ConnectionManagerWrapper`, `MinimalConfigManager`) from
   `test_graph_schema_integration`, a file that no longer exists. It now builds
-  `SchemaManager(ConnectionManager(config), config)` with `core.connection`'s class
-  and a `ConfigurationManager`, which resolves the `IRIS_*` variables `iris_target`
-  exports. All six tests pass.
+  `SchemaManager(ConnectionManager(config), config)` with `core.connection`'s
+  class and a `ConfigurationManager`, which resolves the `IRIS_*` variables
+  `iris_target` exports. All six tests pass.
 - **CI.** The `--ignore` of that file is removed from the integration job. The
-  "ignored files still exist" test would now pass vacuously, so a new test asserts
-  the file is not ignored and still exists. Neither file was in
+  "ignored files still exist" test would now pass vacuously, so a new test
+  asserts the file is not ignored and still exists. Neither file was in
   `ci_known_failures.txt`.
+
+## e2e-pollution
+
+- **Polluter: the test schema resetter, run after the contract suite.** The
+  three target files pass alone, in the combined
+  `tests/integration tests/e2e tests/test_*.py` session on a fresh container and
+  on a container that already held an earlier run. They fail only when
+  `tests/contract` ran first on the same database, which the final gate did.
+  `tests/utils/schema_models.get_expected_rag_schema` still described `Entities`
+  and a `Relationships` table by hand: `id` required, `entity_type` NOT NULL, no
+  `confidence`, and a table the library never creates, so validation failed for
+  every class using `database_with_clean_schema` and
+  `SchemaResetter.reset_schema` recreated `RAG.Entities` in that shape. Every
+  entity write afterwards failed with "`id` is a required field", so the
+  GraphRAG and ColBERT fixtures (`load_documents` with entity extraction)
+  errored at setup and the GraphRAG e2e tests failed. It is the same bug class
+  feature 082 fixed for the document and chunk tables. Reproduced on a private
+  persistent container (contract suite, then the three files: 17 failed, 23
+  errors, the exact counts of the final gate).
+- **Fix.** The test infrastructure stops describing library-owned graph tables:
+  the expected schema is the document and chunk tables only, and the resetter
+  drops `EntityRelationships` and `Entities` (children first) and never creates
+  them, so the library creates them in its own shape on first use.
+- **Not addressed.** A `RAG.Entities` already left in the old shape stays until
+  a reset or a test that drops it (the fuzzy-entity contract fixture does); the
+  dev database may hold one and needs
+  `DROP TABLE RAG.EntityRelationships; DROP TABLE RAG.Entities` once.
