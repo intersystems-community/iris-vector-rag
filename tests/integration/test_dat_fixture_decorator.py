@@ -142,13 +142,9 @@ def test_graphrag_pipeline_with_fixture(fixture_metadata):
     assert len(result["retrieved_documents"]) > 0
 
     # Verify metadata
-    assert result["metadata"]["retrieval_method"] in [
-        "kg",
-        "vector",
-        "hybrid",
-        "rrf",
-        "text",
-    ]
+    from iris_vector_rag.pipelines.hybrid_graphrag import RETRIEVAL_METHODS
+
+    assert result["metadata"]["retrieval_method"] in RETRIEVAL_METHODS
 
     print(f"✓ Pipeline returned {len(result['retrieved_documents'])} documents")
     print(f"✓ Retrieval method: {result['metadata']['retrieval_method']}")

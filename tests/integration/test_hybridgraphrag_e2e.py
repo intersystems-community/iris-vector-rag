@@ -8,8 +8,10 @@ Contract: E2E-001
 Requirements: FR-026, FR-027, FR-028
 """
 
-import pytest
 import time
+
+import pytest
+
 from iris_vector_rag import create_pipeline
 
 
@@ -199,16 +201,11 @@ class TestHybridGraphRAGE2E:
                 "retrieval_method" in result["metadata"]
             ), f"Metadata should contain retrieval_method for method={method}"
 
-            # Verify execution time (may be in different formats)
-            has_time = any(
-                key in result["metadata"]
-                for key in [
-                    "execution_time",
-                    "total_time",
-                    "query_time",
-                    "elapsed_time",
-                ]
-            )
+            # Execution time: the response carries `execution_time` (query API
+            # contract C-Q5) and metadata carries `processing_time`, as in every
+            # pipeline.
+            assert isinstance(result["execution_time"], float)
+            has_time = isinstance(result["metadata"].get("processing_time"), float)
             assert (
                 has_time
             ), f"Metadata should contain execution time for method={method}"
@@ -226,17 +223,9 @@ class TestHybridGraphRAGE2E:
 
             # Verify retrieval method value is valid
             retrieval_method = result["metadata"]["retrieval_method"]
-            valid_methods = [
-                "hybrid",
-                "hybrid_fusion",
-                "rrf",
-                "text",
-                "vector",
-                "hnsw_vector",
-                "knowledge_graph",
-                "kg",
-                "vector_fallback",
-            ]
+            from iris_vector_rag.pipelines.hybrid_graphrag import RETRIEVAL_METHODS
+
+            valid_methods = sorted(RETRIEVAL_METHODS)
             assert (
                 retrieval_method in valid_methods
             ), f"Retrieval method '{retrieval_method}' should be one of: {valid_methods}"

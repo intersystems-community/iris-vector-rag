@@ -26,6 +26,41 @@ from .hybrid_graphrag_retrieval import HybridRetrievalMethods
 logger = logging.getLogger(__name__)
 
 
+# The values of ``result["metadata"]["retrieval_method"]`` from
+# ``HybridGraphRAGPipeline.query``. A label says which path produced the documents,
+# not which ``method=`` the caller asked for: a path that finds nothing (or fails)
+# reports ``vector_fallback``.
+#
+# Through iris_vector_graph (``method`` hybrid / rrf / text / vector):
+#   hybrid_fusion, rrf_fusion, enhanced_text, hnsw_vector
+# Any of those paths falling back to the vector store, and ``method="kg"`` finding
+# no matching entity:
+#   vector_fallback
+# Without the graph engine, or ``method="kg"``:
+#   knowledge_graph, knowledge_graph_primary, kg_vector_hybrid, balanced_hybrid,
+#   vector_primary, entity_guided_text, text_vector_fallback,
+#   vector_entity_enhanced, vector_only, vector_search_failed
+RETRIEVAL_METHODS = frozenset(
+    {
+        "hybrid_fusion",
+        "rrf_fusion",
+        "enhanced_text",
+        "hnsw_vector",
+        "vector_fallback",
+        "knowledge_graph",
+        "knowledge_graph_primary",
+        "kg_vector_hybrid",
+        "balanced_hybrid",
+        "vector_primary",
+        "entity_guided_text",
+        "text_vector_fallback",
+        "vector_entity_enhanced",
+        "vector_only",
+        "vector_search_failed",
+    }
+)
+
+
 class AttachResult(TypedDict):
     table: str
     label: str
@@ -353,7 +388,8 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 retrieval=, weights=, rerank=, metadata_filter=, similarity_threshold=
 
         Returns:
-            Dictionary with query results and metadata
+            Dictionary with query results and metadata.
+            ``metadata["retrieval_method"]`` is one of ``RETRIEVAL_METHODS``.
         """
         # FR-005: normalize query / query_text alias with deprecation warning
         from iris_vector_rag.core.query_options import normalize_query_params
