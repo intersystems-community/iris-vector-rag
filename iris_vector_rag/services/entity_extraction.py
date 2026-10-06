@@ -1,11 +1,12 @@
 import json
 import logging
 import time
+import uuid
 import warnings
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
-from ..common.batch_utils import BatchMetricsTracker
+from ..common.batch_utils import BatchMetricsTracker, extract_batch_with_retry
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
 from ..core.models import (
@@ -122,6 +123,39 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         self.confidence_threshold = self.config.get("confidence_threshold", 0.3)
         # Only a configured `entity_types` filters what the LLM returns.
         self._filter_types = "entity_types" in self.config
+        self._log_llm_configuration()
+
+    def _log_llm_configuration(self) -> None:
+        """Say at startup which LLM the service is configured for.
+
+        The LLM itself is the ``llm_func``; the ``llm`` config section only describes
+        it. Nothing in the log would otherwise tell a user of a long run that
+        extraction has no LLM behind it.
+        """
+        llm_config = self.config_manager.get("llm", {})
+        if not isinstance(llm_config, dict) or not llm_config:
+            logger.warning(
+                "⚠️  No LLM configuration found: set llm.provider and llm.model so "
+                "the extraction run can be traced to a model"
+            )
+        else:
+            logger.info("=" * 70)
+            logger.info("🤖 Entity Extraction Service - LLM Configuration")
+            logger.info("=" * 70)
+            logger.info("  Provider:    %s", llm_config.get("provider", "unknown"))
+            logger.info("  API Type:    %s", llm_config.get("api_type", "unknown"))
+            logger.info(
+                "  Model:       %s",
+                llm_config.get("model") or llm_config.get("model_name") or "unknown",
+            )
+            logger.info("  API Base:    %s", llm_config.get("api_base", "unknown"))
+            logger.info("  Method:      %s", self.method)
+            logger.info("=" * 70)
+        if not self.llm_func_override:
+            logger.warning(
+                "⚠️  No llm_func given: extract_entities() and extract_batch() will "
+                "raise EntityExtractionError"
+            )
 
     def extract_entities(self, document: Document) -> List[Entity]:
         return self._extract_llm(document.page_content, document)
@@ -132,8 +166,10 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         """Extract entities from a batch of documents.
 
         A document whose extraction raises is listed in `result.failed` with the
-        reason and the batch carries on. If every document fails the batch raises
-        `EntityExtractionError`: there is nothing to report but failure.
+        reason and the batch carries on. A batch in which every document fails is
+        retried with 2s, 4s and 8s delays (`batch_processing.retry_delays`), then split
+        in halves and retried again (FR-005); if nothing was extracted in the end it
+        raises `EntityExtractionError`. Each call updates `get_batch_metrics()`.
 
         Args:
             documents: List of documents to process
@@ -151,6 +187,12 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         """
         if not documents:
             raise ValueError("documents list cannot be empty")
+        if not self.llm_func_override:
+            # A configuration error: retrying with a backoff would only delay it.
+            raise EntityExtractionError(
+                "No llm_func configured for entity extraction; pass llm_func= to "
+                "the service (or its pipeline)"
+            )
 
         estimated_tokens = sum(len(d.page_content) for d in documents) // 4
         if estimated_tokens > token_budget:
@@ -162,6 +204,62 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                 token_budget,
             )
 
+        start_time = time.time()
+        reasons: Dict[str, str] = {}
+
+        def attempt(batch: List[Document]) -> ServiceBatchResult:
+            try:
+                partial = self._extract_batch_impl(batch)
+            except Exception as exc:
+                if len(batch) == 1:
+                    reasons[batch[0].id] = str(exc)
+                raise
+            for item in partial.failed:
+                reasons[item["document_id"]] = item["reason"]
+            return partial
+
+        retry_delays = self.config.get("batch_processing", {}).get("retry_delays")
+        merged = extract_batch_with_retry(documents, attempt, retry_delays=retry_delays)
+
+        failed = [
+            {"document_id": d.id, "reason": reasons.get(d.id, "extraction failed")}
+            for d in documents
+            if d.id not in merged.per_document_entities
+        ]
+        processing_time = time.time() - start_time
+        error_message = None
+        if failed:
+            error_message = "Extraction failed for: " + ", ".join(
+                f["document_id"] for f in failed
+            )
+        result = ServiceBatchResult(
+            batch_id=str(uuid.uuid4()),
+            per_document_entities=merged.per_document_entities,
+            per_document_relationships=merged.per_document_relationships,
+            processing_time=processing_time,
+            success_status=not failed,
+            retry_count=merged.retry_count,
+            error_message=error_message,
+            failed=failed,
+        )
+        BatchMetricsTracker.get_instance().update_with_batch(result, len(documents))
+
+        if len(failed) == len(documents):
+            reasons_text = "; ".join(
+                f"{f['document_id']}: {f['reason']}" for f in failed
+            )
+            raise EntityExtractionError(
+                f"Entity extraction failed for every document in the batch ({reasons_text})"
+            )
+        return result
+
+    def _extract_batch_impl(self, documents: List[Document]) -> ServiceBatchResult:
+        """One attempt at a batch: one prompt per document.
+
+        A document whose extraction raises goes in `failed` and the rest carry on. The
+        attempt raises `EntityExtractionError` only if every document failed, which is
+        what the retry wrapper in `extract_batch` treats as the batch failing.
+        """
         start_time = time.time()
         per_document_entities: Dict[str, List[Entity]] = {}
         per_document_relationships: Dict[str, List[Relationship]] = {}
@@ -183,22 +281,13 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                 f"Entity extraction failed for every document in the batch ({reasons})"
             )
 
-        processing_time = time.time() - start_time
-        batch_id = f"batch-{int(start_time * 1000)}"
-        error_message = None
-        if failed:
-            error_message = "Extraction failed for: " + ", ".join(
-                f["document_id"] for f in failed
-            )
-
         return ServiceBatchResult(
-            batch_id=batch_id,
+            batch_id=str(uuid.uuid4()),
             per_document_entities=per_document_entities,
             per_document_relationships=per_document_relationships,
-            processing_time=processing_time,
-            success_status=not failed,
+            processing_time=time.time() - start_time,
+            success_status=True,
             retry_count=0,
-            error_message=error_message,
             failed=failed,
         )
 
@@ -231,9 +320,26 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
     def _extract_llm(
         self, text: str, document: Optional[Document] = None
     ) -> List[Entity]:
-        prompt = f"Extract entities from text: {text[:500]}"
+        prompt = self._build_prompt(text)
         response = self._call_llm(prompt)
         return self._parse_llm_response(response, document)
+
+    def _build_prompt(self, text: str) -> str:
+        """The prompt asks for the JSON array `_parse_llm_response` reads.
+
+        Without the format a chat model answers in prose, which parses as one
+        bogus entity.
+        """
+        types = ""
+        if self._filter_types:
+            types = f" Use only these entity types: {', '.join(sorted(self.enabled_types))}."
+        return (
+            f"Extract the named entities from the text below.{types}\n"
+            "Reply with ONLY a JSON array, no prose and no code fences. Each element "
+            'is {"text": "<entity as written>", "type": "<ENTITY_TYPE>", '
+            '"confidence": <number from 0 to 1>}. Reply [] if there are none.\n\n'
+            f"Text: {text[:2000]}"
+        )
 
     def _call_llm(self, prompt: str) -> str:
         if not self.llm_func_override:

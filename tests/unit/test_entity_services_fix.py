@@ -77,7 +77,10 @@ def test_a_clean_batch_has_an_empty_failed_list():
     assert result.success_status is True
 
 
-def test_every_document_failing_raises():
+def test_every_document_failing_raises(monkeypatch):
+    # the batch is retried with a backoff before it gives up (FR-005): don't wait it out
+    monkeypatch.setattr("iris_vector_rag.common.batch_utils.time.sleep", lambda s: None)
+
     def llm(prompt):
         raise ConnectionError("llm down")
 
