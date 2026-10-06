@@ -19,6 +19,7 @@ from ..exceptions import (
     GenerationError,
     IngestionError,
     RetrievalError,
+    TextIndexMissingError,
     VectorStoreConfigurationError,
 )
 
@@ -623,7 +624,9 @@ class BasicRAGPipeline(RAGPipeline):
         except Exception as e:
             from iris_vector_rag.retrieval.modes import RetrievalPrerequisiteError
 
-            if isinstance(e, RetrievalPrerequisiteError):
+            # A missing text index is an unmet prerequisite too: an empty result would
+            # read as "nothing matches".
+            if isinstance(e, (RetrievalPrerequisiteError, TextIndexMissingError)):
                 raise
             logger.warning(f"Document retrieval failed: {e}")
             retrieval_error = {

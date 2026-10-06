@@ -20,6 +20,7 @@ from ..core.vector_store import VectorStore
 from ..exceptions import (
     DimensionMismatchError,
     EmbeddingError,
+    TextIndexMissingError,
     VectorStoreCLOBError,
     VectorStoreConfigurationError,
     VectorStoreConnectionError,
@@ -35,6 +36,12 @@ from .table_shape import (
     TableNotFound,
     TableShape,
     TableShapeError,
+)
+from .text_search import (
+    TEXT_INDEX_NAME,
+    build_text_search_sql,
+    rank_procedure,
+    search_terms,
 )
 
 logger = logging.getLogger(__name__)
@@ -1640,6 +1647,111 @@ class IRISVectorStore(VectorStore):
         """
         embedding = self._embed_query(query)
         return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+
+    def text_search(
+        self,
+        query: str,
+        top_k: int = 5,
+        metadata_filter: Optional[Dict[str, Any]] = None,
+    ) -> List[Document]:
+        """Full-text search over the document table, best match first.
+
+        Searches through the table's iFind index (`SchemaManager.ensure_text_index`),
+        on whichever column the catalog says holds the text. Each hit is a complete
+        document whose ``metadata["text_score"]`` is the index's TF-IDF rank. A metadata
+        filter is applied in SQL, like the vector search, and again on the parsed
+        metadata; if that drops rows the page is widened once.
+
+        A query with no searchable words returns ``[]``: nothing in it can match.
+
+        Raises:
+            TextIndexMissingError: the table has no full-text index. An empty answer
+                would read as "no document matches", so the absence is an error.
+            RoleNotPresent: a filter was given and the table has no metadata column.
+            VectorStoreConnectionError: the database rejected the search.
+        """
+        if metadata_filter:
+            self._validate_filter_keys(metadata_filter)
+            self._validate_filter_values(metadata_filter)
+
+        shape = self.shape()
+        identifier = shape.column_for(ColumnRole.IDENTIFIER)
+        shape.column_for(ColumnRole.TEXT)  # a table with no text cannot be searched
+        metadata_column = shape.optional_column_for(ColumnRole.METADATA)
+        if metadata_filter and metadata_column is None:
+            raise RoleNotPresent(
+                "a metadata filter was supplied but this table has no metadata "
+                f"column, so the filter cannot be applied (filter keys: "
+                f"{sorted(metadata_filter)})",
+                shape.schema,
+                shape.table,
+            )
+
+        if not self.schema_manager.has_text_index(shape.qualified_name):
+            raise TextIndexMissingError(
+                f"{shape.qualified_name} has no full-text index {TEXT_INDEX_NAME}, so "
+                f"text, hybrid and rrf retrieval cannot search it. Create it once with "
+                f"SchemaManager(...).ensure_text_index({shape.table!r}); it is built "
+                f"over the rows already in the table.",
+                table=shape.qualified_name,
+                index=TEXT_INDEX_NAME,
+            )
+
+        terms = search_terms(query)
+        if not terms:
+            return []
+
+        extra_where = None
+        if metadata_filter:
+            extra_where = self._metadata_filter_predicate(
+                metadata_filter, self._metadata_filter_column_expr(metadata_column)
+            )
+        rank_proc = rank_procedure(shape.schema, shape.class_name)
+
+        connection = self._get_connection()
+        page = top_k
+        for _ in range(2):
+            sql = build_text_search_sql(
+                table=self.table_name,
+                id_column=identifier.name,
+                index_name=TEXT_INDEX_NAME,
+                rank_proc=rank_proc,
+                top_k=page,
+                extra_where=extra_where,
+            )
+            cursor = connection.cursor()
+            try:
+                cursor.execute(sql, [terms, terms, terms])
+                rows = [(str(row[0]), float(row[1])) for row in cursor.fetchall()]
+            except Exception as exc:
+                raise VectorStoreConnectionError(
+                    f"Text search failed: {self._sanitize_error_message(exc, 'text_search')}"
+                ) from exc
+            finally:
+                cursor.close()
+
+            by_id = {
+                str(d.id): d for d in self.fetch_documents_by_ids([r[0] for r in rows])
+            }
+            hits = []
+            for doc_id, score in rows:
+                doc = by_id.get(doc_id)
+                if doc is None:
+                    continue
+                doc.metadata["text_score"] = score
+                hits.append(doc)
+            if not metadata_filter:
+                return hits[:top_k]
+            kept = [
+                d
+                for d in hits
+                if all(d.metadata.get(k) == v for k, v in metadata_filter.items())
+            ]
+            # Widen once when the exact check dropped rows and the page was full.
+            if len(kept) == len(hits) or len(rows) < page:
+                return kept[:top_k]
+            page = top_k * 10
+        return kept[:top_k]
 
     def search_by_vector(
         self,

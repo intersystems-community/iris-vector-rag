@@ -5,6 +5,7 @@ C-M1..M7 from contracts/retrieval_modes.md.
 """
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 
@@ -69,25 +70,22 @@ class TestRetrievalModeRegistry:
         from iris_vector_rag.retrieval.modes import get_mode
 
         mode = get_mode("text")
-        assert len(mode.requires) > 0  # needs BM25 / iris-vector-graph
+        assert len(mode.requires) > 0  # needs the document table's text index
 
 
 class TestPrerequisiteErrors:
-    """Missing prerequisite → named error, not silent fallback (FR-012)."""
+    """The text modes name their prerequisite; the store enforces it per table (FR-012)."""
 
-    def test_text_mode_missing_prereq_raises_named_error(self):
-        from iris_vector_rag.retrieval.modes import check_prerequisites
+    @pytest.mark.parametrize("name", ["text", "hybrid", "rrf"])
+    def test_text_modes_require_the_text_index(self, name):
+        from iris_vector_rag.retrieval.modes import get_mode
 
-        # Simulate text mode missing iris-vector-graph BM25
-        with patch(
-            "iris_vector_rag.retrieval.modes._check_bm25_available", return_value=False
-        ):
-            with pytest.raises(Exception) as exc_info:
-                check_prerequisites("text", connection=MagicMock())
-            assert (
-                "bm25" in str(exc_info.value).lower()
-                or "text" in str(exc_info.value).lower()
-            )
+        assert get_mode(name).requires == ["text_index"]
+
+    def test_the_missing_index_error_is_a_schema_index_error(self):
+        from iris_vector_rag.exceptions import SchemaIndexError, TextIndexMissingError
+
+        assert issubclass(TextIndexMissingError, SchemaIndexError)
 
 
 class TestWeightValidation:
@@ -118,8 +116,8 @@ class TestRetrievalEngineDispatch:
     """RetrievalEngine dispatches to correct strategy per mode."""
 
     def test_vector_mode_uses_vector_store(self):
-        from iris_vector_rag.retrieval.engine import RetrievalEngine
         from iris_vector_rag.core.query_options import QueryOptions
+        from iris_vector_rag.retrieval.engine import RetrievalEngine
 
         vs = MagicMock()
         vs.search_by_text.return_value = []
@@ -129,8 +127,8 @@ class TestRetrievalEngineDispatch:
         vs.search_by_text.assert_called_once()
 
     def test_unsupported_mode_raises(self):
-        from iris_vector_rag.retrieval.engine import RetrievalEngine
         from iris_vector_rag.core.query_options import QueryOptions
+        from iris_vector_rag.retrieval.engine import RetrievalEngine
 
         vs = MagicMock()
         engine = RetrievalEngine(vector_store=vs)

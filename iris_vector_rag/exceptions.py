@@ -425,6 +425,15 @@ class SchemaIndexError(VectorStoreError):
     """An index the schema needs could not be ensured, or was asked for badly."""
 
 
+class TextIndexMissingError(SchemaIndexError):
+    """A text search was asked of a table that has no full-text index.
+
+    `hybrid`, `rrf` and `text` retrieval read the table through an iFind index. Without
+    one there is nothing to search, and an empty answer would read as "no document
+    matches". Create it with `SchemaManager.ensure_text_index()`.
+    """
+
+
 class RelationNotFoundError(VectorStoreDataError, LookupError):
     """A relationship ID names no row, so there is nothing to attach an embedding to."""
 

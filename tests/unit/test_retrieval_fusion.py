@@ -168,9 +168,15 @@ CORPUS = {
 class FakeStore:
     """A vector store with a fixed ranking; records how it was called."""
 
-    def __init__(self, ranking: List[str], scores: Optional[Dict[str, float]] = None):
+    def __init__(
+        self,
+        ranking: List[str],
+        scores: Optional[Dict[str, float]] = None,
+        text: Optional[List[tuple]] = None,
+    ):
         self.ranking = ranking
         self.scores = scores or {}
+        self.text = text or []
         self.calls: List[tuple] = []
         self.fetched: List[List[str]] = []
 
@@ -200,37 +206,19 @@ class FakeStore:
             ]
         return [(d, self.scores[d.id]) for d in docs][:k]
 
-    def fetch_documents_by_ids(self, ids):
-        self.fetched.append(list(ids))
-        return [self._doc(i) for i in ids if i in CORPUS]
-
-
-class FakeTextEngine:
-    hits: List[tuple] = []
-
-    def __init__(self, connection=None):
-        pass
-
-    def search_documents(self, query, k=50):
-        return list(type(self).hits)[:k]
-
-
-@pytest.fixture
-def text_hits():
-    def set_hits(hits):
-        FakeTextEngine.hits = hits
-
-    with patch("iris_vector_graph.text_search.TextSearchEngine", FakeTextEngine):
-        yield set_hits
-    FakeTextEngine.hits = []
-
-
-@pytest.fixture(autouse=True)
-def bm25_available():
-    with patch(
-        "iris_vector_rag.retrieval.modes._check_bm25_available", return_value=True
-    ):
-        yield
+    def text_search(self, query, top_k=5, metadata_filter=None):
+        """The store's full-text search: complete documents, scored, filter applied."""
+        self.calls.append(("text_search", query, top_k, metadata_filter))
+        docs = []
+        for doc_id, score in self.text:
+            doc = self._doc(doc_id)
+            doc.metadata["text_score"] = score
+            if metadata_filter and not all(
+                doc.metadata.get(k) == v for k, v in metadata_filter.items()
+            ):
+                continue
+            docs.append(doc)
+        return docs[:top_k]
 
 
 def run(store, retrieval, **kw):
@@ -238,9 +226,8 @@ def run(store, retrieval, **kw):
     return RetrievalEngine(vector_store=store, connection=object()).retrieve(opts)
 
 
-def test_text_mode_hydrates_content_by_id(text_hits):
-    text_hits([("b", 3.5), ("a", 1.0)])
-    store = FakeStore(ranking=[])
+def test_text_mode_returns_documents_with_content_and_scores():
+    store = FakeStore(ranking=[], text=[("b", 3.5), ("a", 1.0)])
 
     docs = run(store, "text")
 
@@ -250,9 +237,8 @@ def test_text_mode_hydrates_content_by_id(text_hits):
     assert docs[0].metadata["source"] == "bio"
 
 
-def test_rrf_mode_text_only_hits_come_back_with_content(text_hits):
-    text_hits([("c", 2.0)])
-    store = FakeStore(ranking=["a", "b"])
+def test_rrf_mode_text_only_hits_come_back_with_content():
+    store = FakeStore(ranking=["a", "b"], text=[("c", 2.0)])
 
     docs = run(store, "rrf")
 
@@ -262,9 +248,8 @@ def test_rrf_mode_text_only_hits_come_back_with_content(text_hits):
     assert [d.id for d in docs][-1] == "b"
 
 
-def test_rrf_mode_ranks_the_overlap_first_with_content(text_hits):
-    text_hits([("b", 2.0)])
-    store = FakeStore(ranking=["a", "b"])
+def test_rrf_mode_ranks_the_overlap_first_with_content():
+    store = FakeStore(ranking=["a", "b"], text=[("b", 2.0)])
 
     docs = run(store, "rrf")
 
@@ -273,9 +258,8 @@ def test_rrf_mode_ranks_the_overlap_first_with_content(text_hits):
     assert docs[0].page_content == "beta glucose"
 
 
-def test_hybrid_mode_top_vector_hit_is_not_zero(text_hits):
-    text_hits([])
-    store = FakeStore(ranking=["a"])
+def test_hybrid_mode_top_vector_hit_is_not_zero():
+    store = FakeStore(ranking=["a"], text=[])
 
     docs = run(store, "hybrid")
 
@@ -283,32 +267,11 @@ def test_hybrid_mode_top_vector_hit_is_not_zero(text_hits):
     assert docs[0].metadata["fusion_score"] == pytest.approx(0.7)
 
 
-def test_a_text_hit_the_store_does_not_hold_is_dropped_loudly(text_hits, caplog):
-    text_hits([("ghost", 9.0), ("a", 1.0)])
-    store = FakeStore(ranking=[])
-
-    with caplog.at_level("WARNING"):
-        docs = run(store, "text")
-
-    assert [d.id for d in docs] == ["a"]
-    assert "ghost" in caplog.text
-
-
-def test_text_mode_hydrates_only_blank_hits_in_one_fetch(text_hits):
-    text_hits([("a", 1.0), ("b", 1.0)])
-    store = FakeStore(ranking=[])
-
-    run(store, "text")
-
-    assert store.fetched == [["a", "b"]]
-
-
 # --- CR-09 filter half ------------------------------------------------------
 
 
-def test_vector_leg_receives_the_metadata_filter(text_hits):
-    text_hits([])
-    store = FakeStore(ranking=["a", "c"])
+def test_vector_leg_receives_the_metadata_filter():
+    store = FakeStore(ranking=["a", "c"], text=[])
 
     docs = run(store, "rrf", metadata_filter={"source": "cs"})
 
@@ -316,9 +279,8 @@ def test_vector_leg_receives_the_metadata_filter(text_hits):
     assert store.calls[0][3] == {"source": "cs"}
 
 
-def test_text_hits_are_filtered_on_the_hydrated_metadata(text_hits):
-    text_hits([("a", 3.0), ("c", 2.0), ("b", 1.0)])
-    store = FakeStore(ranking=[])
+def test_text_mode_passes_the_filter_to_the_store():
+    store = FakeStore(ranking=[], text=[("a", 3.0), ("c", 2.0), ("b", 1.0)])
 
     docs = run(store, "text", metadata_filter={"source": "cs"})
 
@@ -326,18 +288,18 @@ def test_text_hits_are_filtered_on_the_hydrated_metadata(text_hits):
 
 
 @pytest.mark.parametrize("mode", ["hybrid", "rrf"])
-def test_fusion_modes_filter_both_legs(text_hits, mode):
-    text_hits([("a", 3.0), ("c", 2.0)])
-    store = FakeStore(ranking=["b", "c"])
+def test_fusion_modes_filter_both_legs(mode):
+    store = FakeStore(ranking=["b", "c"], text=[("a", 3.0), ("c", 2.0)])
 
     docs = run(store, mode, metadata_filter={"source": "cs"})
 
     assert [d.id for d in docs] == ["c"]
 
 
-def test_similarity_threshold_applies_to_the_vector_leg_before_fusion(text_hits):
-    text_hits([("c", 2.0)])
-    store = FakeStore(ranking=["a", "b"], scores={"a": 0.9, "b": 0.4})
+def test_similarity_threshold_applies_to_the_vector_leg_before_fusion():
+    store = FakeStore(
+        ranking=["a", "b"], text=[("c", 2.0)], scores={"a": 0.9, "b": 0.4}
+    )
 
     docs = run(store, "rrf", similarity_threshold=0.5)
 
@@ -347,10 +309,9 @@ def test_similarity_threshold_applies_to_the_vector_leg_before_fusion(text_hits)
     assert all(d.page_content for d in docs)
 
 
-def test_threshold_on_text_mode_raises(text_hits):
-    text_hits([("a", 1.0)])
+def test_threshold_on_text_mode_raises():
     with pytest.raises(ValueError, match="similarity_threshold"):
-        run(FakeStore(ranking=[]), "text", similarity_threshold=0.5)
+        run(FakeStore(ranking=[], text=[("a", 1.0)]), "text", similarity_threshold=0.5)
 
 
 def test_vector_mode_through_the_engine_honours_filter_and_threshold():
@@ -453,3 +414,24 @@ def test_global_with_a_filter_raises():
     ):
         with pytest.raises(ValueError, match="metadata_filter"):
             eng._retrieve_global(opts)
+
+
+@pytest.mark.parametrize("mode", ["text", "hybrid", "rrf"])
+def test_a_missing_text_index_is_raised_not_swallowed(mode):
+    from iris_vector_rag.exceptions import TextIndexMissingError
+
+    class NoIndexStore(FakeStore):
+        def text_search(self, query, top_k=5, metadata_filter=None):
+            raise TextIndexMissingError("no index; run ensure_text_index")
+
+    with pytest.raises(TextIndexMissingError, match="ensure_text_index"):
+        run(NoIndexStore(ranking=["a"]), mode)
+
+
+def test_a_store_without_text_search_says_so():
+    class VectorOnly:
+        def search_by_text(self, *args, **kwargs):
+            return []
+
+    with pytest.raises(NotImplementedError, match="text_search"):
+        run(VectorOnly(), "text")

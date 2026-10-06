@@ -31,9 +31,16 @@ from iris_vector_rag.storage.collation import EXACT_CASE_COLUMNS, ensure_exact_c
 from iris_vector_rag.storage.table_shape import (
     CANONICAL_CHUNK_SHAPE,
     CANONICAL_DOCUMENT_SHAPE,
+    CatalogUnavailable,
+    ColumnRole,
     TableShape,
+    TableShapeError,
     VectorSpec,
     create_table_statement,
+)
+from iris_vector_rag.storage.text_search import (
+    TEXT_INDEX_NAME,
+    create_text_index_statement,
 )
 
 logger = logging.getLogger(__name__)
@@ -180,6 +187,8 @@ class SchemaManager:
         # Instance-level caches (not class-level, so different prefixes don't collide)
         self._schema_validation_cache: dict = {}
         self._tables_validated: set = set()
+        # Qualified names whose text index this instance has already ensured.
+        self._text_indexed: set = set()
 
         # Configurable schema prefix (FR-001 through FR-008)
         self.schema_prefix = self._resolve_schema_prefix(schema_prefix, config_manager)
@@ -1204,6 +1213,11 @@ class SchemaManager:
                 )
                 if success:
                     connection.commit()
+                    # The rebuilt table has no indexes; give it its text index too.
+                    self._text_indexed.discard(
+                        ".".join(self._split_table("SourceDocuments")).lower()
+                    )
+                    self._ensure_text_index_once("SourceDocuments")
                     return True
                 else:
                     connection.rollback()
@@ -1284,6 +1298,10 @@ class SchemaManager:
             logger.warning(f"No migration handler for table {table_name}")
             return False
 
+        except SchemaIndexError:
+            # The table was rebuilt but its text index could not be: say so.
+            connection.rollback()
+            raise
         except Exception as e:
             logger.error(f"Migration failed for {table_name}: {e}")
             connection.rollback()
@@ -1984,6 +2002,106 @@ class SchemaManager:
         finally:
             cursor.close()
 
+    # ========== FULL-TEXT INDEX (text leg of text / hybrid / rrf retrieval) ==========
+
+    def _split_table(self, table_name: str) -> tuple:
+        """``(schema, table)`` for a bare or qualified name; bare means this manager's."""
+        if "." in table_name:
+            schema, table = table_name.split(".", 1)
+            return schema, table
+        return self.schema_prefix, table_name
+
+    def has_text_index(self, table_name: str = "SourceDocuments") -> bool:
+        """Whether the table carries the full-text index ``ensure_text_index`` creates.
+
+        Raises:
+            SchemaIndexError: the catalog could not be read. "Could not tell" is not
+                "absent": a caller that treated it as absent would try to create it.
+        """
+        schema, table = self._split_table(table_name)
+        try:
+            names = IRISCatalogReader(
+                self.connection_manager.get_connection()
+            ).index_names(schema, table)
+        except CatalogUnavailable as exc:
+            raise SchemaIndexError(
+                f"Cannot tell whether {schema}.{table} has its full-text index: {exc}",
+                table=table,
+            ) from exc
+        return TEXT_INDEX_NAME.upper() in names
+
+    def _ensure_text_index_once(self, table_name: str) -> None:
+        """`ensure_text_index`, skipped once this instance has seen it succeed."""
+        key = ".".join(self._split_table(table_name)).lower()
+        if key not in self._text_indexed:
+            self.ensure_text_index(table_name)
+            self._text_indexed.add(key)
+
+    def ensure_text_index(self, table_name: str = "SourceDocuments") -> str:
+        """Ensure the table has a full-text (iFind) index on its text column.
+
+        The text leg of ``text``, ``hybrid`` and ``rrf`` retrieval searches through this
+        index. The column is the one the catalog says fills the text role, whatever the
+        table calls it (``text_content``, ``content``, ...). The index is
+        ``%iFind.Index.Basic`` with English tokenising and lower-casing.
+
+        Idempotent and non-destructive: an existing index is left alone, and a missing
+        one is built over the rows already in the table (no data is read out, dropped
+        or rewritten), so an existing deployment calls this once to gain text search.
+        The build is synchronous and its cost grows with the table.
+
+        Args:
+            table_name: Bare (this manager's schema) or ``Schema.Table``.
+
+        Returns:
+            The name of the index, which now exists.
+
+        Raises:
+            SchemaIndexError: the table is missing, has no column to index, or the
+                database refused the index. Nothing is swallowed.
+        """
+        schema, table = self._split_table(table_name)
+        snapshot = self._snapshot(table, schema=schema)
+        if snapshot is None:
+            raise SchemaIndexError(
+                f"Cannot create the text index: {schema}.{table} does not exist",
+                table=table,
+            )
+        try:
+            column = TableShape.from_snapshot(snapshot).column_for(ColumnRole.TEXT).name
+        except TableShapeError as exc:
+            raise SchemaIndexError(
+                f"Cannot create the text index on {schema}.{table}: {exc}", table=table
+            ) from exc
+
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        try:
+            existing = IRISCatalogReader(connection).index_names(
+                schema, snapshot.table, cursor=cursor
+            )
+            if TEXT_INDEX_NAME.upper() in existing:
+                logger.debug(
+                    f"Text index {TEXT_INDEX_NAME} already on {schema}.{table}"
+                )
+                return TEXT_INDEX_NAME
+            logger.info(
+                f"Building text index {TEXT_INDEX_NAME} on {schema}.{table}.{column}"
+            )
+            cursor.execute(create_text_index_statement(schema, snapshot.table, column))
+            connection.commit()
+            return TEXT_INDEX_NAME
+        except Exception as exc:
+            connection.rollback()
+            raise SchemaIndexError(
+                f"Could not create the text index {TEXT_INDEX_NAME} on "
+                f"{schema}.{table}({column}): {exc}",
+                table=table,
+                column=column,
+            ) from exc
+        finally:
+            cursor.close()
+
     # ========== AUDIT TESTING METHODS ==========
     # These methods replace direct SQL anti-patterns in integration tests
 
@@ -2320,7 +2438,12 @@ class SchemaManager:
                 "Communities",
             ]
             if table_name in standard_tables:
-                return self._ensure_standard_table(table_name)
+                ready = self._ensure_standard_table(table_name)
+                if ready and table_name == "SourceDocuments":
+                    # Raises SchemaIndexError: a document table without its text
+                    # index would make hybrid/rrf retrieval silently vector-only.
+                    self._ensure_text_index_once(table_name)
+                return ready
 
             # IVG owns its physical graph schema. Keep this compatibility entry point
             # for older IVR callers, but delegate creation to IVG instead of emitting
@@ -2340,6 +2463,8 @@ class SchemaManager:
                 )
                 return False
 
+        except SchemaIndexError:
+            raise
         except Exception as e:
             logger.error(f"Failed to ensure table {table_name}: {e}")
             return False

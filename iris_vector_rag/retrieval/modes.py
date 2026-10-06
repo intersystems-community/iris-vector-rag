@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -37,14 +37,14 @@ _register(
     RetrievalMode(
         name="text",
         sources=["text"],
-        requires=["iris_vector_graph_bm25"],
+        requires=["text_index"],
     )
 )
 _register(
     RetrievalMode(
         name="hybrid",
         sources=["vector", "text"],
-        requires=["iris_vector_graph_bm25"],
+        requires=["text_index"],
         fusion="weighted_score",
     )
 )
@@ -52,7 +52,7 @@ _register(
     RetrievalMode(
         name="rrf",
         sources=["vector", "text"],
-        requires=["iris_vector_graph_bm25"],
+        requires=["text_index"],
         fusion="rrf",
     )
 )
@@ -87,16 +87,6 @@ def get_mode(name: str) -> RetrievalMode:
 def list_modes() -> List[str]:
     """Return list of registered mode names."""
     return list(_REGISTRY.keys())
-
-
-def _check_bm25_available(connection: Any = None) -> bool:
-    """Return True if iris-vector-graph BM25 is importable and usable."""
-    try:
-        from iris_vector_graph.text_search import TextSearchEngine  # type: ignore[import]
-
-        return True
-    except ImportError:
-        return False
 
 
 def _check_knowledge_graph_available(connection: Any = None) -> bool:
@@ -141,13 +131,12 @@ def check_prerequisites(mode_name: str, connection: Any = None) -> None:
     """
     mode = get_mode(mode_name)
     for req in mode.requires:
-        if req == "iris_vector_graph_bm25":
-            if not _check_bm25_available(connection):
-                raise RetrievalPrerequisiteError(
-                    f"Retrieval mode {mode_name!r} requires iris-vector-graph with BM25 "
-                    f"text search support (iris_vector_graph.text_search.TextSearchEngine). "
-                    f"Install with: pip install iris-vector-graph"
-                )
+        if req == "text_index":
+            # Checked where the table is known: `IRISVectorStore.text_search` raises
+            # `TextIndexMissingError`, naming the index and how to create it, when the
+            # document table has none. A connection-level check here could not say
+            # which table, so it would either guess or always pass.
+            pass
         elif req == "knowledge_graph":
             if not _check_knowledge_graph_available(connection):
                 raise RetrievalPrerequisiteError(

@@ -1,8 +1,8 @@
 """Retrieval engine: mode dispatch (US4).
 
 Dispatches query execution to the appropriate retrieval strategy based on
-QueryOptions.retrieval. Supports vector mode natively; text/hybrid/rrf
-modes require iris-vector-graph BM25 support (FR-010, FR-012).
+QueryOptions.retrieval. The text leg of text/hybrid/rrf searches the document table
+through its full-text index (`SchemaManager.ensure_text_index`); FR-010, FR-012.
 """
 
 from __future__ import annotations
@@ -107,80 +107,25 @@ class RetrievalEngine:
     def _retrieve_vector(self, opts: Any) -> List[Any]:
         return self._vector_leg(opts.query, opts)
 
-    def _text_search_to_docs(self, results: List[Any]) -> List[Any]:
-        """Convert (doc_id, score) tuples from TextSearchEngine to Document objects.
-
-        The documents are bare: the text index gives ids and scores, not content. Use
-        `_text_leg` to get them hydrated.
-        """
-        from iris_vector_rag.core.models import Document
-
-        docs = []
-        for item in results:
-            if isinstance(item, tuple) and len(item) == 2:
-                doc_id, score = item
-                if hasattr(doc_id, "page_content"):
-                    # Already a Document (mock path)
-                    docs.append(doc_id)
-                else:
-                    doc = Document(
-                        id=str(doc_id),
-                        page_content="",
-                        metadata={"text_score": float(score)},
-                    )
-                    docs.append(doc)
-            else:
-                docs.append(item)
-        return docs
-
-    def _hydrate(self, docs: List[Any]) -> List[Any]:
-        """Fill in the content of hits that have none, by id, from the vector store.
-
-        A text-index hit carries an id and a score only. A hit the store does not hold
-        is dropped with a warning: it has nothing to show.
-        """
-        blank = [d for d in docs if not getattr(d, "page_content", "")]
-        if not blank:
-            return docs
-        wanted = [str(d.id) for d in blank]
-        fetched = {
-            str(d.id): d for d in self.vector_store.fetch_documents_by_ids(wanted)
-        }
-        hydrated = []
-        for d in docs:
-            if getattr(d, "page_content", ""):
-                hydrated.append(d)
-                continue
-            real = fetched.get(str(d.id))
-            if real is None:
-                logger.warning(
-                    "Text search returned id %r, which the vector store does not "
-                    "hold; dropping the hit",
-                    d.id,
-                )
-                continue
-            # The text score stays; everything the store knows about the document joins it.
-            real.metadata.update(d.metadata)
-            hydrated.append(real)
-        return hydrated
-
     def _text_leg(self, opts: Any) -> List[Any]:
-        """Text hits with content, filtered by ``metadata_filter`` on the stored metadata."""
-        from iris_vector_graph.text_search import (
-            TextSearchEngine,  # type: ignore[import]
-        )
+        """Text hits: full documents, best match first, scored in ``text_score``.
 
-        engine = TextSearchEngine(connection=self.connection)
-        raw = engine.search_documents(opts.query, k=opts.top_k)
-        docs = self._hydrate(self._text_search_to_docs(raw))
-        metadata_filter = getattr(opts, "metadata_filter", None)
-        if metadata_filter:
-            docs = [
-                d
-                for d in docs
-                if all(d.metadata.get(k) == v for k, v in metadata_filter.items())
-            ]
-        return docs
+        The store searches its own table through its full-text index and applies
+        ``metadata_filter`` the way the vector leg does. A table without the index
+        raises `TextIndexMissingError` rather than returning nothing.
+        """
+        if not hasattr(self.vector_store, "text_search"):
+            raise NotImplementedError(
+                f"{type(self.vector_store).__name__} has no text_search(), so the "
+                f"text leg of this retrieval mode cannot run on it."
+            )
+        return list(
+            self.vector_store.text_search(
+                opts.query,
+                top_k=opts.top_k,
+                metadata_filter=getattr(opts, "metadata_filter", None),
+            )
+        )
 
     def _retrieve_text(self, opts: Any) -> List[Any]:
         if (getattr(opts, "similarity_threshold", 0.0) or 0.0) > 0.0:
