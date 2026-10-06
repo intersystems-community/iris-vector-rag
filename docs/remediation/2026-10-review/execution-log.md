@@ -1003,3 +1003,62 @@ entry: feature, question, choice, why.
 - **Fixture.** `exact_case_type_columns` and `_set_type_collation` removed from
   `tests/integration/conftest.py`; the fixture manager's `ensure_table_schema`
   now creates or repairs the tables.
+
+## fix85-pipelines
+
+- **Scope.** 21 failing tests in the pipeline e2e and MCP integration files,
+  plus the e2e directory files. All run against the real OpenAI client
+  (`OPENAI_API_KEY`) and the real sentence-transformer (HF reachable here). No
+  fake LLM or embedder in `tests/e2e` or `tests/integration`; the e2e fixtures
+  still require the key.
+- **LLM limits.** `timeout` default 60 s, `max_retries` default 2; precedence
+  argument, `llm.*` config (via `create_pipeline`), `RAG_LLM__*` environment,
+  default. Only the `openai` provider is limited; `iris_llm` and `stub` are not.
+  A timeout is found through the exception chain (openai `APITimeoutError`,
+  httpx `TimeoutException`, builtin `TimeoutError`) and re-raised as
+  `LLMTimeoutError`; other errors propagate unchanged. Unit-tested with a fake
+  client in `tests/unit`.
+- **Root causes.** (1) Stale API: the basic and rerank e2e tests passed the
+  document list as the first positional argument, which is `documents_path`
+  since core-contracts; `sources` is a top-level response key (unit test), not
+  metadata. Tests updated. (2) Real bug: `documents` as dicts reached the store
+  and failed (`'dict' object has no attribute 'page_content'`);
+  `coerce_documents` now converts them in basic, CRAG, PyLate and GraphRAG. (3)
+  Real bug: `CRAGPipeline()` (what the MCP server builds) had no connection
+  manager, so the chunk search raised and the evaluator guard reported
+  `fallback_vector`; it now builds the default one. The test's status vocabulary
+  (`uncertain`/`incorrect`) was stale: CRAG reports
+  `confident`/`ambiguous`/`disoriented`. CRAG now also names the correction
+  applied (`correction_strategy`). The MCP `confidence_threshold` and
+  `correction_strategy` arguments are still accepted and ignored by the pipeline
+  (no rewrite strategy exists). (4) `test_mcp_basic_rag` "Document missing
+  score": decision below. (5) Multi-query RRF never set `rrf_score`, `rrf_rank`
+  or a fused `score`. (6) `HybridGraphRAGPipeline._extract_sources` called a
+  parent method nobody defines. (7) `test_mcp_concurrent_queries` loaded no
+  documents and depended on test order; it requests `loaded_test_documents`. (8)
+  `test_crag_pipeline_e2e`'s session fixture called `ensure_all_vector_indexes`
+  with no `RAG.Entities`, which raises since storage-correctness; the fixture
+  creates the table first.
+- **Where a score is carried.** `search_by_text` stays score-free (FR-014). The
+  store gained `search_by_text_with_score`; `BasicRAGPipeline._search_text` uses
+  it when the store's class defines it (a class check, so a test double is not
+  mistaken for a scoring store) and records `score` and `similarity` in each
+  document's metadata, which is where the threshold filter already looked. The
+  MCP serializer passes the metadata on and names `score` when only `similarity`
+  is present.
+- **GraphRAG ingest.** `load_documents(documents_path=None)` follows the base
+  contract; a path with no `documents=` raises instead of being ignored. The
+  logged `insert_vector failed: <LIST ERROR> Incorrect list format` was the
+  duplicate-key report of a re-ingested document: the store inserted first and
+  read the failure, ivg logged it at ERROR, then the store updated the row. It
+  now asks whether the row exists first (real-IRIS test). The missing-table
+  message on the following query is ivg's `GRAPH_KG.DOCS` (no ivg graph is
+  loaded); the query falls back to vector search and answers, as designed.
+- **Comprehensive validation.** `test_comprehensive_pipeline_validation_e2e.py`
+  now uses the real LLM for GraphRAG and requires all four pipelines WORKING.
+  `test_comprehensive_pipeline_validation_e2e_fixed.py` is deleted: it validated
+  mock objects (mock mode failed on `Mock` not being iterable) and its full mode
+  only constructed a pipeline and reported INFRASTRUCTURE_MISSING; the real file
+  covers the same ground.
+- **Multi-query LLM expansion test** had been skipped with a cost reason; it now
+  runs against the real client.

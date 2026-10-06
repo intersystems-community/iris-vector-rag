@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List, Optional
 from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
-from ..core.models import Document
+from ..core.models import Document, coerce_documents
 from ..embeddings.manager import EmbeddingManager
 from ..exceptions import (
     GenerationError,
@@ -145,6 +145,7 @@ class BasicRAGPipeline(RAGPipeline):
         if documents is not None:
             if not isinstance(documents, list):
                 raise ValueError("Documents must be provided as a list")
+            documents = coerce_documents(documents)
         else:
             # Load documents from path
             documents = self._load_documents_from_path(documents_path)
@@ -609,8 +610,8 @@ class BasicRAGPipeline(RAGPipeline):
                     )
                     retrieved_documents = [doc for doc, _ in raw]
                 else:
-                    retrieved_documents = self.vector_store.search_by_text(
-                        query, top_k=top_k, metadata_filter=metadata_filter
+                    retrieved_documents = self._search_text(
+                        query, top_k, metadata_filter
                     )
             else:
                 logger.warning("No vector store available")
@@ -735,6 +736,32 @@ class BasicRAGPipeline(RAGPipeline):
             rerank_degraded,
         )
         return response
+
+    def _search_text(
+        self, query: str, top_k: int, metadata_filter: Optional[Dict[str, Any]]
+    ) -> List[Document]:
+        """Documents for a text query, each carrying its score when the store has one.
+
+        `search_by_text` returns documents without scores (FR-014). A store class that
+        defines `search_by_text_with_score` is asked for scores instead, and the score
+        is recorded in each document's metadata as ``score`` and ``similarity`` (the
+        keys the similarity-threshold filter and the MCP serializer read). The check is
+        on the class so that a test double is not mistaken for a scoring store.
+        """
+        store = self.vector_store
+        if callable(getattr(type(store), "search_by_text_with_score", None)):
+            scored = store.search_by_text_with_score(
+                query, top_k=top_k, metadata_filter=metadata_filter
+            )
+            return [
+                Document(
+                    id=doc.id,
+                    page_content=doc.page_content,
+                    metadata={**doc.metadata, "score": score, "similarity": score},
+                )
+                for doc, score in scored
+            ]
+        return store.search_by_text(query, top_k=top_k, metadata_filter=metadata_filter)
 
     def _require_llm_for_answer(self, generate_answer: bool, label: str) -> None:
         """Fail loudly when an answer is asked for and nothing can produce it.

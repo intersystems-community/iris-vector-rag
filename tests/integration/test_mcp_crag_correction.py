@@ -53,9 +53,9 @@ class TestMCPCRAGCorrection:
         assert result["success"] is True
         metadata = result["result"]["metadata"]
 
-        # CRAG should include retrieval_status (confident, uncertain, incorrect)
+        # CRAG reports retrieval_status: confident, ambiguous or disoriented
         assert "retrieval_status" in metadata, "CRAG metadata missing retrieval_status"
-        assert metadata["retrieval_status"] in ["confident", "uncertain", "incorrect"]
+        assert metadata["retrieval_status"] in ["confident", "ambiguous", "disoriented"]
 
     @pytest.mark.asyncio
     async def test_crag_correction_applied_metadata(self):

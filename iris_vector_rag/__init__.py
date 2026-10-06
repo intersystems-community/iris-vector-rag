@@ -2,7 +2,7 @@
 
 from typing import Any, Callable, Dict, List, Optional
 
-from iris_vector_rag.common.utils import get_llm_func
+from iris_vector_rag.common.utils import get_llm_func, llm_limits_from_config
 from iris_vector_rag.executor import SqlExecutor
 
 from .config.manager import ConfigurationManager
@@ -99,7 +99,9 @@ def create_pipeline(
             llm_provider = config_manager.get("llm.provider", default_provider)
             llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
             effective_llm_func = get_llm_func(
-                provider=llm_provider, model_name=llm_model_name
+                provider=llm_provider,
+                model_name=llm_model_name,
+                **llm_limits_from_config(config_manager),
             )
         return _create_pipeline_legacy(
             pipeline_type,
@@ -150,7 +152,9 @@ def create_pipeline(
         llm_provider = config_manager.get("llm.provider", default_provider)
         llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
         effective_llm_func = get_llm_func(
-            provider=llm_provider, model_name=llm_model_name
+            provider=llm_provider,
+            model_name=llm_model_name,
+            **llm_limits_from_config(config_manager),
         )
 
     return _create_pipeline_legacy(

@@ -14,7 +14,8 @@ import time
 from typing import Any, Callable, Dict, List, Literal, Optional, cast
 
 from ..core.base import RAGPipeline
-from ..core.models import Document
+from ..core.connection import ConnectionManager
+from ..core.models import Document, coerce_documents
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,12 @@ class CRAGPipeline(RAGPipeline):
                     return self._connection
 
             connection_manager = _CallerConnectionManager(iris_connector)
+
+        if connection_manager is None:
+            # Like BasicRAGPipeline: the chunk search and knowledge-base expansion
+            # need a connection, so a pipeline built with no arguments (the MCP
+            # server does) gets the default one. It connects on first use.
+            connection_manager = ConnectionManager()
 
         if config_manager is None:
             # Create a minimal config manager
@@ -208,6 +215,7 @@ class CRAGPipeline(RAGPipeline):
         if documents is not None:
             if not isinstance(documents, list):
                 raise ValueError("Documents must be provided as a list")
+            documents = coerce_documents(documents)
         else:
             # Load documents from path - basic implementation
             import os
@@ -488,6 +496,11 @@ class CRAGPipeline(RAGPipeline):
                     "generated_answer": generate_answer and answer is not None,
                     "retrieval_status": retrieval_status,
                     "correction_applied": retrieval_status != "confident",
+                    **(
+                        {"correction_strategy": strategy}
+                        if (strategy := self._correction_strategy(retrieval_status))
+                        else {}
+                    ),
                     "initial_doc_count": len(initial_docs),
                     "final_doc_count": len(corrected_docs),
                     "retrieval_method": effective_retrieval_method,  # FR-003: Include retrieval method
@@ -699,6 +712,15 @@ class CRAGPipeline(RAGPipeline):
                 f"CRAG _apply_corrective_actions() exit (disoriented): returning {len(expanded_docs)} expanded documents"
             )
             return expanded_docs
+
+    @staticmethod
+    def _correction_strategy(status: str) -> Optional[str]:
+        """Name of the corrective action a retrieval status triggers (None: none)."""
+        return {
+            "ambiguous": "chunk_enhancement",
+            "disoriented": "knowledge_base_expansion",
+            "fallback_vector": "vector_fallback",
+        }.get(status)
 
     def _enhance_retrieval(
         self, query: str, initial_docs: List[Document], top_k: int

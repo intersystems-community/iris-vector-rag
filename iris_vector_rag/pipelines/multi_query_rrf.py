@@ -264,6 +264,7 @@ Return only the alternative queries, one per line, without numbering.
             ]
             fused = _IVGRRFFusion.fuse_results(ranked_lists, c=self.rrf_k)
             sorted_ids = [doc_id for doc_id, _ in fused[:top_k]]
+            fused_scores = dict(fused)
         else:
             rrf_scores: Dict[str, float] = defaultdict(float)
             for result_set in result_sets:
@@ -271,6 +272,7 @@ Return only the alternative queries, one per line, without numbering.
                     doc_id = doc.id if doc.id else fallback_document_id(doc)
                     rrf_scores[doc_id] += 1.0 / (rank + self.rrf_k)
             sorted_ids = sorted(rrf_scores, key=rrf_scores.get, reverse=True)[:top_k]
+            fused_scores = dict(rrf_scores)
 
         results = []
         for doc_id in sorted_ids:
@@ -280,6 +282,11 @@ Return only the alternative queries, one per line, without numbering.
                     doc.metadata = {}
                 doc.metadata["source_queries"] = source_queries.get(doc_id, [])
                 results.append(doc)
+                # The fused score replaces the per-query similarity under "score",
+                # the key every pipeline's documents share; rank is 1-based.
+                doc.metadata["rrf_score"] = fused_scores[doc_id]
+                doc.metadata["rrf_rank"] = len(results)
+                doc.metadata["score"] = fused_scores[doc_id]
 
         logger.info(
             "RRF fusion: %d raw results → %d final results",

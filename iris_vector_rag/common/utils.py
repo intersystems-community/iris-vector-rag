@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List, Optional  # Added Tuple
 import numpy as np
 import yaml  # Added for config loading
 
-from iris_vector_rag.exceptions import EmbeddingError
+from iris_vector_rag.exceptions import EmbeddingError, LLMTimeoutError
 
 logger = logging.getLogger(__name__)  # Added for logger usage
 
@@ -49,6 +49,95 @@ def get_config_value(key_path: str, default: Any = None) -> Any:
             f"Config key '{key_path}' not found. Returning default: {default}"
         )
         return default
+
+
+# --- LLM call limits ---
+# A live LLM call with no client timeout hangs for the SDK default (ten minutes, with
+# retries) when the network stalls. Every provider client built here gets a timeout and a
+# bounded retry count: explicit argument, then RAG_LLM__TIMEOUT / RAG_LLM__MAX_RETRIES
+# (the environment form of llm.timeout / llm.max_retries), then these defaults.
+DEFAULT_LLM_TIMEOUT_S = 60.0
+DEFAULT_LLM_MAX_RETRIES = 2
+_LLM_TIMEOUT_ENV = "RAG_LLM__TIMEOUT"
+_LLM_MAX_RETRIES_ENV = "RAG_LLM__MAX_RETRIES"
+
+
+def _resolve_llm_timeout(value: Any) -> float:
+    if value is None:
+        value = os.getenv(_LLM_TIMEOUT_ENV)
+        if value is None or value == "":
+            return DEFAULT_LLM_TIMEOUT_S
+    try:
+        if isinstance(value, bool):
+            raise ValueError
+        timeout = float(value)
+    except (TypeError, ValueError):
+        timeout = float("nan")
+    if not timeout > 0 or timeout == float("inf"):
+        raise ValueError(
+            f"LLM timeout must be a positive number of seconds, got {value!r} "
+            f"(llm.timeout / {_LLM_TIMEOUT_ENV})"
+        )
+    return timeout
+
+
+def _resolve_llm_max_retries(value: Any) -> int:
+    if value is None:
+        value = os.getenv(_LLM_MAX_RETRIES_ENV)
+        if value is None or value == "":
+            return DEFAULT_LLM_MAX_RETRIES
+    try:
+        if isinstance(value, bool) or (
+            isinstance(value, float) and not value.is_integer()
+        ):
+            raise ValueError
+        retries = int(value)
+    except (TypeError, ValueError):
+        retries = -1
+    if retries < 0:
+        raise ValueError(
+            f"LLM max_retries must be a non-negative integer, got {value!r} "
+            f"(llm.max_retries / {_LLM_MAX_RETRIES_ENV})"
+        )
+    return retries
+
+
+def llm_limits_from_config(config_manager: Any) -> Dict[str, Any]:
+    """`llm.timeout` and `llm.max_retries` from a configuration manager, if set.
+
+    The result is passed to `get_llm_func` as keyword arguments. The manager already
+    applies the `RAG_LLM__*` environment overrides.
+    """
+    limits: Dict[str, Any] = {}
+    for key in ("timeout", "max_retries"):
+        value = config_manager.get(f"llm.{key}", None)
+        if value is not None:
+            limits[key] = value
+    return limits
+
+
+def _is_timeout(exc: Optional[BaseException]) -> bool:
+    """True when `exc`, or anything it was raised from, is a provider timeout."""
+    kinds: List[type] = [TimeoutError]
+    try:
+        import httpx
+
+        kinds.append(httpx.TimeoutException)
+    except ImportError:
+        pass
+    try:
+        import openai
+
+        kinds.append(openai.APITimeoutError)
+    except ImportError:
+        pass
+    seen = set()
+    while exc is not None and id(exc) not in seen:
+        if isinstance(exc, tuple(kinds)):
+            return True
+        seen.add(id(exc))
+        exc = exc.__cause__ or exc.__context__
+    return False
 
 
 # --- Dataclasses ---
@@ -277,13 +366,23 @@ def get_llm_func(
         provider: LLM provider (openai, stub, etc.)
         model_name: Model name
         enable_cache: Override cache enable/disable (None = use config default)
-        **kwargs: Additional LLM parameters
+        **kwargs: Additional LLM parameters. ``timeout`` (seconds per attempt, default
+            60; env ``RAG_LLM__TIMEOUT``) and ``max_retries`` (default 2; env
+            ``RAG_LLM__MAX_RETRIES``) bound the openai client; a call that times out
+            raises `LLMTimeoutError`. Other providers have no client-side limit here.
 
     Returns:
         LLM function (automatically cached if enabled)
     """
     # Setup caching if enabled
     cache_enabled = _setup_caching_if_needed(enable_cache)
+
+    # Bound every provider call: the limits are part of the client's identity.
+    timeout_s = _resolve_llm_timeout(kwargs.pop("timeout", None))
+    max_retries = _resolve_llm_max_retries(kwargs.pop("max_retries", None))
+    if provider == "openai":
+        kwargs["timeout"] = timeout_s
+        kwargs["max_retries"] = max_retries
 
     llm_key = (
         provider,
@@ -408,7 +507,14 @@ def get_llm_func(
         return query_iris_llm
 
     def query_llm(prompt: str) -> str:
-        response = llm_instance.invoke(prompt)
+        try:
+            response = llm_instance.invoke(prompt)
+        except Exception as exc:
+            if _is_timeout(exc):
+                raise LLMTimeoutError(
+                    provider, model_name, timeout_s, max_retries
+                ) from exc
+            raise
         # Ensure the response is always a string
         if hasattr(response, "content"):
             return str(response.content)

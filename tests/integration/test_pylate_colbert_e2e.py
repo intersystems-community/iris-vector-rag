@@ -8,6 +8,7 @@ Requirements: FR-025, FR-026, FR-027, FR-028
 """
 
 import json
+
 import pytest
 
 
@@ -87,8 +88,8 @@ class TestPyLateColBERTIntegration:
 
         assert len(result["answer"]) > 10
         metadata = result["metadata"]
-        assert "sources" in metadata
-        assert len(metadata["sources"]) > 0
+        assert "sources" in result
+        assert len(result["sources"]) > 0
 
     def test_colbert_late_interaction_search(self, pylate_colbert_pipeline):
         """

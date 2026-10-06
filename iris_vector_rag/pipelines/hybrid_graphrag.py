@@ -10,7 +10,7 @@ robust error handling, and modular architecture.
 
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional, TypedDict
+from typing import Any, Callable, Dict, List, Optional, TypedDict, cast
 
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager

@@ -19,7 +19,14 @@ class FakeChatOpenAI:
     """Records its constructor arguments; rejects unknown ones like the real client."""
 
     created: list = []
-    ALLOWED = {"model_name", "openai_api_key", "temperature", "max_tokens"}
+    ALLOWED = {
+        "model_name",
+        "openai_api_key",
+        "temperature",
+        "max_tokens",
+        "timeout",
+        "max_retries",
+    }
 
     def __init__(self, **kwargs):
         unknown = set(kwargs) - self.ALLOWED

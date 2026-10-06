@@ -7,7 +7,7 @@ from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..core.exceptions import RAGException
-from ..core.models import Document
+from ..core.models import Document, coerce_documents
 from ..embeddings.manager import EmbeddingManager
 
 if TYPE_CHECKING:
@@ -79,7 +79,9 @@ class GraphRAGPipeline(RAGPipeline):
             f"Production-hardened GraphRAG pipeline initialized (entity extraction: {self.entity_extraction_enabled})"
         )
 
-    def load_documents(self, documents_path: str, **kwargs) -> Dict[str, Any]:
+    def load_documents(
+        self, documents_path: Optional[str] = None, **kwargs
+    ) -> Dict[str, Any]:
         """
         Load documents with integrated entity extraction.
 
@@ -99,6 +101,12 @@ class GraphRAGPipeline(RAGPipeline):
             documents = kwargs["documents"]
             if not isinstance(documents, list):
                 raise ValueError("Documents must be provided as a list")
+            documents = coerce_documents(documents)
+        elif documents_path is not None:
+            raise ValueError(
+                "GraphRAG loads documents passed as documents=[...]; "
+                f"loading from a path ({documents_path!r}) is not supported"
+            )
         else:
             documents = []
 

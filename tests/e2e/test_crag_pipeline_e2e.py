@@ -41,6 +41,9 @@ def clean_database_once():
 
     assert schema_manager.ensure_table_schema("SourceDocuments")
     assert schema_manager.ensure_table_schema("DocumentChunks")
+    # ensure_all_vector_indexes raises for a table that is missing (it used to log and
+    # go on), and the suite's schema reset leaves the graph tables for the library.
+    assert schema_manager.ensure_table_schema("Entities")
     schema_manager.ensure_all_vector_indexes()
     yield
 

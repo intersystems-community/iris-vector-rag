@@ -325,6 +325,42 @@ class GenerationError(Exception):
         return " | ".join(parts)
 
 
+class LLMTimeoutError(GenerationError):
+    """The LLM provider did not answer within the configured timeout.
+
+    Names the provider, the model and the limit so a stalled network fails one call
+    with a reason instead of hanging it. Raised from the provider's own timeout error
+    (see ``__cause__``).
+
+    Attributes:
+        provider: LLM provider name (for example ``openai``)
+        model_name: model the call was made to
+        timeout: the per-request timeout in seconds
+        max_retries: how many times the client retries before giving up
+    """
+
+    def __init__(
+        self,
+        provider: str,
+        model_name: str,
+        timeout: Any,
+        max_retries: Any = None,
+    ):
+        super().__init__(
+            f"LLM call to provider '{provider}' (model '{model_name}') timed out "
+            f"after {timeout} s per attempt; set llm.timeout or RAG_LLM__TIMEOUT to "
+            f"change the limit",
+            provider=provider,
+            model_name=model_name,
+            timeout=timeout,
+            max_retries=max_retries,
+        )
+        self.provider = provider
+        self.model_name = model_name
+        self.timeout = timeout
+        self.max_retries = max_retries
+
+
 class VectorStoreError(RAGException):
     """
     Base exception for vector store operations.

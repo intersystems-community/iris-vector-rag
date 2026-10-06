@@ -806,24 +806,12 @@ class IRISVectorStore(VectorStore):
                     values[title_column.name] = title
 
                 if embeddings and len(embeddings) > i:
-                    # upsert=False: ivg falls back to UPDATE only when the duplicate-key
-                    # error text contains UNIQUE or DUPLICATE, and this driver can report
-                    # a duplicate as "<LIST ERROR> ...". The store asks IRIS whether the
-                    # row exists instead of trusting a message.
-                    success = insert_vector(
-                        cursor=cursor,
-                        table_name=self.table_name,
-                        vector_column=embedding_column.name,
-                        vector_data=embeddings[i],
-                        dimension=vector.dimension,
-                        key_columns={identifier.name: doc.id},
-                        additional_columns=values,
-                        dtype=vector.element_type,
-                        upsert=False,
-                    )
-                    if not success and self._row_exists(
-                        cursor, identifier.name, doc.id
-                    ):
+                    # The store asks IRIS whether the row exists instead of trying
+                    # the INSERT and reading its failure: ivg logs a failed INSERT at
+                    # ERROR level, and this driver reports a duplicate key as
+                    # "<LIST ERROR> Incorrect list format", so every re-ingested
+                    # document used to log an error although the call succeeded.
+                    if self._row_exists(cursor, identifier.name, doc.id):
                         self._update_with_vector(
                             cursor,
                             identifier.name,
@@ -834,6 +822,18 @@ class IRISVectorStore(VectorStore):
                             vector,
                         )
                         success = True
+                    else:
+                        success = insert_vector(
+                            cursor=cursor,
+                            table_name=self.table_name,
+                            vector_column=embedding_column.name,
+                            vector_data=embeddings[i],
+                            dimension=vector.dimension,
+                            key_columns={identifier.name: doc.id},
+                            additional_columns=values,
+                            dtype=vector.element_type,
+                            upsert=False,
+                        )
                     if not success:
                         # ivg has logged the cause. Carrying on would commit the rest of
                         # the batch and return a partial id list as if it were whole.
@@ -1627,6 +1627,19 @@ class IRISVectorStore(VectorStore):
         embedding = self._embed_query(query)
         results = self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
         return [doc for doc, _ in results]
+
+    def search_by_text_with_score(
+        self,
+        query: str,
+        top_k: int = 5,
+        metadata_filter: Optional[Dict[str, Any]] = None,
+    ) -> List[Tuple[Document, float]]:
+        """Return (Document, similarity score) pairs for a text query, best first.
+
+        The scored sibling of `search_by_text`, which stays score-free (FR-014).
+        """
+        embedding = self._embed_query(query)
+        return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
 
     def search_by_vector(
         self,

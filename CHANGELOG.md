@@ -19,6 +19,27 @@
   gives up, logs why, changes nothing and retries on the next ensure. Queries that group
   or compare these columns are now case-sensitive.
 
+### Changed: LLM calls are bounded by a timeout and a retry count
+
+- **`get_llm_func` gives the OpenAI client `timeout=60` (seconds per attempt) and
+  `max_retries=2`.** Before, the client used the SDK defaults (ten minutes, two
+  retries), so a stalled network hung a caller for half an hour. Set `llm.timeout` and
+  `llm.max_retries` in the configuration, the environment variables `RAG_LLM__TIMEOUT`
+  and `RAG_LLM__MAX_RETRIES`, or pass `timeout=` / `max_retries=` to `get_llm_func`.
+  A call that times out raises the new `LLMTimeoutError` (a `GenerationError`) naming
+  the provider, the model and the limit. The worst case is
+  `timeout * (max_retries + 1)` seconds. Other providers are not limited by this.
+- **`load_documents` accepts dict documents** (`content`/`page_content`/`text`,
+  `id`/`doc_id`) on the basic, rerank, CRAG, PyLate and GraphRAG pipelines, as its
+  documentation always said.
+- **Retrieved documents carry `score` and `similarity`** on the basic pipeline when
+  the store defines `search_by_text_with_score` (`IRISVectorStore` does), and the MCP
+  tools report `score`. Multi-query RRF documents carry `rrf_score`, `rrf_rank` and the
+  fused `score`.
+- **Re-ingesting a stored document no longer logs an ERROR** from
+  iris-vector-graph: the store checks for the row and updates it instead of trying the
+  INSERT first.
+
 ### Changed: an entity table from an older release is upgraded in place
 
 - **The entity writers add a missing `confidence` column.** `EntityStorageAdapter` and

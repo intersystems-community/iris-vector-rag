@@ -1064,3 +1064,52 @@ class BenchmarkQuery:
     answer: Union[str, List[str]]
     supporting_docs: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+def coerce_documents(documents: List[Any]) -> List[Any]:
+    """Turn dict documents into `Document` objects; anything else passes through.
+
+    Pipelines document their input as "dicts or Document objects". A dict carries its
+    text under ``page_content``, ``content`` or ``text``, its id under ``id``,
+    ``doc_id`` or ``document_id`` (one is generated when absent), and extra scalar
+    fields such as ``title`` are kept in the metadata. The caller's dicts are not
+    changed. A dict with no text is refused, naming its position.
+    """
+    coerced: List[Any] = []
+    for index, item in enumerate(documents):
+        if not isinstance(item, dict):
+            coerced.append(item)
+            continue
+        text = next(
+            (
+                item[key]
+                for key in ("page_content", "content", "text")
+                if isinstance(item.get(key), str) and item[key].strip()
+            ),
+            None,
+        )
+        if text is None:
+            raise ValueError(
+                f"document {index} has no text: expected a non-empty 'page_content', "
+                f"'content' or 'text' (keys: {sorted(item)})"
+            )
+        metadata = dict(item.get("metadata") or {})
+        reserved = {
+            "page_content",
+            "content",
+            "text",
+            "id",
+            "doc_id",
+            "document_id",
+            "metadata",
+        }
+        for key, value in item.items():
+            if key not in reserved and isinstance(value, (str, int, float, bool)):
+                metadata.setdefault(key, value)
+        doc_id = next(
+            (str(item[k]) for k in ("id", "doc_id", "document_id") if item.get(k)),
+            None,
+        )
+        kwargs = {"id": doc_id} if doc_id else {}
+        coerced.append(Document(page_content=text, metadata=metadata, **kwargs))
+    return coerced

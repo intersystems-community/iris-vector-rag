@@ -47,24 +47,7 @@ tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegr
 tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_multiple_queries_consistency
 tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_relevance_scoring
 tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_vector_search_retrieval
-tests/integration/test_mcp_basic_rag.py::TestMCPBasicRAG::test_basic_rag_query_execution
-tests/integration/test_multi_query_rrf_e2e.py::TestMultiQueryRRFE2E::test_document_metadata_enrichment
 # pipelines-fix leftovers (first honest integration run; the pipelines' response shape and retrieval against the real store)
-tests/integration/test_basic_rag_e2e.py::TestBasicRAGIntegration::test_document_loading_workflow
-tests/integration/test_basic_rag_e2e.py::TestBasicRAGIntegration::test_full_query_path_with_real_db
-tests/integration/test_basic_rag_e2e.py::TestBasicRAGIntegration::test_multiple_queries_maintain_consistency
-tests/integration/test_basic_rag_e2e.py::TestBasicRAGIntegration::test_response_quality_metrics
-tests/integration/test_basic_rerank_e2e.py::TestBasicRerankRAGIntegration::test_document_loading_workflow
-tests/integration/test_basic_rerank_e2e.py::TestBasicRerankRAGIntegration::test_full_query_path_with_real_db
-tests/integration/test_basic_rerank_e2e.py::TestBasicRerankRAGIntegration::test_multiple_queries_maintain_consistency
-tests/integration/test_basic_rerank_e2e.py::TestBasicRerankRAGIntegration::test_reranking_in_query_path
-tests/integration/test_basic_rerank_e2e.py::TestBasicRerankRAGIntegration::test_response_quality_metrics
-tests/integration/test_crag_e2e.py::TestCRAGIntegration::test_response_quality_metrics
-tests/integration/test_pylate_colbert_e2e.py::TestPyLateColBERTIntegration::test_colbert_late_interaction_search
-tests/integration/test_pylate_colbert_e2e.py::TestPyLateColBERTIntegration::test_document_loading_workflow
-tests/integration/test_pylate_colbert_e2e.py::TestPyLateColBERTIntegration::test_full_query_path_with_real_db
-tests/integration/test_pylate_colbert_e2e.py::TestPyLateColBERTIntegration::test_multiple_queries_maintain_consistency
-tests/integration/test_pylate_colbert_e2e.py::TestPyLateColBERTIntegration::test_response_quality_metrics
 # entity-services-fix leftovers (batch extraction tests that need an LLM or the removed batch surface)
 tests/integration/test_batch_extraction_e2e.py::TestBatchExtractionE2E::test_as1_1k_documents_3x_speedup
 tests/integration/test_batch_extraction_e2e.py::TestBatchExtractionE2E::test_entity_extraction_quality_consistency
@@ -80,19 +63,6 @@ tests/integration/test_entity_extraction_logging.py::test_no_silent_failures_llm
 # test-environment leftovers (DAT fixtures, the deleted devtools bridge, connection and cache tests)
 tests/integration/test_iris_connection_integration.py::TestIRISConnectionIntegration::test_auto_port_detection
 # mcp-stdio-server follow-up (order-dependent: the tests read tables an earlier test may have dropped, so the failing subset differs run to run)
-tests/integration/test_mcp_concurrent_queries.py::TestMCPConcurrentQueries::test_no_resource_conflicts_concurrent
-tests/integration/test_mcp_concurrent_queries.py::TestMCPConcurrentQueries::test_three_concurrent_queries_different_pipelines
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_basic_query_execution
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_both_correction_strategy
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_confidence_threshold_validation
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_correction_applied_metadata
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_default_parameters
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_includes_confidence_score
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_performance_metrics
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_response_format_consistency
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_rewrite_correction_strategy
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_with_high_confidence_threshold
-tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_with_low_confidence_threshold
 tests/integration/test_mcp_health_check.py::TestMCPHealthCheck::test_reports_a_measured_connection
 # pipelines-fix leftovers: the CRAG contract files release.yml used to --ignore. CRAG swallows retrieval and generation errors into an `error` field (dimension mismatch, missing config) and its query result lacks the documented structure.
 tests/contract/test_crag_contract.py::TestCRAGContract::test_query_returns_valid_structure
