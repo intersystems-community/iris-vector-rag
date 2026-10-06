@@ -42,15 +42,15 @@ _RELS = [
 
 
 @pytest.fixture(scope="module")
-def e2e_conn():
-    try:
-        import iris
+def e2e_conn(iris_target):
+    """A connection to the IRIS the session runs against (never a fixed port)."""
+    from tests.support.iris_environment import connect
 
-        conn = iris.connect("localhost", 51972, "USER", "_SYSTEM", "SYS")
+    conn = connect(iris_target)
+    try:
         yield conn
+    finally:
         conn.close()
-    except Exception as exc:
-        pytest.skip(f"IRIS unavailable for e2e tests: {exc}")
 
 
 @pytest.fixture(scope="module")
@@ -61,37 +61,50 @@ def e2e_managers(e2e_conn):
     return ConnectionManager(), ConfigurationManager()
 
 
+def _insert_once(conn, sql, params):
+    """Insert a seed row; a row that is already there is fine, any other error is not."""
+    cur = conn.cursor()
+    try:
+        cur.execute(sql, params)
+        conn.commit()
+    except Exception as exc:
+        conn.rollback()
+        if "unique" not in str(exc).lower() and "duplicate" not in str(exc).lower():
+            raise
+    finally:
+        cur.close()
+
+
 @pytest.fixture(scope="module", autouse=True)
 def kg_with_embeddings(e2e_conn, e2e_managers):
     """Seed entities + relationships + relation embeddings; teardown after module."""
+    from iris_vector_rag.storage.schema_manager import SchemaManager
+
     conn_mgr, cfg_mgr = e2e_managers
     conn = e2e_conn
-    cur = conn.cursor()
 
-    # Insert entities (ignore duplicate)
+    # Earlier tests in the session reset the RAG schema, so this module makes the
+    # tables it seeds instead of assuming an earlier test left them.
+    schema = SchemaManager(conn_mgr, cfg_mgr)
+    for table in ("SourceDocuments", "Entities", "EntityRelationships"):
+        assert schema.ensure_table_schema(table), f"could not create RAG.{table}"
+
     for eid, name, etype in _ENTITIES:
-        try:
-            cur.execute(
-                "INSERT INTO RAG.Entities (entity_id, entity_name, entity_type, source_doc_id) "
-                "VALUES (?, ?, ?, 'e2e_synthetic')",
-                [eid, name, etype],
-            )
-            conn.commit()
-        except Exception:
-            conn.rollback()
+        _insert_once(
+            conn,
+            "INSERT INTO RAG.Entities (entity_id, entity_name, entity_type, source_doc_id) "
+            "VALUES (?, ?, ?, 'e2e_synthetic')",
+            [eid, name, etype],
+        )
 
-    # Insert relationships (ignore duplicate)
     for rid, src, tgt, rtype, _ in _RELS:
-        try:
-            cur.execute(
-                "INSERT INTO RAG.EntityRelationships "
-                "(relationship_id, source_entity_id, target_entity_id, relationship_type) "
-                "VALUES (?, ?, ?, ?)",
-                [rid, src, tgt, rtype],
-            )
-            conn.commit()
-        except Exception:
-            conn.rollback()
+        _insert_once(
+            conn,
+            "INSERT INTO RAG.EntityRelationships "
+            "(relationship_id, source_entity_id, target_entity_id, relationship_type) "
+            "VALUES (?, ?, ?, ?)",
+            [rid, src, tgt, rtype],
+        )
 
     # Ensure schema and embed relationships
     from iris_vector_rag.storage.relation_embedding_store import RelationEmbeddingStore
@@ -123,7 +136,6 @@ def kg_with_embeddings(e2e_conn, e2e_managers):
         except Exception:
             conn.rollback()
     cur2.close()
-    cur.close()
 
 
 @pytest.fixture(scope="module")
