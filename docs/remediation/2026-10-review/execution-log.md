@@ -845,3 +845,65 @@ entry: feature, question, choice, why.
   a reset or a test that drops it (the fuzzy-entity contract fixture does); the
   dev database may hold one and needs
   `DROP TABLE RAG.EntityRelationships; DROP TABLE RAG.Entities` once.
+
+## e2e-fixtures
+
+- **Root cause.** `fixture_metadata` was defined in
+  `tests/fixtures/pytest_plugin.py`, which nothing registered, so every
+  `dat_fixture` test errored on a missing fixture; and no `medical-graphrag-20`
+  fixture or `scripts/fixtures/create_graphrag_dat_fixture.py` existed to load.
+- **No `.DAT`.** The repo holds no `.DAT` for medical-20 (only
+  `tests/fixtures/graphrag/medical_docs.json`, which carries exactly the 3
+  documents, 21 entities and 15 relationships the tests assert). The fixture is
+  therefore a `json` fixture:
+  `tests/fixtures/dat/medical-graphrag-20/manifest.json` names the data file
+  (new `data_file` field) and the sha256 of it; `FixtureManager` validates it,
+  creates missing RAG tables through `SchemaManager`, deletes rows child-first,
+  inserts documents/entities/relationships (entity ids qualified by doc id,
+  since every document has an `e1`) and embeds the documents with the pipelines'
+  own `EmbeddingManager`. No embedder available: it loads without vectors and
+  warns.
+- **Registration.** `tests.fixtures.pytest_plugin` is in `pytest_plugins`; the
+  shadowing `dat_fixture_loader` in `tests/conftest.py` (which skipped when
+  `iris-devtools` was missing) is removed. The plugin loads over a connection to
+  `iris_target`, deletes the rows afterwards, and fails setup with the reason
+  (no skip on an IRIS problem).
+- **medical-20 tests.** Hardcode `RAG.*`, so the module-scoped
+  `medical_20_loaded` (tests/integration/conftest.py) empties those tables,
+  loads the fixture, and empties them again at module end. Rows other tests left
+  in them are deleted: there is no way to assert `COUNT(*) == 3` on a table that
+  also holds them.
+- **Collation.** `entity_type` / `relationship_type` use IRIS's default SQLUPPER
+  collation, so `GROUP BY` returns `DISEASE` where the tests count `Disease`.
+  The session fixture `exact_case_type_columns` alters the two columns to
+  `COLLATE EXACT` and leaves them so: altering them back after the module, or
+  dropping and recreating the tables, made the later `CREATE INDEX ... AS HNSW`
+  in `test_relation_embedding_store` wait for ever (bisected; without the
+  restore it passes). The ALTER back is tried once at session end on a daemon
+  thread. Production DDL is unchanged; a pinned database keeps the EXACT columns
+  after a run.
+- **Leaked transactions.** `test_graphrag_pipeline_with_fixture` builds a
+  pipeline that nothing closes; `release_open_transactions`
+  (tests/fixtures/pytest_plugin.py) rolls back the process's IRIS DBAPI
+  connections before the fixture's DDL.
+- **Newly running tests.** With a fixture present, `test_fixture_versioning` and
+  `test_fixture_isolation` stop skipping. `FixtureManager` now cleans up by
+  DELETE (child tables first) rather than the idt schema reset, and creates
+  missing tables itself; two versioning tests were corrected to the manager's
+  documented contract (`FixtureNotFoundError` for a version that matches
+  nothing; `""` means latest).
+- **Combined run.** The ~16 min session only completes under `--timeout=120`
+  when the machine is quiet: the thread-method timeout kills the whole process
+  on any single test over 120 s (test_iris_environment_live, container starts),
+  which happened under load with or without these changes.
+- **test_missing_fixture_fails_gracefully.** As written it could only error
+  (setup fails) or fail (body says "should not reach here"). It now requests
+  `fixture_metadata` inside
+  `pytest.raises(pytest.fail.Exception, match="non-existent-fixture")`,
+  asserting the documented behaviour.
+- **test_graphrag_pipeline_with_fixture stays quarantined.** It retrieves
+  documents now, but asserts
+  `retrieval_method in [kg, vector, hybrid, rrf, text]` and the pipeline reports
+  `hybrid_fusion` or `vector_fallback` (no IVG `GRAPH_KG` tables here). A
+  different label vocabulary, not a fixture problem; left failing and listed in
+  `ci_known_failures.txt`. 19 other entries removed.

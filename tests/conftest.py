@@ -300,6 +300,7 @@ pytest_plugins = [
     "tests.plugins.coverage_warnings",
     "tests.plugins.error_message_validator",
     "tests.plugins.tdd_compliance",
+    "tests.fixtures.pytest_plugin",
 ]
 
 
@@ -804,21 +805,6 @@ def sample_documents():
             doc["id"] = doc["doc_id"]
 
     return documents
-
-
-@pytest.fixture
-def dat_fixture_loader(request):
-    """Load DAT fixtures when @pytest.mark.dat_fixture is present."""
-    marker = request.node.get_closest_marker("dat_fixture")
-    if marker is None:
-        return None
-
-    try:
-        from iris_devtools.fixtures.loader import DATFixtureLoader
-    except ImportError:
-        pytest.skip("iris-devtools not installed")
-
-    return DATFixtureLoader()
 
 
 @pytest.fixture

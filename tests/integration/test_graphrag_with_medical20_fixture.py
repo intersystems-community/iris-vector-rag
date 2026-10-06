@@ -4,7 +4,8 @@ Integration tests for GraphRAG using medical-20 fixture.
 This test suite validates GraphRAG functionality using the medical-20 fixture,
 which contains 21 entities and 15 relationships across 3 medical documents.
 
-Fixture must be loaded before running:
+The fixture is loaded into the session's IRIS by the `medical_20_loaded` fixture
+(tests/integration/conftest.py). To load it into another database by hand:
     python scripts/fixtures/create_graphrag_dat_fixture.py --cleanup-first
 """
 
@@ -13,7 +14,7 @@ from sqlalchemy import text
 
 
 @pytest.fixture(scope="function")
-def medical_20_fixture_validation(iris_sql_connection):
+def medical_20_fixture_validation(iris_sql_connection, medical_20_loaded):
     """
     Validate that medical-20 fixture is loaded in database.
 

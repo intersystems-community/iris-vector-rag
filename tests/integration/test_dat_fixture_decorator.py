@@ -160,16 +160,16 @@ def test_graphrag_pipeline_with_fixture(fixture_metadata):
 
 
 @pytest.mark.dat_fixture("non-existent-fixture")
-def test_missing_fixture_fails_gracefully(fixture_metadata):
+def test_missing_fixture_fails_gracefully(request):
     """
     Example: Missing fixture fails with clear error.
 
     When fixture doesn't exist, pytest should fail with
-    a clear error message (not crash).
+    a clear error message (not crash). Requesting `fixture_metadata` is what
+    triggers the load, so the failure is asserted where it is raised.
     """
-    # This test will fail during fixture setup
-    # The error should clearly indicate which fixture is missing
-    pytest.fail("This test should not reach here - fixture should fail to load")
+    with pytest.raises(pytest.fail.Exception, match="non-existent-fixture"):
+        request.getfixturevalue("fixture_metadata")
 
 
 # ==============================================================================

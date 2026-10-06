@@ -1,0 +1,28 @@
+{
+  "name": "medical-graphrag-20",
+  "version": "1.0.0",
+  "description": "3 medical documents (diabetes, COVID-19, hypertension) with 21 entities and 15 relationships",
+  "created_at": "2026-10-05T00:00:00Z",
+  "created_by": "script",
+  "source_type": "json",
+  "tables": [
+    "RAG.SourceDocuments",
+    "RAG.Entities",
+    "RAG.EntityRelationships"
+  ],
+  "row_counts": {
+    "RAG.SourceDocuments": 3,
+    "RAG.Entities": 21,
+    "RAG.EntityRelationships": 15
+  },
+  "checksum": "sha256:e23ae19cc02df04e3c8a839e94df105c5a7389d839b1f790ad2701567e847e7d",
+  "requires_embeddings": true,
+  "embedding_model": "all-MiniLM-L6-v2",
+  "embedding_dimension": 384,
+  "namespace": "USER",
+  "iris_version_min": null,
+  "backend_mode": null,
+  "schema_version": "1.0",
+  "migration_history": [],
+  "data_file": "graphrag/medical_docs.json"
+}

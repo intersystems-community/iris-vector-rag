@@ -4,11 +4,11 @@ Data models for fixture infrastructure.
 Defines core data structures for fixture metadata, manifests, and load results.
 """
 
+import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-import json
+from typing import Any, Dict, List, Optional
 
 
 class FixtureSourceType(Enum):
@@ -52,9 +52,12 @@ class FixtureMetadata:
     schema_version: str = "1.0"  # Manifest format version
     migration_history: List[Dict[str, Any]] = field(default_factory=list)
 
+    # JSON fixtures: the data file, relative to the fixtures root (checksummed)
+    data_file: Optional[str] = None
+
     def to_dict(self) -> dict:
         """Serialize to dictionary for JSON storage."""
-        return {
+        data = {
             "name": self.name,
             "version": self.version,
             "description": self.description,
@@ -73,6 +76,9 @@ class FixtureMetadata:
             "schema_version": self.schema_version,
             "migration_history": self.migration_history,
         }
+        if self.data_file:
+            data["data_file"] = self.data_file
+        return data
 
     @classmethod
     def from_dict(cls, data: dict) -> "FixtureMetadata":
