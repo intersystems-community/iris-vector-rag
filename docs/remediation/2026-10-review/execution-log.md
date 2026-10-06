@@ -1101,3 +1101,11 @@ command): 12.5 and 13 minutes, no hang. Facts measured on the ephemeral containe
   (opt-in, unset = unchanged) so the library's own connections in tests are bounded too.
 - `pyproject.toml`: `faulthandler_timeout = 300`, so a future hang dumps every thread.
 - No test was weakened or skipped.
+
+**Result after the change** (ephemeral container, exact combined command,
+`--timeout=240 --timeout-method=signal`): no hang; 20 failed, 779 passed, 30 skipped,
+5 xfailed, 1 xpassed, 10 errors in 21 min. The failures are the files that already failed
+before the change: entity-extraction batch/logging/service tests (another agent's area),
+`test_sdk_canonical_vector_type.py` (3), `test_iris_connection_integration.py` (1),
+`test_dual_level_retrieval_e2e.py` (10 errors). `tests/unit`: 1572 passed, 5 skipped.
+Contract suite as release.yml runs it: 758 passed, 28 skipped, 56 deselected.
