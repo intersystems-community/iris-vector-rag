@@ -214,7 +214,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                 if len(batch) == 1:
                     reasons[batch[0].id] = str(exc)
                 raise
-            for item in partial.failed:
+            for item in getattr(partial, "failed", []):
                 reasons[item["document_id"]] = item["reason"]
             return partial
 
