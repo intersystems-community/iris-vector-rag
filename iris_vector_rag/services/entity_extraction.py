@@ -334,7 +334,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         if self._filter_types:
             types = f" Use only these entity types: {', '.join(sorted(self.enabled_types))}."
         return (
-            f"Extract the named entities from the text below.{types}\n"
+            f"Extract every entity mentioned in the text below, including products, modules, people, identifiers, error codes and versions.{types}\n"
             "Reply with ONLY a JSON array, no prose and no code fences. Each element "
             'is {"text": "<entity as written>", "type": "<ENTITY_TYPE>", '
             '"confidence": <number from 0 to 1>}. Reply [] if there are none.\n\n'
