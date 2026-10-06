@@ -5,28 +5,26 @@ FR-011: per-source scores echoed into Document.metadata.
 FR-012: prereq error is explicit, never silent fallback.
 
 Everything is real: the session's IRIS, the real embedder, the real vector store and the
-real iris-vector-graph `TextSearchEngine`. That engine reads a table `docs(id, text)` of
-its own (default table name, no schema) and falls back to `LIKE` when `%FIND` fails, so
-each test seeds that table with the rows it wants the text leg to find, keyed by the ids
-of the documents the pipeline stored. The text leg therefore returns a known set while
-the engine, the SQL and the hydration from the store are the product's own.
+real text leg. The text leg is the document table's own full-text index
+(`SchemaManager.ensure_text_index`, created when the pipeline first stores a document),
+queried with `%FIND`. Nothing is seeded or faked: which documents the text leg returns
+is decided by the words in the stored documents, and the tests choose queries whose
+keyword hits are known. The missing-index error and the per-table index checks are in
+`test_text_search_iris.py`.
 
-PRODUCT DEFECT (reported, not fixed here): the pipeline never creates or fills `docs`,
-so on a real deployment the text leg of `hybrid`/`rrf` finds nothing and the result is the
-vector leg alone. Run against `RAG.SourceDocuments` the engine cannot work: it addresses
-`id` and `text` (the table has `doc_id` and `text_content`), its `%FIND(text, ?)` is not
-IRIS SQL (SQLCODE -359, so it always falls back) and `LIKE` on the `LONGVARCHAR` column
-matches nothing. `test_text_leg_finds_nothing_without_a_docs_table` pins that.
+History: until this feature the text leg read an iris-vector-graph `docs(id, text)` table
+that nothing created, so on a real deployment `hybrid` and `rrf` were the vector leg alone.
 """
 
 import uuid
-from typing import Dict
 
 import pytest
 
 from iris_vector_rag.core.models import Document
 
-DOCS_TABLE = "docs"
+#: The one stored document that contains the word "zephyrquill". Vector search cannot
+#: know that word; only the text leg can bring this document in for it.
+KEYWORD_ONLY_CONTENT = "Neural networks learn from training data, see zephyrquill."
 
 
 def _execute(connection, sql, params=None):
@@ -76,7 +74,7 @@ def loaded_corpus(basic_pipeline):
             metadata={"source": "bio", "topic": "diabetes"},
         ),
         Document(
-            page_content=f"Neural networks learn from training data. [{tag}]",
+            page_content=f"{KEYWORD_ONLY_CONTENT} [{tag}]",
             metadata={"source": "cs", "topic": "ml"},
         ),
         Document(
@@ -92,33 +90,7 @@ def loaded_corpus(basic_pipeline):
     try:
         yield basic_pipeline, docs
     finally:
-        _execute(conn, f"DROP TABLE IF EXISTS {DOCS_TABLE}")
         _clear_source_documents(conn)
-
-
-def _stored_ids(pipeline) -> Dict[str, str]:
-    """page_content (without the tag) -> the doc_id the store gave it."""
-    conn = pipeline.connection_manager.get_connection()
-    rows = _execute(conn, "SELECT doc_id, text_content FROM RAG.SourceDocuments")
-    return {str(text).split(" [")[0]: str(doc_id) for doc_id, text in rows}
-
-
-def _seed_text_index(pipeline, entries: Dict[str, str]) -> None:
-    """Fill the engine's `docs(id, text)` table: stored page_content -> indexed text.
-
-    The engine's LIKE fallback matches the query as a phrase inside `text`, so the
-    indexed text decides which documents the text leg returns for a query.
-    """
-    conn = pipeline.connection_manager.get_connection()
-    ids = _stored_ids(pipeline)
-    _execute(conn, f"DROP TABLE IF EXISTS {DOCS_TABLE}")
-    _execute(conn, f"CREATE TABLE {DOCS_TABLE} (id VARCHAR(255), text VARCHAR(4000))")
-    for content, indexed_text in entries.items():
-        _execute(
-            conn,
-            f"INSERT INTO {DOCS_TABLE} (id, text) VALUES (?, ?)",
-            [ids[content], indexed_text],
-        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -141,12 +113,7 @@ def test_rrf_metadata_contains_per_source_scores(loaded_corpus):
     """FR-011: rrf mode echoes vector_score, text_score, fusion_score into each doc.metadata."""
     pipeline, _ = loaded_corpus
 
-    # The text leg finds one document, which overlaps the vector results
-    _seed_text_index(
-        pipeline,
-        {"Insulin regulates blood glucose levels.": "glucose insulin"},
-    )
-
+    # "glucose" and "insulin" are words of stored documents, so the text leg finds them
     result = pipeline.query(
         "glucose insulin", top_k=3, retrieval="rrf", generate_answer=False
     )
@@ -162,22 +129,15 @@ def test_rrf_metadata_contains_per_source_scores(loaded_corpus):
     assert (
         "vector_score" in first.metadata or "text_score" in first.metadata
     ), "rrf must record per-source contribution scores in metadata (FR-011)"
-    # the text leg really ran: the seeded hit carries the text engine's score
+    # the text leg really ran: a hit found by keyword carries the index's score
     assert any(
         "text_score" in d.metadata for d in docs
-    ), "the real text engine's hit must appear with a text_score"
+    ), "a document found by the text leg must appear with a text_score"
 
 
 def test_hybrid_metadata_contains_per_source_scores(loaded_corpus):
     """FR-011: hybrid mode echoes per-source scores."""
     pipeline, _ = loaded_corpus
-
-    _seed_text_index(
-        pipeline,
-        {
-            "Diabetes affects glucose metabolism and insulin response.": "glucose diabetes"
-        },
-    )
 
     result = pipeline.query(
         "glucose diabetes",
@@ -191,28 +151,25 @@ def test_hybrid_metadata_contains_per_source_scores(loaded_corpus):
     assert docs, "hybrid mode must return documents"
     first = docs[0]
     assert "fusion_score" in first.metadata
+    assert any(
+        "text_score" in d.metadata for d in docs
+    ), "hybrid must carry the text leg's score on a document the index found"
 
 
 def test_hybrid_vs_rrf_produce_different_rankings(loaded_corpus):
     """SC-004: hybrid and rrf rankings differ when text leg has divergent results.
 
-    The text index is seeded so the text leg returns a doc that is NOT top-ranked by
-    vector, making RRF (rank-only) vs weighted-score fusion produce different top docs.
+    The keyword "zephyrquill" is in one CS document only, which vector ranks low for a
+    glucose query but the text leg ranks first (the rarest word), so RRF (rank-only) and
+    weighted-score fusion produce different top docs.
     """
     pipeline, _ = loaded_corpus
+    query = "glucose zephyrquill"
 
-    # The text leg finds only the CS/NLP doc, which vector ranks lower for "glucose"
-    _seed_text_index(
-        pipeline,
-        {"Transformer architecture uses attention mechanisms.": "glucose neural"},
-    )
-
-    rrf_result = pipeline.query(
-        "glucose neural", top_k=3, retrieval="rrf", generate_answer=False
-    )
+    rrf_result = pipeline.query(query, top_k=3, retrieval="rrf", generate_answer=False)
 
     hybrid_result = pipeline.query(
-        "glucose neural",
+        query,
         top_k=3,
         retrieval="hybrid",
         weights={"vector": 0.9, "text": 0.1},
@@ -242,13 +199,14 @@ def test_weights_shift_hybrid_ranking(loaded_corpus):
     """SC-004: increasing text weight promotes text-only docs in hybrid mode."""
     pipeline, _ = loaded_corpus
 
-    # The text leg finds a doc that vector would rank last (CS topic for a bio query)
-    cs_doc = Document(page_content="Neural networks learn from training data.")
-    _seed_text_index(pipeline, {cs_doc.page_content: "glucose"})
+    # The text leg finds a doc that vector would rank last (CS topic for a bio query):
+    # the one stored document that contains "zephyrquill"
+    cs_doc = Document(page_content=KEYWORD_ONLY_CONTENT)
+    query = "glucose zephyrquill"
 
     # High vector weight → bio docs dominate
     high_vec = pipeline.query(
-        "glucose",
+        query,
         top_k=3,
         retrieval="hybrid",
         weights={"vector": 0.95, "text": 0.05},
@@ -257,7 +215,7 @@ def test_weights_shift_hybrid_ranking(loaded_corpus):
 
     # High text weight → cs doc should climb
     high_text = pipeline.query(
-        "glucose",
+        query,
         top_k=3,
         retrieval="hybrid",
         weights={"vector": 0.1, "text": 0.9},
@@ -317,21 +275,75 @@ def test_unknown_mode_returns_empty_with_warning(loaded_corpus, caplog):
     ), f"mode name must appear in logged warning. Got: {[r.message for r in caplog.records]}"
 
 
-def test_text_leg_finds_nothing_without_a_docs_table(loaded_corpus):
-    """PRODUCT DEFECT: the text leg has no index of its own, so rrf is the vector leg alone.
+def test_a_document_findable_only_by_keyword_is_returned_by_text_rrf_and_hybrid(
+    loaded_corpus,
+):
+    """The regression this feature fixes: the text leg contributes on a real deployment.
 
-    The engine reads `docs(id, text)`, which nothing in the product creates; against
-    `RAG.SourceDocuments` it finds no row whatever the query (see the module docstring).
-    When the text index exists, the same query does return text hits (the tests above).
+    "zephyrquill" is a word of exactly one stored document and means nothing to the
+    embedder. Before the text index existed, `rrf`/`hybrid` were the vector leg alone,
+    so that document came back only by luck. Now each mode returns it through the text
+    leg, and it carries the index's score.
     """
     pipeline, _ = loaded_corpus
+    tagged = lambda d: d.page_content.split(" [")[0]  # noqa: E731
+
+    text = pipeline.query(
+        "zephyrquill", top_k=3, retrieval="text", generate_answer=False
+    )
+    assert [tagged(d) for d in text["retrieved_documents"]] == [KEYWORD_ONLY_CONTENT]
+    assert text["retrieved_documents"][0].metadata["text_score"] > 0
+
+    for mode, extra in (
+        ("rrf", {}),
+        ("hybrid", {"weights": {"vector": 0.7, "text": 0.3}}),
+    ):
+        result = pipeline.query(
+            "zephyrquill", top_k=3, retrieval=mode, generate_answer=False, **extra
+        )
+        docs = {tagged(d): d for d in result["retrieved_documents"]}
+        assert KEYWORD_ONLY_CONTENT in docs, f"{mode} dropped the keyword-only document"
+        hit = docs[KEYWORD_ONLY_CONTENT]
+        assert "text_score" in hit.metadata, f"{mode}: the text leg did not contribute"
+        assert hit.metadata["fusion_score"] > 0
+
+
+def test_text_mode_honours_metadata_filters(loaded_corpus):
+    pipeline, _ = loaded_corpus
+    for mode in ("text", "rrf", "hybrid"):
+        kwargs = {"weights": {"vector": 0.5, "text": 0.5}} if mode == "hybrid" else {}
+        result = pipeline.query(
+            "insulin glucose zephyrquill",
+            top_k=5,
+            retrieval=mode,
+            metadata_filter={"source": "bio"},
+            generate_answer=False,
+            **kwargs,
+        )
+        docs = result["retrieved_documents"]
+        assert docs, mode
+        assert {d.metadata["source"] for d in docs} == {"bio"}, mode
+        assert not any(KEYWORD_ONLY_CONTENT in d.page_content for d in docs), mode
+
+
+def test_a_missing_text_index_fails_loudly_through_the_pipeline(loaded_corpus):
+    """No silent vector-only answer: without the index, text-leg modes raise."""
+    from iris_vector_rag.exceptions import TextIndexMissingError
+    from iris_vector_rag.storage.text_search import TEXT_INDEX_NAME
+
+    pipeline, _ = loaded_corpus
     conn = pipeline.connection_manager.get_connection()
-    _execute(conn, f"DROP TABLE IF EXISTS {DOCS_TABLE}")
-
-    result = pipeline.query("glucose", top_k=5, retrieval="rrf", generate_answer=False)
-
-    docs = result["retrieved_documents"]
-    assert docs, "the vector leg still answers"
-    assert not any(
-        "text_score" in d.metadata for d in docs
-    ), "without a docs table no document can carry a text score"
+    _execute(conn, f"DROP INDEX {TEXT_INDEX_NAME} ON RAG.SourceDocuments")
+    try:
+        for mode in ("text", "rrf", "hybrid"):
+            with pytest.raises(TextIndexMissingError, match="ensure_text_index"):
+                pipeline.query(
+                    "glucose", top_k=3, retrieval=mode, generate_answer=False
+                )
+        # the vector leg alone is unaffected
+        assert pipeline.query(
+            "glucose", top_k=3, retrieval="vector", generate_answer=False
+        )["retrieved_documents"]
+    finally:
+        # the explicit method an existing deployment uses to add the index
+        pipeline.vector_store.schema_manager.ensure_text_index("SourceDocuments")
