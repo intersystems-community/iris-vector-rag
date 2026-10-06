@@ -15,6 +15,24 @@ import pytest
 pytest.importorskip("mcp", reason="the `mcp` extra provides the official SDK")
 
 
+def _run(coro):
+    """Run a coroutine on its own event loop, in a thread of its own.
+
+    `asyncio.run` on the main thread resets the main thread's loop, which drops the one
+    pytest-asyncio made and sets off an unraisable-exception warning in whichever test
+    the garbage collector reaches next.
+    """
+    outcome = {}
+
+    def target():
+        outcome["value"] = asyncio.run(coro)
+
+    worker = threading.Thread(target=target)
+    worker.start()
+    worker.join()
+    return outcome["value"]
+
+
 class ThreadRecordingPipeline:
     def __init__(self):
         self.threads = []
@@ -33,7 +51,7 @@ def test_concurrent_queries_share_one_thread():
     async def run():
         await asyncio.gather(*(handler.execute(f"q{i}", {}) for i in range(8)))
 
-    asyncio.run(run())
+    _run(run())
 
     assert len(pipeline.threads) == 8
     assert len(set(pipeline.threads)) == 1
@@ -47,7 +65,7 @@ def test_queries_from_separate_event_loops_share_the_thread():
     handler = TechniqueHandler("basic", lambda: pipeline)
 
     for _ in range(3):
-        asyncio.run(handler.execute("q", {}))
+        _run(handler.execute("q", {}))
 
     assert len(set(pipeline.threads)) == 1
 
@@ -63,7 +81,7 @@ def test_handlers_of_different_techniques_share_the_thread():
             TechniqueHandler("crag", lambda: second).execute("q", {}),
         )
 
-    asyncio.run(run())
+    _run(run())
 
     assert first.threads == second.threads
 
@@ -80,5 +98,5 @@ def test_the_health_probe_and_the_health_construct_use_the_same_thread():
         await handler.execute("q", {})
         return probe
 
-    probe = asyncio.run(run())
+    probe = _run(run())
     assert pipeline.threads == [probe]
