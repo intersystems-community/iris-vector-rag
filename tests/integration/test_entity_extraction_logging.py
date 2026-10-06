@@ -9,11 +9,12 @@ Related: https://github.com/tdyar/hipporag2-pipeline/BUG_REPORT_IRIS_VECTOR_RAG.
 """
 
 import logging
-from unittest.mock import MagicMock, patch
+import os
 
 import pytest
 
 from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
@@ -28,7 +29,7 @@ def config_with_openai():
             "api_type": "openai",
             "model": "gpt-4o-mini",
             "api_base": "https://api.openai.com/v1",
-            "api_key": "test-key",
+            "api_key": os.environ["OPENAI_API_KEY"],
             "temperature": 0.1,
             "max_tokens": 2000,
         },
@@ -84,8 +85,7 @@ def test_entity_extraction_service_logs_llm_config(config_with_openai, caplog):
     with caplog.at_level(logging.INFO):
         EntityExtractionService(
             config_manager=config_with_openai,
-            connection_manager=None,
-            embedding_manager=None,
+            connection_manager=ConnectionManager(config_with_openai),
         )
 
     # Verify LLM configuration banner appears
@@ -115,8 +115,7 @@ def test_no_silent_failures_llm_config_warning(caplog):
     with caplog.at_level(logging.WARNING):
         EntityExtractionService(
             config_manager=config,
-            connection_manager=None,
-            embedding_manager=None,
+            connection_manager=ConnectionManager(config),
         )
 
     # Should warn about missing LLM config

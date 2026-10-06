@@ -96,12 +96,8 @@ class TestUserStory1OneWayIn:
 
         assert doomed.in_backoff is False
 
-    def test_the_engine_reports_the_dimension_the_project_configured(self, monkeypatch):
-        # The dimension authority is the active backend. This test is about the
-        # engine agreeing with the configuration, not about a model download, so it
-        # injects the test embedder explicitly (G6 point 3).
-        monkeypatch.setenv("RAG_EMBEDDINGS__PROVIDER", "stub")
-        monkeypatch.setenv("RAG_EMBEDDINGS__DIMENSION", "384")
+    def test_the_engine_reports_the_dimension_the_project_configured(self):
+        # The dimension authority is the active backend: the real embedder.
         engine = IRISVectorEngine.from_config()
 
         expected = int(ConfigurationManager().get_embedding_config()["dimension"])
@@ -306,6 +302,7 @@ class TestUserStory4DriverChoiceIsADecision:
         )
         from iris_vector_rag.session.errors import NoUsableDriver
 
+        # FAULT INJECTION: neither driver can be used; selection and its error are the subject.
         monkeypatch.setattr(EmbeddedDriver, "available", lambda self: False)
         monkeypatch.setattr(NetworkDriver, "available", lambda self: False)
 
@@ -315,17 +312,27 @@ class TestUserStory4DriverChoiceIsADecision:
         assert "embedded" in str(caught.value)
         assert "network" in str(caught.value)
 
-    def test_a_substituted_driver_reaches_no_instance_at_all(self):
-        from tests.support.fake_driver import FakeDriver
+    def test_a_supplied_driver_is_the_one_the_session_connects_through(self):
+        from iris_vector_rag.session.drivers import NetworkDriver
 
-        # Nothing is listening on this port. A session given a driver never asks.
-        nowhere = SessionIdentity(
-            host="127.0.0.1", port=59999, namespace="USER", username="_SYSTEM"
-        )
-        session = IRISSession(identity=nowhere, driver=FakeDriver(rows=[(1,)]))
+        class CountingDriver(NetworkDriver):
+            """The real network driver, counting the connections it makes."""
 
-        assert session.one("SELECT 1") == (1,)
-        assert session.driver_name == "fake"
+            connects = 0
+
+            def connect(self, identity):
+                type(self).connects += 1
+                return super().connect(identity)
+
+        driver = CountingDriver()
+        session = IRISSession(identity=SessionIdentity.from_env(), driver=driver)
+        try:
+            assert session.one("SELECT 1") == (1,)
+            assert session.driver is driver
+            assert session.driver_name == "network"
+            assert CountingDriver.connects == 1
+        finally:
+            session.close()
 
 
 class TestUserStory5TheOldNamesStillWork:

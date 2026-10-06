@@ -11,12 +11,11 @@ One story each, on the standard RAG tables of this test session's own database:
    no fake rows, when it has no LLM.
 4. Migrating `Entities` keeps the `confidence` column the storage adapter writes.
 
-The embedder is the test embedder, asked for by name: nothing here is about the model.
+The embedder is the real sentence-transformer and the LLM is OpenAI's (OPENAI_API_KEY from
+the environment), wrapped only to record the prompts it is sent.
 """
 
 from __future__ import annotations
-
-import json
 
 import pytest
 
@@ -26,6 +25,7 @@ from iris_vector_rag.storage.schema_manager import SchemaManager
 from iris_vector_rag.validation.orchestrator import SetupOrchestrator
 from iris_vector_rag.validation.requirements import get_pipeline_requirements
 from iris_vector_rag.validation.validator import PreConditionValidator
+from tests.support.real_services import real_llm
 
 RAG_TABLES = [
     "DocumentChunks",
@@ -63,7 +63,7 @@ def _scalar(connection_manager: ConnectionManager, sql: str, params=None):
 
 
 @pytest.fixture
-def managers(use_test_embedder):
+def managers():
     """A config and connection manager over an empty RAG schema."""
     config = ConfigurationManager()
     connections = ConnectionManager(config)
@@ -93,20 +93,12 @@ def loaded(managers):
 
 
 def _llm(prompts: list):
-    """Names an entity per document, by what the prompt (the document's text) says."""
+    """The real LLM, recording every prompt it is sent (so a test can say what it saw)."""
+    real = real_llm()
 
     def call(prompt: str) -> str:
         prompts.append(prompt)
-        lowered = prompt.lower()
-        if "warfarin" in lowered:
-            found = [("Warfarin", "DRUG"), ("Aspirin", "DRUG")]
-        elif "metformin" in lowered:
-            found = [("Metformin", "DRUG"), ("Insulin", "DRUG")]
-        else:
-            found = []
-        return json.dumps(
-            [{"text": t, "type": kind, "confidence": 0.9} for t, kind in found]
-        )
+        return real(prompt)
 
     return call
 
@@ -260,7 +252,9 @@ class TestGraphPipelineSetup:
         names = {
             row[0] for row in _rows(connections, "SELECT entity_name FROM RAG.Entities")
         }
-        assert {"Warfarin", "Aspirin", "Metformin", "Insulin"} <= names
+        # The real model's capitalisation is its own; the drugs in the text are what count.
+        lowered = {name.lower() for name in names}
+        assert {"warfarin", "aspirin", "metformin", "insulin"} <= lowered, names
         assert names.isdisjoint({"Test Entity"})
         assert (
             _scalar(
@@ -349,6 +343,11 @@ def test_factory_auto_setup_builds_the_graph_pipeline_it_set_up(loaded, pipeline
 
     assert isinstance(pipeline, HybridGraphRAGPipeline)
     assert pipeline.schema_manager is not None
-    assert _scalar(connections, "SELECT COUNT(*) FROM RAG.Entities") >= 4
+    # The real model's entity list varies run to run (3 to 4+ entities for these two
+    # documents); what is guaranteed is that each document got at least one.
+    assert _scalar(
+        connections, "SELECT COUNT(DISTINCT source_doc_id) FROM RAG.Entities"
+    ) == len(DOCUMENTS)
+    assert _scalar(connections, "SELECT COUNT(*) FROM RAG.Entities") >= len(DOCUMENTS)
     assert any("Warfarin dosing" in prompt for prompt in prompts)
     assert set(factory.list_available_pipelines()) >= {"graphrag", "hybrid_graphrag"}

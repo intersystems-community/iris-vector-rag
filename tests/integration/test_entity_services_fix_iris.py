@@ -2,16 +2,16 @@
 
 Works in a schema of its own (`ESFIX`): DDL autocommits, so nothing here can be rolled
 back and nothing here is left in `RAG`. Runs on the ephemeral container `iris_target`
-starts. The LLM is a plain function; everything else is the real stack.
+starts. The LLM is the real OpenAI model (OPENAI_API_KEY from the environment), the
+embedder is the real sentence-transformer and the vector store is the real
+`IRISVectorStore`. The one fault injected is an LLM timeout on one document (Story 2),
+because that fault is what the story is about.
 
 Story 1  a batch of entities is stored with confidence, upserted, chunked, mixed
          embeddings included, and read back by document and by type.
 Story 2  a document whose extraction fails is reported in `failed`, the rest are
          stored; every document failing raises.
 """
-
-import json
-from unittest.mock import Mock
 
 import pytest
 
@@ -25,10 +25,11 @@ from iris_vector_rag.services.entity_extraction import (
 )
 from iris_vector_rag.services.storage import EntityStorageAdapter
 from iris_vector_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 pytestmark = pytest.mark.integration
 
-WIDTH = 12
+WIDTH = 384  # the real embedder's width
 SCHEMA = "ESFIX"
 TABLES = ("EntityRelationships", "Entities", "DocumentChunks", "SourceDocuments")
 
@@ -54,10 +55,11 @@ def _scalar(connection, sql, params=None):
 
 
 @pytest.fixture
-def stack(iris_connection, monkeypatch):
-    monkeypatch.setenv("RAG_EMBEDDINGS__PROVIDER", "stub")
-    monkeypatch.setenv("RAG_EMBEDDINGS__DIMENSION", str(WIDTH))
+def stack(iris_connection):
     config = ConfigurationManager()
+    config._config.setdefault("storage", {}).setdefault("iris", {})[
+        "table_name"
+    ] = f"{SCHEMA}.SourceDocuments"
     config._config.setdefault("entity_extraction", {})["storage"] = {
         "entities_table": f"{SCHEMA}.Entities",
         "relationships_table": f"{SCHEMA}.EntityRelationships",
@@ -220,6 +222,32 @@ def test_a_row_iris_rejects_is_reported_not_swallowed(stack, iris_connection):
 # --- Story 2: load_documents -----------------------------------------------------------
 
 
+OPENAI_MODEL = "gpt-4o-mini"
+
+TEXTS = {
+    "d1": "Dr. John Smith, a cardiologist at Mayo Clinic, prescribed aspirin to treat the patient's hypertension.",
+    "d2": "DOCUMENT-TWO-MARKER: Dr. Lee at Cleveland Clinic prescribed insulin for diabetes.",
+    "d3": "Dr. Maria Garcia at Johns Hopkins Hospital treated the patient's asthma with albuterol.",
+}
+
+
+def _real_llm():
+    from iris_vector_rag.common.utils import get_llm_func
+
+    return get_llm_func(provider="openai", model_name=OPENAI_MODEL)
+
+
+def _llm_timing_out_on_document_two(real):
+    """The real LLM, except that the call for document two times out (fault injection)."""
+
+    def llm(prompt):
+        if "DOCUMENT-TWO-MARKER" in prompt:
+            raise TimeoutError("llm timed out")
+        return real(prompt)
+
+    return llm
+
+
 def _pipeline(stack, llm):
     config, connections, _adapter = stack
     service = EntityExtractionService(
@@ -228,43 +256,51 @@ def _pipeline(stack, llm):
     pipeline = object.__new__(GraphRAGPipeline)
     pipeline.entity_extraction_service = service
     pipeline.entity_extraction_enabled = True
-    pipeline.vector_store = Mock()
+    pipeline.vector_store = IRISVectorStore(
+        connection_manager=connections, config_manager=config
+    )
     pipeline.connection_manager = connections
     pipeline.config_manager = config
     return pipeline
 
 
 def _docs():
-    return [Document(page_content=f"text of {d}", id=d) for d in ("d1", "d2", "d3")]
+    return [Document(page_content=TEXTS[d], id=d) for d in ("d1", "d2", "d3")]
 
 
-def test_load_documents_stores_the_rest_and_lists_the_failed_one(stack):
+def test_load_documents_stores_the_rest_and_lists_the_failed_one(
+    stack, iris_connection
+):
     _config, _connections, adapter = stack
-
-    def llm(prompt):
-        if "text of d2" in prompt:
-            raise TimeoutError("llm timed out")
-        who = "d1" if "text of d1" in prompt else "d3"
-        return json.dumps(
-            [
-                {"text": f"Ada {who}", "type": "PERSON"},
-                {"text": f"Acme {who}", "type": "ORGANIZATION"},
-            ]
-        )
+    llm = _llm_timing_out_on_document_two(_real_llm())
 
     result = _pipeline(stack, llm).load_documents("", documents=_docs())
 
     assert [f["document_id"] for f in result["failed"]] == ["d2"]
     assert "timed out" in result["failed"][0]["reason"]
     assert result["documents_loaded"] == 3
-    assert len(adapter.get_entities_by_document("d1")) == 2
-    assert len(adapter.get_entities_by_document("d3")) == 2
+    # the real LLM found entities in the two documents whose call did not time out
+    found = {d: adapter.get_entities_by_document(d) for d in ("d1", "d3")}
+    assert all(found[d] for d in found), f"the real LLM extracted nothing: {found}"
     assert adapter.get_entities_by_document("d2") == []
-    assert len(adapter.get_entities_by_type("ORGANIZATION")) == 2
-    assert len(adapter.get_relationships_by_document("d1")) == 1
+    for entities in found.values():
+        assert all(0.0 < e.confidence <= 1.0 for e in entities)
+    stored = _scalar(iris_connection, f"SELECT COUNT(*) FROM {SCHEMA}.Entities")
+    assert stored == sum(len(v) for v in found.values())
+    # every pair of entities in a document is related (the pipeline's co-occurrence rule)
+    expected_pairs = sum(len(v) * (len(v) - 1) // 2 for v in found.values())
+    assert (
+        _scalar(iris_connection, f"SELECT COUNT(*) FROM {SCHEMA}.EntityRelationships")
+        == expected_pairs
+    )
+    # the real vector store holds all three documents, including the one that failed
+    assert (
+        _scalar(iris_connection, f"SELECT COUNT(*) FROM {SCHEMA}.SourceDocuments") == 3
+    )
 
 
 def test_load_documents_raises_when_every_document_fails(stack):
+    # FAULT INJECTION: the LLM is down for every document; nothing else is replaced.
     def llm(prompt):
         raise ConnectionError("llm down")
 

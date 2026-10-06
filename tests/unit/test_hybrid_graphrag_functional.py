@@ -32,13 +32,13 @@ class TestHybridGraphRAGSecurity:
     def test_no_hardcoded_credentials_in_source(self):
         """Verify no hard-coded credentials exist in source code."""
         pipeline_file = (
-            Path(__file__).parent.parent
+            Path(__file__).resolve().parents[2]
             / "iris_vector_rag"
             / "pipelines"
             / "hybrid_graphrag.py"
         )
         discovery_file = (
-            Path(__file__).parent.parent
+            Path(__file__).resolve().parents[2]
             / "iris_vector_rag"
             / "pipelines"
             / "hybrid_graphrag_discovery.py"
@@ -210,7 +210,11 @@ class TestHybridGraphRAGPipeline:
             "iris_vector_rag.pipelines.hybrid_graphrag.GraphCoreDiscovery"
         ) as mock_discovery_class, patch(
             "iris_vector_rag.common.iris_connection._session_connection"
-        ) as mock_session:
+        ) as mock_session, patch(
+            # A unit test loads no model: the embedder reports its width.
+            "iris_vector_rag.pipelines.graphrag.EmbeddingManager"
+        ) as mock_embeddings:
+            mock_embeddings.return_value.get_embedding_dimension.return_value = 384
             mock_discovery = Mock(spec=GraphCoreDiscovery)
             mock_discovery_class.return_value = mock_discovery
             mock_discovery.import_graph_core_modules.return_value = self._fake_modules(
@@ -353,7 +357,7 @@ class TestModularArchitecture:
         }
 
         for module_file, max_lines in module_files.items():
-            file_path = Path(__file__).parent.parent / module_file
+            file_path = Path(__file__).resolve().parents[2] / module_file
             if file_path.exists():
                 line_count = len(file_path.read_text().splitlines())
                 assert (

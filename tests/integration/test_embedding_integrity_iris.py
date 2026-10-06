@@ -2,7 +2,8 @@
 
 The dimension the table is created at is the embedding manager's; a vector of any other
 width is refused at insert and at query, and nothing is stored. Runs on the ephemeral
-container `iris_target` starts, never on a mock.
+container `iris_target` starts, never on a mock. The embedder is the real sentence-transformer; the one fault injected
+is a failing `embed_text` in the ingest-failure test, because that failure is the subject.
 """
 
 import pytest
@@ -17,15 +18,13 @@ from tests.fixtures.shapes.ddl import VECTOR_DIMENSION, create_statement
 
 pytestmark = pytest.mark.integration
 
-WIDTH = 12
+WIDTH = 384  # the real embedder's width
 PREFIX = "EITEST"
 
 
 @pytest.fixture
-def stack(iris_connection, monkeypatch):
+def stack(iris_connection):
     """A real config, schema manager and store on a schema of their own."""
-    monkeypatch.setenv("RAG_EMBEDDINGS__PROVIDER", "stub")
-    monkeypatch.setenv("RAG_EMBEDDINGS__DIMENSION", str(WIDTH))
     config = ConfigurationManager()
     connections = ConnectionManager(config)
     schema = SchemaManager(connections, config, schema_prefix=PREFIX)
@@ -114,6 +113,7 @@ def test_embedding_failure_during_ingest_raises_and_stores_nothing(
 ):
     store, _ = stack
 
+    # FAULT INJECTION: the embedder fails; store, schema and IRIS stay real.
     def fail(self, text):
         raise EmbeddingError("the model is gone")
 

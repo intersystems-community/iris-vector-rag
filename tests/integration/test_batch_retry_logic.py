@@ -41,25 +41,16 @@ class TestBatchRetryLogic:
         When: Batch fails due to LLM error (timeout, rate limit, parsing error)
         Then: System retries entire batch 3 times with exponential backoff (2s, 4s, 8s)
         """
-        # Mock LLM failure for first 2 attempts, success on 3rd
+        # FAULT INJECTION: the first two attempts fail at the batch boundary (the fault is
+        # what is under test); the third runs the real extraction against the real LLM.
         attempt_count = {"count": 0}
+        real_extract = service._extract_batch_impl
 
         def mock_extract_with_failure(*args, **kwargs):
             attempt_count["count"] += 1
             if attempt_count["count"] < 3:
                 raise Exception("Simulated LLM timeout")
-            # Third attempt succeeds
-            from iris_vector_rag.core.models import BatchExtractionResult
-
-            return BatchExtractionResult(
-                batch_id="test-batch",
-                per_document_entities={doc.id: [] for doc in test_documents},
-                per_document_relationships={},
-                processing_time=1.0,
-                success_status=True,
-                retry_count=attempt_count["count"] - 1,
-                error_message="",
-            )
+            return real_extract(*args, **kwargs)
 
         # Patch the internal batch extraction method
         with patch.object(
@@ -94,30 +85,22 @@ class TestBatchRetryLogic:
         When: All retries are exhausted
         Then: System splits batch into individual documents for separate retry
         """
-        # Mock LLM failure for all batch attempts
+        # FAULT INJECTION: every multi-document batch fails at the batch boundary (the
+        # fault is what is under test); single-document calls run the real extraction
+        # against the real LLM.
         batch_attempt_count = {"count": 0}
         individual_calls = {"count": 0}
+        real_extract = service._extract_batch_impl
 
         def mock_extract_always_fail_batch(*args, **kwargs):
             batch_attempt_count["count"] += 1
             if len(args) > 0 and len(args[0]) > 1:  # Batch of multiple docs
                 raise Exception("Simulated batch LLM failure")
-            else:  # Individual document
-                individual_calls["count"] += 1
-                from iris_vector_rag.core.models import BatchExtractionResult
+            individual_calls["count"] += 1
+            return real_extract(*args, **kwargs)
 
-                doc = args[0][0]
-                return BatchExtractionResult(
-                    batch_id=f"individual-{doc.id}",
-                    per_document_entities={doc.id: []},
-                    per_document_relationships={},
-                    processing_time=0.5,
-                    success_status=True,
-                    retry_count=0,
-                    error_message="",
-                )
-
-        # Nine failing batches each back off 2s+4s+8s: record the delays, don't wait
+        # The clock is patched, not a service: nine failing batches each back off
+        # 2s+4s+8s; record the delays instead of waiting them out.
         with patch(
             "iris_vector_rag.common.batch_utils.time.sleep"
         ) as sleep, patch.object(
@@ -150,7 +133,8 @@ class TestBatchRetryLogic:
         """Validate retry delays follow exponential pattern (2s, 4s, 8s)."""
         from iris_vector_rag.common.batch_utils import extract_batch_with_retry
 
-        # Mock function that always fails
+        # FAULT INJECTION: an extract function that always fails; no service is involved,
+        # the retry timing is the thing under test.
         def failing_function(*args, **kwargs):
             raise Exception("Simulated failure")
 
@@ -189,24 +173,16 @@ class TestBatchRetryLogic:
 
     def test_successful_retry_after_first_failure(self, service, test_documents):
         """Validate immediate success after single failure."""
+        # FAULT INJECTION: the first attempt fails at the batch boundary; the second runs
+        # the real extraction against the real LLM.
         attempt_count = {"count": 0}
+        real_extract = service._extract_batch_impl
 
         def mock_extract_fail_once(*args, **kwargs):
             attempt_count["count"] += 1
             if attempt_count["count"] == 1:
                 raise Exception("First attempt fails")
-            # Second attempt succeeds
-            from iris_vector_rag.core.models import BatchExtractionResult
-
-            return BatchExtractionResult(
-                batch_id="test-batch",
-                per_document_entities={doc.id: [] for doc in test_documents},
-                per_document_relationships={},
-                processing_time=1.0,
-                success_status=True,
-                retry_count=1,
-                error_message="",
-            )
+            return real_extract(*args, **kwargs)
 
         with patch.object(
             service, "_extract_batch_impl", side_effect=mock_extract_fail_once

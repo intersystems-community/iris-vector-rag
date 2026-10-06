@@ -2,15 +2,13 @@
 Realistic GraphRAG integration tests using existing database content.
 
 These tests validate GraphRAG functionality against real data that exists in the
-database (1,396 documents with 221,165 entities and 228,100 relationships).
+database.
 
-Unlike the fixture-based tests (which require complex LLM mocking), these tests:
-1. Check if sufficient data exists in the database
-2. Run actual queries against real knowledge graph
+These tests run on the session's IRIS, loaded with the medical-20 fixture
+(`medical_20_loaded`): 21 entities and 15 relationships. They:
+1. Check the data the fixture loaded is there
+2. Run actual queries against the real knowledge graph
 3. Validate retrieval methods work end-to-end
-4. Skip gracefully if database is empty
-
-Requirements: Database must have at least 100 entities for tests to run.
 """
 
 import pytest
@@ -19,49 +17,32 @@ from iris_vector_rag import create_pipeline
 
 
 @pytest.fixture(scope="function")
-def graphrag_with_existing_data(iris_sql_connection):
+def graphrag_with_existing_data(medical_20_loaded):
     """
-    Create GraphRAG pipeline if database has sufficient entities.
+    A GraphRAG pipeline over the session's IRIS, which holds the medical-20 fixture.
 
-    Skips if database has <10 entities (not enough for meaningful testing).
+    The pipeline builds its own ConnectionManager; the session exports the ephemeral
+    container's settings to the environment, so it talks to the same IRIS the fixture
+    was loaded into. Nothing is injected.
     """
+    from iris_vector_rag.core.connection import ConnectionManager
+
+    pipeline = create_pipeline(
+        "graphrag", validate_requirements=False, auto_setup=False
+    )
+    assert isinstance(pipeline.connection_manager, ConnectionManager)
+
+    raw_conn = pipeline.connection_manager.get_connection()
+    cursor = raw_conn.cursor()
     try:
-        # Check entity count using the test's iris_sql_connection (same port as fixture loading)
-        from sqlalchemy import text
-
-        result = iris_sql_connection.execute(text("SELECT COUNT(*) FROM RAG.Entities"))
-        entity_count = result.scalar()
-
-        if entity_count < 10:
-            pytest.skip(
-                f"Database has only {entity_count} entities. Need at least 10 for realistic testing. "
-                f"Load fixture: python scripts/fixtures/create_graphrag_dat_fixture.py --cleanup-first"
-            )
-
-        print(f"\nTesting against database with {entity_count} entities")
-
-        # Create pipeline - skip validation to avoid double-checking
-        pipeline = create_pipeline(
-            "graphrag", validate_requirements=False, auto_setup=False
-        )
-
-        # Inject the test's connection manager so pipeline uses same database
-        from unittest.mock import Mock
-
-        from iris_vector_rag.core.connection import ConnectionManager
-
-        # Create a mock connection manager that returns the test's connection
-        mock_conn_manager = Mock(spec=ConnectionManager)
-        mock_conn_manager.get_connection.return_value = iris_sql_connection.connection
-
-        # Replace the pipeline's connection manager
-        pipeline.connection_manager = mock_conn_manager
-        pipeline.entity_extraction_service.connection_manager = mock_conn_manager
-
-        return pipeline, entity_count
-
-    except Exception as e:
-        pytest.skip(f"Could not initialize GraphRAG pipeline: {e}")
+        cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
+        entity_count = cursor.fetchone()[0]
+    finally:
+        cursor.close()
+    assert (
+        entity_count >= 10
+    ), f"The medical-20 fixture should leave at least 10 entities, found {entity_count}"
+    return pipeline, entity_count
 
 
 class TestGraphRAGRealistic:
@@ -82,8 +63,7 @@ class TestGraphRAGRealistic:
         # Get an entity that HAS relationships (not just any entity)
         # Use the iris_sql_connection fixture directly (already a SQLAlchemy connection)
 
-        # Get the actual connection from the fixture (it's passed via graphrag_with_existing_data)
-        # We stored it in the pipeline's connection manager mock
+        # The pipeline's own (real) connection manager
         raw_conn = pipeline.connection_manager.get_connection()
 
         # Execute using DB-API cursor
@@ -98,8 +78,7 @@ class TestGraphRAGRealistic:
                 ORDER BY COUNT(r.relationship_id) DESC
             """)
             row = cursor.fetchone()
-            if not row:
-                pytest.skip("No entities with relationships found in database")
+            assert row, "The medical-20 fixture has entities with relationships"
             sample_entity = row[0]
         finally:
             cursor.close()
@@ -125,7 +104,7 @@ class TestGraphRAGRealistic:
         # Verify metadata
         retrieval_method = result["metadata"]["retrieval_method"]
         assert retrieval_method in [
-            "knowledge_graph_traversal",
+            "knowledge_graph",
             "vector_fallback",
         ], f"Should use KG or fallback, got: {retrieval_method}"
 

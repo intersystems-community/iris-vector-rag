@@ -1245,3 +1245,75 @@ after only in the sense noted below.
   line went with it. No assertion changed, nothing skipped.
 - Not mine: `test_iris_connection_integration.py::test_auto_port_detection`
   still fails in the prefix session (another agent's file).
+
+## real-services-sweep
+
+Branch `remediation/real-services-sweep` from `remediation/integrated`. Rule
+from the maintainer: tests in `tests/integration` and `tests/e2e` (and the
+end-to-end tests in `tests/test_*.py`) use real services: the session's
+ephemeral IRIS, the real `OPENAI_API_KEY`, the real sentence-transformer. Fakes
+stay in `tests/unit`. A fault injected at a boundary is allowed when the fault
+is the subject, and the test says so. `tests/integration/test_mcp_*.py` and
+`tests/unit` content were not touched (unit got files moved into it, below).
+
+**Decisions.**
+
+- `tests/support/real_services.py` holds the shared real services: `real_llm()`
+  (gpt-4o-mini through `get_llm_func`), `real_embedder()`
+  (all-MiniLM-L6-v2, 384) and `real_colbert_encoder()`.
+- The ColBERT token encoder is ColBERTv2 (`colbert-ir/colbertv2.0`, BERT plus
+  its 128-wide projection, no [Q]/[D] markers). The project's default
+  GTE-ModernColBERT cannot run in this environment: its `tokenizer.json` does
+  not parse with the installed `tokenizers` and `pylate` is not installed. Token
+  counts are now the model's, so the token-row assertion compares with the
+  encoder's own count instead of a hard-coded 4.
+- `test_hybrid_rrf_modes`: the real `iris_vector_graph.TextSearchEngine` reads
+  `docs(id, text)`; each test seeds that table (keyed by the ids the pipeline
+  stored) so the text leg returns a known set while the engine, SQL and
+  hydration are the product's own. No mock remains.
+- **Product defect, not fixed:** nothing in the product creates or fills `docs`,
+  so on a real deployment the text leg of `hybrid`/`rrf` finds nothing and the
+  result is the vector leg alone. Evidence from the session's IRIS: the engine's
+  `%FIND(text, ?)` is not IRIS SQL (SQLCODE -359), so it always falls back to
+  `LIKE`; the fallback addresses columns `id`/`text` (`RAG.SourceDocuments` has
+  `doc_id`/`text_content`, SQLCODE -29); and `LIKE` on the `LONGVARCHAR` column
+  matches nothing even for `'Insulin%'`. What does work on
+  `RAG.SourceDocuments`: `CREATE INDEX ... (text_content) AS %iFind.Index.Basic`
+  then `WHERE %ID %FIND search_index(idx, ?)` returned the right document. A fix
+  (an iFind index created by `SchemaManager`, queried by
+  `RetrievalEngine._text_leg` instead of the ivg engine) changes DDL on every
+  deployment and the write path, so it is left for a decision.
+  `test_text_leg_finds_nothing_without_a_docs_table` pins the current behaviour.
+- `test_graphrag_realistic` had never run: it skipped unless the database held
+  10 entities, and it asserted a label `knowledge_graph_traversal` that the
+  pipeline never reports (`knowledge_graph`). It now loads `medical_20_loaded`,
+  uses the pipeline's own real connection manager instead of a
+  `Mock(spec=ConnectionManager)`, asserts instead of skipping, and accepts the
+  real labels.
+- Batch retry tests still inject their fault at `_extract_batch_impl`, but after
+  the injected failures they call the real extraction (real LLM) instead of
+  returning a fabricated result. The patched `time.sleep` in the splitting test
+  is a clock, not a service.
+- Unit-level files that lived in `tests/` moved to `tests/unit`:
+  `test_index_ensure`, `test_schema_manager_bugs`, `test_vector_safe_helpers`,
+  `test_entity_extraction_service`, `test_hybrid_graphrag_functional`,
+  `test_pylate_colbert_pipeline`, `test_iris_sql_utils_connection_ownership`.
+  All are mock-based by design. In `test_hybrid_graphrag_functional` two tests
+  had passed only because the real sentence-transformer loaded under a `Mock`
+  config; the unit copy patches the embedding manager's width explicitly. Its
+  source-path lookups use `parents[2]`.
+- The `FakeDriver` session test moved from `tests/e2e/test_session_e2e.py` to
+  `tests/unit/session/test_session_connect.py`; the e2e file gets a test that
+  passes a counting subclass of the real `NetworkDriver`.
+- `ci_known_failures.txt`: the six `test_graphrag_vector_search` entries are
+  removed; the tests pass with the real LLM.
+- Real-LLM nondeterminism: `test_validation_truthfulness_e2e` factory test
+  asserted at least 4 entities (the scripted LLM returned 2 per document); the
+  real model gave 3 on a run, so it now asserts that both documents got an
+  entity and at least 2 rows exist.
+  `test_seed_entities_are_found_in_the_real_table` used the query "warfarin
+  dosing", for which the model returned no entity in 5 of 5 extractions on one
+  check and was flaky in the suite; it now uses a sentence ("What is the right
+  dose of warfarin for a patient?", 5 of 5).
+- The contract workflow sets `OPENAI_API_KEY: sk-ci-placeholder`
+  (`release.yml`); that is `tests/contract`, outside this sweep, and left as is.

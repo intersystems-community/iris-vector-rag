@@ -69,9 +69,7 @@ def _drop_all(connection):
 
 
 @pytest.fixture
-def legacy(iris_connection, monkeypatch):
-    monkeypatch.setenv("RAG_EMBEDDINGS__PROVIDER", "stub")
-    monkeypatch.setenv("RAG_EMBEDDINGS__DIMENSION", "12")
+def legacy(iris_connection):
     config = ConfigurationManager()
     config._config.setdefault("entity_extraction", {})["storage"] = {
         "entities_table": f"{SCHEMA}.Entities",

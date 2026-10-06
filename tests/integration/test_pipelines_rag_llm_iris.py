@@ -2,14 +2,12 @@
 
 Each test works in schemas of its own (`PLFIXA` canonical, `PLFIXB` legacy) so nothing
 touches `RAG` tables another test owns. Runs on the ephemeral container `iris_target`
-starts. The only fakes are at the boundary: the OpenAI client class, and the embedding
-function (a pure function of the text).
+starts. Everything is real: the LLM is OpenAI's (OPENAI_API_KEY from the environment),
+the embedder is the real sentence-transformer. The one fault injected is a reranker that
+raises, because that failure is what the rerank test is about.
 """
 
 from __future__ import annotations
-
-import sys
-import types
 
 import pytest
 
@@ -19,10 +17,11 @@ from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.crag import CRAGPipeline
 from iris_vector_rag.storage.schema_manager import SchemaManager
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
+from tests.support.real_services import EMBEDDING_WIDTH, real_embedder, real_llm
 
 pytestmark = pytest.mark.integration
 
-WIDTH = 12
+WIDTH = EMBEDDING_WIDTH
 A, B = "PLFIXA", "PLFIXB"
 DOCS = {
     "doc1": "alpha insulin regulates glucose",
@@ -31,14 +30,13 @@ DOCS = {
 }
 
 
+_EMBEDDER = real_embedder()
+
+
 def embed(texts):
-    """Deterministic 12-wide vectors; the same text gives the same vector."""
+    """The real embedder, on a list of texts."""
     assert isinstance(texts, list)
-    out = []
-    for text in texts:
-        padded = (text * WIDTH)[:WIDTH]
-        out.append([float(ord(c) % 7 + 1) for c in padded])
-    return out
+    return _EMBEDDER(texts)
 
 
 def _vec(text):
@@ -66,9 +64,7 @@ def _exec(connection, sql):
 
 
 @pytest.fixture
-def stack(iris_connection, monkeypatch):
-    monkeypatch.setenv("RAG_EMBEDDINGS__PROVIDER", "stub")
-    monkeypatch.setenv("RAG_EMBEDDINGS__DIMENSION", str(WIDTH))
+def stack(iris_connection):
     config = ConfigurationManager()
     connections = ConnectionManager(config)
     _drop(iris_connection)
@@ -123,7 +119,7 @@ def _pipeline(stack, manager, prefix):
         config_manager=config,
         vector_store=store,
         embedding_func=embed,
-        llm_func=lambda prompt: "an answer",
+        llm_func=real_llm(),
     )
 
 
@@ -167,6 +163,7 @@ def test_rerank_failure_is_loud_against_a_real_store(stack, iris_connection):
         auto_chunk=False,
     )
 
+    # FAULT INJECTION: the reranker is down; store, embedder and LLM stay real.
     def broken(query, docs):
         raise RuntimeError("reranker is down")
 
@@ -175,7 +172,7 @@ def test_rerank_failure_is_loud_against_a_real_store(stack, iris_connection):
             connections,
             config,
             reranker_func=broken,
-            llm_func=lambda p: "local answer",
+            llm_func=real_llm(),
             vector_store=store,
         )
 
@@ -185,38 +182,24 @@ def test_rerank_failure_is_loud_against_a_real_store(stack, iris_connection):
     result = make().query("insulin", top_k=2, allow_rerank_fallback=True)
     assert result["metadata"]["reranked"] is False
     assert "reranker is down" in result["metadata"]["rerank_error"]
-    assert result["answer"] == "local answer"  # no OPENAI_API_KEY needed
+    assert isinstance(result["answer"], str) and result["answer"].strip()
 
 
-def test_create_pipeline_with_embedding_func_and_a_key_reaches_a_real_pipeline(
-    stack, monkeypatch
-):
-    """OS-10 end to end: the OpenAI client must not see the pipeline's kwargs."""
-    seen = {}
+def test_create_pipeline_with_embedding_func_and_a_key_reaches_a_real_pipeline(stack):
+    """OS-10 end to end: the OpenAI client must not see the pipeline's kwargs.
 
-    class StrictChatOpenAI:
-        def __init__(self, **kwargs):
-            seen.update(kwargs)
-            if "embedding_func" in kwargs:
-                raise TypeError("unexpected keyword argument 'embedding_func'")
-
-        def invoke(self, prompt):
-            return types.SimpleNamespace(content="fake openai answer")
-
-    module = types.ModuleType("langchain_openai")
-    module.ChatOpenAI = StrictChatOpenAI
-    monkeypatch.setitem(sys.modules, "langchain_openai", module)
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    The real `ChatOpenAI` rejects an unknown keyword, so a leaked `embedding_func` would
+    fail here; the real model then has to answer.
+    """
     import iris_vector_rag.common.utils as utils
 
     utils._llm_instances.clear()
-    monkeypatch.setattr(utils, "_setup_caching_if_needed", lambda enable=None: False)
 
     from iris_vector_rag import create_pipeline
 
     pipeline = create_pipeline(
         "basic", embedding_func=embed, validate_requirements=False
     )
-    assert "embedding_func" not in seen
-    assert pipeline.llm_func("hello") == "fake openai answer"
+    answer = pipeline.llm_func("Reply with the single word: ready")
+    assert isinstance(answer, str) and answer.strip()
     utils._llm_instances.clear()

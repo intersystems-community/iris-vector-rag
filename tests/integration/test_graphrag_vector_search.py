@@ -14,6 +14,7 @@ import pytest
 from iris_vector_rag import create_pipeline
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.embeddings.manager import EmbeddingManager
+from tests.support.real_services import real_llm
 
 
 class TestGraphRAGVectorSearchIntegration:
@@ -36,14 +37,15 @@ class TestGraphRAGVectorSearchIntegration:
         `query()` returns a dict (`contexts`, `answer`, `retrieved_documents`,
         `metadata`), not an object: the tests read it as one. They used to assume a
         2,376-document corpus already sat in the database and a live LLM; the corpus
-        is loaded here and the LLM is a stub, so the test runs on any IRIS.
+        is loaded here and the LLM is the real one (OPENAI_API_KEY from the environment), so the
+        test runs on any IRIS.
         """
         from iris_vector_rag.core.models import Document
 
         pipeline = create_pipeline(
             "graphrag",
             validate_requirements=True,
-            llm_func=lambda prompt: "Symptoms include thirst and fatigue.",
+            llm_func=real_llm(),
         )
         pipeline.load_documents(
             "",
