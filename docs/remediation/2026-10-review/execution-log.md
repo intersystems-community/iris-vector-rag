@@ -1174,3 +1174,29 @@ tests (another agent's area), `test_sdk_canonical_vector_type.py` (3),
 `test_iris_connection_integration.py` (1), `test_dual_level_retrieval_e2e.py`
 (10 errors). `tests/unit`: 1572 passed, 5 skipped. Contract suite as release.yml
 runs it: 758 passed, 28 skipped, 56 deselected.
+
+## fix-mcp-tests
+
+- **Scope.** 19 tests in `test_mcp_crag_correction.py` (11), `test_mcp_hybrid_graphrag.py`
+  (6), `test_mcp_health_check.py` (1), `test_mcp_concurrent_queries.py` (1).
+- **Root cause 1 (defect, order-dependent).** The MCP server ran every IRIS call with
+  `asyncio.to_thread`. The session gives each thread its own connection, and a thread
+  keeps it until it ends, so N concurrent queries held N connections although
+  `TechniqueHandler._run_lock` already serialised them. The Community image has 8
+  licence units (measured with `ShowCounts()`); the session already holds 3 to 4 (the
+  engine, the fixtures), and `test_five_concurrent_queries_max_connections` added five
+  more: "Unable to allocate a license". The refused connect opens the session's 30 s
+  back-off, and every MCP test in that window (the rest of the concurrent file, all of
+  the CRAG file, the health check, the hybrid file) failed with "IRIS is not
+  reachable". Alone or with few predecessors the baseline is lower and it passes.
+  Fix: `iris_vector_rag/mcp/worker.py`, a one-thread executor used for queries, the
+  pre-query reachability probe, the health probe and pipeline construction. Unit test
+  `tests/unit/test_mcp_single_iris_thread.py` (written first, failed before).
+- **Root cause 2 (test).** `test_mcp_crag_correction.py` loaded no documents: alone it
+  hit "RAG.SourceDocuments: no such table" (fallback_vector, 1 document instead of 5),
+  and in a session it read whatever an earlier test left. It now uses
+  `loaded_test_documents`, like the basic and concurrent MCP files.
+- `test_reports_a_measured_connection` left `ci_known_failures.txt`; its comment line
+  went with it. No assertion changed, nothing skipped.
+- Not mine: `test_iris_connection_integration.py::test_auto_port_detection` still fails
+  in the prefix session (another agent's file).

@@ -9,7 +9,6 @@ Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
-import asyncio
 import logging
 import threading
 from datetime import datetime
