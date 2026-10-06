@@ -224,3 +224,18 @@ def test_a_table_without_an_embedding_column_is_refused(monkeypatch):
         )
 
     assert engine.mapped == []
+
+
+def test_a_query_of_the_wrong_width_raises_the_dimension_error_with_both_widths():
+    """`DimensionMismatchError` takes (got, expected); the attach check once passed a message."""
+    from iris_vector_rag.exceptions import DimensionMismatchError
+
+    pipeline = HybridGraphRAGPipeline.__new__(HybridGraphRAGPipeline)
+    pipeline._attached_corpora = {"Docs": {"dimension": 384}}
+
+    with pytest.raises(DimensionMismatchError) as caught:
+        pipeline._validate_query_dimension("Docs", [0.0] * 768)
+
+    assert (caught.value.got, caught.value.expected) == (768, 384)
+    pipeline._validate_query_dimension("Docs", [0.0] * 384)
+    pipeline._validate_query_dimension("NotAttached", [0.0] * 5)

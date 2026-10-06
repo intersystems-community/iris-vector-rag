@@ -792,3 +792,28 @@ entry: feature, question, choice, why.
   `connection-settings` agent; the global `_cache_lock` it names no longer
   exists after `083`, and the session's connect lock is per session, so it is
   closed.
+
+## e2e-attach-ivg
+
+- **`tests/test_attach_corpus.py` (12 errors).** The file sits outside
+  `IRIS_TEST_DIRECTORIES`, so `iris_target` was not autouse, and it connected to
+  `localhost:1972` with `_SYSTEM`/`SYS` from its own helpers. It now requests
+  `iris_target` in its `conn` and `engine` fixtures and connects with the target's
+  host, port, namespace and credentials. No embedder is involved.
+- **A production bug the fixture errors were hiding.**
+  `HybridGraphRAGPipeline._validate_query_dimension` raised
+  `DimensionMismatchError(message)`, but the class takes `(got, expected, where)`
+  since the exceptions work, so a wrong-width query raised `TypeError` instead.
+  Unit test first (`tests/unit/test_hybrid_graphrag_shape.py`), then the call site
+  passes both widths. The assertion in `test_mismatch_raises_error` is unchanged.
+- **`tests/integration/test_ivg_4x_upgrade_e2e.py` (collection error).** It imported
+  the removed `common.connection_manager.ConnectionManager` and two helpers
+  (`ConnectionManagerWrapper`, `MinimalConfigManager`) from
+  `test_graph_schema_integration`, a file that no longer exists. It now builds
+  `SchemaManager(ConnectionManager(config), config)` with `core.connection`'s class
+  and a `ConfigurationManager`, which resolves the `IRIS_*` variables `iris_target`
+  exports. All six tests pass.
+- **CI.** The `--ignore` of that file is removed from the integration job. The
+  "ignored files still exist" test would now pass vacuously, so a new test asserts
+  the file is not ignored and still exists. Neither file was in
+  `ci_known_failures.txt`.

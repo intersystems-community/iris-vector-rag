@@ -1,6 +1,6 @@
 """E2E: upgrading Graph_KG to the iris-vector-graph 4.x layout, then using it.
 
-Runs against this project's container (`iris-vector-rag-iris`). The first run on an
+Runs against the IRIS the suite provides (`iris_target`). The first run on an
 install that predates ivg 4.0 exercises the whole path: the old layout is reported by
 name, the dry run previews without writing, the real run migrates, and validation comes
 back clean. Every later run finds the 4.x layout already there and checks that the
@@ -14,15 +14,11 @@ import uuid
 
 import pytest
 
-from iris_vector_rag.common.connection_manager import ConnectionManager
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.integrations.ivg import create_graph_engine
 from iris_vector_rag.pipelines.hybrid_graphrag_retrieval import HybridRetrievalMethods
 from iris_vector_rag.storage.schema_manager import SchemaManager
-
-from .test_graph_schema_integration import (
-    ConnectionManagerWrapper,
-    MinimalConfigManager,
-)
 
 pytestmark = pytest.mark.integration
 
@@ -33,10 +29,10 @@ DIM = 384
 def schema_manager():
     migrations = pytest.importorskip("iris_vector_graph.migrations")
     assert hasattr(migrations, "upgrade_to_4_0_0")
-    return SchemaManager(
-        ConnectionManagerWrapper(ConnectionManager(connection_type="dbapi")),
-        MinimalConfigManager(),
-    )
+    # `iris_target` (autouse for tests/integration) exports IRIS_* for the session,
+    # which ConfigurationManager resolves into the connection identity.
+    config = ConfigurationManager()
+    return SchemaManager(ConnectionManager(config), config)
 
 
 @pytest.fixture(scope="module")
