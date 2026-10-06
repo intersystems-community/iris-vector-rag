@@ -1,8 +1,10 @@
 """End-to-end gate for the GraphRAG and ColBERT stories of pipelines-fix.
 
 Runs on the IRIS the suite provides (`iris_connection` / `iris_target`): an ephemeral
-container unless IRIS_CONTAINER_NAME pins one. Not about the embedding model, so the
-embedder is the stub (RAG_EMBEDDINGS__PROVIDER=stub, RAG_EMBEDDINGS__DIMENSION=384).
+container unless IRIS_CONTAINER_NAME pins one. Everything else is real too: the LLM is
+OpenAI's (OPENAI_API_KEY from the environment), the embedder is the real
+sentence-transformer and the ColBERT token vectors come from the real ColBERTv2 model.
+The one fault injected is a failing token insert, because that failure is the story.
 """
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ from iris_vector_rag.pipelines.colbert_iris.ingest import ColBERTIngestor
 from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
 from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
 from iris_vector_rag.pipelines.iris_global_graphrag import IRISGlobalGraphRAGPipeline
+from tests.support.real_services import real_colbert_encoder, real_llm
 
 pytestmark = pytest.mark.integration
 
@@ -62,7 +65,7 @@ def _ensure(conn, ddl):
 def graph(iris_connection):
     """A hybrid GraphRAG pipeline over three documents and a star-shaped entity graph."""
     pipeline = create_pipeline(
-        "graphrag", validate_requirements=True, llm_func=lambda prompt: "ok"
+        "graphrag", validate_requirements=True, llm_func=real_llm()
     )
     _ensure(iris_connection, ENTITIES_DDL)
     _ensure(iris_connection, RELATIONSHIPS_DDL)
@@ -111,11 +114,7 @@ def test_expansion_reads_a_neighbourhood_larger_than_one_in_list(graph):
 
 
 def test_seed_entities_are_found_in_the_real_table(graph):
-    graph.entity_extraction_service = type(
-        "S",
-        (),
-        {"extract_entities": lambda self, doc: [type("E", (), {"text": "warfarin"})()]},
-    )()
+    # The pipeline's own extraction service, over the real LLM, reads the query.
     assert [e.upper() for e in graph._find_seed_entities("warfarin dosing")] == [
         "PL-HUB"
     ]
@@ -190,17 +189,6 @@ def test_iris_global_graphrag_load_inserts_a_row(iris_connection, iris_target):
 # --- ColBERT story ------------------------------------------------------------------
 
 
-class TokenModel:
-    """Two 128-d token vectors per text, derived from the text so queries can match."""
-
-    def encode(self, texts, is_query=False):
-        out = []
-        for text in texts:
-            rng = np.random.default_rng(abs(hash(text)) % (2**32))
-            out.append(rng.normal(size=(2, 128)).astype(np.float32))
-        return out
-
-
 @pytest.fixture
 def colbert(iris_connection):
     schema = ColBERTSchema(iris_connection)
@@ -212,7 +200,8 @@ def colbert(iris_connection):
 
 def test_a_failed_token_insert_leaves_no_orphan_document(colbert):
     schema, conn = colbert
-    ingestor = ColBERTIngestor(conn, model=TokenModel())
+    ingestor = ColBERTIngestor(conn, model=real_colbert_encoder())
+    # FAULT INJECTION: one document's token insert fails; model, schema and IRIS are real.
     real_insert_tokens = ingestor._insert_tokens
 
     def insert_tokens(doc_id, vecs):
@@ -233,12 +222,15 @@ def test_a_failed_token_insert_leaves_no_orphan_document(colbert):
     assert stats["docs_failed"] == 1 and stats["docs_ingested"] == 2
     docs = {r[0] for r in _run(conn, "SELECT doc_id FROM RAG.ColBERTDocuments")}
     assert docs == {"good-1", "good-2"}, "no orphan row for the failed document"
-    assert schema.row_count("RAG.DocumentTokenEmbeddings") == 4
+    # one token row per token of the two documents that were ingested
+    model = real_colbert_encoder()
+    expected_tokens = sum(len(v) for v in model.encode(["alpha", "gamma"]))
+    assert schema.row_count("RAG.DocumentTokenEmbeddings") == expected_tokens
 
 
 def test_maxsim_ranks_ingested_documents(colbert):
     schema, conn = colbert
-    model = TokenModel()
+    model = real_colbert_encoder()
     ColBERTIngestor(conn, model=model).ingest_documents(
         [{"doc_id": "d1", "text": "alpha"}, {"doc_id": "d2", "text": "beta"}]
     )
