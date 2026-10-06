@@ -907,3 +907,20 @@ entry: feature, question, choice, why.
   `hybrid_fusion` or `vector_fallback` (no IVG `GRAPH_KG` tables here). A
   different label vocabulary, not a fixture problem; left failing and listed in
   `ci_known_failures.txt`. 19 other entries removed.
+
+## E2E error elimination (56 to 0)
+
+- **Result.** The combined `tests/integration`, `tests/e2e`, `tests/test_*.py`
+  run on the dev container, after the three `e2e-*` branches, shows 85 failed,
+  708 passed, 31 skipped and 0 errors (it was 100 failed and 56 errors).
+- **Measuring it.** My first attempts were wrong, and the mistakes are worth
+  keeping: buffered output made a progressing run look hung and I killed it
+  twice; a surviving process from one attempt shared the database with the next;
+  killing pytest mid-run wedged the dev container until `make iris-reset`; and
+  unsetting `OPENAI_API_KEY` gave 137 errors because the e2e fixtures require
+  it. The accepted run is one process, unbuffered, after a reset, with the key
+  set and the Hugging Face hub offline.
+- **Decision.** The three groups were fixed at their root cause and not
+  quarantined: the fixture for medical-20 is built from the repository's own
+  data, the stale hand-written schema was removed from the test schema resetter,
+  and the attach-corpus tests take their IRIS from `iris_target`.

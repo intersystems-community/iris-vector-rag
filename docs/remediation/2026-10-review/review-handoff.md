@@ -121,42 +121,73 @@ rejected (OS-21, ST-14).
 Run against the dev container (`iris-vector-rag-iris`, pinned), the only process
 using it at the time.
 
-| Check                                               | Result                                        |
-| --------------------------------------------------- | --------------------------------------------- |
-| `tests/unit` + `tests/test_index_ensure.py`         | 1507 passed, 5 skipped                        |
-| `verify.sh --boundary agent`                        | failed=0                                      |
-| `antipatterns.py`                                   | 0 new, 297 baselined, 0 stale                 |
-| `tests/contract`, deselecting the quarantine list   | 764 passed, 0 failed, 34 skipped              |
-| `tests/integration`, `tests/e2e`, `tests/test_*.py` | 100 failed, 609 passed, 54 skipped, 56 errors |
+| Check                                               | Result                                          |
+| --------------------------------------------------- | ----------------------------------------------- |
+| `tests/unit` + `tests/test_index_ensure.py`         | 1507 passed, 5 skipped                          |
+| `verify.sh --boundary agent`                        | failed=0                                        |
+| `antipatterns.py`                                   | 0 new, 297 baselined, 0 stale                   |
+| `tests/contract`, deselecting the quarantine list   | 764 passed, 0 failed, 34 skipped                |
+| `tests/integration`, `tests/e2e`, `tests/test_*.py` | 85 failed, 708 passed, 31 skipped, **0 errors** |
 
 Master, run the same way, had 177 failed and 376 errors in the last row, and 37
-contract failures. The 156 failures and errors that remain are 125 that fail the
-same way on master or in a fresh container (dual-level retrieval, table shape,
-canonical vector type, configuration, the unloaded medical-20 fixture and the
-attach-corpus tests) plus 31 that are **test pollution**, not regressions:
-`test_graphrag_pipeline_e2e`, `test_graph_colbert_pipelines_e2e` and
-`test_graphrag_vector_search` fail when `tests/integration`, `tests/e2e` and the
-loose `tests/test_*.py` run in one session against one database, and all 52 of
-their tests pass when those three files run alone (3m18s). The polluting test
-was not isolated. CI runs `tests/integration` alone, and `tests/e2e` is not in
-CI.
+contract failures. The 85 failures that remain in that row are not errors in
+setup: they are tests that run and fail for their own reasons (mostly the loose
+`tests/test_*.py` files for the hybrid GraphRAG, the vector-safe helpers, the
+schema-manager bugs and the entity extraction service, plus the basic, rerank,
+CRAG and ColBERT end-to-end tests that want a real LLM or model).
+
+The last row needed care to measure, and is reproducible only this way:
+
+- one pytest process at a time against the dev container, after
+  `make iris-reset`;
+- `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1`, because this machine cannot
+  download the sentence-transformer model and some tests hang on the attempt;
+- `OPENAI_API_KEY` **set**: the e2e fixtures require it, and with it unset the
+  same run shows 137 errors, every one `OPENAI_API_KEY` missing;
+- `--timeout=150 --timeout-method=signal`, so a hung LLM call fails one test and
+  the run continues (`pyproject.toml` sets the thread method, which kills the
+  whole process and leaves no summary);
+- unbuffered output (`python -u`); buffered output looked like a hang twice.
 
 ## Known failures introduced or exposed
 
-`tests/contract/ci_known_failures.txt` holds 139 node IDs (lines starting with
+`tests/contract/ci_known_failures.txt` holds 120 node IDs (lines starting with
 `#` name an owner). Tests that only passed because of a mock, or because the old
 setup errored first, now fail for their real reason and are listed there rather
 than deleted. The groups and owners:
 
 - the four CRAG contract tests and the `test_diagnostic_logging_contract` tests
   (owner: `pipelines-fix` leftovers and `test-environment` leftovers);
-- the medical-20 graph fixture tests, which need a `.DAT` fixture nobody loads;
+- (the medical-20 and DAT-decorator tests left this list: their fixture now
+  loads);
 - integration and e2e tests whose setup used to error before reaching the
   assertion (`test_mcp_basic_rag`, `test_hybridgraphrag_e2e`,
   `test_multi_query_rrf_e2e` and others), owned by the file in the list's
   comments.
 
 ## What was not done, or only partly
+
+- **The setup errors were three different problems.** 12 errors: the file sits
+  outside the directories where `iris_target` applies automatically, so it
+  connected to `localhost:1972` (and a wrong-width query raised `TypeError` in
+  `hybrid_graphrag.py`). 23 GraphRAG, ColBERT and vector-search errors:
+  `tests/utils/schema_models.py` described `RAG.Entities` by hand in a shape the
+  library never creates, and after the contract suite ran the schema resetter
+  rebuilt the table that way. 20 medical-20 and DAT errors: the repo has no
+  medical-20 `.DAT`; the fixture is now built from
+  `tests/fixtures/graphrag/medical_docs.json`.
+- **A pinned database keeps `COLLATE EXACT`** on `entity_type` and
+  `relationship_type` after a run (altering them back made `CREATE INDEX` hang
+  in `test_relation_embedding_store`). A `RAG.Entities` left in the old bad
+  shape by an earlier run needs `DROP TABLE RAG.EntityRelationships` and
+  `DROP TABLE RAG.Entities` once.
+- **`test_graphrag_pipeline_with_fixture`** fails on a label: it asserts
+  `retrieval_method` is one of `kg, vector, hybrid, rrf, text` and the pipeline
+  reports `hybrid_fusion` or `vector_fallback`.
+- **E2E tests call a live LLM** (`test_mcp_concurrent_queries`, the GraphRAG e2e
+  tests) with no client timeout; when the network stalls they hang, and
+  `test_bidirectional_relationships` failed once on "Could not parse LLM
+  response". They should take an injected LLM.
 
 - **ST-16 (`RelationEmbeddingStore`).** The plan put it in `remove-dead-code` as
   dead code. It is live (`retrieval/engine.py:161`); it was reassigned to
