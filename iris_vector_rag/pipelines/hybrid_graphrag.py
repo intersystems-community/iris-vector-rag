@@ -21,7 +21,10 @@ from ..storage.shape_resolver import TableShapeResolver
 from ..storage.table_shape import ColumnRole, TableShape
 from .graphrag import GraphRAGPipeline
 from .hybrid_graphrag_discovery import GraphCoreDiscovery
-from .hybrid_graphrag_retrieval import HybridRetrievalMethods
+from .hybrid_graphrag_retrieval import (  # noqa: F401
+    RETRIEVAL_METHODS,
+    HybridRetrievalMethods,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -353,7 +356,8 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 retrieval=, weights=, rerank=, metadata_filter=, similarity_threshold=
 
         Returns:
-            Dictionary with query results and metadata
+            Dictionary with query results and metadata.
+            ``metadata["retrieval_method"]`` is one of ``RETRIEVAL_METHODS``.
         """
         # FR-005: normalize query / query_text alias with deprecation warning
         from iris_vector_rag.core.query_options import normalize_query_params
@@ -871,7 +875,8 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             return {"iris_vector_graph_enabled": False}
 
     def _extract_sources(self, documents: List[Document]) -> List[str]:
-        return super()._extract_sources(documents)
+        """Titles (ids when untitled), the same `sources` shape GraphRAG returns."""
+        return [doc.metadata.get("title", doc.id) for doc in documents]
 
     def benchmark_search_methods(
         self, query_text: str, iterations: int = 5

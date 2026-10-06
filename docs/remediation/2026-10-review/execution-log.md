@@ -924,3 +924,44 @@ entry: feature, question, choice, why.
   quarantined: the fixture for medical-20 is built from the repository's own
   data, the stale hand-written schema was removed from the test schema resetter,
   and the attach-corpus tests take their IRIS from `iris_target`.
+
+## fix85-hybrid
+
+- **`tests/test_hybrid_graphrag_functional.py` (13 failing).** The file named the
+  package `iris_rag` (renamed to `iris_vector_rag` in 0.4.1): the source-reading
+  checks raised `FileNotFoundError`, the patches hit a module that does not exist,
+  and `test_file_line_count_limits` passed only because its loop skipped every
+  missing file. Behind the rename, the contract moved on purpose:
+  `GraphCoreDiscovery` imports the installed package only (no path search, no
+  `GRAPH_CORE_PATH`, no `sys.path` edit) and returns a dict; connection settings
+  come from the one resolver (environment beats the config file); a missing
+  iris_vector_graph is an `ImportError`, not a half-working pipeline; a database
+  error in `_get_document_content_for_entity` propagates (PL-10). Tests were
+  rewritten to those behaviours. The pipeline is built with the discovery and
+  session connection replaced at the two seams the constructor uses, patched at
+  the consuming module. The line limits now apply (1000 for the main module, which
+  is 973 lines; they were never enforced).
+- **Real bug: `include_sources=True` on HybridGraphRAG raised `AttributeError`.**
+  `_extract_sources` delegated to a parent method `GraphRAGPipeline` never had.
+  It now returns titles (ids when untitled), as GraphRAG does. The MCP default is
+  `include_sources=True`, so every `rag_graphrag` call failed. Unit test added.
+- **`test_mcp_hybrid_graphrag.py` (6).** No data: the module now loads the
+  `medical_20_loaded` fixture. The tests run on the real embedding path and the
+  real LLM.
+- **`retrieval_method` vocabulary.** Documented as `RETRIEVAL_METHODS` in
+  `hybrid_graphrag.py` (the label says which path produced the documents, not which
+  `method=` was asked for). A unit test parses every label the pipeline modules can
+  return and fails if one is missing from the set. The DAT-decorator and e2e tests
+  assert membership in it. Values are unchanged.
+- **`test_retrieval_metadata_completeness`.** It looked for an execution-time key
+  in `metadata` that no pipeline sets. The contract (C-Q5) is `execution_time` at
+  the top of the response and `processing_time` in metadata; it asserts both.
+- **`test_comprehensive_pipeline_validation`.** Run alone it fell into a mock mode
+  (no `iris_target` outside the IRIS test directories) that could not pass, and in
+  full mode it only constructed pipelines, so it could never report WORKING. Mock
+  mode is removed; it uses `iris_target`, the real LLM and embeddings, and
+  ingests and queries each pipeline. Three of four are WORKING; GraphRAG is
+  PARTIAL (ingest logs `insert_vector ... Incorrect list format`, query hits a
+  missing table), which belongs to the GraphRAG pipeline work and is not asserted.
+- Removed from `ci_known_failures.txt`: the 8 entries of these files that were
+  listed.

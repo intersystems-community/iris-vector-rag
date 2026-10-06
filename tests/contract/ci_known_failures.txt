@@ -47,7 +47,6 @@ tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegr
 tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_multiple_queries_consistency
 tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_relevance_scoring
 tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_vector_search_retrieval
-tests/integration/test_hybridgraphrag_e2e.py::TestHybridGraphRAGE2E::test_retrieval_metadata_completeness
 tests/integration/test_mcp_basic_rag.py::TestMCPBasicRAG::test_basic_rag_query_execution
 tests/integration/test_multi_query_rrf_e2e.py::TestMultiQueryRRFE2E::test_document_metadata_enrichment
 # pipelines-fix leftovers (first honest integration run; the pipelines' response shape and retrieval against the real store)
@@ -81,7 +80,6 @@ tests/integration/test_entity_extraction_logging.py::test_no_silent_failures_llm
 # test-environment leftovers (DAT fixtures, the deleted devtools bridge, connection and cache tests)
 tests/integration/test_cloud_config_integration.py::TestCompleteConfigurationFlow::test_end_to_end_config_to_database
 tests/integration/test_cloud_config_integration.py::TestSchemaManagerIntegration::test_schema_manager_creates_correct_vector_columns
-tests/integration/test_dat_fixture_decorator.py::test_graphrag_pipeline_with_fixture
 tests/integration/test_embedding_cache_reuse.py::TestActualModelCaching::test_actual_model_caching
 tests/integration/test_iris_connection_integration.py::TestIRISConnectionIntegration::test_auto_port_detection
 tests/integration/test_iris_devtools_namespace_fix.py::TestIrisDevtoolsNamespaceFix::test_can_import_fixture_creator
@@ -103,12 +101,6 @@ tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_
 tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_with_high_confidence_threshold
 tests/integration/test_mcp_crag_correction.py::TestMCPCRAGCorrection::test_crag_with_low_confidence_threshold
 tests/integration/test_mcp_health_check.py::TestMCPHealthCheck::test_reports_a_measured_connection
-tests/integration/test_mcp_hybrid_graphrag.py::TestMCPHybridGraphRAG::test_graphrag_hybrid_search
-tests/integration/test_mcp_hybrid_graphrag.py::TestMCPHybridGraphRAG::test_graphrag_metadata_includes_search_info
-tests/integration/test_mcp_hybrid_graphrag.py::TestMCPHybridGraphRAG::test_graphrag_rrf_search_method
-tests/integration/test_mcp_hybrid_graphrag.py::TestMCPHybridGraphRAG::test_graphrag_text_search_method
-tests/integration/test_mcp_hybrid_graphrag.py::TestMCPHybridGraphRAG::test_graphrag_traversal_depth_validation
-tests/integration/test_mcp_hybrid_graphrag.py::TestMCPHybridGraphRAG::test_graphrag_vector_search_method
 # pipelines-fix leftovers: the CRAG contract files release.yml used to --ignore. CRAG swallows retrieval and generation errors into an `error` field (dimension mismatch, missing config) and its query result lacks the documented structure.
 tests/contract/test_crag_contract.py::TestCRAGContract::test_query_returns_valid_structure
 tests/contract/test_crag_error_handling.py::TestCRAGErrorHandling::test_dimension_mismatch_error_actionable

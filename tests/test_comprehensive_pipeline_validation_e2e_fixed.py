@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-COMPREHENSIVE END-TO-END PIPELINE VALIDATION - FIXED VERSION
-IRONCLAD VALIDATION FOR 4 ACTUAL PIPELINES - HANDLES INFRASTRUCTURE DEPENDENCIES
+COMPREHENSIVE END-TO-END PIPELINE VALIDATION
 
-This test provides BULLETPROOF validation with TWO modes:
-1. MOCK MODE: Tests pipeline logic without database dependencies
-2. FULL MODE: Tests with real database (when infrastructure is available)
-
-NO FAKE RESULTS. REAL INFRASTRUCTURE ASSESSMENT.
+Validates the four pipelines against real services: the suite's IRIS container, the
+real embedding path and the real LLM (OPENAI_API_KEY). Each pipeline is constructed,
+given documents and queried; a pipeline is WORKING only if all three steps succeed.
+There is no mock mode: a run without infrastructure fails rather than reporting on
+mocks.
 """
 
 import json
@@ -17,7 +16,8 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from unittest.mock import Mock
+
+import pytest
 
 from iris_vector_rag.core.models import Document
 
@@ -65,52 +65,6 @@ class PipelineValidationResult:
     status: str  # "WORKING", "PARTIAL", "BROKEN", "INFRASTRUCTURE_MISSING"
 
 
-class MockInfrastructure:
-    """Mock infrastructure for testing pipeline logic without database."""
-
-    def __init__(self):
-        self.mock_documents = [
-            Document(
-                id=f"mock_doc_{i}",
-                page_content=f"Mock document {i} content about medical topic {i}",
-                metadata={"source": f"mock_source_{i}.txt", "mock": True},
-            )
-            for i in range(5)
-        ]
-
-    def create_mock_connection_manager(self):
-        """Create a mock connection manager."""
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.get_connection.return_value = Mock()
-        return mock_conn_mgr
-
-    def create_mock_config_manager(self):
-        """Create a mock configuration manager."""
-        mock_config_mgr = Mock()
-        mock_config_mgr.get.return_value = {}
-        mock_config_mgr.get_embedding_config.return_value = {
-            "model": "mock",
-            "dimension": 384,
-        }
-        mock_config_mgr.get_vector_index_config.return_value = {"type": "mock"}
-        return mock_config_mgr
-
-    def create_mock_vector_store(self):
-        """Create a mock vector store."""
-        mock_vector_store = Mock()
-        mock_vector_store.add_documents.return_value = None
-        mock_vector_store.similarity_search.return_value = self.mock_documents[:3]
-        return mock_vector_store
-
-    def create_mock_llm_func(self):
-        """Create a mock LLM function."""
-
-        def mock_llm(prompt: str) -> str:
-            return f"Mock LLM response to prompt about: {prompt[:50]}..."
-
-        return mock_llm
-
-
 class ComprehensivePipelineValidator:
     """
     IRONCLAD validator that tests pipelines in BOTH mock and full modes.
@@ -120,7 +74,6 @@ class ComprehensivePipelineValidator:
     """
 
     def __init__(self):
-        self.mock_infra = MockInfrastructure()
         self.test_documents = self._create_test_documents()
         self.test_queries = [
             "What are the main symptoms of diabetes?",
@@ -179,154 +132,45 @@ class ComprehensivePipelineValidator:
             logger.debug(f"Infrastructure check failed: {e}")
             return False
 
-    def _test_pipeline_mock_mode(
-        self, pipeline_class, pipeline_name: str
-    ) -> PipelineValidationResult:
-        """Test pipeline in mock mode (no database required)."""
-        logger.info(f"🧪 Testing {pipeline_name} in MOCK mode")
+    def _build_pipeline(self, pipeline_class, pipeline_name: str):
+        from iris_vector_rag.common.utils import get_llm_func
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.core.connection import ConnectionManager
 
-        result = PipelineValidationResult(
-            pipeline_name=pipeline_name,
-            test_mode="mock",
-            constructor_success=False,
-            constructor_time=0.0,
-            constructor_error=None,
-            ingestion_success=False,
-            documents_ingested=0,
-            ingestion_time=0.0,
-            ingestion_error=None,
-            query_success=False,
-            queries_tested=0,
-            avg_query_time=0.0,
-            avg_docs_retrieved=0.0,
-            avg_answer_length=0.0,
-            query_error=None,
-            database_required=True,
-            database_available=False,
-            infrastructure_ready=False,
-            status="BROKEN",
+        config_manager = ConfigurationManager()
+        return pipeline_class(
+            connection_manager=ConnectionManager(config_manager),
+            config_manager=config_manager,
+            llm_func=get_llm_func(),
         )
 
-        # Test 1: Constructor with mock dependencies
-        try:
-            start_time = time.time()
+    def _load_documents(self, pipeline, pipeline_name: str) -> int:
+        """Ingest the test documents through the pipeline's own loader.
 
-            # Create mock dependencies
-            mock_conn_mgr = self.mock_infra.create_mock_connection_manager()
-            mock_config_mgr = self.mock_infra.create_mock_config_manager()
-            mock_vector_store = self.mock_infra.create_mock_vector_store()
-            mock_llm_func = self.mock_infra.create_mock_llm_func()
+        GraphRAG's loader takes a path and extracts entities with the LLM, so its
+        documents go in as a JSON file.
+        """
+        if pipeline_name == "GraphRAG":
+            import tempfile
 
-            # Handle different constructor signatures
-            if pipeline_name == "BasicRAGReranking":
-                pipeline = pipeline_class(
-                    connection_manager=mock_conn_mgr,
-                    config_manager=mock_config_mgr,
-                    llm_func=mock_llm_func,
-                    vector_store=mock_vector_store,
-                )
-            else:
-                pipeline = pipeline_class(
-                    connection_manager=mock_conn_mgr,
-                    config_manager=mock_config_mgr,
-                    llm_func=mock_llm_func,
-                    vector_store=mock_vector_store,
-                )
-
-            result.constructor_time = time.time() - start_time
-            result.constructor_success = True
-            logger.info(
-                f"✅ {pipeline_name} mock constructor: {result.constructor_time:.3f}s"
-            )
-
-        except Exception as e:
-            result.constructor_error = str(e)
-            logger.error(f"❌ {pipeline_name} mock constructor failed: {e}")
-            return result
-
-        # Test 2: Document ingestion (mock)
-        try:
-            start_time = time.time()
-            pipeline.load_documents("", documents=self.test_documents)
-            result.ingestion_time = time.time() - start_time
-            result.documents_ingested = len(self.test_documents)
-            result.ingestion_success = True
-            logger.info(
-                f"✅ {pipeline_name} mock ingestion: {result.documents_ingested} docs in {result.ingestion_time:.3f}s"
-            )
-        except Exception as e:
-            result.ingestion_error = str(e)
-            logger.error(f"❌ {pipeline_name} mock ingestion failed: {e}")
-            return result
-
-        # Test 3: Query execution (mock)
-        query_times = []
-        docs_retrieved = []
-        answer_lengths = []
-        successful_queries = 0
-
-        for query in self.test_queries:
-            try:
-                start_time = time.time()
-                query_result = pipeline.query(query, top_k=3)
-                query_time = time.time() - start_time
-
-                # Validate response structure
-                assert isinstance(query_result, dict), "Query result must be dict"
-                assert (
-                    "retrieved_documents" in query_result
-                ), "Must have retrieved_documents"
-                assert "answer" in query_result, "Must have answer"
-
-                retrieved_docs = len(query_result.get("retrieved_documents", []))
-                answer = query_result.get("answer", "")
-                answer_length = len(str(answer)) if answer else 0
-
-                query_times.append(query_time)
-                docs_retrieved.append(retrieved_docs)
-                answer_lengths.append(answer_length)
-                successful_queries += 1
-
-                logger.info(
-                    f"✅ {pipeline_name} mock query: {retrieved_docs} docs, {answer_length} chars, {query_time:.3f}s"
-                )
-
-            except Exception as e:
-                logger.error(f"❌ {pipeline_name} mock query failed: {e}")
-                if result.query_error is None:
-                    result.query_error = str(e)
-
-        # Calculate results
-        if successful_queries > 0:
-            result.query_success = True
-            result.queries_tested = successful_queries
-            result.avg_query_time = sum(query_times) / len(query_times)
-            result.avg_docs_retrieved = sum(docs_retrieved) / len(docs_retrieved)
-            result.avg_answer_length = sum(answer_lengths) / len(answer_lengths)
-
-        # Determine status for mock mode
-        if (
-            result.constructor_success
-            and result.ingestion_success
-            and result.query_success
-        ):
-            result.status = (
-                "WORKING" if result.infrastructure_ready else "INFRASTRUCTURE_MISSING"
-            )
-        elif result.constructor_success and (
-            result.ingestion_success or result.query_success
-        ):
-            result.status = "PARTIAL"
+            payload = [
+                {"id": d.id, "page_content": d.page_content, "metadata": d.metadata}
+                for d in self.test_documents
+            ]
+            with tempfile.TemporaryDirectory() as tmp:
+                path = os.path.join(tmp, "docs.json")
+                with open(path, "w") as handle:
+                    json.dump(payload, handle)
+                pipeline.load_documents(path)
         else:
-            result.status = "BROKEN"
+            pipeline.load_documents(documents=self.test_documents)
+        return len(self.test_documents)
 
-        return result
-
-    def _test_pipeline_full_mode(
+    def validate_pipeline(
         self, pipeline_class, pipeline_name: str
     ) -> PipelineValidationResult:
-        """Test pipeline in full mode (with real database)."""
-        logger.info(f"🏭 Testing {pipeline_name} in FULL mode")
+        """Construct, ingest and query one pipeline against the real services."""
+        logger.info(f"Testing {pipeline_name} against real services")
 
         result = PipelineValidationResult(
             pipeline_name=pipeline_name,
@@ -350,49 +194,52 @@ class ComprehensivePipelineValidator:
             status="BROKEN",
         )
 
-        # Test with real infrastructure (same logic as mock but without mocks)
         try:
             start_time = time.time()
-            if pipeline_name == "BasicRAGReranking":
-                # This pipeline requires explicit parameters
-                from iris_vector_rag.config.manager import ConfigurationManager
-                from iris_vector_rag.core.connection import ConnectionManager
-
-                pipeline_class(
-                    connection_manager=ConnectionManager(),
-                    config_manager=ConfigurationManager(),
-                )
-            else:
-                pipeline_class()
-
+            pipeline = self._build_pipeline(pipeline_class, pipeline_name)
             result.constructor_time = time.time() - start_time
             result.constructor_success = True
-            logger.info(
-                f"✅ {pipeline_name} full constructor: {result.constructor_time:.3f}s"
-            )
-
-            # Continue with ingestion and queries...
-            # (Similar implementation as mock mode but with real components)
-
         except Exception as e:
             result.constructor_error = str(e)
-            logger.error(f"❌ {pipeline_name} full constructor failed: {e}")
+            logger.error(f"{pipeline_name} constructor failed: {e}")
             return result
 
-        # For now, if we reach here, mark as infrastructure missing
-        result.status = "INFRASTRUCTURE_MISSING"
+        try:
+            start_time = time.time()
+            result.documents_ingested = self._load_documents(pipeline, pipeline_name)
+            result.ingestion_time = time.time() - start_time
+            result.ingestion_success = True
+        except Exception as e:
+            result.ingestion_error = str(e)
+            logger.error(f"{pipeline_name} ingestion failed: {e}")
+            return result
+
+        query_times, docs_retrieved, answer_lengths = [], [], []
+        for query in self.test_queries:
+            try:
+                start_time = time.time()
+                query_result = pipeline.query(query, top_k=3)
+                query_times.append(time.time() - start_time)
+
+                assert isinstance(query_result, dict), "Query result must be dict"
+                assert "retrieved_documents" in query_result
+                assert "answer" in query_result
+                docs_retrieved.append(len(query_result["retrieved_documents"]))
+                answer_lengths.append(len(str(query_result["answer"] or "")))
+            except Exception as e:
+                logger.error(f"{pipeline_name} query failed: {e}")
+                if result.query_error is None:
+                    result.query_error = str(e)
+
+        if query_times:
+            result.query_success = True
+            result.queries_tested = len(query_times)
+            result.avg_query_time = sum(query_times) / len(query_times)
+            result.avg_docs_retrieved = sum(docs_retrieved) / len(docs_retrieved)
+            result.avg_answer_length = sum(answer_lengths) / len(answer_lengths)
+
+        result.status = "WORKING" if result.query_success else "PARTIAL"
         return result
-
-    def validate_pipeline(
-        self, pipeline_class, pipeline_name: str
-    ) -> PipelineValidationResult:
-        """Validate a pipeline in the appropriate mode."""
-        infrastructure_available = self._check_infrastructure_availability()
-
-        if infrastructure_available:
-            return self._test_pipeline_full_mode(pipeline_class, pipeline_name)
-        else:
-            return self._test_pipeline_mock_mode(pipeline_class, pipeline_name)
 
     def validate_all_pipelines(self) -> Dict[str, PipelineValidationResult]:
         """Validate all 4 ACTUAL pipelines."""
@@ -473,6 +320,7 @@ class ComprehensivePipelineValidator:
 
 
 # Pytest Test Functions
+@pytest.mark.usefixtures("iris_target")
 def test_comprehensive_pipeline_validation():
     """Comprehensive test of all pipelines with proper infrastructure assessment."""
     validator = ComprehensivePipelineValidator()
@@ -498,25 +346,14 @@ def test_comprehensive_pipeline_validation():
     print(f"❌ Broken: {report['summary']['broken']}")
     print(f"🏗️  Infrastructure Missing: {report['summary']['infrastructure_missing']}")
 
-    # For mock mode, success means pipelines work logically
-    # For full mode, success means everything works with real infrastructure
-    if report["test_mode"] == "mock":
-        # In mock mode, we expect INFRASTRUCTURE_MISSING status for working pipelines
-        success_count = (
-            report["summary"]["working"] + report["summary"]["infrastructure_missing"]
-        )
-        assert success_count > 0, "No pipelines working even in mock mode!"
-        logger.info(
-            f"Mock validation successful: {success_count}/{len(results)} pipelines working logically"
-        )
-    else:
-        # In full mode, we expect WORKING status
-        assert report["summary"]["working"] > 0, "No pipelines working in full mode!"
-        logger.info(
-            f"Full validation successful: {report['summary']['working']}/{len(results)} pipelines working"
-        )
-
-    return report
+    assert report["infrastructure_available"], "No IRIS infrastructure"
+    assert report["summary"]["working"] > 0, (
+        f"No pipelines working: {report['summary']['broken_pipelines']} broken, "
+        f"{report['summary']['partial_pipelines']} partial"
+    )
+    logger.info(
+        f"{report['summary']['working']}/{len(results)} pipelines working end to end"
+    )
 
 
 if __name__ == "__main__":
