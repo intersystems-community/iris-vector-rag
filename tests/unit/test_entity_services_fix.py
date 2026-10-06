@@ -681,7 +681,12 @@ def test_load_documents_lists_a_document_whose_entities_could_not_be_stored(
     assert [f["document_id"] for f in result["failed"]] == ["d1"]
 
 
-def test_load_documents_raises_when_every_document_fails(no_schema_or_adapter):
+def test_load_documents_raises_when_every_document_fails(
+    no_schema_or_adapter, monkeypatch
+):
+    # a batch that fails as a whole is retried with a backoff (FR-005): don't wait it out
+    monkeypatch.setattr("iris_vector_rag.common.batch_utils.time.sleep", lambda s: None)
+
     def llm(prompt):
         raise ConnectionError("llm down")
 

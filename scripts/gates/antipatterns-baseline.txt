@@ -188,7 +188,7 @@ swallowed-error	iris_vector_rag/services/batch_entity_processor.py::BatchEntityP
 swallowed-error	iris_vector_rag/services/batch_entity_processor.py::BatchEntityProcessor.store_relationships_batch#1
 swallowed-error	iris_vector_rag/services/batch_entity_processor.py::BatchEntityProcessor.store_relationships_batch#2
 swallowed-error	iris_vector_rag/services/batch_entity_processor.py::BatchEntityProcessor.store_relationships_batch#3
-swallowed-error	iris_vector_rag/services/entity_extraction.py::EntityExtractionService.extract_batch#1
+swallowed-error	iris_vector_rag/services/entity_extraction.py::EntityExtractionService._extract_batch_impl#1
 swallowed-error	iris_vector_rag/services/entity_extraction.py::OntologyAwareEntityExtractor._convert_to_entity#1
 swallowed-error	iris_vector_rag/services/storage.py::EntityStorageAdapter._ensure_entity_columns#1
 swallowed-error	iris_vector_rag/services/storage.py::EntityStorageAdapter._ensure_entity_columns#2
