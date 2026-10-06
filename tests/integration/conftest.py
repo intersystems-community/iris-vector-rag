@@ -1,13 +1,12 @@
 """Integration test configuration and fixtures.
 
 This module provides IRIS database fixtures and real service configurations
-for integration tests. Integration tests use real IRIS connections but may
-mock external APIs (LLM, embeddings).
+for integration tests. Integration tests use real services: the session's IRIS,
+the real LLM (OPENAI_API_KEY from the environment) and the real embedder. Fakes
+belong in tests/unit.
 """
 
 import sys
-from typing import Any, Dict
-from unittest.mock import Mock
 
 import pytest
 
@@ -128,54 +127,6 @@ def iris_vector_store_config(iris_connection_config):
         "vector_dimension": 384,
         "distance_metric": "COSINE",
     }
-
-
-@pytest.fixture
-def integration_test_config(iris_connection_config) -> Dict[str, Any]:
-    """Full configuration for integration tests with real IRIS connection."""
-    return {
-        "database": {
-            "iris": {
-                "host": iris_connection_config["host"],
-                "port": iris_connection_config["port"],
-                "username": iris_connection_config["username"],
-                "password": iris_connection_config["password"],
-                "namespace": iris_connection_config["namespace"],
-            }
-        },
-        "llm": {
-            "provider": "mock",  # Use mock for LLM in integration tests
-            "model": "test-model",
-        },
-        "embeddings": {
-            "provider": "mock",  # Use mock for embeddings in integration tests
-            "model": "test-embedding-model",
-            "dimension": 384,
-        },
-        "vector_store": {"provider": "iris", "table_name": "integration_test_vectors"},
-    }
-
-
-@pytest.fixture
-def mock_llm_for_integration():
-    """Mock LLM client for integration tests (avoid real API calls)."""
-    mock_llm = Mock()
-    mock_llm.generate = Mock(return_value="Integration test response")
-    mock_llm.chat = Mock(return_value="Integration test chat response")
-    mock_llm.__call__ = Mock(return_value="Integration test LLM response")
-    return mock_llm
-
-
-@pytest.fixture
-def mock_embeddings_for_integration():
-    """Mock embedding service for integration tests (avoid model downloads)."""
-    mock_embeddings = Mock()
-    mock_embeddings.embed_documents = Mock(
-        return_value=[[0.1] * 384 for _ in range(10)]
-    )
-    mock_embeddings.embed_query = Mock(return_value=[0.1] * 384)
-    mock_embeddings.dimension = 384
-    return mock_embeddings
 
 
 @pytest.fixture
@@ -325,25 +276,3 @@ def cleanup_test_data(iris_sql_connection):
             iris_sql_connection.commit()
         except Exception:
             pass  # Ignore cleanup errors
-
-
-@pytest.fixture
-def iris_schema_manager(iris_sql_connection, iris_connection_config):
-    """Schema manager for integration tests."""
-    from iris_vector_rag.storage.schema_manager import SchemaManager
-
-    settings = {
-        "database.iris.host": iris_connection_config["host"],
-        "database.iris.port": iris_connection_config["port"],
-        "database.iris.username": iris_connection_config["username"],
-        "database.iris.password": iris_connection_config["password"],
-        "database.iris.namespace": iris_connection_config["namespace"],
-    }
-    mock_config = Mock()
-    mock_config.get = Mock(
-        side_effect=lambda key, default=None: settings.get(key, default)
-    )
-
-    manager = SchemaManager(config=mock_config)
-    manager.connection = iris_sql_connection  # Use test connection
-    yield manager
