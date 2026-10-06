@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
+from iris_vector_rag.common.utils import get_llm_func
 from iris_vector_rag.core.models import Document
 
 # Use the ACTUAL pipeline implementations we verified
@@ -276,7 +277,7 @@ class ComprehensivePipelineValidator:
             (BasicRAGPipeline, "BasicRAG", {}),
             (CRAGPipeline, "CRAG", {}),
             (BasicRAGRerankingPipeline, "BasicRAGReranking", {}),
-            (GraphRAGPipeline, "GraphRAG", {"llm_func": _graphrag_llm}),
+            (GraphRAGPipeline, "GraphRAG", {"llm_func": get_llm_func()}),
         ]
 
         logger.info("🚀 STARTING COMPREHENSIVE PIPELINE VALIDATION")
@@ -412,27 +413,11 @@ def test_basic_rag_reranking_pipeline():
     ), f"BasicRAGReranking not working: {metrics.overall_status}"
 
 
-def _graphrag_llm(prompt: str) -> str:
-    """A deterministic LLM: entity extraction gets JSON, everything else gets prose.
-
-    GraphRAG fails loudly without an LLM (it has no way to extract entities), so this
-    test supplies one instead of relying on the pipeline to carry on without.
-    """
-    if "entities" in prompt.lower() and "json" in prompt.lower():
-        return json.dumps(
-            [
-                {"text": "diabetes", "type": "DISEASE"},
-                {"text": "insulin", "type": "TREATMENT"},
-            ]
-        )
-    return "Diabetes is managed with insulin and lifestyle changes."
-
-
 def test_graph_rag_pipeline():
     """Test GraphRAG pipeline end-to-end."""
     validator = ComprehensivePipelineValidator()
     metrics = validator.validate_pipeline(
-        GraphRAGPipeline, "GraphRAG", llm_func=_graphrag_llm
+        GraphRAGPipeline, "GraphRAG", llm_func=get_llm_func()
     )
 
     assert (
@@ -470,10 +455,12 @@ def test_comprehensive_validation():
     print(f"⚠️  Partial: {len(report['summary']['partial_pipeline_names'])}")
     print(f"❌ Broken: {len(report['summary']['broken_pipeline_names'])}")
 
-    # Require at least some working pipelines
-    assert (
-        len(report["summary"]["working_pipeline_names"]) > 0
-    ), "No working pipelines found!"
+    # All four pipelines work against the real database, embedder and LLM.
+    summary = report["summary"]
+    assert len(summary["working_pipeline_names"]) == 4, (
+        f"Expected 4 working pipelines; partial={summary['partial_pipeline_names']}, "
+        f"broken={summary['broken_pipeline_names']}"
+    )
 
 
 if __name__ == "__main__":
