@@ -1,8 +1,12 @@
 """
 Unit tests for safe vector SQL helpers.
 
-Tests the safe vector query building and execution utilities that use
-the proven single-parameter pattern for IRIS vector operations.
+The helpers embed a validated vector literal in the SQL text
+(``TO_VECTOR('[..]', FLOAT, dim)``) instead of binding it as a ``?`` parameter:
+IRIS does not accept a bound parameter there for every vector width (see
+docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.py). The injection defence
+is therefore ``validate_vector_string``, the identifier regexes and the
+dimension/top_k checks, all covered here.
 """
 
 from unittest.mock import Mock
@@ -12,158 +16,172 @@ import pytest
 from iris_vector_rag.common.vector_sql_utils import (
     build_safe_vector_dot_sql,
     execute_safe_vector_search,
+    validate_vector_string,
 )
+
+VEC3 = "[0.1,0.2,0.3]"
+LIT3 = "TO_VECTOR('[0.1,0.2,0.3]', FLOAT, 3)"
 
 
 class TestBuildSafeVectorDotSQL:
     """Tests for build_safe_vector_dot_sql function."""
 
     def test_build_safe_vector_dot_sql_shape(self):
-        """Test that build_safe_vector_dot_sql generates SQL with correct shape."""
-        # Basic test
-        sql = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding")
+        """SQL has the expected shape and carries the vector as a literal."""
+        sql = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", VEC3, 3)
 
-        # Check SQL contains expected components
         assert "SELECT TOP 5 doc_id" in sql
-        assert "VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?))" in sql
+        assert f"VECTOR_DOT_PRODUCT(embedding, {LIT3})" in sql
         assert "FROM RAG.SourceDocuments" in sql
         assert "WHERE embedding IS NOT NULL" in sql
         assert "ORDER BY score DESC" in sql
 
-        # Check parameter placeholder count (should be exactly 1)
-        assert sql.count("?") == 1
+        # The vector is embedded, so no bound parameter remains.
+        assert sql.count("?") == 0
 
     def test_build_safe_vector_dot_sql_with_extra_columns(self):
         """Test build_safe_vector_dot_sql with extra columns."""
         sql = build_safe_vector_dot_sql(
-            "RAG.SourceDocuments", "embedding", "doc_id", ["title", "abstract"], 10
+            "RAG.SourceDocuments",
+            "embedding",
+            VEC3,
+            3,
+            "doc_id",
+            ["title", "abstract"],
+            10,
         )
 
         assert "SELECT TOP 10 doc_id, title, abstract" in sql
-        assert "VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?)) AS score" in sql
-        assert sql.count("?") == 1
+        assert f"VECTOR_DOT_PRODUCT(embedding, {LIT3}) AS score" in sql
+        assert sql.count("?") == 0
 
     def test_build_safe_vector_dot_sql_with_additional_where(self):
         """Test build_safe_vector_dot_sql with additional WHERE clause."""
         sql = build_safe_vector_dot_sql(
-            "RAG.SourceDocuments", "embedding", additional_where="title IS NOT NULL"
+            "RAG.SourceDocuments",
+            "embedding",
+            VEC3,
+            3,
+            additional_where="title IS NOT NULL",
         )
 
         assert "WHERE embedding IS NOT NULL AND (title IS NOT NULL)" in sql
-        assert sql.count("?") == 1
 
     def test_build_safe_vector_dot_sql_entities_table(self):
         """Test build_safe_vector_dot_sql with Entities table."""
         sql = build_safe_vector_dot_sql(
-            "RAG.Entities", "embedding", "entity_id", ["entity_name", "entity_type"], 3
+            "RAG.Entities",
+            "embedding",
+            VEC3,
+            3,
+            "entity_id",
+            ["entity_name", "entity_type"],
+            3,
         )
 
         assert "SELECT TOP 3 entity_id, entity_name, entity_type" in sql
-        assert "VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?)) AS score" in sql
+        assert f"VECTOR_DOT_PRODUCT(embedding, {LIT3}) AS score" in sql
         assert "FROM RAG.Entities" in sql
-        assert sql.count("?") == 1
 
     def test_build_safe_vector_dot_sql_validation_errors(self):
         """Test validation errors in build_safe_vector_dot_sql."""
-        # Invalid table name
         with pytest.raises(ValueError, match="Invalid table name"):
-            build_safe_vector_dot_sql("DROP TABLE users;", "embedding")
+            build_safe_vector_dot_sql("DROP TABLE users;", "embedding", VEC3, 3)
 
-        # Invalid vector column name
         with pytest.raises(ValueError, match="Invalid column name"):
             build_safe_vector_dot_sql(
-                "RAG.SourceDocuments", "embedding'; DROP TABLE users; --"
+                "RAG.SourceDocuments", "embedding'; DROP TABLE users; --", VEC3, 3
             )
 
-        # Invalid id column name
         with pytest.raises(ValueError, match="Invalid column name"):
             build_safe_vector_dot_sql(
-                "RAG.SourceDocuments", "embedding", "id; DELETE FROM users"
+                "RAG.SourceDocuments", "embedding", VEC3, 3, "id; DELETE FROM users"
             )
 
-        # Invalid extra column name
         with pytest.raises(ValueError, match="Invalid extra column name"):
             build_safe_vector_dot_sql(
                 "RAG.SourceDocuments",
                 "embedding",
+                VEC3,
+                3,
                 extra_columns=["title; DROP TABLE users"],
             )
 
-        # Invalid top_k value
         with pytest.raises(ValueError, match="Invalid top_k value"):
-            build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", top_k=0)
+            build_safe_vector_dot_sql(
+                "RAG.SourceDocuments", "embedding", VEC3, 3, top_k=0
+            )
 
         with pytest.raises(ValueError, match="Invalid top_k value"):
             build_safe_vector_dot_sql(
-                "RAG.SourceDocuments", "embedding", top_k="5; DROP TABLE users"
+                "RAG.SourceDocuments",
+                "embedding",
+                VEC3,
+                3,
+                top_k="5; DROP TABLE users",
             )
+
+        # The vector literal is spliced into the SQL, so it is validated too.
+        with pytest.raises(ValueError, match="Invalid vector string"):
+            build_safe_vector_dot_sql(
+                "RAG.SourceDocuments",
+                "embedding",
+                "[0.1]'); DROP TABLE users; --",
+                1,
+            )
+
+        with pytest.raises(ValueError, match="Invalid vector_dimension"):
+            build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", VEC3, 0)
 
     def test_build_safe_vector_dot_sql_allowed_table_formats(self):
         """Test that build_safe_vector_dot_sql accepts valid table name formats."""
-        # Schema.Table format
-        sql1 = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding")
+        sql1 = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", VEC3, 3)
         assert "FROM RAG.SourceDocuments" in sql1
 
-        # Simple table name
-        sql2 = build_safe_vector_dot_sql("Documents", "embedding")
+        sql2 = build_safe_vector_dot_sql("Documents", "embedding", VEC3, 3)
         assert "FROM Documents" in sql2
 
-        # Table with underscores
-        sql3 = build_safe_vector_dot_sql("RAG.Source_Documents", "embedding")
+        sql3 = build_safe_vector_dot_sql("RAG.Source_Documents", "embedding", VEC3, 3)
         assert "FROM RAG.Source_Documents" in sql3
+
+
+class TestValidateVectorString:
+    """The vector literal formats the builder accepts and rejects."""
+
+    @pytest.mark.parametrize(
+        "vector_string",
+        ["[1.0,2.0,3.0]", "[0.1,-0.2,0.3,-0.4]", "[1,2,3]", "[1.5e-3,2.7e2]"],
+    )
+    def test_accepts_floats_negatives_integers_and_scientific(self, vector_string):
+        assert validate_vector_string(vector_string) is True
+
+    @pytest.mark.parametrize(
+        "vector_string",
+        ["", "[]", "0.1,0.2", "[0.1,abc]", "[0.1;DROP]", "[0.1,--1]", "[SELECT]"],
+    )
+    def test_rejects_malformed_and_hostile_strings(self, vector_string):
+        assert validate_vector_string(vector_string) is False
 
 
 class TestExecuteSafeVectorSearch:
     """Tests for execute_safe_vector_search function."""
 
     def test_execute_safe_vector_search_mocks_param_and_returns_rows(self):
-        """Test that execute_safe_vector_search properly mocks parameters and returns rows."""
-        # Setup mock cursor
+        """The SQL is executed as given (nothing bound) and the rows returned."""
         mock_cursor = Mock()
         mock_cursor.fetchall.return_value = [
             ("doc1", "title1", 0.95),
             ("doc2", "title2", 0.87),
         ]
 
-        # Test vector
-        test_vector = [0.1, 0.2, 0.3, 0.4]
+        sql = build_safe_vector_dot_sql(
+            "RAG.SourceDocuments", "embedding", VEC3, 3, "doc_id", ["title"]
+        )
+        results = execute_safe_vector_search(mock_cursor, sql)
 
-        # Execute function
-        sql = "SELECT TOP 5 doc_id, title, VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?)) AS score FROM RAG.SourceDocuments WHERE embedding IS NOT NULL ORDER BY score DESC"
-        results = execute_safe_vector_search(mock_cursor, sql, test_vector)
-
-        # Verify cursor.execute was called with correct parameters
-        mock_cursor.execute.assert_called_once_with(sql, ("0.1,0.2,0.3,0.4",))
-
-        # Verify fetchall was called
+        mock_cursor.execute.assert_called_once_with(sql)
         mock_cursor.fetchall.assert_called_once()
-
-        # Verify results
-        assert len(results) == 2
-        assert results[0] == ("doc1", "title1", 0.95)
-        assert results[1] == ("doc2", "title2", 0.87)
-
-    def test_execute_safe_vector_search_vector_conversion(self):
-        """Test vector list to string conversion in execute_safe_vector_search."""
-        mock_cursor = Mock()
-        mock_cursor.fetchall.return_value = []
-
-        # Test different vector formats
-        test_vectors = [
-            [1.0, 2.0, 3.0],
-            [0.1, -0.2, 0.3, -0.4],
-            [1, 2, 3],  # integers
-            [1.5e-3, 2.7e2],  # scientific notation
-        ]
-
-        expected_strings = ["1.0,2.0,3.0", "0.1,-0.2,0.3,-0.4", "1,2,3", "0.0015,270.0"]
-
-        sql = "SELECT doc_id FROM RAG.SourceDocuments WHERE embedding IS NOT NULL"
-
-        for vector, expected_str in zip(test_vectors, expected_strings):
-            mock_cursor.reset_mock()
-            execute_safe_vector_search(mock_cursor, sql, vector)
-            mock_cursor.execute.assert_called_once_with(sql, (expected_str,))
+        assert results == [("doc1", "title1", 0.95), ("doc2", "title2", 0.87)]
 
     def test_execute_safe_vector_search_empty_results(self):
         """Test execute_safe_vector_search with empty results."""
@@ -171,29 +189,46 @@ class TestExecuteSafeVectorSearch:
         mock_cursor.fetchall.return_value = []
 
         sql = "SELECT doc_id FROM RAG.SourceDocuments WHERE embedding IS NOT NULL"
-        results = execute_safe_vector_search(mock_cursor, sql, [0.1, 0.2])
+        results = execute_safe_vector_search(mock_cursor, sql)
 
         assert results == []
-        mock_cursor.execute.assert_called_once()
+        mock_cursor.execute.assert_called_once_with(sql)
         mock_cursor.fetchall.assert_called_once()
 
     def test_execute_safe_vector_search_384_dimension_vector(self):
-        """Test execute_safe_vector_search with 384-dimension vector (typical model size)."""
+        """A 384-wide vector (typical model size) is embedded whole and executed."""
         mock_cursor = Mock()
         mock_cursor.fetchall.return_value = [("doc1", 0.92)]
 
-        # Create 384-dimension vector
-        vector_384d = [0.1] * 384
-        expected_str = ",".join(["0.1"] * 384)
-
-        sql = (
-            "SELECT doc_id, score FROM RAG.SourceDocuments WHERE embedding IS NOT NULL"
+        vector_string = "[" + ",".join(["0.1"] * 384) + "]"
+        sql = build_safe_vector_dot_sql(
+            "RAG.SourceDocuments", "embedding", vector_string, 384
         )
-        results = execute_safe_vector_search(mock_cursor, sql, vector_384d)
+        assert f"TO_VECTOR('{vector_string}', FLOAT, 384)" in sql
 
-        mock_cursor.execute.assert_called_once_with(sql, (expected_str,))
-        assert len(results) == 1
-        assert results[0] == ("doc1", 0.92)
+        results = execute_safe_vector_search(mock_cursor, sql)
+
+        mock_cursor.execute.assert_called_once_with(sql)
+        assert results == [("doc1", 0.92)]
+
+    def test_execute_safe_vector_search_vector_conversion(self):
+        """Each accepted vector format reaches the executed SQL unchanged."""
+        mock_cursor = Mock()
+        mock_cursor.fetchall.return_value = []
+
+        for vector_string, dim in [
+            ("[1.0,2.0,3.0]", 3),
+            ("[0.1,-0.2,0.3,-0.4]", 4),
+            ("[1,2,3]", 3),
+            ("[1.5e-3,2.7e2]", 2),
+        ]:
+            mock_cursor.reset_mock()
+            sql = build_safe_vector_dot_sql(
+                "RAG.SourceDocuments", "embedding", vector_string, dim
+            )
+            execute_safe_vector_search(mock_cursor, sql)
+            mock_cursor.execute.assert_called_once_with(sql)
+            assert f"TO_VECTOR('{vector_string}', FLOAT, {dim})" in sql
 
 
 class TestSafeVectorIntegration:
@@ -201,50 +236,47 @@ class TestSafeVectorIntegration:
 
     def test_build_and_execute_integration(self):
         """Test building SQL and executing it with safe vector utilities."""
-        # Build SQL
         sql = build_safe_vector_dot_sql(
-            "RAG.SourceDocuments", "embedding", "doc_id", ["title"], 5
+            "RAG.SourceDocuments", "embedding", VEC3, 3, "doc_id", ["title"], 5
         )
 
-        # Mock cursor
         mock_cursor = Mock()
         mock_cursor.fetchall.return_value = [
             ("doc1", "Title 1", 0.95),
             ("doc2", "Title 2", 0.88),
         ]
 
-        # Execute
-        test_vector = [0.1, 0.2, 0.3]
-        results = execute_safe_vector_search(mock_cursor, sql, test_vector)
+        results = execute_safe_vector_search(mock_cursor, sql)
 
-        # Verify the complete flow
-        expected_sql = "SELECT TOP 5 doc_id, title, VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?)) AS score FROM RAG.SourceDocuments WHERE embedding IS NOT NULL ORDER BY score DESC"
+        expected_sql = (
+            "SELECT TOP 5 doc_id, title, "
+            f"VECTOR_DOT_PRODUCT(embedding, {LIT3}) AS score "
+            "FROM RAG.SourceDocuments WHERE embedding IS NOT NULL "
+            "ORDER BY score DESC"
+        )
         assert sql == expected_sql
-
-        mock_cursor.execute.assert_called_once_with(sql, ("0.1,0.2,0.3",))
+        mock_cursor.execute.assert_called_once_with(sql)
         assert len(results) == 2
 
     def test_entities_table_integration(self):
         """Test safe vector utilities with Entities table."""
-        # Build SQL for entities
+        vector_string = "[" + ",".join(["0.5"] * 384) + "]"
         sql = build_safe_vector_dot_sql(
             "RAG.Entities",
             "embedding",
+            vector_string,
+            384,
             "entity_id",
             ["entity_name", "entity_type"],
             3,
             "entity_type = 'PERSON'",
         )
 
-        # Mock cursor
         mock_cursor = Mock()
         mock_cursor.fetchall.return_value = [("entity1", "John Doe", "PERSON", 0.91)]
 
-        # Execute
-        test_vector = [0.5] * 384  # 384-dimension vector
-        results = execute_safe_vector_search(mock_cursor, sql, test_vector)
+        results = execute_safe_vector_search(mock_cursor, sql)
 
-        # Verify
         assert "entity_name, entity_type" in sql
         assert "FROM RAG.Entities" in sql
         assert "entity_type = 'PERSON'" in sql

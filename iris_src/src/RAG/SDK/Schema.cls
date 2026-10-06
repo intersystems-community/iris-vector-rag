@@ -49,7 +49,7 @@ ClassMethod GetDefaultDDL(pDim As %Integer, pSchema As %String = "RAG") As %List
     Set tVec = "VECTOR("_..#VECTORTYPE_", "_pDim_")"
     Set tD1 = "CREATE TABLE IF NOT EXISTS "_pSchema_".SourceDocuments (doc_id VARCHAR(64) NOT NULL, title VARCHAR(500), text_content LONGVARCHAR, metadata LONGVARCHAR, embedding "_tVec_", PRIMARY KEY (doc_id))"
     Set tD2 = "CREATE TABLE IF NOT EXISTS "_pSchema_".DocumentChunks (chunk_id VARCHAR(64) NOT NULL, source_doc_id VARCHAR(64), chunk_text LONGVARCHAR, chunk_embedding "_tVec_", PRIMARY KEY (chunk_id))"
-    Set tD3 = "CREATE TABLE IF NOT EXISTS "_pSchema_".Entities (entity_id VARCHAR(64) NOT NULL, entity_name VARCHAR(500), entity_type VARCHAR(100), source_doc_id VARCHAR(64), PRIMARY KEY (entity_id))"
+    Set tD3 = "CREATE TABLE IF NOT EXISTS "_pSchema_".Entities (entity_id VARCHAR(64) NOT NULL, entity_name VARCHAR(500), entity_type VARCHAR(100) COLLATE EXACT, source_doc_id VARCHAR(64), PRIMARY KEY (entity_id))"
     Quit $ListBuild(tD1, tD2, tD3)
 }
 

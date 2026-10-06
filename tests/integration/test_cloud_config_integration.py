@@ -129,7 +129,7 @@ class TestSchemaManagerIntegration:
             assert cloud_config.vector.vector_dimension == 1024
             assert cloud_config.vector.source["vector_dimension"].value == "environment"
 
-    def test_schema_manager_creates_correct_vector_columns(self):
+    def test_schema_manager_creates_correct_vector_columns(self, iris_target):
         """
         GIVEN VECTOR_DIMENSION=512 environment variable
         WHEN SchemaManager creates test table
@@ -148,11 +148,11 @@ class TestSchemaManagerIntegration:
 
             # Connect to database
             conn = iris_dbapi.connect(
-                hostname="localhost",
-                port=1972,
-                namespace="USER",
-                username="_SYSTEM",
-                password="SYS",
+                hostname=iris_target.host,
+                port=iris_target.port,
+                namespace=iris_target.namespace,
+                username=iris_target.username,
+                password=iris_target.password,
             )
 
             try:
@@ -314,18 +314,18 @@ class TestConfigurationPriorityChain:
 class TestCompleteConfigurationFlow:
     """Test complete configuration flow from environment to database"""
 
-    def test_end_to_end_config_to_database(self):
+    def test_end_to_end_config_to_database(self, iris_target):
         """
         GIVEN complete environment configuration
         WHEN system initializes and creates tables
         THEN all configuration flows correctly to database
         """
         test_env = {
-            "IRIS_HOST": "localhost",
-            "IRIS_PORT": "1972",
-            "IRIS_NAMESPACE": "USER",
-            "IRIS_USERNAME": "_SYSTEM",
-            "IRIS_PASSWORD": "SYS",
+            "IRIS_HOST": iris_target.host,
+            "IRIS_PORT": str(iris_target.port),
+            "IRIS_NAMESPACE": iris_target.namespace,
+            "IRIS_USERNAME": iris_target.username,
+            "IRIS_PASSWORD": iris_target.password,
             "VECTOR_DIMENSION": "256",
             "TABLE_SCHEMA": "RAG",
         }
@@ -340,9 +340,9 @@ class TestCompleteConfigurationFlow:
             cloud_config = config_manager.get_cloud_config()
 
             # Verify all configuration loaded from environment
-            assert cloud_config.connection.host == "localhost"
-            assert cloud_config.connection.port == 1972
-            assert cloud_config.connection.namespace == "USER"
+            assert cloud_config.connection.host == iris_target.host
+            assert cloud_config.connection.port == iris_target.port
+            assert cloud_config.connection.namespace == iris_target.namespace
             assert cloud_config.vector.vector_dimension == 256
             assert cloud_config.tables.table_schema == "RAG"
 

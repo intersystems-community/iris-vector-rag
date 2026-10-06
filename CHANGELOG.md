@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Changed: entity and relationship types keep their case (existing tables are altered)
+
+- **`entity_type` and `relationship_type` are `COLLATE EXACT`.** IRIS gives a string
+  column the case-folding `SQLUPPER` collation by default, so
+  `SELECT entity_type, COUNT(*) FROM RAG.Entities GROUP BY entity_type` returned
+  `DISEASE` for a stored `Disease`, and `= 'disease'` matched it. The canonical DDL
+  (`SchemaManager`, `sql/schema.sql`, `db_init_complete.sql`, the SDK `Schema.cls`)
+  now declares the two type columns EXACT; no other column changes.
+- **An existing table is altered in place.** When `ensure_table_schema` finds
+  `Entities` or `EntityRelationships` with the default collation it reads the collation
+  from `%Dictionary.CompiledProperty` and runs
+  `ALTER TABLE ... ALTER COLUMN c VARCHAR(n) COLLATE EXACT`. Rows, nullability and
+  indexes are kept (IRIS rebuilds the column's indexes). The ALTER runs on its own
+  connection with a lock timeout; if another connection holds a lock on the table it
+  gives up, logs why, changes nothing and retries on the next ensure. Queries that group
+  or compare these columns are now case-sensitive.
+
 ### Changed: an entity table from an older release is upgraded in place
 
 - **The entity writers add a missing `confidence` column.** `EntityStorageAdapter` and

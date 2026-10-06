@@ -27,6 +27,7 @@ from iris_vector_rag.integrations.ivg import (
     pre_4_layout_tables,
 )
 from iris_vector_rag.storage.catalog import IRISCatalogReader
+from iris_vector_rag.storage.collation import EXACT_CASE_COLUMNS, ensure_exact_collation
 from iris_vector_rag.storage.table_shape import (
     CANONICAL_CHUNK_SHAPE,
     CANONICAL_DOCUMENT_SHAPE,
@@ -1705,7 +1706,7 @@ class SchemaManager:
                     CREATE TABLE {table_name} (
                         entity_id VARCHAR(255) PRIMARY KEY,
                         entity_name VARCHAR(1000) NOT NULL,
-                        entity_type VARCHAR(255) NOT NULL,
+                        entity_type VARCHAR(255) COLLATE EXACT NOT NULL,
                         source_doc_id VARCHAR(255) NOT NULL,
                         description VARCHAR(4000) NULL,
                         confidence DOUBLE DEFAULT 1.0,
@@ -1782,7 +1783,7 @@ class SchemaManager:
                         relationship_id VARCHAR(255) PRIMARY KEY,
                         source_entity_id VARCHAR(255) NOT NULL,
                         target_entity_id VARCHAR(255) NOT NULL,
-                        relationship_type VARCHAR(255) NOT NULL,
+                        relationship_type VARCHAR(255) COLLATE EXACT NOT NULL,
                         metadata VARCHAR(4000) NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (source_entity_id) REFERENCES {self._qn("Entities")}(entity_id) ON DELETE CASCADE,
@@ -2407,6 +2408,15 @@ class SchemaManager:
                     except Exception as exc:
                         logger.warning(f"Failed to ensure Entities columns: {exc}")
 
+                if table_name in EXACT_CASE_COLUMNS:
+                    # A table from an earlier release has the case-folding default.
+                    ensure_exact_collation(
+                        self.connection_manager,
+                        self.schema_prefix,
+                        table_name,
+                        raise_on_failure=False,
+                    )
+
                 logger.debug(
                     f"Table {self._qn(table_name)} exists - caching validation result"
                 )
@@ -2471,7 +2481,7 @@ class SchemaManager:
             CREATE TABLE {self._qn("Entities")} (
                 entity_id VARCHAR(255) NOT NULL,
                 entity_name VARCHAR(500) NOT NULL,
-                entity_type VARCHAR(100),
+                entity_type VARCHAR(100) COLLATE EXACT,
                 description VARCHAR(2000),
                 confidence DOUBLE DEFAULT 1.0,
                 source_doc_id VARCHAR(255),
@@ -2504,7 +2514,7 @@ class SchemaManager:
                 relationship_id VARCHAR(255) NOT NULL,
                 source_entity_id VARCHAR(255) NOT NULL,
                 target_entity_id VARCHAR(255) NOT NULL,
-                relationship_type VARCHAR(255),
+                relationship_type VARCHAR(255) COLLATE EXACT,
                 weight DOUBLE DEFAULT 1.0,
                 confidence DOUBLE DEFAULT 1.0,
                 source_document VARCHAR(255),

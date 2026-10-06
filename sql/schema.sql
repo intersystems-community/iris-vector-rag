@@ -23,7 +23,7 @@ GO
 CREATE TABLE IF NOT EXISTS RAG.Entities (
     entity_id    VARCHAR(64)               NOT NULL,
     entity_name  VARCHAR(500),
-    entity_type  VARCHAR(100),
+    entity_type  VARCHAR(100) COLLATE EXACT,
     source_doc_id VARCHAR(64),
     PRIMARY KEY (entity_id)
 )
