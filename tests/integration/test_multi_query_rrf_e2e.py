@@ -5,6 +5,7 @@ End-to-end tests for the multi-query retrieval with RRF fusion pipeline.
 """
 
 import pytest
+
 from iris_vector_rag import create_pipeline
 from iris_vector_rag.core.models import Document
 
@@ -271,14 +272,8 @@ class TestMultiQueryRRFE2E:
             for i, doc in enumerate(result["retrieved_documents"][:5], 1):
                 assert doc.metadata["rrf_rank"] == i
 
-    @pytest.mark.skip(reason="LLM tests require OPENAI_API_KEY and cost money")
     def test_llm_query_expansion(self):
         """Test LLM-based query expansion (requires OPENAI_API_KEY)."""
-        import os
-
-        if not os.getenv("OPENAI_API_KEY"):
-            pytest.skip("OPENAI_API_KEY not set")
-
         pipeline = create_pipeline(
             "multi_query_rrf",
             validate_requirements=False,
