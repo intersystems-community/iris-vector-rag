@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
 DEFAULT_IMAGE = "intersystemsdc/iris-community:2026.1"
+LOCK_TIMEOUT_SECONDS = 30
 RESET_HINT = "Recover a wedged project container with: make iris-reset"
 
 
@@ -145,8 +146,15 @@ def connect(
     connector: Callable[[IrisTarget], Any] = _dbapi_connect,
     attempts: int = 6,
     delay: float = 5.0,
+    lock_timeout: int = LOCK_TIMEOUT_SECONDS,
 ) -> Any:
-    """A live connection, after a warm-up query. Retries a server that is still coming up."""
+    """A live connection, after a warm-up query. Retries a server that is still coming up.
+
+    The connection also gets `SET OPTION LOCK_TIMEOUT=<lock_timeout>`: a statement that
+    waits on a lock fails with SQLCODE -110 after that long. Without it the wait is
+    whatever the server is configured for, and a statement stuck in a driver call cannot
+    be broken by pytest-timeout's signal method, so one leaked lock would hang the suite.
+    """
     last: Optional[BaseException] = None
     for attempt in range(attempts):
         if attempt:
@@ -157,6 +165,7 @@ def connect(
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
             cursor.fetchone()
+            cursor.execute(f"SET OPTION LOCK_TIMEOUT={int(lock_timeout)}")
             cursor.close()
             return conn
         except Exception as exc:  # noqa: BLE001 - reported below with the target

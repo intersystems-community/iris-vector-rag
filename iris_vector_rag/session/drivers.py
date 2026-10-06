@@ -62,6 +62,29 @@ class Driver(Protocol):
         """Is this failure the expired-default-password state?"""
 
 
+def lock_timeout_statement() -> Optional[str]:
+    """`SET OPTION LOCK_TIMEOUT=n` when IRIS_LOCK_TIMEOUT asks for it, else None.
+
+    Off by default: the server's own lock wait applies. A deployment (or a test session)
+    that would rather see a lock wait fail quickly than wait sets the variable.
+    """
+    raw = os.environ.get("IRIS_LOCK_TIMEOUT", "").strip()
+    if not raw.isdigit() or int(raw) < 1:
+        return None
+    return f"SET OPTION LOCK_TIMEOUT={int(raw)}"
+
+
+def _apply_lock_timeout(connection: Any) -> None:
+    statement = lock_timeout_statement()
+    if statement is None:
+        return
+    cursor = connection.cursor()
+    try:
+        cursor.execute(statement)
+    finally:
+        cursor.close()
+
+
 def _import_iris() -> Any:
     try:
         import iris
@@ -262,8 +285,10 @@ class NetworkDriver:
             )
         if "error" in outcome:
             raise wrap_connect_failure(identity, outcome["error"])
+        connection = outcome["connection"]
+        _apply_lock_timeout(connection)
         logger.info("connected to IRIS at %s", identity.label)
-        return outcome["connection"]
+        return connection
 
     def ping(self, connection: Any) -> bool:
         return _ping(connection)

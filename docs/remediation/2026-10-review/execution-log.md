@@ -1118,3 +1118,59 @@ entry: feature, question, choice, why.
   `entity_extraction.batch_processing`), `antipatterns-baseline.txt` (the loop
   moved to `_extract_batch_impl`), `ci_known_failures.txt` (11 ids removed),
   `tests/unit/test_entity_services_fix.py` (two tests patch the backoff sleep).
+
+## fix-lock-leak
+
+Branch `remediation/fix-lock-leak` from `remediation/integrated`. Task: the
+combined session (`tests/integration tests/e2e tests/test_*.py`,
+`--timeout-method=signal`) hung on test 135,
+`test_exact_collation_iris.py::TestLegacyTable::test_a_blocked_alter_gives_up_and_a_retry_repairs`.
+
+**Reproduction: not achieved.** On fresh ephemeral containers the first 135
+collected ids ran without a hang (three runs), and the full combined command ran
+to the end twice (once with `--timeout-method=thread --timeout=120`, once with
+the exact `signal`/240 command): 12.5 and 13 minutes, no hang. Facts measured on
+the ephemeral container:
+
+- The server's default SQL lock wait is 10 s: a blocked `INSERT`, `LOCK TABLE`
+  and `ALTER TABLE` each fail with SQLCODE -110 after 10.0 s. A plain lock
+  therefore cannot hold a statement for 8 minutes; the observed hang is not an
+  ordinary lock wait.
+- A session peaks at 3 live dbapi connections (weakref count after every test,
+  135 ids); no connection accumulation. Community Edition refuses the 9th
+  connection in 2 s with "Unable to allocate a license" (an error, not a hang).
+- `iris.dbapi.connect(timeout=n)` is a connection timeout only; it does not
+  interrupt a running statement (a 30 s lock wait ran 30 s with `timeout=5`).
+- `autocommit` is True on a new dbapi connection, so nothing in the library
+  leaves a transaction open unless it turns autocommit off. The one place that
+  does is ColBERT ingest (`_transactional`); it commits per document, but an
+  escaping `BaseException` restored autocommit with uncommitted rows. Hardened
+  (rollback first).
+- Other pytest sessions ran at the same time on this machine, with their own
+  ephemeral containers. A hung session against the shared dev container is
+  consistent with a wedged server process (see the ivg 4.1.1 callin note), which
+  no lock timeout can break.
+
+**Decisions.**
+
+- `tests.support.iris_environment.connect` sets `SET OPTION LOCK_TIMEOUT=30`
+  (parameter `lock_timeout`) on every test connection. Proven to fire: a live
+  test holds a table lock on one connection and asks for it on another with
+  `lock_timeout=2`; the server returns -110 after about 2 s. Note the server
+  default is already 10 s, so 30 s is a pin, not a shortening; it removes the
+  dependence on how the server is configured.
+- The session fixture exports `IRIS_LOCK_TIMEOUT=30`; `NetworkDriver.connect`
+  applies it (opt-in, unset = unchanged) so the library's own connections in
+  tests are bounded too.
+- `pyproject.toml`: `faulthandler_timeout = 300`, so a future hang dumps every
+  thread.
+- No test was weakened or skipped.
+
+**Result after the change** (ephemeral container, exact combined command,
+`--timeout=240 --timeout-method=signal`): no hang; 20 failed, 779 passed, 30
+skipped, 5 xfailed, 1 xpassed, 10 errors in 21 min. The failures are the files
+that already failed before the change: entity-extraction batch/logging/service
+tests (another agent's area), `test_sdk_canonical_vector_type.py` (3),
+`test_iris_connection_integration.py` (1), `test_dual_level_retrieval_e2e.py`
+(10 errors). `tests/unit`: 1572 passed, 5 skipped. Contract suite as release.yml
+runs it: 758 passed, 28 skipped, 56 deselected.

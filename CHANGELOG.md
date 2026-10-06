@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added: `IRIS_LOCK_TIMEOUT` bounds lock waits on network connections
+
+When `IRIS_LOCK_TIMEOUT=<seconds>` is set, every network connection the session opens
+runs `SET OPTION LOCK_TIMEOUT=<seconds>`, so a statement that waits on another
+connection's lock fails with SQLCODE -110 after that long. Unset, nothing changes.
+ColBERT ingest now rolls back before it restores autocommit when a failure that is
+not an `Exception` (an interrupt, a timeout) escapes it.
+
 ### Changed: entity and relationship types keep their case (existing tables are altered)
 
 - **`entity_type` and `relationship_type` are `COLLATE EXACT`.** IRIS gives a string

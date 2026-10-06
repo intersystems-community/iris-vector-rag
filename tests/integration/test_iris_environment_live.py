@@ -48,3 +48,34 @@ def test_an_ephemeral_container_starts_and_answers():
 def test_resolve_pinned_matches_the_environment_this_run_uses():
     pinned = resolve_pinned(os.environ, declared=declared_container(REPO))
     assert (pinned is None) == (not os.environ.get("IRIS_CONTAINER_NAME"))
+
+
+def test_a_test_connection_gives_up_on_a_lock_instead_of_hanging(iris_target):
+    """`connect(lock_timeout=n)` makes a blocked statement fail with SQLCODE -110 after n s.
+
+    The holder locks a table; the second connection asks for the same lock. Without
+    the option this is the shape of a hang; with it the server returns the error.
+    """
+    import time
+
+    import pytest
+
+    holder = connect(iris_target)
+    waiter = connect(iris_target, lock_timeout=2)
+    try:
+        holder.cursor().execute("DROP TABLE IF EXISTS LOCKPROOF.T")
+        holder.cursor().execute("CREATE TABLE LOCKPROOF.T (id INT PRIMARY KEY)")
+        holder.cursor().execute("LOCK TABLE LOCKPROOF.T IN EXCLUSIVE MODE")
+        started = time.time()
+        with pytest.raises(Exception, match="-110"):
+            waiter.cursor().execute("LOCK TABLE LOCKPROOF.T IN EXCLUSIVE MODE")
+        assert 1 <= time.time() - started < 8
+    finally:
+        holder.rollback()
+        holder.cursor().execute("DROP TABLE IF EXISTS LOCKPROOF.T")
+        holder.close()
+        waiter.close()
+
+
+def test_the_session_exports_a_lock_timeout_to_the_code_under_test(iris_target):
+    assert os.environ.get("IRIS_LOCK_TIMEOUT") == "30"
