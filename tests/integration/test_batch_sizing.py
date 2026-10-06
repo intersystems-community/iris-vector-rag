@@ -9,10 +9,10 @@ import pytest
 
 from iris_vector_rag.common.batch_utils import BatchQueue
 from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
-from iris_vector_rag.services.entity_extraction import EntityExtractionService
 from iris_vector_rag.utils.token_counter import estimate_tokens
+
+from .batch_support import real_service
 
 
 @pytest.mark.integration
@@ -22,14 +22,8 @@ class TestBatchSizing:
 
     @pytest.fixture
     def service(self):
-        """Initialize EntityExtractionService."""
-        config_manager = ConfigurationManager()
-        connection_manager = ConnectionManager(config_manager)
-        return EntityExtractionService(
-            config_manager,
-            connection_manager,
-            llm_func=lambda prompt: '[{"text": "Test", "type": "PERSON"}]',
-        )
+        """EntityExtractionService over the real LLM."""
+        return real_service()
 
     def test_as4_variable_document_sizes_dynamic_batching(self, service):
         """
@@ -164,7 +158,7 @@ class TestBatchSizing:
         test_cases = [
             ("Short text.", 3),
             ("This is a medium length sentence with multiple words.", 10),
-            ("A very long document. " * 100, 400),  # ~400 tokens
+            ("A very long document. " * 100, 500),  # 5 tokens per repeat
         ]
 
         for text, expected_approx in test_cases:
@@ -181,7 +175,7 @@ class TestBatchSizing:
         # Create documents
         docs = [
             Document(id=f"doc{i}", page_content="Test document content. " * 50)
-            for i in range(10)
+            for i in range(4)
         ]
 
         # Process with custom token budget
@@ -194,13 +188,11 @@ class TestBatchSizing:
         ), "All documents must be processed"
 
     def test_token_budget_from_config(self):
-        """Validate token budget can be configured in memory_config.yaml."""
+        """Validate token budget can be configured in the entity_extraction config."""
         config_manager = ConfigurationManager()
 
         # Load batch processing config
-        batch_config = config_manager.get_config(
-            "rag_memory_config.knowledge_extraction.entity_extraction.batch_processing"
-        )
+        batch_config = config_manager.get_nested("entity_extraction.batch_processing")
 
         assert batch_config is not None, "Batch processing config must exist"
         assert "token_budget" in batch_config, "Config must have token_budget"

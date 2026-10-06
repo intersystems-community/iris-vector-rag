@@ -10,10 +10,9 @@ from unittest.mock import patch
 
 import pytest
 
-from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
-from iris_vector_rag.services.entity_extraction import EntityExtractionService
+
+from .batch_support import real_service
 
 
 @pytest.mark.integration
@@ -23,14 +22,8 @@ class TestBatchRetryLogic:
 
     @pytest.fixture
     def service(self):
-        """Initialize EntityExtractionService."""
-        config_manager = ConfigurationManager()
-        connection_manager = ConnectionManager(config_manager)
-        return EntityExtractionService(
-            config_manager,
-            connection_manager,
-            llm_func=lambda prompt: '[{"text": "Test", "type": "PERSON"}]',
-        )
+        """EntityExtractionService over the real LLM; the fault is injected per test."""
+        return real_service()
 
     @pytest.fixture
     def test_documents(self):
@@ -124,10 +117,19 @@ class TestBatchRetryLogic:
                     error_message="",
                 )
 
-        with patch.object(
+        # Nine failing batches each back off 2s+4s+8s: record the delays, don't wait
+        with patch(
+            "iris_vector_rag.common.batch_utils.time.sleep"
+        ) as sleep, patch.object(
             service, "_extract_batch_impl", side_effect=mock_extract_always_fail_batch
         ):
-            service.extract_batch(test_documents)
+            result = service.extract_batch(test_documents)
+            delays = [c.args[0] for c in sleep.call_args_list]
+
+            # Every failing batch backs off 2s, 4s, 8s before it is split
+            assert delays and delays == [2.0, 4.0, 8.0] * (len(delays) // 3)
+            assert result.success_status, "Split batches must recover every document"
+            assert set(result.per_document_entities) == {d.id for d in test_documents}
 
             # Validate batch was split after 3 failed attempts
             assert (
@@ -225,17 +227,16 @@ class TestBatchRetryLogic:
 
     def test_no_retry_on_immediate_success(self, service, test_documents):
         """Validate no retries when batch succeeds immediately."""
-        result = service.extract_batch(test_documents)
+        result = service.extract_batch(test_documents[:3])
 
-        # Should succeed without retries (assuming LLM is working)
         assert result.success_status, "Batch should succeed"
-        # Retry count should be 0 for immediate success
-        # (This may fail until implementation is complete)
+        assert result.retry_count == 0, "An immediate success has no retries"
+        assert result.failed == []
 
     def test_retry_count_tracked_in_metrics(self, service, test_documents):
         """Validate retry attempts are tracked in processing metrics (FR-007)."""
         # Process batch (may have retries depending on LLM stability)
-        service.extract_batch(test_documents)
+        service.extract_batch(test_documents[:3])
 
         # Get metrics
         metrics = service.get_batch_metrics()

@@ -234,6 +234,13 @@ Feature `entity-services-fix` of the 2026-10 review (CR-06, CR-10, CR-11, CR-13,
   storage failures; the documents themselves are stored) and raises
   `EntityExtractionError` if every document failed. `documents_failed` still counts
   documents that failed to load.
+- **Batch extraction is concurrent, retries, records metrics and asks for JSON.** Up to
+  `batch_processing.max_workers` (8) documents of a batch are extracted at once; 1 is sequential. `extract_batch` retries a
+  batch in which every document failed (2s, 4s, 8s; `batch_processing.retry_delays`), splits it
+  and retries the halves, updates `get_batch_metrics()`, and the service logs its `llm`
+  configuration at startup (or warns that none is set). The extraction prompt now asks the LLM
+  for a JSON array of the configured entity types; it used to leave the format out, so a chat
+  model's prose parsed as one entity.
 - **No swallowed errors in extraction.** `_call_llm` raises when no `llm_func` is set or
   the LLM raises; `_parse_llm_response` raises on a reply it cannot parse instead of
   returning `[]`. `confidence_threshold` (default 0.3 for the service), a configured
