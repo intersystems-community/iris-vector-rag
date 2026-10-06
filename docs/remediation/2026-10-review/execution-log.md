@@ -1174,3 +1174,45 @@ tests (another agent's area), `test_sdk_canonical_vector_type.py` (3),
 `test_iris_connection_integration.py` (1), `test_dual_level_retrieval_e2e.py`
 (10 errors). `tests/unit`: 1572 passed, 5 skipped. Contract suite as release.yml
 runs it: 758 passed, 28 skipped, 56 deselected.
+
+## fix-dual-sdk
+
+Branch `remediation/fix-dual-sdk` from `remediation/integrated`. All three files
+failed because of the test, not production code; each passed alone before and
+after only in the sense noted below.
+
+- `test_dual_level_retrieval_e2e.py` (10 errors): the module connected with a
+  hardcoded `iris.connect("localhost", 51972, ...)` (the dev container's port)
+  while `RelationEmbeddingStore` used the session's IRIS, and it swallowed every
+  seed-insert error. The session's `e2e_reset_namespace` had dropped the RAG
+  tables, so the store's `ALTER TABLE RAG.EntityRelationships` found no table.
+  Now the module connects to `iris_target`, creates `SourceDocuments`,
+  `Entities` and `EntityRelationships` through `SchemaManager`, and only a
+  duplicate-row error is tolerated when seeding. No assertion changed.
+- `test_sdk_canonical_vector_type.py` (3): it ran ObjectScript in the dev
+  container named in CLAUDE.md and expected the `RAG.SDK` classes to be there.
+  It now starts a module-private ephemeral container and compiles the SDK
+  classes into it with the contract test's `_load`, like
+  `test_objectscript_sdk_fix.py`; connections go to that container. The dev
+  container is no longer touched.
+- `test_iris_connection_integration.py::test_auto_port_detection` (1): 083
+  removed Docker scanning; with `IRIS_PORT` unset the port is the pinned
+  container's published port, else 1972. The test deleted `IRIS_PORT` and
+  expected a scan. It now pins the session container by `IRIS_CONTAINER_NAME`,
+  asserts the port is resolved from the container (source `container`, equal to
+  the target's port) and that the connection works. Removed from
+  `ci_known_failures.txt`.
+
+- Follow-up (real services): the dual-level `e2e_engine` fixture's `MagicMock`
+  vector store is replaced by the real `IRISVectorStore` over the session's IRIS,
+  seeded through `add_documents` (one document per seeded relationship, real
+  embeddings) and cleaned up after. A new test runs the same three labelled
+  queries through real vector retrieval: recall 3/3 (global recall 3/3, asserted
+  at 1.0 as before). No assertion weakened.
+- Sweep of `tests/e2e` and `tests/integration` (excluding `test_mcp_*`) for
+  stand-ins left for their owners: `integration/conftest.py` (mock LLM,
+  mock embeddings, mock config), `test_entity_services_fix_iris.py:231`
+  (`vector_store = Mock()`), `test_entity_extraction_logging.py`,
+  `test_batch_retry_logic.py:121`, `test_graphrag_realistic.py:54`
+  (`Mock(spec=ConnectionManager)`), `test_hybrid_rrf_modes.py`
+  (`TextSearchEngine` patched).

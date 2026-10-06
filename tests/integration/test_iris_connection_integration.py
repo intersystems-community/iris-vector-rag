@@ -210,39 +210,46 @@ class TestIRISConnectionIntegration:
 
         print("✅ Successfully executed 5 queries on same connection")
 
-    def test_auto_port_detection(self):
+    def test_auto_port_detection(self, iris_target, monkeypatch):
         """
-        Additional integration test: Verify auto-port detection works.
+        Additional integration test: Verify the port is found without IRIS_PORT.
+
+        Since 083 nothing scans Docker for a running IRIS: with no IRIS_PORT the
+        port comes from the one container named by IRIS_CONTAINER_NAME (its
+        published 1972/tcp), and without a pin it is the default 1972. This pins
+        the test's own IRIS by name and checks the port is resolved from it.
 
         Validates:
-        - Port auto-detection finds running IRIS
-        - Connection succeeds without explicit port
+        - The port is resolved from the pinned container, not from IRIS_PORT
+        - Connection succeeds without an explicit port
         - Detected port is valid (1-65535)
         """
-        # Clear IRIS_PORT environment variable if set
-        original_port = os.environ.get("IRIS_PORT")
-        if original_port:
-            del os.environ["IRIS_PORT"]
+        from iris_vector_rag.config.connection_settings import (
+            SOURCE_CONTAINER,
+            resolve_connection_settings,
+        )
 
-        try:
-            # Connection should succeed via auto-detection
-            conn = get_iris_connection()
+        monkeypatch.delenv("IRIS_PORT", raising=False)
+        monkeypatch.setenv("IRIS_CONTAINER_NAME", iris_target.container)
 
-            # Verify connection works
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            row = cursor.fetchone()
-            value = row[0] if row is not None else None
-            cursor.close()
+        settings = resolve_connection_settings()
+        assert settings.sources["port"] == SOURCE_CONTAINER
+        assert settings.port == iris_target.port
+        assert 1 <= settings.port <= 65535
 
-            assert row is not None
-            assert value == 1
-            print("✅ Auto-port detection successful")
+        # Connection should succeed via the pinned container's port
+        conn = get_iris_connection()
 
-        finally:
-            # Restore original environment
-            if original_port:
-                os.environ["IRIS_PORT"] = original_port
+        # Verify connection works
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        row = cursor.fetchone()
+        value = row[0] if row is not None else None
+        cursor.close()
+
+        assert row is not None
+        assert value == 1
+        print("✅ Port resolved from the pinned container")
 
 
 @pytest.mark.skipif(

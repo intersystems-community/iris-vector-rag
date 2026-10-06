@@ -42,15 +42,15 @@ _RELS = [
 
 
 @pytest.fixture(scope="module")
-def e2e_conn():
-    try:
-        import iris
+def e2e_conn(iris_target):
+    """A connection to the IRIS the session runs against (never a fixed port)."""
+    from tests.support.iris_environment import connect
 
-        conn = iris.connect("localhost", 51972, "USER", "_SYSTEM", "SYS")
+    conn = connect(iris_target)
+    try:
         yield conn
+    finally:
         conn.close()
-    except Exception as exc:
-        pytest.skip(f"IRIS unavailable for e2e tests: {exc}")
 
 
 @pytest.fixture(scope="module")
@@ -61,37 +61,50 @@ def e2e_managers(e2e_conn):
     return ConnectionManager(), ConfigurationManager()
 
 
+def _insert_once(conn, sql, params):
+    """Insert a seed row; a row that is already there is fine, any other error is not."""
+    cur = conn.cursor()
+    try:
+        cur.execute(sql, params)
+        conn.commit()
+    except Exception as exc:
+        conn.rollback()
+        if "unique" not in str(exc).lower() and "duplicate" not in str(exc).lower():
+            raise
+    finally:
+        cur.close()
+
+
 @pytest.fixture(scope="module", autouse=True)
 def kg_with_embeddings(e2e_conn, e2e_managers):
     """Seed entities + relationships + relation embeddings; teardown after module."""
+    from iris_vector_rag.storage.schema_manager import SchemaManager
+
     conn_mgr, cfg_mgr = e2e_managers
     conn = e2e_conn
-    cur = conn.cursor()
 
-    # Insert entities (ignore duplicate)
+    # Earlier tests in the session reset the RAG schema, so this module makes the
+    # tables it seeds instead of assuming an earlier test left them.
+    schema = SchemaManager(conn_mgr, cfg_mgr)
+    for table in ("SourceDocuments", "Entities", "EntityRelationships"):
+        assert schema.ensure_table_schema(table), f"could not create RAG.{table}"
+
     for eid, name, etype in _ENTITIES:
-        try:
-            cur.execute(
-                "INSERT INTO RAG.Entities (entity_id, entity_name, entity_type, source_doc_id) "
-                "VALUES (?, ?, ?, 'e2e_synthetic')",
-                [eid, name, etype],
-            )
-            conn.commit()
-        except Exception:
-            conn.rollback()
+        _insert_once(
+            conn,
+            "INSERT INTO RAG.Entities (entity_id, entity_name, entity_type, source_doc_id) "
+            "VALUES (?, ?, ?, 'e2e_synthetic')",
+            [eid, name, etype],
+        )
 
-    # Insert relationships (ignore duplicate)
     for rid, src, tgt, rtype, _ in _RELS:
-        try:
-            cur.execute(
-                "INSERT INTO RAG.EntityRelationships "
-                "(relationship_id, source_entity_id, target_entity_id, relationship_type) "
-                "VALUES (?, ?, ?, ?)",
-                [rid, src, tgt, rtype],
-            )
-            conn.commit()
-        except Exception:
-            conn.rollback()
+        _insert_once(
+            conn,
+            "INSERT INTO RAG.EntityRelationships "
+            "(relationship_id, source_entity_id, target_entity_id, relationship_type) "
+            "VALUES (?, ?, ?, ?)",
+            [rid, src, tgt, rtype],
+        )
 
     # Ensure schema and embed relationships
     from iris_vector_rag.storage.relation_embedding_store import RelationEmbeddingStore
@@ -123,26 +136,57 @@ def kg_with_embeddings(e2e_conn, e2e_managers):
         except Exception:
             conn.rollback()
     cur2.close()
-    cur.close()
+
+
+_DOCS = [
+    ("doc_e2e_1", "rel_e2e_1"),
+    ("doc_e2e_2", "rel_e2e_2"),
+    ("doc_e2e_3", "rel_e2e_3"),
+]
 
 
 @pytest.fixture(scope="module")
-def e2e_engine(e2e_managers, kg_with_embeddings):
-    from unittest.mock import MagicMock
+def e2e_vector_store(e2e_managers, kg_with_embeddings):
+    """The real IRISVectorStore over the session's IRIS, seeded through add_documents.
 
+    One document per seeded relationship, worded as the relationship's description, so
+    vector retrieval over documents and global retrieval over relation embeddings are
+    asked the same question of the same facts. Embedded by the real embedding path.
+    """
+    from iris_vector_rag.core.models import Document
+    from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
+
+    conn_mgr, cfg_mgr = e2e_managers
+    store = IRISVectorStore(conn_mgr, cfg_mgr)
+    descriptions = {rid: desc for rid, _, _, _, desc in _RELS}
+    ids = [doc_id for doc_id, _ in _DOCS]
+    store.delete_documents(ids)
+    store.add_documents(
+        [
+            Document(
+                id=doc_id,
+                page_content=descriptions[rid],
+                metadata={"source": "e2e_dual_level", "relationship_id": rid},
+            )
+            for doc_id, rid in _DOCS
+        ]
+    )
+    yield store
+    store.delete_documents(ids)
+
+
+@pytest.fixture(scope="module")
+def e2e_engine(e2e_managers, e2e_vector_store):
     from iris_vector_rag.retrieval.engine import RetrievalEngine
 
     conn_mgr, cfg_mgr = e2e_managers
-    mock_vs = MagicMock()
-    mock_vs.search_by_text.return_value = []
-
     engine = RetrievalEngine(
-        vector_store=mock_vs,
+        vector_store=e2e_vector_store,
         connection=None,
         config_manager=cfg_mgr,
     )
     engine._conn_mgr = conn_mgr
-    # Use pre-supplied keywords to avoid needing a real LLM
+    # Keywords are supplied in the QueryOptions, so no LLM call is needed to extract them
     return engine
 
 
@@ -309,7 +353,8 @@ class TestRecallBenchmark:
     Uses the seeded KG fixture (3 relationships). Each labeled query is a
     thematic phrase whose meaning matches one of the seeded relationship
     descriptions. Global mode must surface the expected relationship ID.
-    Vector store is mocked (returns nothing), so global must be the source.
+    The vector store is the real IRISVectorStore holding one document per
+    relationship, so the same queries also run through real vector retrieval.
     """
 
     # (query, expected_relationship_id, high_level_keywords)
@@ -359,3 +404,17 @@ class TestRecallBenchmark:
             f"SC-001 failed: global recall {recall:.2f} ({hits}/{n} queries). "
             f"Expected all seeded relationships to be retrievable by thematic query."
         )
+
+    def test_vector_retrieval_finds_the_same_facts(self, e2e_engine):
+        """The real vector leg over the seeded documents, for comparison with global."""
+        from iris_vector_rag.core.query_options import QueryOptions
+
+        hits = 0
+        for query, expected_id, _ in self.LABELED_QUERIES:
+            opts = QueryOptions(query=query, retrieval="vector", top_k=3)
+            docs = e2e_engine.retrieve(opts)
+            related = {d.metadata.get("relationship_id") for d in docs}
+            if expected_id in related:
+                hits += 1
+        print(f"vector recall {hits}/{len(self.LABELED_QUERIES)}")
+        assert hits >= 1, "real vector retrieval found none of the seeded documents"

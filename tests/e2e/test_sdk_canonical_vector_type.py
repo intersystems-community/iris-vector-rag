@@ -13,8 +13,10 @@ The declaration is read out of the class dictionary rather than `INFORMATION_SCH
 reports every VECTOR column as varchar (a driver limitation, per CLAUDE.md).
 
 Everything runs in a scratch schema of this feature's own, so no test here can reach
-`RAG.SourceDocuments`. ObjectScript is called in `iris-vector-rag-iris` -- the only
-container this project uses -- because a `.cls` runs on the server, not on disk.
+`RAG.SourceDocuments`. ObjectScript is called in a throwaway container of this module's
+own, into which the SDK classes are compiled (as tests/contract/test_objectscript_sdk_fix.py
+does): a `.cls` runs on the server, not on disk, and the session's IRIS does not have the
+SDK classes, nor should it be made to.
 """
 
 from __future__ import annotations
@@ -26,8 +28,9 @@ from pathlib import Path
 
 import pytest
 
-from iris_vector_rag.common.iris_connection import get_iris_connection
 from iris_vector_rag.storage.table_shape import CANONICAL_VECTOR_TYPE
+from tests.contract.test_objectscript_sdk_fix import Server, _load
+from tests.support.iris_environment import connect, start_ephemeral
 
 pytestmark = [
     pytest.mark.e2e,
@@ -50,12 +53,30 @@ SCRATCH_TABLES = (
 )
 
 
+# The module's private container, set by the `_sdk_container` fixture.
+_PRIVATE: dict = {}
+
+
 def _container_name() -> str:
-    """The container CLAUDE.md declares for this project, and no other."""
-    for line in (REPO_ROOT / "CLAUDE.md").read_text().splitlines():
-        if line.startswith("IRIS_CONTAINER:"):
-            return line.split(":", 1)[1].strip()
-    raise AssertionError("CLAUDE.md declares no IRIS_CONTAINER line")
+    """The throwaway container this module compiled the SDK classes into."""
+    return _PRIVATE["target"].container
+
+
+def _connect():
+    """A DBAPI connection to the private container; the caller closes it."""
+    return connect(_PRIVATE["target"])
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _sdk_container():
+    container, target = start_ephemeral()
+    _PRIVATE["target"] = target
+    try:
+        _load(Server(target.container))
+        yield
+    finally:
+        _PRIVATE.clear()
+        container.stop()
 
 
 def _session(script: str) -> str:
@@ -137,21 +158,20 @@ def _drop_scratch_tables(connection) -> None:
 @pytest.fixture
 def scratch_schema():
     """A schema of this feature's own, empty before the test and gone after it."""
-    connection = get_iris_connection()
-    _drop_scratch_tables(connection)
+    connection = _connect()
     try:
-        yield SCRATCH_SCHEMA
-    finally:
         _drop_scratch_tables(connection)
-        # Do not close: get_iris_connection hands out a cached connection the rest of the
-        # session reuses.
+        yield SCRATCH_SCHEMA
+        _drop_scratch_tables(connection)
+    finally:
+        connection.close()
 
 
 def _search_score(
     table: str, doc_id: str, element_type: str, vector: str, dim: int
 ) -> float:
     """The cosine of a stored row against the vector that was stored in it."""
-    connection = get_iris_connection()
+    connection = _connect()
     cursor = connection.cursor()
     try:
         cursor.execute(
@@ -164,6 +184,7 @@ def _search_score(
         return float(row[0])
     finally:
         cursor.close()
+        connection.close()
 
 
 def test_initialize_declares_the_canonical_element_type(scratch_schema):
@@ -188,7 +209,7 @@ def test_initialize_declares_the_canonical_element_type(scratch_schema):
     # against the column the SDK just created. A cross-element-type comparison comes back
     # as SQLCODE -259, and nothing here retries with a second type.
     vector = _vector_text(1, DIM)
-    connection = get_iris_connection()
+    connection = _connect()
     cursor = connection.cursor()
     try:
         cursor.execute(
@@ -200,6 +221,7 @@ def test_initialize_declares_the_canonical_element_type(scratch_schema):
         connection.commit()
     finally:
         cursor.close()
+        connection.close()
 
     score = _search_score(
         f"{scratch_schema}.SourceDocuments",
@@ -213,7 +235,7 @@ def test_initialize_declares_the_canonical_element_type(scratch_schema):
 
 def test_add_document_writes_the_type_a_legacy_double_column_has(scratch_schema):
     """FR-003, FR-004: a table created before the canonical type is still writable."""
-    connection = get_iris_connection()
+    connection = _connect()
     cursor = connection.cursor()
     try:
         cursor.execute(
@@ -224,6 +246,7 @@ def test_add_document_writes_the_type_a_legacy_double_column_has(scratch_schema)
         connection.commit()
     finally:
         cursor.close()
+        connection.close()
     assert _declared_vector(LEGACY_TABLE, "embedding") == ("DOUBLE", SMALL_DIM)
 
     vector = _vector_text(2, SMALL_DIM)

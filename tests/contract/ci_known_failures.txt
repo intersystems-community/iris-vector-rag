@@ -50,7 +50,6 @@ tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegr
 # pipelines-fix leftovers (first honest integration run; the pipelines' response shape and retrieval against the real store)
 # entity-services-fix leftovers (batch extraction tests that need an LLM or the removed batch surface)
 # test-environment leftovers (DAT fixtures, the deleted devtools bridge, connection and cache tests)
-tests/integration/test_iris_connection_integration.py::TestIRISConnectionIntegration::test_auto_port_detection
 # mcp-stdio-server follow-up (order-dependent: the tests read tables an earlier test may have dropped, so the failing subset differs run to run)
 tests/integration/test_mcp_health_check.py::TestMCPHealthCheck::test_reports_a_measured_connection
 # pipelines-fix leftovers: the CRAG contract files release.yml used to --ignore. CRAG swallows retrieval and generation errors into an `error` field (dimension mismatch, missing config) and its query result lacks the documented structure.
