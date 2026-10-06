@@ -871,7 +871,8 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             return {"iris_vector_graph_enabled": False}
 
     def _extract_sources(self, documents: List[Document]) -> List[str]:
-        return super()._extract_sources(documents)
+        """Titles (ids when untitled), the same `sources` shape GraphRAG returns."""
+        return [doc.metadata.get("title", doc.id) for doc in documents]
 
     def benchmark_search_methods(
         self, query_text: str, iterations: int = 5

@@ -13,6 +13,7 @@ import pytest
 
 @pytest.mark.integration
 @pytest.mark.mcp
+@pytest.mark.usefixtures("medical_20_loaded")
 class TestMCPHybridGraphRAG:
     """Integration test for rag_graphrag tool with hybrid search."""
 
