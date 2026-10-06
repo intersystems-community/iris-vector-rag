@@ -3,6 +3,7 @@ import logging
 import time
 import uuid
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
@@ -123,7 +124,19 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         self.confidence_threshold = self.config.get("confidence_threshold", 0.3)
         # Only a configured `entity_types` filters what the LLM returns.
         self._filter_types = "entity_types" in self.config
+        self.max_workers = self._read_max_workers()
         self._log_llm_configuration()
+
+    def _read_max_workers(self) -> int:
+        """Documents of a batch extracted at once (`batch_processing.max_workers`, 8)."""
+        batch_config = self.config.get("batch_processing") or {}
+        workers = batch_config.get("max_workers", 8)
+        if isinstance(workers, bool) or not isinstance(workers, int) or workers < 1:
+            raise ValueError(
+                f"entity_extraction.batch_processing.max_workers must be an integer "
+                f">= 1 (1 is sequential), got {workers!r}"
+            )
+        return workers
 
     def _log_llm_configuration(self) -> None:
         """Say at startup which LLM the service is configured for.
@@ -259,18 +272,34 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         A document whose extraction raises goes in `failed` and the rest carry on. The
         attempt raises `EntityExtractionError` only if every document failed, which is
         what the retry wrapper in `extract_batch` treats as the batch failing.
+        Up to `max_workers` documents are extracted at once; the results keep the
+        order of `documents`.
         """
         start_time = time.time()
         per_document_entities: Dict[str, List[Entity]] = {}
         per_document_relationships: Dict[str, List[Relationship]] = {}
         failed: List[Dict[str, str]] = []
 
-        for document in documents:
+        def extract_one(document: Document):
             try:
-                entities = self.extract_entities(document)
+                return document, self.extract_entities(document), None
             except Exception as exc:
                 logger.error("Entity extraction failed for %s: %s", document.id, exc)
-                failed.append({"document_id": document.id, "reason": str(exc)})
+                return document, None, str(exc)
+
+        workers = min(self.max_workers, len(documents))
+        if workers == 1:
+            outcomes = [extract_one(d) for d in documents]
+        else:
+            # map() yields in the order of `documents`, whatever finishes first
+            with ThreadPoolExecutor(
+                max_workers=workers, thread_name_prefix="entity-extract"
+            ) as pool:
+                outcomes = list(pool.map(extract_one, documents))
+
+        for document, entities, reason in outcomes:
+            if reason is not None:
+                failed.append({"document_id": document.id, "reason": reason})
                 continue
             per_document_entities[document.id] = entities
             per_document_relationships[document.id] = []

@@ -176,6 +176,7 @@ entity_extraction:
   batch_processing:
     enabled: false # DISABLED: GPT-OSS doesn't support JSON mode
     token_budget: 8192 # Advisory: a batch over this many tokens is logged (FR-006)
+    max_workers: 8 # Documents of a batch sent to the LLM at once (1 = sequential)
     retry_delays: [2, 4, 8] # Seconds between retries of a failed batch (FR-005)
   storage:
     entities_table: "RAG.Entities" # Database table for entities

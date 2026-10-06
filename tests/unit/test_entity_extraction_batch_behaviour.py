@@ -192,3 +192,155 @@ def test_a_missing_llm_configuration_is_warned_about(caplog):
         EntityExtractionService(cfg)
 
     assert "No LLM configuration found" in caplog.text
+
+
+# --------------------------------------------------------------------- concurrency
+
+
+def _slow_llm(delay, fail_on=None, seen=None):
+    import threading
+    import time
+
+    lock = threading.Lock()
+    state = {"now": 0, "peak": 0}
+
+    def llm(prompt):
+        with lock:
+            state["now"] += 1
+            state["peak"] = max(state["peak"], state["now"])
+        try:
+            time.sleep(delay)
+            if fail_on and f"text of {fail_on}" in prompt:
+                raise TimeoutError("llm timed out")
+            doc = prompt.rsplit("text of ", 1)[1].split()[0]
+            return (
+                f'[{{"text": "entity of {doc}", "type": "PERSON", "confidence": 0.9}}]'
+            )
+        finally:
+            with lock:
+                state["now"] -= 1
+
+    llm.state = state
+    return llm
+
+
+def _timed(service, docs):
+    import time
+
+    start = time.time()
+    result = service.extract_batch(docs)
+    return result, time.time() - start
+
+
+def test_wall_clock_scales_with_max_workers():
+    docs = _docs(8)
+    sequential = EntityExtractionService(
+        _config(batch_processing={"max_workers": 1}), llm_func=_slow_llm(0.1)
+    )
+    concurrent = EntityExtractionService(
+        _config(batch_processing={"max_workers": 8}), llm_func=_slow_llm(0.1)
+    )
+
+    _, t_seq = _timed(sequential, docs)
+    result, t_con = _timed(concurrent, docs)
+
+    assert t_seq >= 0.8  # eight calls, one after another
+    assert t_con < t_seq / 3  # eight calls at once: about one call's time
+    assert result.success_status is True
+
+
+def test_concurrency_is_bounded_by_max_workers():
+    llm = _slow_llm(0.05)
+    service = EntityExtractionService(
+        _config(batch_processing={"max_workers": 3}), llm_func=llm
+    )
+
+    service.extract_batch(_docs(12))
+
+    assert llm.state["peak"] == 3
+
+
+def test_max_workers_defaults_to_8_and_1_is_sequential():
+    default = _slow_llm(0.02)
+    EntityExtractionService(_config(), llm_func=default).extract_batch(_docs(16))
+    assert default.state["peak"] == 8
+
+    one = _slow_llm(0.02)
+    EntityExtractionService(
+        _config(batch_processing={"max_workers": 1}), llm_func=one
+    ).extract_batch(_docs(4))
+    assert one.state["peak"] == 1
+
+
+def test_an_invalid_max_workers_is_an_error_not_a_silent_default():
+    with pytest.raises(ValueError, match="max_workers"):
+        EntityExtractionService(
+            _config(batch_processing={"max_workers": 0}), llm_func=lambda p: REPLY
+        )
+
+
+def test_results_keep_the_order_of_the_documents_under_concurrency():
+    import random
+
+    def llm(prompt):
+        import time
+
+        time.sleep(random.random() * 0.05)  # finish out of order
+        doc = prompt.rsplit("text of ", 1)[1].split()[0]
+        return f'[{{"text": "entity of {doc}", "type": "PERSON", "confidence": 0.9}}]'
+
+    service = EntityExtractionService(
+        _config(batch_processing={"max_workers": 8}), llm_func=llm
+    )
+    docs = _docs(20)
+
+    result = service.extract_batch(docs)
+
+    assert list(result.per_document_entities) == [d.id for d in docs]
+    for d in docs:
+        assert [e.text for e in result.per_document_entities[d.id]] == [
+            f"entity of {d.id}"
+        ]
+        assert result.per_document_entities[d.id][0].source_document_id == d.id
+
+
+def test_one_failing_document_under_concurrency(sleeps):
+    service = EntityExtractionService(
+        _config(batch_processing={"max_workers": 4}),
+        llm_func=_slow_llm(0.02, fail_on="d3"),
+    )
+    docs = _docs(8)
+
+    result = service.extract_batch(docs)
+
+    assert [f["document_id"] for f in result.failed] == ["d3"]
+    assert "timed out" in result.failed[0]["reason"]
+    assert list(result.per_document_entities) == [d.id for d in docs if d.id != "d3"]
+    assert result.success_status is False
+    # a partial failure is not retried: no backoff delay (the fake's own 0.02s sleeps
+    # go through the same patched sleep)
+    assert not [d for d in _delays(sleeps) if d >= 2.0]
+    metrics = service.get_batch_metrics()
+    assert metrics.total_batches_processed == 1
+    assert metrics.total_documents_processed == 8
+    assert metrics.failed_batches_count == 1
+
+
+def test_metrics_are_exact_under_concurrent_batches():
+    import threading
+
+    service = EntityExtractionService(
+        _config(batch_processing={"max_workers": 4}), llm_func=_slow_llm(0.01)
+    )
+    threads = [
+        threading.Thread(target=service.extract_batch, args=(_docs(5),))
+        for _ in range(6)
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    metrics = service.get_batch_metrics()
+    assert metrics.total_batches_processed == 6
+    assert metrics.total_documents_processed == 30

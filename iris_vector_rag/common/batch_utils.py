@@ -10,14 +10,15 @@ Implementation:
 - BatchMetricsTracker: Global singleton for metrics tracking (FR-007)
 """
 
-from collections import deque
-from typing import List, Optional, Callable
-import time
 import logging
+import threading
+import time
+from collections import deque
+from typing import Callable, List, Optional
 
 from iris_vector_rag.core.models import (
-    Document,
     BatchExtractionResult,
+    Document,
     ProcessingMetrics,
 )
 
@@ -246,6 +247,7 @@ class BatchMetricsTracker:
     def __init__(self):
         """Initialize metrics tracker with default values."""
         self._metrics = ProcessingMetrics()
+        self._lock = threading.Lock()
 
     @classmethod
     def get_instance(cls) -> "BatchMetricsTracker":
@@ -282,9 +284,10 @@ class BatchMetricsTracker:
             batch_size: Number of documents in the batch
             single_doc_baseline_time: Baseline time per document (default: 7.2s from spec)
         """
-        self._metrics.update_with_batch(
-            batch_result, batch_size, single_doc_baseline_time
-        )
+        with self._lock:
+            self._metrics.update_with_batch(
+                batch_result, batch_size, single_doc_baseline_time
+            )
 
     def get_statistics(self) -> ProcessingMetrics:
         """
