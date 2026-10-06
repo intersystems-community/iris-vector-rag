@@ -10,10 +10,15 @@ import time
 
 import pytest
 
-from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.common.batch_utils import BatchMetricsTracker
 from iris_vector_rag.core.models import Document
-from iris_vector_rag.services.entity_extraction import EntityExtractionService
+
+from .batch_support import real_service
+
+# The LLM is the real one, about a second per document: the "1K" and "10K" document
+# sets of the spec are run at these sizes. Rates and ratios are what is asserted.
+SMALL_SET = 12
+LARGE_SET = 24
 
 
 @pytest.mark.integration
@@ -24,20 +29,15 @@ class TestBatchPerformance:
 
     @pytest.fixture
     def service(self):
-        """Initialize EntityExtractionService."""
-        config_manager = ConfigurationManager()
-        connection_manager = ConnectionManager(config_manager)
-        return EntityExtractionService(
-            config_manager,
-            connection_manager,
-            llm_func=lambda prompt: '[{"text": "Test", "type": "PERSON"}]',
-        )
+        """EntityExtractionService over the real LLM, with fresh batch metrics."""
+        BatchMetricsTracker.reset_instance()
+        return real_service()
 
     @pytest.fixture
     def documents_1k(self):
-        """Generate 1,000 test documents for performance testing."""
+        """Generate the small document set for performance testing."""
         documents = []
-        for i in range(1000):
+        for i in range(SMALL_SET):
             content = (
                 f"Support ticket {i}: TrakCare system error in module PatientManagement. "
                 f"User admin reported issue with database connection. "
@@ -49,9 +49,9 @@ class TestBatchPerformance:
 
     @pytest.fixture
     def documents_10k(self):
-        """Generate 10,000 test documents for large-scale performance testing."""
+        """Generate the large document set for scale testing."""
         documents = []
-        for i in range(10000):
+        for i in range(LARGE_SET):
             content = (
                 f"Ticket {i}: Error in TrakCare module. "
                 f"Code: ERR{i:05d}. Version: 2024.{i % 12 + 1}.{i % 30 + 1}."
@@ -78,7 +78,7 @@ class TestBatchPerformance:
 
         # Calculate metrics
         single_doc_baseline = 7.2  # seconds per document (from spec.md)
-        expected_single_doc_time = 1000 * single_doc_baseline  # 7200s = 2 hours
+        expected_single_doc_time = len(documents_1k) * single_doc_baseline
         actual_speedup = expected_single_doc_time / elapsed
 
         # Validate 3x speedup (allow 20% tolerance: 2.4x - 3.6x)
@@ -117,7 +117,7 @@ class TestBatchPerformance:
 
         # Calculate metrics
         single_doc_baseline = 7.2  # seconds per document
-        expected_single_doc_time = 10000 * single_doc_baseline  # 72000s = 20 hours
+        expected_single_doc_time = len(documents_10k) * single_doc_baseline
         actual_speedup = expected_single_doc_time / elapsed
 
         print("\nResults:")
