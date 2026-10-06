@@ -12,7 +12,10 @@ from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document, Entity, EntityTypes, Relationship
 from iris_vector_rag.embeddings.manager import EmbeddingManager
-from iris_vector_rag.services.entity_extraction import EntityExtractionService
+from iris_vector_rag.services.entity_extraction import (
+    EntityExtractionError,
+    EntityExtractionService,
+)
 
 
 class TestEntityExtractionService:
@@ -77,33 +80,46 @@ class TestEntityExtractionService:
         assert service.storage_adapter is None
 
     def test_pattern_extraction(self):
-        """Test pattern-based entity extraction."""
-        # Configure for pattern-only extraction
-        self.config_manager.get.return_value = {
-            **self.mock_config["entity_extraction"],
-            "method": "pattern_only",
-        }
+        """Extracted entities carry the document id, type and a valid confidence.
 
+        The service has no non-LLM ("pattern_only") method any more, so the
+        extraction is driven by a fake ``llm_func`` at the LLM boundary.
+        """
+        llm = Mock(
+            return_value=(
+                '[{"text": "aspirin", "type": "DRUG", "confidence": 0.9},'
+                ' {"text": "hypertension", "type": "DISEASE", "confidence": 0.85}]'
+            )
+        )
+        service = EntityExtractionService(
+            config_manager=self.config_manager,
+            connection_manager=self.connection_manager,
+            llm_func=llm,
+        )
+
+        entities = service.extract_entities(self.test_document)
+
+        assert {e.text for e in entities} == {"aspirin", "hypertension"}
+        llm.assert_called_once()
+        for entity in entities:
+            assert isinstance(entity, Entity)
+            assert entity.source_document_id == self.test_document.id
+            assert entity.entity_type in {"DRUG", "DISEASE"}
+            assert 0 <= entity.confidence <= 1
+
+    def test_no_llm_raises(self):
+        """Without an llm_func extraction fails loudly instead of returning nothing."""
         service = EntityExtractionService(
             config_manager=self.config_manager,
             connection_manager=self.connection_manager,
         )
 
-        entities = service.extract_entities(self.test_document)
+        with pytest.raises(EntityExtractionError, match="llm_func"):
+            service.extract_entities(self.test_document)
 
-        # Should find at least one entity (aspirin as DRUG)
-        assert len(entities) > 0
-
-        # Check that entities have proper structure
-        for entity in entities:
-            assert isinstance(entity, Entity)
-            assert entity.source_document_id == self.test_document.id
-            assert hasattr(entity, "text")
-            assert hasattr(entity, "entity_type")
-            assert hasattr(entity, "confidence")
-            assert 0 <= entity.confidence <= 1
-
-    @patch("iris_rag.services.entity_extraction.EntityExtractionService._call_llm")
+    @patch(
+        "iris_vector_rag.services.entity_extraction.EntityExtractionService._call_llm"
+    )
     def test_llm_extraction(self, mock_llm_call):
         """Test LLM-based entity extraction."""
         # Mock LLM response
@@ -167,24 +183,23 @@ class TestEntityExtractionService:
             config_manager=self.config_manager,
             connection_manager=self.connection_manager,
             embedding_manager=self.embedding_manager,
+            llm_func=lambda prompt: (
+                '[{"text": "aspirin", "type": "DRUG", "confidence": 0.9},'
+                ' {"text": "hypertension", "type": "DISEASE", "confidence": 0.85}]'
+            ),
         )
 
-        # Mock storage adapter methods
-        service.storage_adapter.store_entities_batch = Mock(return_value=2)
-        service.storage_adapter.store_relationships_batch = Mock(return_value=1)
-
-        # Mock embedding generation
-        self.embedding_manager.generate_embedding.return_value = [0.1, 0.2, 0.3]
+        # Mock the storage adapter write (one call per entity)
+        service.storage_adapter.store_entity = Mock(return_value=True)
 
         result = service.process_document(self.test_document)
 
-        assert "document_id" in result
-        assert "entities_count" in result
-        assert "relationships_count" in result
-        assert "stored" in result
         assert result["document_id"] == self.test_document.id
-        assert isinstance(result["entities_count"], int)
-        assert isinstance(result["relationships_count"], int)
+        assert result["entities_extracted"] == 2
+        assert result["stored"] is True
+        assert result["stored_entities"] == 2
+        assert len(result["entities"]) == 2
+        assert service.storage_adapter.store_entity.call_count == 2
 
     def test_configuration_integration(self):
         """Test that service properly integrates with ConfigurationManager."""
@@ -230,30 +245,56 @@ class TestEntityExtractionService:
         assert len(relationships) == 0
 
     def test_entity_confidence_filtering(self):
-        """Test that entities are filtered by confidence threshold."""
+        """Entities below the confidence threshold are filtered out."""
         service = EntityExtractionService(
             config_manager=self.config_manager,
             connection_manager=self.connection_manager,
+            llm_func=lambda prompt: (
+                '[{"text": "test", "type": "PERSON", "confidence": 0.5},'
+                ' {"text": "John Doe", "type": "PERSON", "confidence": 0.95}]'
+            ),
         )
 
-        # Mock low-confidence entities
-        with patch.object(service, "_extract_llm") as mock_extract:
-            low_confidence_entities = [
-                Entity(
-                    text="test",
-                    entity_type="PERSON",
-                    confidence=0.5,  # Below threshold
-                    start_offset=0,
-                    end_offset=4,
-                    source_document_id=self.test_document.id,
-                )
-            ]
-            mock_extract.return_value = low_confidence_entities
+        entities = service.extract_entities(self.test_document)
 
-            entities = service.extract_entities(self.test_document)
+        # 0.5 is below the 0.7 threshold: only the confident entity remains
+        assert [e.text for e in entities] == ["John Doe"]
 
-            # Should filter out low confidence entities
-            assert len(entities) == 0
+    def test_entity_confidence_filtering_all_below_threshold(self):
+        """When every entity is below the threshold, none are returned."""
+        service = EntityExtractionService(
+            config_manager=self.config_manager,
+            connection_manager=self.connection_manager,
+            llm_func=lambda prompt: (
+                '[{"text": "test", "type": "PERSON", "confidence": 0.5}]'
+            ),
+        )
+
+        assert service.extract_entities(self.test_document) == []
+
+    def _entities_and_relationships(self):
+        entities = [
+            Entity(
+                text=f"entity{i}",
+                entity_type="PERSON",
+                confidence=0.9,
+                start_offset=0,
+                end_offset=5,
+                source_document_id=self.test_document.id,
+            )
+            for i in range(5)
+        ]
+        relationships = [
+            Relationship(
+                source_entity_id=entities[i].id,
+                target_entity_id=entities[i + 1].id,
+                relationship_type="RELATED_TO",
+                confidence=0.8,
+                source_document_id=self.test_document.id,
+            )
+            for i in range(3)
+        ]
+        return entities, relationships
 
     def test_storage_adapter_integration(self):
         """Test integration with storage adapter."""
@@ -261,25 +302,36 @@ class TestEntityExtractionService:
             config_manager=self.config_manager,
             connection_manager=self.connection_manager,
         )
+        entities, relationships = self._entities_and_relationships()
 
-        # Mock storage methods
-        service.storage_adapter.store_entities_batch = Mock(return_value=5)
-        service.storage_adapter.store_relationships_batch = Mock(return_value=3)
+        # Mock storage writes (the service writes item by item)
+        service.storage_adapter.store_entity = Mock(return_value=True)
+        service.storage_adapter.store_relationship = Mock(return_value=True)
 
-        test_entities = [Mock(spec=Entity) for _ in range(5)]
-        test_relationships = [Mock(spec=Relationship) for _ in range(3)]
+        result = service.store_entities_and_relationships(entities, relationships)
 
-        result = service.store_entities_and_relationships(
-            test_entities, test_relationships
+        assert result == {"stored_entities": 5, "stored_relationships": 3}
+        assert [
+            c.args[0] for c in service.storage_adapter.store_entity.call_args_list
+        ] == entities
+        assert [
+            c.args[0] for c in service.storage_adapter.store_relationship.call_args_list
+        ] == relationships
+
+    def test_storage_refusal_raises(self):
+        """A write the adapter refuses is reported, not swallowed."""
+        service = EntityExtractionService(
+            config_manager=self.config_manager,
+            connection_manager=self.connection_manager,
         )
+        entities, relationships = self._entities_and_relationships()
+        service.storage_adapter.store_entity = Mock(
+            side_effect=[True, False, True, True, True]
+        )
+        service.storage_adapter.store_relationship = Mock(return_value=True)
 
-        assert result is True
-        service.storage_adapter.store_entities_batch.assert_called_once_with(
-            test_entities
-        )
-        service.storage_adapter.store_relationships_batch.assert_called_once_with(
-            test_relationships
-        )
+        with pytest.raises(EntityExtractionError, match="Could not store 1"):
+            service.store_entities_and_relationships(entities, relationships)
 
 
 if __name__ == "__main__":
