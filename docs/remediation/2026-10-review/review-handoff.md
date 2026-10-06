@@ -167,14 +167,14 @@ than deleted. The groups and owners:
 
 ## What was not done, or only partly
 
-- **The setup errors were three different problems.** 12 errors: the file sits
-  outside the directories where `iris_target` applies automatically, so it
-  connected to `localhost:1972` (and a wrong-width query raised `TypeError` in
-  `hybrid_graphrag.py`). 23 GraphRAG, ColBERT and vector-search errors:
-  `tests/utils/schema_models.py` described `RAG.Entities` by hand in a shape the
-  library never creates, and after the contract suite ran the schema resetter
-  rebuilt the table that way. 20 medical-20 and DAT errors: the repo has no
-  medical-20 `.DAT`; the fixture is now built from
+- **The setup errors were three different problems.** 12 `test_attach_corpus`
+  errors: the file sits outside the directories where `iris_target` applies
+  automatically, so it connected to `localhost:1972` (and a wrong-width query
+  raised `TypeError` in `hybrid_graphrag.py`). 23 GraphRAG, ColBERT and
+  vector-search errors: `tests/utils/schema_models.py` described `RAG.Entities`
+  by hand in a shape the library never creates, and after the contract suite ran
+  the schema resetter rebuilt the table that way. 20 medical-20 and DAT errors:
+  the repo has no medical-20 `.DAT`; the fixture is now built from
   `tests/fixtures/graphrag/medical_docs.json`.
 - **A pinned database keeps `COLLATE EXACT`** on `entity_type` and
   `relationship_type` after a run (altering them back made `CREATE INDEX` hang
