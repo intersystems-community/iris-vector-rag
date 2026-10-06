@@ -819,8 +819,24 @@ entry: feature, question, choice, why.
   there is no way to assert `COUNT(*) == 3` on a table that also holds them.
 - **Collation.** `entity_type` / `relationship_type` use IRIS's default SQLUPPER
   collation, so `GROUP BY` returns `DISEASE` where the tests count `Disease`. The
-  fixture alters the two columns to `COLLATE EXACT` while it is loaded and back to
-  `SQLUPPER` at teardown (rows and indexes kept). Production DDL is unchanged.
+  session fixture `exact_case_type_columns` alters the two columns to `COLLATE
+EXACT` and leaves them so: altering them back after the module, or dropping and
+  recreating the tables, made the later `CREATE INDEX ... AS HNSW` in
+  `test_relation_embedding_store` wait for ever (bisected; without the restore it
+  passes). The ALTER back is tried once at session end on a daemon thread. Production
+  DDL is unchanged; a pinned database keeps the EXACT columns after a run.
+- **Leaked transactions.** `test_graphrag_pipeline_with_fixture` builds a pipeline
+  that nothing closes; `release_open_transactions` (tests/fixtures/pytest_plugin.py)
+  rolls back the process's IRIS DBAPI connections before the fixture's DDL.
+- **Newly running tests.** With a fixture present, `test_fixture_versioning` and
+  `test_fixture_isolation` stop skipping. `FixtureManager` now cleans up by DELETE
+  (child tables first) rather than the idt schema reset, and creates missing tables
+  itself; two versioning tests were corrected to the manager's documented contract
+  (`FixtureNotFoundError` for a version that matches nothing; `""` means latest).
+- **Combined run.** The ~16 min session only completes under
+  `--timeout=120` when the machine is quiet: the thread-method timeout kills the whole
+  process on any single test over 120 s (test_iris_environment_live, container
+  starts), which happened under load with or without these changes.
 - **test_missing_fixture_fails_gracefully.** As written it could only error (setup
   fails) or fail (body says "should not reach here"). It now requests
   `fixture_metadata` inside `pytest.raises(pytest.fail.Exception,
