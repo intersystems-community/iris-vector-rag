@@ -12,11 +12,11 @@ This script:
 4. Restores data (if any)
 """
 
-import sys
-import os
-from pathlib import Path
-from datetime import datetime
 import logging
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
 
 # Add rag-templates to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -25,8 +25,7 @@ import iris.dbapi as dbapi
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s'
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -34,11 +33,11 @@ logger = logging.getLogger(__name__)
 def get_connection():
     """Get database connection."""
     return dbapi.connect(
-        hostname=os.getenv('IRIS_HOST', 'localhost'),
-        port=int(os.getenv('IRIS_PORT', 21972)),
-        namespace=os.getenv('IRIS_NAMESPACE', 'USER'),
-        username=os.getenv('IRIS_USERNAME', '_SYSTEM'),
-        password=os.getenv('IRIS_PASSWORD', 'SYS')
+        hostname=os.getenv("IRIS_HOST", "localhost"),
+        port=int(os.getenv("IRIS_PORT", 21972)),
+        namespace=os.getenv("IRIS_NAMESPACE", "USER"),
+        username=os.getenv("IRIS_USERNAME", "_SYSTEM"),
+        password=os.getenv("IRIS_PASSWORD", "SYS"),
     )
 
 
@@ -91,13 +90,13 @@ def create_entities_table_with_correct_fk(conn):
         logger.info("Creating RAG.Entities table with corrected foreign key...")
 
         # Get vector dimension from config (default 384)
-        vector_dim = int(os.getenv('EMBEDDING_DIMENSION', 384))
+        vector_dim = int(os.getenv("EMBEDDING_DIMENSION", 384))
 
         create_sql = f"""
         CREATE TABLE RAG.Entities (
             entity_id VARCHAR(255) PRIMARY KEY,
             entity_name VARCHAR(1000) NOT NULL,
-            entity_type VARCHAR(255) NOT NULL,
+            entity_type VARCHAR(255) COLLATE EXACT NOT NULL,
             source_doc_id VARCHAR(255) NOT NULL,
             description TEXT NULL,
             embedding VECTOR(DOUBLE, {vector_dim}) NULL,
@@ -132,11 +131,14 @@ def restore_entities(conn, entities):
 
         for entity in entities:
             try:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO RAG.Entities
                     (entity_id, entity_name, entity_type, source_doc_id, description)
                     VALUES (?, ?, ?, ?, ?)
-                """, entity)
+                """,
+                    entity,
+                )
                 restored += 1
             except Exception as e:
                 failed += 1
@@ -165,14 +167,25 @@ def verify_foreign_key(conn):
 
             # Try to insert test entity
             test_entity_id = f"test_fk_verification_{datetime.now().timestamp()}"
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO RAG.Entities
                 (entity_id, entity_name, entity_type, source_doc_id, description)
                 VALUES (?, ?, ?, ?, ?)
-            """, (test_entity_id, "Test Entity", "TEST", test_doc_id, "Test foreign key"))
+            """,
+                (
+                    test_entity_id,
+                    "Test Entity",
+                    "TEST",
+                    test_doc_id,
+                    "Test foreign key",
+                ),
+            )
 
             # Clean up test entity
-            cursor.execute("DELETE FROM RAG.Entities WHERE entity_id = ?", (test_entity_id,))
+            cursor.execute(
+                "DELETE FROM RAG.Entities WHERE entity_id = ?", (test_entity_id,)
+            )
             conn.commit()
 
             logger.info("✅ Foreign key constraint verified - working correctly!")
@@ -190,12 +203,12 @@ def verify_foreign_key(conn):
 
 def main():
     """Main migration process."""
-    logger.info("="*80)
+    logger.info("=" * 80)
     logger.info("FIXING ENTITIES TABLE FOREIGN KEY CONSTRAINT")
-    logger.info("="*80)
+    logger.info("=" * 80)
     logger.info("BUG: Foreign key referenced SourceDocuments(id)")
     logger.info("FIX: Changing to reference SourceDocuments(doc_id)")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
     conn = get_connection()
 
@@ -221,12 +234,12 @@ def main():
             logger.error("Foreign key verification failed")
             return 1
 
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info("✅ MIGRATION COMPLETE!")
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info("Entities table now correctly references SourceDocuments(doc_id)")
         logger.info("Entity storage should now work without foreign key errors")
-        logger.info("="*80)
+        logger.info("=" * 80)
 
         return 0
 
@@ -239,5 +252,6 @@ def main():
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
+
     load_dotenv()
     sys.exit(main())

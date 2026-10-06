@@ -51,7 +51,7 @@ DROP TABLE IF EXISTS RAG.Entities CASCADE;
 CREATE TABLE RAG.Entities (
     entity_id VARCHAR(255) PRIMARY KEY,
     entity_name VARCHAR(1000) NOT NULL,
-    entity_type VARCHAR(255) NOT NULL,
+    entity_type VARCHAR(255) COLLATE EXACT NOT NULL,
     source_doc_id VARCHAR(255) NOT NULL,
     description TEXT NULL,
     embedding VECTOR(FLOAT, 384) NULL,
@@ -69,7 +69,7 @@ CREATE TABLE RAG.EntityRelationships (
     relationship_id VARCHAR(255) PRIMARY KEY,
     source_entity_id VARCHAR(255) NOT NULL,
     target_entity_id VARCHAR(255) NOT NULL,
-    relationship_type VARCHAR(255) NOT NULL,
+    relationship_type VARCHAR(255) COLLATE EXACT NOT NULL,
     metadata TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     relation_embedding VECTOR(FLOAT, 384) NULL,
