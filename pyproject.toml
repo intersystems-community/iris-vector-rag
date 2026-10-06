@@ -263,6 +263,9 @@ norecursedirs = [
 ]
 timeout = 300
 timeout_method = "thread"
+# A test stuck in a C call (the IRIS driver) cannot be interrupted by a signal; after this
+# long pytest dumps every thread's stack so the hang names its own call site.
+faulthandler_timeout = 300
 markers = [
     # Scope
     "unit: test one component in isolation, no external services",

@@ -9,6 +9,7 @@ Design choices:
   • No HNSW index during ingest — caller creates it after load completes
 """
 
+import contextlib
 import json
 import logging
 import time
@@ -47,6 +48,13 @@ class ColBERTIngestor:
         self._conn.autocommit = False
         try:
             yield
+        except BaseException:
+            # A failure that escapes the per-document rollback (a timeout, an
+            # interrupt) must not leave uncommitted rows, and the row locks they hold,
+            # on a connection other code shares.
+            with contextlib.suppress(Exception):  # the original failure is the news
+                self._conn.rollback()
+            raise
         finally:
             self._conn.autocommit = previous
 

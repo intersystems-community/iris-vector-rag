@@ -18,7 +18,7 @@ hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:134
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:31
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:57
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:75
-hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/ingest.py:180
+hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/ingest.py:188
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:117
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:142
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:70

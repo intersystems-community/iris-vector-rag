@@ -394,6 +394,7 @@ def iris_target():
     Never a mock, never a skip.
     """
     from tests.support.iris_environment import (
+        LOCK_TIMEOUT_SECONDS,
         connect,
         declared_container,
         resolve_pinned,
@@ -406,10 +407,11 @@ def iris_target():
     if target is None:
         container, target = start_ephemeral()
 
-    saved = {key: os.environ.get(key) for key in target.environment()}
+    exported = {**target.environment(), "IRIS_LOCK_TIMEOUT": str(LOCK_TIMEOUT_SECONDS)}
+    saved = {key: os.environ.get(key) for key in exported}
     try:
         connect(target).close()  # warm-up: fail here, loudly, once
-        os.environ.update(target.environment())
+        os.environ.update(exported)
         yield target
     finally:
         for key, value in saved.items():

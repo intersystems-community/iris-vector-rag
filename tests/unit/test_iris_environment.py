@@ -155,7 +155,7 @@ class TestConnect:
         conn = self.Conn()
         got = connect(self.TARGET, connector=lambda t: conn, attempts=1, delay=0)
         assert got is conn
-        assert conn.statements == ["SELECT 1"]
+        assert conn.statements == ["SELECT 1", "SET OPTION LOCK_TIMEOUT=30"]
 
     def test_warm_up_retries_a_wedged_server(self):
         calls = []
