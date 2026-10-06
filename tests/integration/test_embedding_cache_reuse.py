@@ -12,12 +12,13 @@ Test Coverage:
 - T005: Actual model caching with real SentenceTransformer models
 """
 
-import pytest
 import time
 from typing import List
 
-from iris_vector_rag.embeddings.manager import EmbeddingManager
+import pytest
+
 from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.embeddings.manager import EmbeddingManager, clear_cache
 
 
 class TestActualModelCaching:
@@ -35,6 +36,10 @@ class TestActualModelCaching:
         - Both initializations taking ~400ms (no caching)
         - Assertion error on time2 < time1 / 10
         """
+        # Start cold: an earlier test in the same process may already have loaded
+        # the model, which would make the first call as fast as the second.
+        clear_cache()
+
         # Create first EmbeddingManager (should load model from disk)
         config1 = ConfigurationManager()
         start1 = time.time()
