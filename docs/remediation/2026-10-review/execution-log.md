@@ -924,3 +924,36 @@ entry: feature, question, choice, why.
   quarantined: the fixture for medical-20 is built from the repository's own
   data, the stale hand-written schema was removed from the test schema resetter,
   and the attach-corpus tests take their IRIS from `iris_target`.
+
+## fix85-storage
+
+- **test_vector_safe_helpers (12).** The helpers embed a validated vector literal
+  (`TO_VECTOR('[..]', FLOAT, dim)`), not a bound `?`; the tests were written for the
+  parameter form. Rewritten to the literal contract, plus tests of the literal's
+  validation (the injection defence now lives there). Production unchanged.
+- **test_schema_manager_bugs (7).** Stale import name `iris_rag`, constructor order,
+  and a class-level validation cache that became per-instance on purpose (so prefixes
+  do not collide). Rewritten to those facts; the 100-instance test asserted on a
+  counter nothing incremented and now counts real calls.
+- **test_iris_devtools_namespace_fix (4), deleted.** It imported `iris_devtools` and
+  read another project's source at `/Users/intersystems-community/...`; nothing in this
+  repo uses `FixtureCreator`. It did not target the removed bridge: it tested a
+  third-party fix that does not belong in this suite.
+- **test_cloud_config_integration (2).** Hardcoded `localhost:1972`; now the session's
+  `iris_target`.
+- **test_embedding_cache_reuse (1).** Needs the real model (online); it also compared
+  first and second load, which an earlier test in the process defeats, so it starts
+  with `clear_cache()`. No fakes.
+- **COLLATE EXACT.** New tables declare it (four DDL sites in `schema_manager.py` and
+  the shipped SQL/SDK files). Existing tables: `storage/collation.py`, called from
+  `_ensure_standard_table`. Measured on IRIS 2026.1: the ALTER keeps rows, NOT NULL and
+  the index (no drop/recreate needed). Hangs observed: ALTER on the same connection
+  that holds an open transaction on the table, and against another connection's
+  `LOCK TABLE`; a query racing a collation ALTER died with `<INVALID OREF>`. So the ALTER
+  runs on a worker connection with `SET OPTION LOCK_TIMEOUT`, so a blocked ALTER is
+  abandoned by the server rather than completing later; the caller's connection is
+  never committed. Failure raises `ExactCollationError`; the schema manager passes
+  `raise_on_failure=False` (best-effort repair, logged).
+- **Fixture.** `exact_case_type_columns` and `_set_type_collation` removed from
+  `tests/integration/conftest.py`; the fixture manager's `ensure_table_schema` now
+  creates or repairs the tables.
