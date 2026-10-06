@@ -3,7 +3,17 @@ import logging
 import numpy as np
 import pytest
 
-TOKEN_DIM = 384
+from tests.support.real_services import EMBEDDING_WIDTH, real_embedder
+
+TOKEN_DIM = EMBEDDING_WIDTH
+
+
+def _embed(texts):
+    """Vectors from the real sentence-transformer, L2-normalised, as comma lists."""
+    vectors = np.asarray(real_embedder()(list(texts)), dtype=np.float32)
+    vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
+    return vectors
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +30,15 @@ def _create_test_table(conn, table_name, n_rows, dim=TOKEN_DIM):
             f"embedding VECTOR(DOUBLE, {dim}))"
         )
         conn.commit()
-        rng = np.random.default_rng(42)
-        for i in range(n_rows):
-            vec = rng.random(dim).astype(np.float32)
-            vec /= np.linalg.norm(vec)
+        texts = [f"Test document {i} about topic {i % 10}." for i in range(n_rows)]
+        vectors = _embed(texts)
+        assert vectors.shape[1] == dim, "the real embedder's width is the table's"
+        for i, (text, vec) in enumerate(zip(texts, vectors)):
             vec_str = ",".join(str(float(v)) for v in vec)
             cur.execute(
                 f"INSERT INTO {table_name} (doc_id, text_content, embedding) "
                 f"VALUES (?, ?, TO_VECTOR(?, DOUBLE, {dim}))",
-                [f"doc_{i:04d}", f"Test document {i} about topic {i % 10}.", vec_str],
+                [f"doc_{i:04d}", text, vec_str],
             )
         conn.commit()
     finally:
@@ -48,15 +58,15 @@ def _drop_test_table(conn, table_name):
 
 
 def _make_pipeline(conn, engine):
-    from unittest.mock import MagicMock
-
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
     from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
     pipeline = HybridGraphRAGPipeline.__new__(HybridGraphRAGPipeline)
     pipeline.iris_engine = engine
     pipeline._attached_corpora = {}
-    pipeline.connection_manager = MagicMock()
-    pipeline.config_manager = MagicMock()
+    pipeline.config_manager = ConfigurationManager()
+    pipeline.connection_manager = ConnectionManager(pipeline.config_manager)
     return pipeline
 
 
@@ -161,9 +171,7 @@ class TestAttachCorpusBasic:
             embedding_col="embedding",
             graph_label="TestDocVS",
         )
-        rng = np.random.default_rng(99)
-        q = rng.random(TOKEN_DIM).astype(np.float32)
-        q /= np.linalg.norm(q)
+        q = _embed(["a document about topic 3"])[0]
         results = engine.vector_search(
             test_table, "embedding", q.tolist(), top_k=5, id_col="doc_id"
         )
@@ -202,9 +210,7 @@ class TestNewRowsVisible:
             graph_label="NewRowLabel",
         )
         cur = conn.cursor()
-        rng = np.random.default_rng(777)
-        vec = rng.random(TOKEN_DIM).astype(np.float32)
-        vec /= np.linalg.norm(vec)
+        vec = _embed(["Newly inserted document."])[0]
         vec_str = ",".join(str(float(v)) for v in vec)
         try:
             cur.execute(

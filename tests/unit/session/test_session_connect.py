@@ -106,3 +106,16 @@ def test_the_connect_budget_and_backoff_come_from_the_environment(monkeypatch):
 
     assert session.connect_timeout == 3.0
     assert session.backoff_seconds == 7.0
+
+
+def test_a_substituted_driver_reaches_no_instance_at_all():
+    from iris_vector_rag.session import SessionIdentity
+
+    # Nothing is listening on this port. A session given a driver never asks.
+    nowhere = SessionIdentity(
+        host="127.0.0.1", port=59999, namespace="USER", username="_SYSTEM"
+    )
+    session = IRISSession(identity=nowhere, driver=FakeDriver(rows=[(1,)]))
+
+    assert session.one("SELECT 1") == (1,)
+    assert session.driver_name == "fake"
