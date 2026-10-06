@@ -1202,3 +1202,17 @@ after only in the sense noted below.
   asserts the port is resolved from the container (source `container`, equal to
   the target's port) and that the connection works. Removed from
   `ci_known_failures.txt`.
+
+- Follow-up (real services): the dual-level `e2e_engine` fixture's `MagicMock`
+  vector store is replaced by the real `IRISVectorStore` over the session's IRIS,
+  seeded through `add_documents` (one document per seeded relationship, real
+  embeddings) and cleaned up after. A new test runs the same three labelled
+  queries through real vector retrieval: recall 3/3 (global recall 3/3, asserted
+  at 1.0 as before). No assertion weakened.
+- Sweep of `tests/e2e` and `tests/integration` (excluding `test_mcp_*`) for
+  stand-ins left for their owners: `integration/conftest.py` (mock LLM,
+  mock embeddings, mock config), `test_entity_services_fix_iris.py:231`
+  (`vector_store = Mock()`), `test_entity_extraction_logging.py`,
+  `test_batch_retry_logic.py:121`, `test_graphrag_realistic.py:54`
+  (`Mock(spec=ConnectionManager)`), `test_hybrid_rrf_modes.py`
+  (`TextSearchEngine` patched).
