@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Fixed: the MCP server holds one IRIS connection, not one per query in flight
+
+Every call that touches IRIS (queries, the reachability check before each query, pipeline
+construction in the health check) now runs on one worker thread. Before, each call ran on
+whichever executor thread was free and each thread kept its own connection, so five
+concurrent queries held five IRIS licences (a Community IRIS has eight) even though the
+handlers run one query at a time. A refused connect then put the session into its 30 s
+back-off and every tool call in the window failed with "IRIS is not reachable".
+
 ### Added: `IRIS_LOCK_TIMEOUT` bounds lock waits on network connections
 
 When `IRIS_LOCK_TIMEOUT=<seconds>` is set, every network connection the session opens

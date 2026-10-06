@@ -13,6 +13,7 @@ import pytest
 
 @pytest.mark.integration
 @pytest.mark.mcp
+@pytest.mark.usefixtures("loaded_test_documents")
 class TestMCPCRAGCorrection:
     """Integration test for rag_crag tool with corrective measures."""
 

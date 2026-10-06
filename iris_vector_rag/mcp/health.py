@@ -17,6 +17,7 @@ import time
 from typing import Any, Awaitable, Callable, Dict, Optional
 
 from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+from iris_vector_rag.mcp.worker import run_on_iris_thread
 
 IrisProbe = Callable[[], Awaitable[float]]
 EmbedderProbe = Callable[[], Awaitable[int]]
@@ -43,7 +44,7 @@ async def probe_iris() -> float:
             raise RuntimeError(f"SELECT 1 returned {row!r}")
         return round(elapsed, 1)
 
-    return await asyncio.to_thread(run)
+    return await run_on_iris_thread(run)
 
 
 async def probe_embedder() -> int:
@@ -85,7 +86,7 @@ async def check_health(
     pipelines: Dict[str, Any] = {}
     for name, handler in registry.get_all_handlers().items():
         try:
-            await asyncio.to_thread(handler.construct)
+            await run_on_iris_thread(handler.construct)
             pipelines[name] = {"constructible": True}
         except Exception as exc:
             pipelines[name] = {"constructible": False, "error": _describe(exc)}
