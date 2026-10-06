@@ -19,6 +19,7 @@ from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.mcp import tool_schemas
 from iris_vector_rag.mcp.validation import ValidationError
+from iris_vector_rag.mcp.worker import run_on_iris_thread
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ class TechniqueHandler:
     async def execute(self, query: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the technique with given query and parameters."""
         try:
-            result = await asyncio.to_thread(self._run_query, query, params)
+            result = await run_on_iris_thread(self._run_query, query, params)
 
             self._last_success = datetime.now()
             self._query_count += 1
