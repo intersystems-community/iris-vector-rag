@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+### Fixed: the text leg of `text`, `hybrid` and `rrf` retrieval searches the real document table (existing tables gain an index)
+
+On a real deployment the text leg found nothing, so `hybrid` and `rrf` returned the
+vector leg alone. It read an iris-vector-graph `docs(id, text)` table that nothing
+created; its `%FIND(text, ?)` is not IRIS SQL (SQLCODE -359) and its `LIKE` fallback
+addressed columns `RAG.SourceDocuments` does not have (and `LIKE` on the long text
+column matches nothing anyway).
+
+- **`SchemaManager` now keeps a full-text index, `SourceDocumentsTextIdx`, on the document
+  table's text column** (`CREATE INDEX ... AS %iFind.Index.Basic(LANGUAGE='en', LOWER=1)`).
+  The column is the one the catalog says fills the text role (`text_content`, `content`,
+  ...). `ensure_table_schema("SourceDocuments")` creates it with a new table and adds it
+  to an existing one; `migrate_table("SourceDocuments")` recreates it.
+- **DDL change on existing tables.** The first `ensure_table_schema("SourceDocuments")`
+  after upgrading builds the index over the rows already there. No row is read out,
+  dropped or rewritten, but the build is synchronous and its time grows with the table.
+  Call `SchemaManager.ensure_text_index()` yourself to choose when (idempotent;
+  `has_text_index()` reports whether it exists). It raises `SchemaIndexError` if the
+  database refuses the index; `ensure_table_schema` propagates that error rather than
+  returning a table that would silently search nothing.
+- **`IRISVectorStore.text_search()`** runs the search with `%ID %FIND search_index(...)`,
+  ranks by the index's TF-IDF, honours `metadata_filter` in SQL like the vector leg, and
+  returns complete documents with `metadata["text_score"]`. A question is searched as an
+  `OR` of its content words.
+- **A table without the index raises `TextIndexMissingError`** (a `SchemaIndexError`)
+  naming the index and `ensure_text_index()`, instead of returning nothing;
+  `BasicRAGPipeline.query` re-raises it.
+- iris-vector-graph's `TextSearchEngine` is no longer used by `RetrievalEngine`, and the
+  retrieval modes now `require` `text_index` instead of `iris_vector_graph_bm25`.
+
 ### Fixed: the MCP server holds one IRIS connection, not one per query in flight
 
 Every call that touches IRIS (queries, the reachability check before each query, pipeline

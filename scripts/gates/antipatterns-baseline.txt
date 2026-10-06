@@ -11,8 +11,8 @@ catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:194
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:211
 catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:173
 catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:185
-catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:111
-catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:122
+catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:101
+catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:112
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:13
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:134
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:31

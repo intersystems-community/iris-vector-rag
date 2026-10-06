@@ -1317,3 +1317,66 @@ is the subject, and the test says so. `tests/integration/test_mcp_*.py` and
   dose of warfarin for a patient?", 5 of 5).
 - The contract workflow sets `OPENAI_API_KEY: sk-ci-placeholder`
   (`release.yml`); that is `tests/contract`, outside this sweep, and left as is.
+
+## text-search-leg
+
+Branch `remediation/text-search-leg` from `remediation/integrated`. Fixes the defect the
+`real-services-sweep` reported: the text leg of `hybrid`/`rrf` found nothing on a real
+deployment.
+
+Decisions, each checked against the running IRIS 2026.1 container (ephemeral, not the dev
+container):
+
+- **Index class.** `%iFind.Index.Basic(LANGUAGE='en', LOWER=1)` via SQL DDL. It builds on
+  `LONGVARCHAR`, `VARCHAR(MAX)`, `CLOB` and `VARCHAR(4000)` columns, backfills a
+  populated table, and shows in `INFORMATION_SCHEMA.INDEXES` under its own name. The
+  ObjectScript index definition was not needed.
+- **Query.** `WHERE %ID %FIND search_index(IndexName, ?)` with the search string as a
+  parameter. Several words are an AND, so a natural question would find nothing;
+  `search_terms()` turns a query into an `OR` of its lower-cased, de-duplicated,
+  stop-word-free words (capped at 32), which also keeps operators and wildcards out of
+  the index. An empty search string is SQLCODE -400, so an empty term list returns `[]`
+  without asking.
+- **Ranking.** The index generates `<schema>.<class>_<Index>Rank(%ID, ?)` (TF-IDF). It
+  is named from the class, not the SQL table name. `%iFind.Rank(?)` as documented in
+  places returned 0 for every row in this image; the generated procedure works.
+  `SELECT TOP n ... ORDER BY CAST(rank AS DOUBLE) DESC` is used (the vector SQL already
+  does TOP + ORDER BY); the rank comes back as text when it is ordered on, hence the CAST,
+  and the integration test compares `top_k=5` with the head of `top_k=30`.
+- **IRIS DBAPI quirk.** A statement with a doubled `((` in the WHERE and a parameter in
+  the ORDER BY fails with "Incorrect number of parameters" (and a wrong count can
+  segfault the client). The metadata predicate is therefore not wrapped a second time.
+- **Why not ivg's `TextSearchEngine`.** Table name, column names, the `%FIND(col, ?)`
+  syntax and the fallback are all fixed inside it; nothing is configurable and the
+  installed package is not patched. The engine's text leg now calls
+  `IRISVectorStore.text_search`, which owns the table, the shape and the filter.
+- **Where the index is ensured.** `ensure_table_schema("SourceDocuments")` (new table and
+  existing table, once per manager instance), `migrate_table("SourceDocuments")` (the
+  rebuilt table), and explicitly through `ensure_text_index()`. Failure raises
+  `SchemaIndexError`; `ensure_table_schema` re-raises it ahead of its generic
+  `except Exception: return False`. The swallowed-error gate stays clean.
+- **Missing index.** `TextIndexMissingError(SchemaIndexError)` is raised by
+  `text_search`, checked by `SchemaManager.has_text_index` on every search (one catalog
+  query). `BasicRAGPipeline.query` re-raises it like `RetrievalPrerequisiteError`
+  instead of folding it into `retrieval_error`.
+- **Filters.** Pushed into SQL with the vector leg's own predicate builder, then checked
+  exactly on the parsed metadata; a page the exact check shortened is re-run once at
+  10x. A filter on a table with no metadata column raises `RoleNotPresent`.
+- **Known limits.** A `mixed` table (both `text_content` and `content`) indexes the
+  canonical column only; rows an older release wrote to `content` are not searchable
+  until copied. The index name is fixed, so one index per table.
+- **Prerequisite registry.** The modes required `iris_vector_graph_bm25`, checked by
+  importing ivg; they now require `text_index`, which is enforced per table at query time
+  (the registry has no table to check).
+- **Tests.** `tests/unit/test_text_search.py` (SQL, DDL, fake cursor, recorded catalog),
+  `tests/integration/test_text_search_iris.py` (19 tests, real IRIS), and
+  `test_hybrid_rrf_modes.py` reworked to rely on the real index (the pinning test
+  `test_text_leg_finds_nothing_without_a_docs_table` is replaced by a keyword-only
+  document test, a filter test and a missing-index test). The e2e fusion test no longer
+  mirrors a `docs` table. One stored test document gained the word `zephyrquill`, which
+  only the text leg can match.
+- **Pre-existing, not mine.** Running `tests/unit/test_index_ensure.py` and then any
+  integration test that calls `ensure_table_schema` in one session fails the latter
+  ("Cannot determine the embedding dimension ... Mock"): a unit test constructs
+  `SchemaManager` with a Mock connection, which sets the class-level `_config_loaded`.
+  The combined session does not include `tests/unit`, so it is unaffected.
