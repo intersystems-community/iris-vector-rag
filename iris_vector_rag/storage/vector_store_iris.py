@@ -1628,6 +1628,19 @@ class IRISVectorStore(VectorStore):
         results = self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
         return [doc for doc, _ in results]
 
+    def search_by_text_with_score(
+        self,
+        query: str,
+        top_k: int = 5,
+        metadata_filter: Optional[Dict[str, Any]] = None,
+    ) -> List[Tuple[Document, float]]:
+        """Return (Document, similarity score) pairs for a text query, best first.
+
+        The scored sibling of `search_by_text`, which stays score-free (FR-014).
+        """
+        embedding = self._embed_query(query)
+        return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+
     def search_by_vector(
         self,
         embedding: List[float],

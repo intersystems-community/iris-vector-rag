@@ -19,7 +19,9 @@ class TestMCPConcurrentQueries:
     """Integration test for concurrent MCP query handling."""
 
     @pytest.mark.asyncio
-    async def test_three_concurrent_queries_different_pipelines(self):
+    async def test_three_concurrent_queries_different_pipelines(
+        self, loaded_test_documents
+    ):
         """Verify 3 concurrent queries to different pipelines complete successfully."""
         from tests.support.mcp_tools import McpTools
 
@@ -45,7 +47,7 @@ class TestMCPConcurrentQueries:
             assert "answer" in result["result"]
 
     @pytest.mark.asyncio
-    async def test_five_concurrent_queries_max_connections(self):
+    async def test_five_concurrent_queries_max_connections(self, loaded_test_documents):
         """Verify 5 concurrent queries work (at connection limit)."""
         from tests.support.mcp_tools import McpTools
 
@@ -65,7 +67,7 @@ class TestMCPConcurrentQueries:
             assert result["success"] is True, f"Query {i} failed at max connections"
 
     @pytest.mark.asyncio
-    async def test_no_resource_conflicts_concurrent(self):
+    async def test_no_resource_conflicts_concurrent(self, loaded_test_documents):
         """Verify concurrent queries don't have resource conflicts."""
         from tests.support.mcp_tools import McpTools
 
@@ -85,7 +87,7 @@ class TestMCPConcurrentQueries:
             assert len(result["result"]["retrieved_documents"]) == 5
 
     @pytest.mark.asyncio
-    async def test_concurrent_queries_performance(self):
+    async def test_concurrent_queries_performance(self, loaded_test_documents):
         """Verify concurrent queries don't significantly degrade performance."""
         import time
 

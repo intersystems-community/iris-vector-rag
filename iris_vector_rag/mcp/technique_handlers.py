@@ -40,6 +40,9 @@ def _serialize_document(doc: Any) -> Dict[str, Any]:
                 if id_field in doc.metadata:
                     serialized["doc_id"] = doc.metadata[id_field]
                     break
+        # The score travels in metadata as "score" or "similarity"; give it one name.
+        if "score" not in serialized and "similarity" in serialized:
+            serialized["score"] = serialized["similarity"]
         logger.debug(f"Serialized Document to: {list(serialized.keys())}")
         return serialized
     elif isinstance(doc, dict):

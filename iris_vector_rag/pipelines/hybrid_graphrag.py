@@ -10,7 +10,7 @@ robust error handling, and modular architecture.
 
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional, TypedDict
+from typing import Any, Callable, Dict, List, Optional, TypedDict, cast
 
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
@@ -870,8 +870,11 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         else:
             return {"iris_vector_graph_enabled": False}
 
-    def _extract_sources(self, documents: List[Document]) -> List[str]:
-        return super()._extract_sources(documents)
+    def _extract_sources(self, documents: List[Document]) -> List[Dict[str, Any]]:
+        # No parent defines it; the response shape is the one BasicRAG reports.
+        from .basic import BasicRAGPipeline
+
+        return BasicRAGPipeline._extract_sources(cast(Any, self), documents)
 
     def benchmark_search_methods(
         self, query_text: str, iterations: int = 5
