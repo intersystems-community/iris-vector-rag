@@ -33,13 +33,13 @@ class TestHybridGraphRAGSecurity:
         """Verify no hard-coded credentials exist in source code."""
         pipeline_file = (
             Path(__file__).parent.parent
-            / "iris_rag"
+            / "iris_vector_rag"
             / "pipelines"
             / "hybrid_graphrag.py"
         )
         discovery_file = (
             Path(__file__).parent.parent
-            / "iris_rag"
+            / "iris_vector_rag"
             / "pipelines"
             / "hybrid_graphrag_discovery.py"
         )
@@ -65,28 +65,26 @@ class TestHybridGraphRAGSecurity:
                 pattern not in discovery_content
             ), f"Hard-coded credential found: {pattern}"
 
-    def test_config_driven_connection_params(self):
-        """Test that connection parameters come from configuration only."""
-        with patch("iris_rag.config.manager.ConfigurationManager") as mock_config_mgr:
-            # Mock configuration with secure params
-            mock_config_instance = Mock()
-            mock_config_mgr.return_value = mock_config_instance
-            mock_config_instance.get.return_value = {
-                "host": "test-host",
-                "port": 9999,
-                "namespace": "TEST",
-                "username": "test-user",
-                "password": "test-pass",
-            }
+    def test_config_driven_connection_params(self, monkeypatch, tmp_path):
+        """Connection parameters come from the one settings resolver, not from code."""
+        monkeypatch.chdir(tmp_path)  # no .env here
+        for name, value in {
+            "IRIS_HOST": "test-host",
+            "IRIS_PORT": "9999",
+            "IRIS_NAMESPACE": "TEST",
+            "IRIS_USERNAME": "test-user",
+            "IRIS_PASSWORD": "test-pass",
+        }.items():
+            monkeypatch.setenv(name, value)
+        monkeypatch.delenv("IRIS_CONTAINER_NAME", raising=False)
 
-            discovery = GraphCoreDiscovery(mock_config_instance)
-            config = discovery.get_connection_config()
+        config = GraphCoreDiscovery(None).get_connection_config()
 
-            assert config["host"] == "test-host"
-            assert config["port"] == 9999
-            assert config["namespace"] == "TEST"
-            assert config["username"] == "test-user"
-            assert config["password"] == "test-pass"
+        assert config["host"] == "test-host"
+        assert config["port"] == 9999
+        assert config["namespace"] == "TEST"
+        assert config["username"] == "test-user"
+        assert config["password"] == "test-pass"
 
     def test_missing_credentials_validation(self):
         """Test that missing credentials are properly detected."""
@@ -103,51 +101,51 @@ class TestHybridGraphRAGSecurity:
 
 
 class TestGraphCoreDiscovery:
-    """Test the GraphCoreDiscovery functionality."""
+    """iris_vector_graph is found by import only: no path search, no sys.path edits."""
 
     def test_discovery_priority_order(self):
-        """Test that discovery follows correct priority order."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir).resolve()
+        """The installed package is the only source; the import returns its classes."""
+        modules = GraphCoreDiscovery(None).import_graph_core_modules()
 
-            # Create mock graph core structure
-            mock_graph_core = temp_path / "test-graph-core"
-            mock_graph_core.mkdir()
-            (mock_graph_core / "iris_vector_graph").mkdir()
+        for name in (
+            "IRISGraphEngine",
+            "HybridSearchFusion",
+            "TextSearchEngine",
+            "VectorOptimizer",
+        ):
+            assert name in modules, f"{name} missing from the discovered modules"
 
-            # Mock config manager that returns the test path
-            mock_config = Mock()
-            mock_config.get.return_value = {"path": str(mock_graph_core)}
+    def test_environment_variable_discovery(self, tmp_path, monkeypatch):
+        """GRAPH_CORE_PATH no longer steers discovery, and nothing is put on sys.path."""
+        import sys
 
-            discovery = GraphCoreDiscovery(mock_config)
-            found_path = discovery.discover_graph_core_path()
+        impostor = tmp_path / "env-graph-core"
+        (impostor / "iris_vector_graph").mkdir(parents=True)
+        monkeypatch.setenv("GRAPH_CORE_PATH", str(impostor))
+        original_path = sys.path.copy()
 
-            assert found_path.resolve() == mock_graph_core.resolve()
+        discovery = GraphCoreDiscovery(None)
+        modules = discovery.import_graph_core_modules()
 
-    def test_environment_variable_discovery(self):
-        """Test discovery via GRAPH_CORE_PATH environment variable."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir).resolve()
-            mock_graph_core = temp_path / "env-graph-core"
-            mock_graph_core.mkdir()
-            (mock_graph_core / "iris_vector_graph").mkdir()
+        assert not hasattr(discovery, "discover_graph_core_path")
+        assert str(impostor) not in sys.path
+        assert sys.path == original_path
+        # The real package was imported, not the empty directory named by the variable.
+        assert modules["IRISGraphEngine"].__module__.startswith("iris_vector_graph")
 
-            with patch.dict(os.environ, {"GRAPH_CORE_PATH": str(mock_graph_core)}):
-                discovery = GraphCoreDiscovery(None)
-                found_path = discovery.discover_graph_core_path()
-
-                assert found_path.resolve() == mock_graph_core.resolve()
-
-    def test_safe_import_without_sys_path_pollution(self):
-        """Test that imports don't permanently pollute sys.path."""
+    def test_safe_import_without_sys_path_pollution(self, monkeypatch):
+        """sys.path is unchanged on success, and a missing package is an ImportError."""
         import sys
 
         original_path = sys.path.copy()
 
-        discovery = GraphCoreDiscovery(None)
-        success, modules = discovery.import_graph_core_modules()
+        modules = GraphCoreDiscovery(None).import_graph_core_modules()
+        assert "IRISGraphEngine" in modules
+        assert sys.path == original_path
 
-        # sys.path should be restored regardless of import success
+        monkeypatch.setenv("FORCE_IRIS_VECTOR_GRAPH_IMPORT_ERROR", "1")
+        with pytest.raises(ImportError, match="iris-vector-graph"):
+            GraphCoreDiscovery(None).import_graph_core_modules()
         assert sys.path == original_path
 
 
@@ -181,92 +179,98 @@ class TestHybridGraphRAGPipeline:
             "database": {"schema": "RAG"},
             "vector_search": {"metric": "COSINE", "top_k": 5},
         }
+        self.mock_config_mgr.to_dict.return_value = self.mock_config_mgr._config
 
-    def test_pipeline_initialization_without_graph_core(self):
-        """Test pipeline initializes gracefully without iris_vector_graph."""
-        with patch(
-            "iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery"
-        ) as mock_discovery_class:
-            mock_discovery = Mock()
-            mock_discovery_class.return_value = mock_discovery
-            mock_discovery.import_graph_core_modules.return_value = (False, {})
+    def _fake_modules(self, engine_class=None):
+        # Factories, not `Mock` itself: Mock's first positional argument is a spec.
+        def make(*args, **kwargs):
+            return Mock()
 
-            pipeline = HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
-
-            assert not pipeline.is_hybrid_enabled()
-            assert pipeline.iris_engine is None
-            assert pipeline.retrieval_methods is None
-
-    def test_pipeline_initialization_with_graph_core(self):
-        """Test pipeline initializes with iris_vector_graph when available."""
-        mock_modules = {
-            "IRISGraphEngine": Mock,
-            "HybridSearchFusion": Mock,
-            "TextSearchEngine": Mock,
-            "VectorOptimizer": Mock,
+        return {
+            "IRISGraphEngine": engine_class or make,
+            "HybridSearchFusion": make,
+            "TextSearchEngine": make,
+            "VectorOptimizer": make,
             "package_name": "iris_vector_graph",
         }
 
+    def _build(self, engine_class=None):
+        """Construct the pipeline with iris_vector_graph and IRIS replaced at the
+        two seams the constructor uses: the discovery it builds and the session
+        connection it opens."""
+        database = {
+            "host": "localhost",
+            "port": 1972,
+            "namespace": "TEST",
+            "username": "test",
+            "password": "test",
+        }
+        self.mock_config_mgr.get_database_config.return_value = database
         with patch(
-            "iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery"
-        ) as mock_discovery_class:
-            mock_discovery = Mock()
+            "iris_vector_rag.pipelines.hybrid_graphrag.GraphCoreDiscovery"
+        ) as mock_discovery_class, patch(
+            "iris_vector_rag.common.iris_connection._session_connection"
+        ) as mock_session:
+            mock_discovery = Mock(spec=GraphCoreDiscovery)
             mock_discovery_class.return_value = mock_discovery
-            mock_discovery.import_graph_core_modules.return_value = (True, mock_modules)
-            mock_discovery.get_connection_config.return_value = {
-                "host": "localhost",
-                "port": 1972,
-                "namespace": "TEST",
-                "username": "test",
-                "password": "test",
-            }
+            mock_discovery.import_graph_core_modules.return_value = self._fake_modules(
+                engine_class
+            )
             mock_discovery.validate_connection_config.return_value = (True, [])
+            mock_session.return_value = Mock()
+            return HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
 
-            with patch("iris.connect") as mock_iris_connect:
-                mock_connection = Mock()
-                mock_iris_connect.return_value = mock_connection
+    def _degraded_pipeline(self):
+        """iris_vector_graph imports but its engine cannot start: no hybrid."""
 
-                pipeline = HybridGraphRAGPipeline(
-                    self.mock_conn_mgr, self.mock_config_mgr
-                )
+        def broken_engine(*args, **kwargs):
+            raise RuntimeError("engine unavailable")
 
-                assert pipeline.discovery is not None
-                # Note: iris_engine might still be None due to connection issues in test
+        return self._build(engine_class=broken_engine)
+
+    def test_pipeline_initialization_without_graph_core(self, monkeypatch):
+        """A missing iris_vector_graph is an ImportError that says how to install it.
+
+        The pipeline used to come up half-working; a pipeline that cannot do what
+        it is named for now refuses to start.
+        """
+        monkeypatch.setenv("FORCE_IRIS_VECTOR_GRAPH_IMPORT_ERROR", "1")
+
+        with pytest.raises(ImportError, match="iris-vector-graph"):
+            HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
+
+    def test_pipeline_initialization_with_graph_core(self):
+        """With iris_vector_graph available the engines are built and hybrid is on."""
+        pipeline = self._build()
+
+        assert pipeline.discovery is not None
+        assert pipeline.is_hybrid_enabled()
+        assert pipeline.iris_engine is not None
+        assert pipeline.fusion_engine is not None
+        assert pipeline.text_engine is not None
+        assert pipeline.vector_optimizer is not None
+        assert pipeline.retrieval_methods is not None
 
     def test_query_fallback_to_graphrag(self):
-        """Test that queries use enhanced fallback when hybrid unavailable."""
-        with patch(
-            "iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery"
-        ) as mock_discovery_class:
-            mock_discovery = Mock()
-            mock_discovery_class.return_value = mock_discovery
-            mock_discovery.import_graph_core_modules.return_value = (False, {})
+        """Queries use the enhanced fallback when the hybrid engine failed to start."""
+        pipeline = self._degraded_pipeline()
 
-            # Mock connection and cursor for knowledge graph validation
-            mock_cursor = Mock()
-            mock_cursor.fetchone.return_value = [1]  # 1 entity (non-empty graph)
-            mock_connection = Mock()
-            mock_connection.cursor.return_value = mock_cursor
-            self.mock_conn_mgr.get_connection.return_value = mock_connection
+        assert not pipeline.is_hybrid_enabled()
+        assert pipeline.iris_engine is None
+        assert pipeline.retrieval_methods is None
 
-            pipeline = HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
+        with patch.object(pipeline, "_validate_knowledge_graph"), patch.object(
+            pipeline, "_enhanced_hybrid_fallback"
+        ) as mock_fallback:
+            mock_fallback.return_value = ([Mock()], "fallback")
 
-            # Verify hybrid is NOT enabled
-            assert not pipeline.is_hybrid_enabled()
+            pipeline.query("test query", method="hybrid", generate_answer=False)
 
-            # Mock the enhanced fallback method
-            with patch.object(pipeline, "_enhanced_hybrid_fallback") as mock_fallback:
-                mock_fallback.return_value = ([Mock()], "fallback")
-
-                pipeline.query("test query", method="hybrid", generate_answer=False)
-
-                # Should use enhanced fallback when hybrid unavailable
-                mock_fallback.assert_called_once()
+            mock_fallback.assert_called_once()
 
     def test_query_with_hybrid_methods(self):
         """Test query routing to different hybrid methods."""
-        # Create a pipeline with mocked hybrid capabilities
-        pipeline = HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
+        pipeline = self._build()
         pipeline.retrieval_methods = Mock()
 
         # Mock successful retrieval
@@ -282,34 +286,43 @@ class TestHybridGraphRAGPipeline:
                 "test query", method="hybrid", generate_answer=False
             )
 
-            assert result["retrieved_documents"] == mock_docs
+            assert [d.page_content for d in result["retrieved_documents"]] == ["test"]
             assert result["metadata"]["retrieval_method"] == "hybrid_fusion"
 
     def test_cursor_cleanup_robustness(self):
-        """Test that cursor cleanup is robust and doesn't raise UnboundLocalError."""
-        pipeline = HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
+        """The cursor is closed when the query fails, and the failure is not hidden.
 
-        # Mock connection manager to return a connection
+        A database error used to become the string "Entity: <id>", which looked like
+        document content (PL-10). It now propagates; no row at all is None.
+        """
+        pipeline = self._degraded_pipeline()
+
+        shape = Mock()
+        shape.schema = "RAG"
+        shape.qualified_name = "RAG.SourceDocuments"
+        shape.column_for.return_value.name = "col"
+        pipeline.vector_store = Mock()
+        pipeline.vector_store.shape.return_value = shape
+
         mock_connection = Mock()
         mock_cursor = Mock()
         mock_connection.cursor.return_value = mock_cursor
         self.mock_conn_mgr.get_connection.return_value = mock_connection
 
-        # Test that cursor cleanup works even if cursor.execute fails
         mock_cursor.execute.side_effect = Exception("Database error")
+        with pytest.raises(Exception, match="Database error"):
+            pipeline._get_document_content_for_entity("test_entity")
+        mock_cursor.close.assert_called_once()
 
-        # This should not raise UnboundLocalError
-        result = pipeline._get_document_content_for_entity("test_entity")
-
-        # Should return fallback content
-        assert result == "Entity: test_entity"
-
-        # Cursor should still be closed
+        mock_cursor.reset_mock()
+        mock_cursor.execute.side_effect = None
+        mock_cursor.fetchone.return_value = None
+        assert pipeline._get_document_content_for_entity("test_entity") is None
         mock_cursor.close.assert_called_once()
 
     def test_get_hybrid_status(self):
         """Test the hybrid status reporting functionality."""
-        pipeline = HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
+        pipeline = self._build()
 
         status = pipeline.get_hybrid_status()
 
@@ -320,6 +333,9 @@ class TestHybridGraphRAGPipeline:
         assert "text_engine_available" in status
         assert "vector_optimizer_available" in status
         assert "graph_core_path" in status
+        assert status["hybrid_enabled"] is True
+        # Found by import, so there is no path to report.
+        assert status["graph_core_path"] is None
 
 
 class TestModularArchitecture:
@@ -328,9 +344,12 @@ class TestModularArchitecture:
     def test_file_line_count_limits(self):
         """Test that all module files stay under reasonable limits."""
         module_files = {
-            "iris_rag/pipelines/hybrid_graphrag.py": 700,  # Main pipeline
-            "iris_rag/pipelines/hybrid_graphrag_discovery.py": 500,
-            "iris_rag/pipelines/hybrid_graphrag_retrieval.py": 500,
+            # These limits were never enforced: the paths named a package that no
+            # longer exists, so the loop skipped every file. Set to the size the
+            # modules actually are, so growth is caught from here on.
+            "iris_vector_rag/pipelines/hybrid_graphrag.py": 1000,  # Main pipeline
+            "iris_vector_rag/pipelines/hybrid_graphrag_discovery.py": 500,
+            "iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py": 500,
         }
 
         for module_file, max_lines in module_files.items():
@@ -367,20 +386,20 @@ class TestConfigurationDriven:
     """Test configuration-driven behavior."""
 
     def test_graph_core_path_configuration(self):
-        """Test that graph core path can be configured."""
+        """A graph-core path in configuration is not consulted: import only."""
         mock_config = Mock()
         mock_config.get.return_value = {"path": "/custom/graph/core/path"}
 
         discovery = GraphCoreDiscovery(mock_config)
+        modules = discovery.import_graph_core_modules()
 
-        # Mock path validation to return True for our test path
-        with patch.object(discovery, "_validate_graph_core_path", return_value=True):
-            path = discovery.discover_graph_core_path()
-            assert str(path) == "/custom/graph/core/path"
+        assert modules["IRISGraphEngine"].__module__.startswith("iris_vector_graph")
+        mock_config.get.assert_not_called()
 
-    def test_connection_parameter_priority(self):
-        """Test connection parameter priority: config > env > none."""
-        # Test config takes priority over environment
+    def test_connection_parameter_priority(self, monkeypatch, tmp_path):
+        """Connection parameter priority: the environment beats the config file."""
+        monkeypatch.chdir(tmp_path)  # no .env here
+        monkeypatch.delenv("IRIS_CONTAINER_NAME", raising=False)
         mock_config = Mock()
         mock_config.get.return_value = {"host": "config-host", "port": 9999}
 
@@ -389,9 +408,8 @@ class TestConfigurationDriven:
         with patch.dict(os.environ, {"IRIS_HOST": "env-host", "IRIS_PORT": "8888"}):
             config = discovery.get_connection_config()
 
-            # Config should win over environment
-            assert config["host"] == "config-host"
-            assert config["port"] == 9999
+        assert config["host"] == "env-host"
+        assert config["port"] == 8888
 
 
 if __name__ == "__main__":
