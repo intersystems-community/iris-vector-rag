@@ -15,7 +15,6 @@ from iris_vector_rag.storage.schema_manager import SchemaManager
 
 pytestmark = pytest.mark.integration
 
-WIDTH = 12
 A, B = "SCFIXA", "SCFIXB"
 TABLES = (
     "EntityRelationships",
@@ -38,9 +37,7 @@ def _drop_all(connection):
 
 
 @pytest.fixture
-def stack(iris_connection, monkeypatch):
-    monkeypatch.setenv("RAG_EMBEDDINGS__PROVIDER", "stub")
-    monkeypatch.setenv("RAG_EMBEDDINGS__DIMENSION", str(WIDTH))
+def stack(iris_connection):
     config = ConfigurationManager()
     connections = ConnectionManager(config)
     _drop_all(iris_connection)
