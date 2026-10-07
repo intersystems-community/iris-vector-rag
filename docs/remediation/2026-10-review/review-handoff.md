@@ -121,33 +121,75 @@ rejected (OS-21, ST-14).
 Run against the dev container (`iris-vector-rag-iris`, pinned), the only process
 using it at the time.
 
-| Check                                               | Result                                          |
-| --------------------------------------------------- | ----------------------------------------------- |
-| `tests/unit` + `tests/test_index_ensure.py`         | 1507 passed, 5 skipped                          |
-| `verify.sh --boundary agent`                        | failed=0                                        |
-| `antipatterns.py`                                   | 0 new, 297 baselined, 0 stale                   |
-| `tests/contract`, deselecting the quarantine list   | 764 passed, 0 failed, 34 skipped                |
-| `tests/integration`, `tests/e2e`, `tests/test_*.py` | 85 failed, 708 passed, 31 skipped, **0 errors** |
+| Check                                               | Result                                                                |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| `tests/unit`                                        | 1734 passed, 5 skipped                                                |
+| `verify.sh --boundary agent`                        | failed=0                                                              |
+| `antipatterns.py`                                   | 0 new, 297 baselined, 0 stale                                         |
+| `tests/contract`, deselecting the quarantine list   | 767 passed, 0 failed, 34 skipped                                      |
+| `tests/integration`, `tests/e2e`, `tests/test_*.py` | 725 passed, 26 skipped, 6 xfailed, **0 failed, 0 errors** (see below) |
 
 Master, run the same way, had 177 failed and 376 errors in the last row, and 37
-contract failures. The 85 failures that remain in that row are not errors in
-setup: they are tests that run and fail for their own reasons (mostly the loose
-`tests/test_*.py` files for the hybrid GraphRAG, the vector-safe helpers, the
-schema-manager bugs and the entity extraction service, plus the basic, rerank,
-CRAG and ColBERT end-to-end tests that want a real LLM or model).
+contract failures.
 
-The last row needed care to measure, and is reproducible only this way:
+**What was and was not verified at the final head.** The unit, contract and
+static-gate numbers above were run by me on `remediation/integrated` after the
+last merge (`1187033b`). The combined integration, e2e and root session was last
+completed on the throwaway container by the `text-search-leg` agent on a branch
+cut from the integrated head just before that merge, which merged cleanly: 725
+passed, 26 skipped, 6 xfailed, 0 failed. My own rerun of that session at the
+final head was abandoned when the laptop ran out of memory (load average over
+100, Docker unresponsive) and I stopped it; it should be rerun once the machine
+is quiet. The 26 skips are unrelated to mocks (no `iris_llm` wheel,
+Enterprise-only, unimplemented features, a test wanting 100 entities).
 
-- one pytest process at a time against the dev container, after
-  `make iris-reset`;
-- `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1`, because this machine cannot
-  download the sentence-transformer model and some tests hang on the attempt;
-- `OPENAI_API_KEY` **set**: the e2e fixtures require it, and with it unset the
-  same run shows 137 errors, every one `OPENAI_API_KEY` missing;
-- `--timeout=150 --timeout-method=signal`, so a hung LLM call fails one test and
-  the run continues (`pyproject.toml` sets the thread method, which kills the
-  whole process and leaves no summary);
+How that session has to be run to be meaningful:
+
+- one pytest process at a time, on a throwaway container (leave
+  `IRIS_CONTAINER_NAME` unset) or on the dev container after `make iris-reset`;
+- the real `OPENAI_API_KEY` set and the real embedding model loadable (the e2e
+  tests use real services; there are no fakes outside `tests/unit`);
+- generous timeouts, for example `--timeout=1500 --timeout-method=signal`,
+  because the signal method cannot interrupt a hung driver call and the thread
+  method kills the whole run;
 - unbuffered output (`python -u`); buffered output looked like a hang twice.
+
+## After the first hand-off: the 85 failures and the three open items
+
+| Item                                            | What was done                                                                                                                          |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| E2E tests hang on a live LLM                    | `get_llm_func` passes `llm.timeout` (60 s) and `llm.max_retries` (2); a timeout raises `LLMTimeoutError`. Tests use the real LLM.      |
+| `retrieval_method` label mismatch               | The documented set is `RETRIEVAL_METHODS`; a unit test fails if a pipeline returns a label outside it.                                 |
+| `COLLATE EXACT` left on a pinned database       | `entity_type` and `relationship_type` are `COLLATE EXACT` in the shipped DDL; existing tables are repaired without data loss.          |
+| 85 failing tests                                | Fixed at the root cause in six groups (branches `fix85-*`, `fix-mcp-tests`, `fix-dual-sdk`, `real-services-sweep`); none were skipped. |
+| Mock stand-ins for real services in e2e tests   | Replaced with real IRIS, LLM and embeddings; only deliberate fault injection remains, commented as such.                               |
+| Entity batches had no real batching             | `extract_batch` runs `max_workers` (default 8) documents concurrently; the 2.4x speedup floor is restored and measured at 9x to 24x.   |
+| MCP server exhausted the Community licence      | All IRIS calls go through one worker thread (`mcp/worker.py`); five concurrent queries no longer hold five connections.                |
+| Text leg of `hybrid` and `rrf` found nothing    | `SchemaManager.ensure_text_index()` builds an iFind index on the text column; the retrieval engine queries it with `%FIND`.            |
+| Possible lock leak hanging the combined session | Not reproduced. Test connections now set `LOCK_TIMEOUT=30`, `faulthandler_timeout = 300` dumps stacks, and ColBERT ingest rolls back.  |
+
+Things to look at in that work:
+
+- **Text search upgrade cost.** The first
+  `ensure_table_schema("SourceDocuments")` after upgrading builds the iFind
+  index synchronously over existing rows, so it grows with table size;
+  `ensure_text_index()` lets a deployment pick the moment. Until the index
+  exists, `text`, `hybrid` and `rrf` raise `TextIndexMissingError`.
+- **`COLLATE EXACT` makes an existing table case-sensitive from then on.** That
+  is the fix (`GROUP BY` returned `DISEASE` for `Disease`); the CHANGELOG says
+  so.
+- **The speedup assertions were weakened by an agent on its own initiative and
+  then restored** after I sent it back; the final tests assert the original
+  floors on the real LLM.
+- **The 24-document "1K" and "10K" sets** still run at 12 and 24 documents.
+- **A mixed-shape document table** indexes `text_content` only, so rows an older
+  release wrote to `content` are not text-searchable until copied.
+- **`tests/unit/test_index_ensure.py` followed by any integration test** that
+  calls `ensure_table_schema` in one session fails the later test: a unit test
+  builds `SchemaManager` with a mock connection and sets a class-level flag. The
+  combined session excludes `tests/unit`, so it does not show.
+- **The storage agent deleted `test_iris_devtools_namespace_fix.py`**: it tested
+  a third-party fix read from another project's path. Worth a glance.
 
 ## Known failures introduced or exposed
 
@@ -167,28 +209,16 @@ than deleted. The groups and owners:
 
 ## What was not done, or only partly
 
-- **The setup errors were three different problems.** 12 `test_attach_corpus`
-  errors: the file sits outside the directories where `iris_target` applies
-  automatically, so it connected to `localhost:1972` (and a wrong-width query
-  raised `TypeError` in `hybrid_graphrag.py`). 23 GraphRAG, ColBERT and
-  vector-search errors: `tests/utils/schema_models.py` described `RAG.Entities`
-  by hand in a shape the library never creates, and after the contract suite ran
-  the schema resetter rebuilt the table that way. 20 medical-20 and DAT errors:
-  the repo has no medical-20 `.DAT`; the fixture is now built from
+- **The 56 setup errors in the combined session were three different problems
+  (all fixed).** 12 `test_attach_corpus` errors: the file sits outside the
+  directories where `iris_target` applies automatically, so it connected to
+  `localhost:1972` (and a wrong-width query raised `TypeError` in
+  `hybrid_graphrag.py`). 23 GraphRAG, ColBERT and vector-search errors:
+  `tests/utils/schema_models.py` described `RAG.Entities` by hand in a shape the
+  library never creates, and after the contract suite ran the schema resetter
+  rebuilt the table that way. 20 medical-20 and DAT errors: the repo has no
+  medical-20 `.DAT`; the fixture is now built from
   `tests/fixtures/graphrag/medical_docs.json`.
-- **A pinned database keeps `COLLATE EXACT`** on `entity_type` and
-  `relationship_type` after a run (altering them back made `CREATE INDEX` hang
-  in `test_relation_embedding_store`). A `RAG.Entities` left in the old bad
-  shape by an earlier run needs `DROP TABLE RAG.EntityRelationships` and
-  `DROP TABLE RAG.Entities` once.
-- **`test_graphrag_pipeline_with_fixture`** fails on a label: it asserts
-  `retrieval_method` is one of `kg, vector, hybrid, rrf, text` and the pipeline
-  reports `hybrid_fusion` or `vector_fallback`.
-- **E2E tests call a live LLM** (`test_mcp_concurrent_queries`, the GraphRAG e2e
-  tests) with no client timeout; when the network stalls they hang, and
-  `test_bidirectional_relationships` failed once on "Could not parse LLM
-  response". They should take an injected LLM.
-
 - **ST-16 (`RelationEmbeddingStore`).** The plan put it in `remove-dead-code` as
   dead code. It is live (`retrieval/engine.py:161`); it was reassigned to
   `storage-correctness` (zero-row `UPDATE`, hardcoded `RAG.`) and
@@ -199,22 +229,15 @@ than deleted. The groups and owners:
 - **`IRIS_TIMEOUT`** is resolved by `connection-settings` but nothing reads it.
 - **Legacy tables whose `id` is a required column with no default** (for example
   `id VARCHAR(255) PRIMARY KEY`) still fail inserts; logged.
-- **`graphrag.load_documents(documents_path)`** requires a path and
-  `iris_global_graphrag.load_documents` has another shape, so `ingest()` still
-  fails on both.
-- **`test_mcp_basic_rag` "Document missing score"**: `search_by_text` returns no
-  scores by design and the serializer is in `mcp/`.
 - **`CRAGPipeline.load_documents`** counts a document as loaded when the store
-  raises, and `_get_documents_from_entities` swallows a database error.
-- **Text search:** ivg's `TextSearchEngine` reads a table `docs(id, text)` and
-  falls back to `LIKE` on any error; real text search over `RAG.SourceDocuments`
-  needs separate work.
-- **`test_mcp_stdio_e2e::test_story_2`** ranks by meaning and fails under the
-  test embedder; it passes with the real model.
+  raises, and `_get_documents_from_entities` swallows a database error (not
+  fixed; the CRAG contract tests pass, so neither is covered by a test).
 - **Loose `tests/test_*.py` files** are not in CI; `release.yml` still ignores
   four coverage and smoke test files, and `security.yml` keeps
   `continue-on-error` on the TruffleHog step.
 - The `simplify` pass was not run on any feature before commit.
+- The final combined session at the last head was not rerun by me (see the gate
+  section).
 
 ## How the work was done, and what went wrong
 
