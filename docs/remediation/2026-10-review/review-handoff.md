@@ -132,19 +132,22 @@ using it at the time.
 Master, run the same way, had 177 failed and 376 errors in the last row, and 37
 contract failures.
 
-**What was and was not verified at the final head.** The unit, contract and
-static-gate numbers above were run by me on `remediation/integrated` after the
-last merge (`1187033b`). The combined integration, e2e and root session was last
-completed on the throwaway container by the `text-search-leg` agent on a branch
-cut from the integrated head just before that merge, which merged cleanly: 725
-passed, 26 skipped, 6 xfailed, 0 failed. My own rerun of that session at the
-final head was abandoned when the laptop became unresponsive (load average over
-100 on 16 cores and Docker not answering; memory was not the cause: 128 GB, no
-swap, 69% free; the top CPU users were `fileproviderd`, the Traps and Defender
-security agents and OrbStack, and this project's own 30 worktrees and containers
-probably added to it) and I stopped it; it should be rerun once the machine is
-quiet. The 26 skips are unrelated to mocks (no `iris_llm` wheel,
-Enterprise-only, unimplemented features, a test wanting 100 entities).
+**Verified at the final head.** Every number in the table above was run by me on
+`remediation/integrated` at `28255b67` (the hand-off commits after it change
+only this file and the execution log). The combined integration, e2e and root
+session ran last, on a throwaway container with the real `OPENAI_API_KEY` and
+the real embedding model, as one process with
+`--timeout=1500 --timeout-method=signal`: **725 passed, 26 skipped, 6 xfailed, 0
+failed, 0 errors**, exit code 0, in 18 minutes. The 26 skips are unrelated to
+mocks (no `iris_llm` wheel, Enterprise-only, unimplemented features, a test
+wanting 100 entities).
+
+An earlier attempt at the same run stalled when the laptop became unresponsive
+(load average over 100 on 16 cores and Docker not answering; memory was not the
+cause: 128 GB, no swap, 69% free; the top CPU users were `fileproviderd`, the
+Traps and Defender security agents and OrbStack, and this project's 30 worktrees
+and containers probably added to it). It completed on a second try once the load
+fell to about 15.
 
 How that session has to be run to be meaningful:
 
@@ -239,8 +242,6 @@ than deleted. The groups and owners:
   four coverage and smoke test files, and `security.yml` keeps
   `continue-on-error` on the TruffleHog step.
 - The `simplify` pass was not run on any feature before commit.
-- The final combined session at the last head was not rerun by me (see the gate
-  section).
 
 ## How the work was done, and what went wrong
 
