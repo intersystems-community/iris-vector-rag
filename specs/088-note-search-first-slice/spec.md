@@ -201,9 +201,10 @@ filter and compare the notes returned.
   `chest pain`.
 - Two sections with the same label in one note (a repeated heading) are two rows and
   both can match.
-- The match found by the index and the match found by the polarity detector must be the
-  same text. If the detector cannot locate the phrase in the section text, the polarity
-  is `unknown`, never a guess.
+- The index only proposes sections. Every candidate is re-scanned for the phrase and a
+  section with no confirmed mention is dropped, because the index returns reverse-order
+  false positives for two-word phrases at the start of a text (contract section 8,
+  answer 6). Polarity is judged only on confirmed mentions.
 - A search on a table that holds ordinary documents (not sections) works as a flat
   phrase search: hits are documents, nothing rolls up, polarity is reported.
 

@@ -28,6 +28,7 @@ class QueryOptions:
     custom_prompt: Optional[str] = None
     high_level_keywords: Optional[List[str]] = None
     low_level_keywords: Optional[List[str]] = None
+    section: Optional[str] = None  # label of the sections a phrase search is limited to
 
 
 def normalize_query_params(
@@ -45,6 +46,7 @@ def normalize_query_params(
     custom_prompt: Optional[str] = None,
     high_level_keywords: Optional[List[str]] = None,
     low_level_keywords: Optional[List[str]] = None,
+    section: Optional[str] = None,
     **_extra: Any,
 ) -> QueryOptions:
     """Resolve aliases, validate, and return a QueryOptions.
@@ -104,4 +106,5 @@ def normalize_query_params(
         custom_prompt=custom_prompt,
         high_level_keywords=high_level_keywords,
         low_level_keywords=low_level_keywords,
+        section=section,
     )

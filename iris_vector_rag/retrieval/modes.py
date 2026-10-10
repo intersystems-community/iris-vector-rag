@@ -1,6 +1,6 @@
 """RetrievalMode registry and prerequisite checks (US4).
 
-Defines the four standard modes: vector, text, hybrid, rrf.
+Defines the standard modes: vector, text, phrase, hybrid, rrf (and global, mix).
 Prerequisites are checked before execution — never a silent fallback (FR-012).
 """
 
@@ -36,6 +36,13 @@ _register(RetrievalMode(name="vector", sources=["vector"], requires=[]))
 _register(
     RetrievalMode(
         name="text",
+        sources=["text"],
+        requires=["text_index"],
+    )
+)
+_register(
+    RetrievalMode(
+        name="phrase",
         sources=["text"],
         requires=["text_index"],
     )

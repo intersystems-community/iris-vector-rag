@@ -29,6 +29,8 @@ class RetrievalEngine:
         connection: Optional IRIS connection for text/hybrid/rrf modes.
         config_manager: Optional ConfigurationManager for RelationEmbeddingStore.
         keyword_extractor: Optional KeywordExtractor override (lazy-init if None).
+        polarity_detector: Optional polarity detector for ``retrieval="phrase"``; the
+            reference detector is used when None.
     """
 
     def __init__(
@@ -37,11 +39,13 @@ class RetrievalEngine:
         connection: Any = None,
         config_manager: Any = None,
         keyword_extractor: Any = None,
+        polarity_detector: Any = None,
     ) -> None:
         self.vector_store = vector_store
         self.connection = connection
         self._config_manager = config_manager
         self.keyword_extractor = keyword_extractor
+        self.polarity_detector = polarity_detector
 
     def retrieve(self, opts: Any) -> List[Any]:
         """Execute retrieval for the given options.
@@ -67,6 +71,8 @@ class RetrievalEngine:
             return self._retrieve_vector(opts)
         elif mode_name == "text":
             return self._retrieve_text(opts)
+        elif mode_name == "phrase":
+            return self._retrieve_phrase(opts)
         elif mode_name in ("hybrid", "rrf"):
             return self._retrieve_fusion(opts, mode_name)
         elif mode_name == "global":
@@ -135,6 +141,32 @@ class RetrievalEngine:
                 "where the threshold applies to the vector leg."
             )
         return self._text_leg(opts)
+
+    def _retrieve_phrase(self, opts: Any) -> List[Any]:
+        """Exact-phrase hits rolled up to parent documents, each with its polarity."""
+        if (getattr(opts, "similarity_threshold", 0.0) or 0.0) > 0.0:
+            raise ValueError(
+                "similarity_threshold does not apply to retrieval='phrase': scores are "
+                "index ranks, not similarities."
+            )
+        if getattr(opts, "metadata_filter", None):
+            raise ValueError(
+                "metadata_filter does not apply to retrieval='phrase'; narrow a phrase "
+                "search with section=."
+            )
+        if not hasattr(self.vector_store, "phrase_search"):
+            raise NotImplementedError(
+                f"{type(self.vector_store).__name__} has no phrase_search(), so "
+                f"retrieval='phrase' cannot run on it."
+            )
+        return list(
+            self.vector_store.phrase_search(
+                opts.query,
+                top_k=opts.top_k,
+                section=getattr(opts, "section", None),
+                detector=self.polarity_detector,
+            )
+        )
 
     def _retrieve_fusion(self, opts: Any, mode_name: str) -> List[Any]:
         vector_docs = self._vector_leg(opts.query, opts)

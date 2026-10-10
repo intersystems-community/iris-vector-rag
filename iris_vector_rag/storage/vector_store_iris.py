@@ -1648,6 +1648,46 @@ class IRISVectorStore(VectorStore):
         embedding = self._embed_query(query)
         return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
 
+    def _require_text_index(self, shape: TableShape) -> None:
+        """Raise `TextIndexMissingError` when the table has no full-text index."""
+        if not self.schema_manager.has_text_index(shape.qualified_name):
+            raise TextIndexMissingError(
+                f"{shape.qualified_name} has no full-text index {TEXT_INDEX_NAME}, so "
+                f"text, phrase, hybrid and rrf retrieval cannot search it. Create it "
+                f"once with SchemaManager(...).ensure_text_index({shape.table!r}); it "
+                f"is built over the rows already in the table.",
+                table=shape.qualified_name,
+                index=TEXT_INDEX_NAME,
+            )
+
+    def _ranked_text_rows(
+        self,
+        shape: TableShape,
+        search_string: str,
+        page: int,
+        extra_where: Optional[str],
+    ) -> List[tuple]:
+        """``(id, rank)`` for the best ``page`` rows matching ``search_string``."""
+        sql = build_text_search_sql(
+            table=self.table_name,
+            id_column=shape.column_for(ColumnRole.IDENTIFIER).name,
+            index_name=TEXT_INDEX_NAME,
+            rank_proc=rank_procedure(shape.schema, shape.class_name),
+            top_k=page,
+            extra_where=extra_where,
+        )
+        connection = self._get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [search_string, search_string, search_string])
+            return [(str(row[0]), float(row[1])) for row in cursor.fetchall()]
+        except Exception as exc:
+            raise VectorStoreConnectionError(
+                f"Text search failed: {self._sanitize_error_message(exc, 'text_search')}"
+            ) from exc
+        finally:
+            cursor.close()
+
     def text_search(
         self,
         query: str,
@@ -1675,7 +1715,6 @@ class IRISVectorStore(VectorStore):
             self._validate_filter_values(metadata_filter)
 
         shape = self.shape()
-        identifier = shape.column_for(ColumnRole.IDENTIFIER)
         shape.column_for(ColumnRole.TEXT)  # a table with no text cannot be searched
         metadata_column = shape.optional_column_for(ColumnRole.METADATA)
         if metadata_filter and metadata_column is None:
@@ -1687,15 +1726,7 @@ class IRISVectorStore(VectorStore):
                 shape.table,
             )
 
-        if not self.schema_manager.has_text_index(shape.qualified_name):
-            raise TextIndexMissingError(
-                f"{shape.qualified_name} has no full-text index {TEXT_INDEX_NAME}, so "
-                f"text, hybrid and rrf retrieval cannot search it. Create it once with "
-                f"SchemaManager(...).ensure_text_index({shape.table!r}); it is built "
-                f"over the rows already in the table.",
-                table=shape.qualified_name,
-                index=TEXT_INDEX_NAME,
-            )
+        self._require_text_index(shape)
 
         terms = search_terms(query)
         if not terms:
@@ -1706,29 +1737,9 @@ class IRISVectorStore(VectorStore):
             extra_where = self._metadata_filter_predicate(
                 metadata_filter, self._metadata_filter_column_expr(metadata_column)
             )
-        rank_proc = rank_procedure(shape.schema, shape.class_name)
-
-        connection = self._get_connection()
         page = top_k
         for _ in range(2):
-            sql = build_text_search_sql(
-                table=self.table_name,
-                id_column=identifier.name,
-                index_name=TEXT_INDEX_NAME,
-                rank_proc=rank_proc,
-                top_k=page,
-                extra_where=extra_where,
-            )
-            cursor = connection.cursor()
-            try:
-                cursor.execute(sql, [terms, terms, terms])
-                rows = [(str(row[0]), float(row[1])) for row in cursor.fetchall()]
-            except Exception as exc:
-                raise VectorStoreConnectionError(
-                    f"Text search failed: {self._sanitize_error_message(exc, 'text_search')}"
-                ) from exc
-            finally:
-                cursor.close()
+            rows = self._ranked_text_rows(shape, terms, page, extra_where)
 
             by_id = {
                 str(d.id): d for d in self.fetch_documents_by_ids([r[0] for r in rows])
@@ -1752,6 +1763,134 @@ class IRISVectorStore(VectorStore):
                 return kept[:top_k]
             page = top_k * 10
         return kept[:top_k]
+
+    #: Most section rows one phrase search reads while looking for ``top_k`` parents.
+    PHRASE_READ_BOUND = 2000
+
+    def phrase_search(
+        self,
+        phrase: str,
+        top_k: int = 5,
+        section: Optional[str] = None,
+        detector: Optional[Any] = None,
+    ) -> List[Document]:
+        """Exact-phrase search over the table, rolled up to parent documents.
+
+        The phrase must match words adjacent and in order
+        (specs/088-note-search-first-slice/contracts/query-semantics.md). Rows that carry
+        a ``parent_id`` in their metadata are sections: their hits roll up to one
+        document per parent, scored by the best section. Other rows are their own
+        parent. Each hit's ``metadata`` holds ``text_score``, ``polarity`` (from
+        ``detector``, the reference detector by default) and ``matched_sections``.
+
+        ``section`` limits the search to sections of that label, in SQL, before the
+        page is cut. Sections are read past ``top_k`` until ``top_k`` parents are found,
+        the matches run out, or `PHRASE_READ_BOUND` is reached; in the last case every
+        hit carries ``metadata["search_truncated"] = True``.
+
+        Raises:
+            ValueError: the phrase has no letter or digit.
+            TextIndexMissingError: the table has no full-text index.
+        """
+        from iris_vector_rag.note_search.phrase import (
+            find_mentions,
+            phrase_search_string,
+        )
+        from iris_vector_rag.note_search.polarity import (
+            ReferenceNegExDetector,
+            section_polarity,
+        )
+        from iris_vector_rag.note_search.rollup import SectionHit, roll_up
+
+        search_string = phrase_search_string(phrase)  # raises ValueError first
+        detector = detector or ReferenceNegExDetector()
+
+        shape = self.shape()
+        shape.column_for(ColumnRole.TEXT)
+        metadata_column = shape.optional_column_for(ColumnRole.METADATA)
+        if section is not None and metadata_column is None:
+            raise RoleNotPresent(
+                "a section filter was supplied but this table has no metadata column",
+                shape.schema,
+                shape.table,
+            )
+        self._require_text_index(shape)
+
+        extra_where = None
+        if section is not None:
+            extra_where = self._metadata_filter_predicate(
+                {"section": section}, self._metadata_filter_column_expr(metadata_column)
+            )
+
+        page = max(int(top_k) * 4, 20)
+        while True:
+            rows = self._ranked_text_rows(shape, search_string, page, extra_where)
+            by_id = {
+                str(d.id): d for d in self.fetch_documents_by_ids([r[0] for r in rows])
+            }
+            hits = []
+            for row_id, score in rows:
+                doc = by_id.get(row_id)
+                if doc is None:
+                    continue
+                meta = doc.metadata or {}
+                if section is not None and meta.get("section") != section:
+                    continue  # the LIKE approximated; the parsed metadata decides
+                mentions = find_mentions(doc.page_content, phrase)
+                if not mentions:
+                    continue  # the index proposed it; the re-scan found no phrase
+                polarity = section_polarity(
+                    detector(doc.page_content, m) for m in mentions
+                )
+                hits.append(
+                    SectionHit(
+                        id=row_id,
+                        parent_id=str(meta.get("parent_id") or row_id),
+                        label=str(meta.get("section", "")),
+                        text=doc.page_content,
+                        score=score,
+                        polarity=polarity,
+                        ordinal=int(meta.get("ordinal", 0) or 0),
+                    )
+                )
+            parents = roll_up(hits, k=top_k)
+            exhausted = len(rows) < page
+            enough = len({h.parent_id for h in hits}) >= top_k
+            if exhausted or enough:
+                truncated = False
+                break
+            if page >= self.PHRASE_READ_BOUND:
+                truncated = True
+                logger.warning(
+                    "phrase_search read %d sections and found %d of %d parents",
+                    page,
+                    len(parents),
+                    top_k,
+                )
+                break
+            page = min(page * 4, self.PHRASE_READ_BOUND)
+
+        documents = []
+        for parent in parents:
+            metadata = {
+                "text_score": parent.score,
+                "polarity": parent.polarity,
+                "matched_sections": [
+                    {
+                        "id": s.id,
+                        "label": s.label,
+                        "text_score": s.score,
+                        "polarity": s.polarity,
+                    }
+                    for s in parent.matched_sections
+                ],
+            }
+            if truncated:
+                metadata["search_truncated"] = True
+            documents.append(
+                Document(page_content=parent.text, metadata=metadata, id=parent.id)
+            )
+        return documents
 
     def search_by_vector(
         self,

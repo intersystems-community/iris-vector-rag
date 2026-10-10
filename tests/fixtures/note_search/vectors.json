@@ -1,0 +1,554 @@
+{
+  "version": 1,
+  "description": "Synthetic notes and known answers for note search (spec 088). No patient data. Consumers need no iris_vector_rag import.",
+  "heading_detector": "a line starting with an upper-case phrase of letters and spaces that ends in a colon",
+  "notes": [
+    {
+      "id": "N-001",
+      "text": "CHIEF COMPLAINT: Chest pain for two hours.\nHPI: Patient reports chest pain radiating to the left arm. Denies shortness of breath.\nALLERGIES: Penicillin: rash.\nMEDICATIONS GIVEN: Aspirin 324 mg given.",
+      "sections": [
+        {
+          "label": "chief complaint",
+          "text": "Chest pain for two hours."
+        },
+        {
+          "label": "hpi",
+          "text": "Patient reports chest pain radiating to the left arm. Denies shortness of breath."
+        },
+        {
+          "label": "allergies",
+          "text": "Penicillin: rash."
+        },
+        {
+          "label": "medications given",
+          "text": "Aspirin 324 mg given."
+        }
+      ]
+    },
+    {
+      "id": "N-002",
+      "text": "CHIEF COMPLAINT: Shortness of breath.\nHPI: Patient denies chest pain. No fever.\nALLERGIES: No known drug allergies.",
+      "sections": [
+        {
+          "label": "chief complaint",
+          "text": "Shortness of breath."
+        },
+        {
+          "label": "hpi",
+          "text": "Patient denies chest pain. No fever."
+        },
+        {
+          "label": "allergies",
+          "text": "No known drug allergies."
+        }
+      ]
+    },
+    {
+      "id": "N-003",
+      "text": "Patient seen for chest pain that resolved after nitroglycerin.",
+      "sections": [
+        {
+          "label": "rest",
+          "text": "Patient seen for chest pain that resolved after nitroglycerin."
+        }
+      ]
+    },
+    {
+      "id": "N-004",
+      "text": "HPI: Possible chest pain, rule out MI. Pain in the chest wall on palpation.\nALLERGIES: Penicillin allergy.",
+      "sections": [
+        {
+          "label": "hpi",
+          "text": "Possible chest pain, rule out MI. Pain in the chest wall on palpation."
+        },
+        {
+          "label": "allergies",
+          "text": "Penicillin allergy."
+        }
+      ]
+    },
+    {
+      "id": "N-005",
+      "text": "HPI: No chest pain at rest. Chest pain with exertion.",
+      "sections": [
+        {
+          "label": "hpi",
+          "text": "No chest pain at rest. Chest pain with exertion."
+        }
+      ]
+    },
+    {
+      "id": "N-006",
+      "text": "CHIEF COMPLAINT: Chest pain.\nHPI: Chest pain. Chest pain is worse with breathing.",
+      "sections": [
+        {
+          "label": "chief complaint",
+          "text": "Chest pain."
+        },
+        {
+          "label": "hpi",
+          "text": "Chest pain. Chest pain is worse with breathing."
+        }
+      ]
+    },
+    {
+      "id": "N-007",
+      "text": "HPI: Took penicillin last week for a sore throat.",
+      "sections": [
+        {
+          "label": "hpi",
+          "text": "Took penicillin last week for a sore throat."
+        }
+      ]
+    },
+    {
+      "id": "N-008",
+      "text": "HPI: Chest pain since noon.\nROS: Positive for chest pain.\nPLAN: Chest pain pathway started.\nDISPOSITION: Return for chest pain.",
+      "sections": [
+        {
+          "label": "hpi",
+          "text": "Chest pain since noon."
+        },
+        {
+          "label": "ros",
+          "text": "Positive for chest pain."
+        },
+        {
+          "label": "plan",
+          "text": "Chest pain pathway started."
+        },
+        {
+          "label": "disposition",
+          "text": "Return for chest pain."
+        }
+      ]
+    },
+    {
+      "id": "N-009",
+      "text": "HPI: Chest-pain noted.",
+      "sections": [
+        {
+          "label": "hpi",
+          "text": "Chest-pain noted."
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "V1",
+      "phrase": "chest pain",
+      "section": null,
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-001",
+          "polarity": "affirmed",
+          "sections": [
+            "chief complaint",
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-002",
+          "polarity": "negated",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-003",
+          "polarity": "affirmed",
+          "sections": [
+            "rest"
+          ]
+        },
+        {
+          "id": "N-004",
+          "polarity": "unknown",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-005",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-006",
+          "polarity": "affirmed",
+          "sections": [
+            "chief complaint",
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-008",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi",
+            "ros",
+            "plan",
+            "disposition"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V2",
+      "phrase": "chest pain",
+      "section": "hpi",
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-001",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-002",
+          "polarity": "negated",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-004",
+          "polarity": "unknown",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-005",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-006",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-008",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V3",
+      "phrase": "chest pain",
+      "section": "chief complaint",
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-001",
+          "polarity": "affirmed",
+          "sections": [
+            "chief complaint"
+          ]
+        },
+        {
+          "id": "N-006",
+          "polarity": "affirmed",
+          "sections": [
+            "chief complaint"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V4",
+      "phrase": "penicillin",
+      "section": null,
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-001",
+          "polarity": "affirmed",
+          "sections": [
+            "allergies"
+          ]
+        },
+        {
+          "id": "N-004",
+          "polarity": "affirmed",
+          "sections": [
+            "allergies"
+          ]
+        },
+        {
+          "id": "N-007",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V5",
+      "phrase": "penicillin",
+      "section": "allergies",
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-001",
+          "polarity": "affirmed",
+          "sections": [
+            "allergies"
+          ]
+        },
+        {
+          "id": "N-004",
+          "polarity": "affirmed",
+          "sections": [
+            "allergies"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V6",
+      "phrase": "pain in the chest",
+      "section": null,
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-004",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V7",
+      "phrase": "chest wall pain",
+      "section": null,
+      "k": 10,
+      "parents": []
+    },
+    {
+      "id": "V8",
+      "phrase": "shortness of breath",
+      "section": null,
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-001",
+          "polarity": "negated",
+          "sections": [
+            "hpi"
+          ]
+        },
+        {
+          "id": "N-002",
+          "polarity": "affirmed",
+          "sections": [
+            "chief complaint"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V9",
+      "phrase": "no known drug allergies",
+      "section": null,
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-002",
+          "polarity": "affirmed",
+          "sections": [
+            "allergies"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V10",
+      "phrase": "chest pain",
+      "section": null,
+      "k": 3,
+      "count": 3,
+      "subset_of": "V1"
+    },
+    {
+      "id": "V11",
+      "phrase": "CHEST   PAIN",
+      "section": null,
+      "k": 10,
+      "same_as": "V1"
+    },
+    {
+      "id": "V12",
+      "phrase": "\"chest pain\" OR penicillin",
+      "section": null,
+      "k": 10,
+      "parents": []
+    },
+    {
+      "id": "V13",
+      "phrase": "chest pain",
+      "section": null,
+      "k": 10,
+      "ranked_before": [
+        "N-006",
+        "N-003"
+      ]
+    },
+    {
+      "id": "V14",
+      "phrase": "chest pain",
+      "section": "allergies",
+      "k": 10,
+      "parents": []
+    },
+    {
+      "id": "V15",
+      "phrase": "chest pain",
+      "section": "no such section",
+      "k": 10,
+      "parents": []
+    },
+    {
+      "id": "V16a",
+      "phrase": "",
+      "section": null,
+      "k": 10,
+      "error": "ValueError"
+    },
+    {
+      "id": "V16b",
+      "phrase": "   ",
+      "section": null,
+      "k": 10,
+      "error": "ValueError"
+    },
+    {
+      "id": "V16c",
+      "phrase": "...",
+      "section": null,
+      "k": 10,
+      "error": "ValueError"
+    },
+    {
+      "id": "V17",
+      "phrase": "chest-pain",
+      "section": null,
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-009",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V18",
+      "phrase": "pain chest",
+      "section": null,
+      "k": 10,
+      "parents": [
+        {
+          "id": "N-006",
+          "polarity": "affirmed",
+          "sections": [
+            "hpi"
+          ]
+        }
+      ]
+    }
+  ],
+  "polarity": [
+    {
+      "text": "Patient reports chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "affirmed"
+    },
+    {
+      "text": "Patient denies chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "No chest pain at rest. Chest pain with exertion.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "No chest pain at rest. Chest pain with exertion.",
+      "phrase": "chest pain",
+      "mention": 1,
+      "expected": "affirmed"
+    },
+    {
+      "text": "Chest pain ruled out.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "Possible chest pain, rule out MI.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "unknown"
+    },
+    {
+      "text": "Denies shortness of breath, but reports chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "affirmed"
+    },
+    {
+      "text": "Denies shortness of breath, but reports chest pain.",
+      "phrase": "shortness of breath",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "Without fever or chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "Denies fever. Chest pain started today.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "affirmed"
+    },
+    {
+      "text": "No known drug allergies.",
+      "phrase": "no known drug allergies",
+      "mention": 0,
+      "expected": "affirmed"
+    },
+    {
+      "text": "Possibly no chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "unknown"
+    }
+  ]
+}

@@ -53,11 +53,12 @@ allergies` is a four-token phrase.
    tokenising, `"chest pain" OR penicillin` is the phrase `chest pain or penicillin`.
 7. A phrase never matches across two sections, because each section is searched as a
    document of its own.
-8. **Locating mentions.** Polarity needs the position of each mention. The index does not
-   return positions (answer 3), so the implementation re-scans the section text with its
-   own tokeniser. Where the index matched a section but the re-scan finds no mention
-   (the two tokenisers disagree on unusual punctuation such as `chest...`), the section's
-   polarity is `unknown`, never a guess.
+8. **The index proposes, the re-scan decides.** The index is a candidate generator: on
+   IRIS 2026.1 a quoted two-word phrase also matches the words in reverse order when
+   one of them is the first token of the text (section 8, answer 6). The implementation
+   therefore re-scans every candidate section with its own tokeniser, finds each
+   mention (the index returns no positions, answer 3), and **drops a section in which it
+   finds none**. Polarity is judged only on mentions the re-scan found.
 
 ## 4. Section filter
 
@@ -127,7 +128,7 @@ accuracy is claimed for it.
 | `N-003` | `Patient seen for chest pain that resolved after nitroglycerin.` (no heading)                                                                                                                                         |
 | `N-004` | `HPI: Possible chest pain, rule out MI. Pain in the chest wall on palpation.` / `ALLERGIES: Penicillin allergy.`                                                                                                      |
 | `N-005` | `HPI: No chest pain at rest. Chest pain with exertion.`                                                                                                                                                               |
-| `N-006` | `CHIEF COMPLAINT: Chest pain.` / `HPI: Chest pain started this morning. Chest pain is worse with breathing.`                                                                                                          |
+| `N-006` | `CHIEF COMPLAINT: Chest pain.` / `HPI: Chest pain. Chest pain is worse with breathing.`                                                                                                          |
 | `N-007` | `HPI: Took penicillin last week for a sore throat.` (no allergies heading)                                                                                                                                            |
 | `N-008` | `HPI: Chest pain since noon.` / `ROS: Positive for chest pain.` / `PLAN: Chest pain pathway started.` / `DISPOSITION: Return for chest pain.`                                                                         |
 | `N-009` | `HPI: Chest-pain noted.`                                                                                                                                                                                              |
@@ -156,7 +157,7 @@ rolled-up polarity; matched section labels in brackets.
 | V10 | `chest pain`                 | none              | 3   | exactly 3 distinct parents, all among V1's; no repeats (`N-008` has four matching sections)                                                                                                                                     |
 | V11 | `CHEST   PAIN`               | none              | 10  | same parents, polarities and sections as V1                                                                                                                                                                                     |
 | V12 | `"chest pain" OR penicillin` | none              | 10  | none (operator text is plain text: the phrase `chest pain or penicillin` occurs nowhere)                                                                                                                                        |
-| V13 | `chest pain`                 | none              | 10  | `N-006` ranks before `N-003` (three mentions in a short note against one in a long sentence). **Provisional**: kept only if the index agrees on the real container, else dropped                                                |
+| V13 | `chest pain`                 | none              | 10  | `N-006` ranks before `N-003` (its best section has two mentions in a short text; `N-003` has one in a longer sentence). Confirmed on the full fixture                                                |
 | V14 | `chest pain`                 | `allergies`       | 10  | none                                                                                                                                                                                                                            |
 | V15 | `chest pain`                 | `no such section` | 10  | none                                                                                                                                                                                                                            |
 | V16 | (empty), `   `, `...`        | none              | 10  | error (`ValueError`), not an empty result                                                                                                                                                                                       |
@@ -189,8 +190,7 @@ Spike scripts: `/tmp/ns_spike/spike*.py`, scratch schema `NS_SPIKE`, dropped aft
    AND of terms, not a phrase. Section 3.3, 3.5.
 2. **Rank.** The generated `<Class>_<Index>Rank(%ID, ?)` procedure scores a quoted phrase
    query and orders it sensibly (a section with two mentions in a short text ahead of one
-   with a single mention in a long sentence). V13 stays provisional until the full fixture
-   runs.
+   with a single mention in a long sentence). V13 held on the full fixture (it ranked `N-006` before `N-003` on every run).
 3. **Mention location.** `%iFind.Highlight` returns a stream, not offsets usable through
    DBAPI; the implementation re-scans the text (section 3.8) and falls back to `unknown`.
 4. **Section filter.** The existing `_metadata_filter_predicate` (a `LIKE` over the JSON
@@ -203,3 +203,9 @@ Spike scripts: `/tmp/ns_spike/spike*.py`, scratch schema `NS_SPIKE`, dropped aft
    `chest_pain`, `chest:pain`, `chest–pain` (en dash), `chest - pain` or `chest... pain`.
    `"patient's pain"`, `"3.5 mg"`, `"r/o mi"` and `"chest - pain"` each matched their own
    form and not the punctuation-stripped one.
+6. **False positives at the start of a text.** A quoted phrase of two words matched the
+   same words in reverse order when a phrase word was the first token of the text
+   (`"pain chest"` matched `chest pain` and even `chest was pain`; `"b a"` matched
+   `a b c d`), and did not when the pair sat later (`x chest pain`). Three-word phrases
+   were exact in every probe. Consequence: section 3.8, candidates are re-scanned and
+   unconfirmed ones dropped.
