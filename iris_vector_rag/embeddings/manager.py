@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, cast
 
 from ..config.manager import ConfigurationManager
 from ..exceptions import EmbeddingError
+from .dimension import embedding_dimension_of
 
 logger = logging.getLogger(__name__)
 
@@ -270,8 +271,7 @@ class EmbeddingManager:
 
         def width() -> Optional[int]:
             m = _get_cached_sentence_transformer(model_name, device)
-            reported = m.get_sentence_embedding_dimension()
-            return int(reported) if reported else None
+            return embedding_dimension_of(m)
 
         self._backend_widths["sentence_transformers"] = width
         self._backend_models["sentence_transformers"] = model_name

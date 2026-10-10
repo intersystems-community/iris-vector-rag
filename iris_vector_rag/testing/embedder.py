@@ -51,8 +51,12 @@ class TestEmbedder:
         self.dimension = dimension
         _warn_once()
 
-    def get_sentence_embedding_dimension(self) -> int:
+    def get_embedding_dimension(self) -> int:
         return self.dimension
+
+    def get_sentence_embedding_dimension(self) -> int:
+        # Kept for callers still on the pre-6.x name; the package probes the new one.
+        return self.get_embedding_dimension()
 
     def _vector(self, text: str) -> List[float]:
         seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16)

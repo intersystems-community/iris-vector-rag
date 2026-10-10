@@ -2,6 +2,15 @@
 
 ## v0.15.0 — correctness release (2026-10-10)
 
+### Fixed: embedding width probe on sentence-transformers 6
+
+sentence-transformers 6 renamed `get_sentence_embedding_dimension()` to
+`get_embedding_dimension()` and warns on the old name. The package allows 6.x, and under the
+test suite's `filterwarnings = error` the warning made the dimension probe fail, which
+surfaced as "Cannot determine the embedding dimension". `EmbeddingManager` now reads the
+width through `embeddings.dimension.embedding_dimension_of`, which prefers the new name and
+falls back to the old one (5.x), and `TestEmbedder` offers both.
+
 ### Changed: iris-vector-graph 4.2.0 (BM25 schema 2, no default superuser login)
 
 IVR now requires `iris-vector-graph>=4.2.0,<5` (4.2.0 is on PyPI). See
