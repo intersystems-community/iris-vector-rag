@@ -38,12 +38,22 @@ class VecIndexSearcher:
     ):
         from iris_vector_graph import IRISGraphEngine
 
+        from iris_vector_rag.integrations.ivg import remember_credentials
+
         self.conn = conn
         self.index_name = index_name
         self.token_dim = token_dim
         self.num_trees = num_trees
         self.leaf_size = leaf_size
-        self._engine = IRISGraphEngine(_ensure_native_conn(conn))
+        # Log in as the account the session resolved, not ivg's old _SYSTEM default.
+        self._engine = remember_credentials(
+            IRISGraphEngine(_ensure_native_conn(conn)),
+            host=getattr(conn, "hostname", None),
+            port=getattr(conn, "port", None),
+            namespace=getattr(conn, "namespace", None),
+            username=None,
+            password=None,
+        )
         self._iris = self._engine._iris_obj()
 
     def build(self) -> dict:

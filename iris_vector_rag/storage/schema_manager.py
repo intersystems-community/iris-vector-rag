@@ -572,18 +572,37 @@ class SchemaManager:
 
         connection = self.connection_manager.get_connection()
         if not dry_run:
-            dimension = self.base_embedding_dimension
-            create_graph_engine(
-                connection, embedding_dimension=dimension
-            ).initialize_schema()
+            self._graph_engine(connection).initialize_schema()
         return upgrade_to_4_0_0(connection, dry_run=dry_run, **options)
+
+    def _graph_engine(self, connection):
+        """An ivg engine on `connection`, logging in as the session's account.
+
+        ivg 4.2.0 opens the engine's class-method connection (the class deploy
+        included) with the credentials it is given; it no longer uses `_SYSTEM`.
+        A connection manager that has no session identity gets an engine without
+        credentials, which then shares `connection`.
+        """
+        from ..session import SessionIdentity
+
+        options: Dict[str, Any] = {"embedding_dimension": self.base_embedding_dimension}
+        identity = getattr(
+            getattr(self.connection_manager, "session", None), "identity", None
+        )
+        if isinstance(identity, SessionIdentity):
+            options["credentials"] = {
+                "host": identity.host,
+                "port": identity.port,
+                "namespace": identity.namespace,
+                "username": identity.username,
+                "password": identity.password,
+            }
+        return create_graph_engine(connection, **options)
 
     def _initialize_ivg_schema(self) -> Dict[str, Any]:
         """Delegate Graph_KG schema creation to iris-vector-graph."""
         connection = self.connection_manager.get_connection()
-        dimension = self.base_embedding_dimension
-        engine = create_graph_engine(connection, embedding_dimension=dimension)
-        status = engine.initialize_schema()
+        status = self._graph_engine(connection).initialize_schema()
         return status if isinstance(status, dict) else {"status": status}
 
     def _validate_configuration(self):

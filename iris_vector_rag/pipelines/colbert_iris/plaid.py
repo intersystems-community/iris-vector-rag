@@ -32,7 +32,19 @@ def _ensure_native_conn(conn):
 def _make_engine(conn):
     from iris_vector_graph import IRISGraphEngine
 
-    return IRISGraphEngine(_ensure_native_conn(conn))
+    from iris_vector_rag.integrations.ivg import remember_credentials
+
+    # The engine's class-method calls log in as the account the session resolved
+    # (ivg 4.2.0 no longer logs in as _SYSTEM), the same account `_ensure_native_conn`
+    # opened the session connection as.
+    return remember_credentials(
+        IRISGraphEngine(_ensure_native_conn(conn)),
+        host=getattr(conn, "hostname", None),
+        port=getattr(conn, "port", None),
+        namespace=getattr(conn, "namespace", None),
+        username=None,
+        password=None,
+    )
 
 
 class PLAIDBuilder:

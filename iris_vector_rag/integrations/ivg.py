@@ -124,21 +124,87 @@ def assert_ivg_compatible(
     )
 
 
+def ivg_connection_params(
+    host: Optional[str],
+    port: Optional[int],
+    namespace: Optional[str],
+    username: Optional[str],
+    password: Optional[str],
+) -> Dict[str, Any]:
+    """The connection keywords `IRISGraphEngine.from_connect` keeps on its engine.
+
+    Unset parameters are filled by the same settings resolver the session used, so
+    the account named here is the one the session's connection was opened as.
+    """
+    from iris_vector_rag.config.connection_settings import resolve_connection_settings
+
+    settings = resolve_connection_settings(
+        {
+            "host": host,
+            "port": port,
+            "namespace": namespace,
+            "username": username,
+            "password": password,
+        }
+    )
+    return {
+        "hostname": settings.host,
+        "port": settings.port,
+        "namespace": settings.namespace,
+        "username": settings.username,
+        "password": settings.password,
+    }
+
+
+def remember_credentials(
+    engine,
+    host: Optional[str],
+    port: Optional[int],
+    namespace: Optional[str],
+    username: Optional[str],
+    password: Optional[str],
+):
+    """Tell an engine built from a session's connection which account that is.
+
+    ivg 4.2.0's `IRISGraphEngine._iris_obj` opens the connection for its class-method
+    calls (BM25, vector, PLAID, ledger) with the credentials in `_connection_params`.
+    Only `from_connect` sets them. An engine built from a bare connection has none and
+    would run those calls on the connection it was given, which here is the session's,
+    shared with cursor SQL; ivg 4.1.1 logged in as `_SYSTEM` instead. Recording the
+    account IVR connected with gives the class-method calls their own connection, as
+    that account, so the role of that account decides what they may do.
+
+    `_connection_params` is ivg's own attribute; `tests/unit/test_ivg_credentials.py`
+    checks against the installed ivg that `_iris_obj` reads it.
+    """
+    engine._connection_params = ivg_connection_params(
+        host, port, namespace, username, password
+    )
+    return engine
+
+
 def create_graph_engine(
     connection,
     embedding_dimension: Optional[int] = None,
+    credentials: Optional[Mapping[str, Any]] = None,
     **kwargs,
 ):
     """Create an IVG engine; `embedding_dimension` and other kwargs pass through.
 
     ivg 4.x auto-detects the stored vector dtype when `vector_dtype` is not given.
+    `credentials` (host, port, namespace, username, password) are recorded on the
+    engine by `remember_credentials`; without them ivg 4.2.0 runs its class-method
+    calls on `connection` itself.
     """
     module = import_ivg_module()
     assert_ivg_compatible(module)
     engine_cls = getattr(module, "IRISGraphEngine")
     if embedding_dimension is not None:
         kwargs.setdefault("embedding_dimension", int(embedding_dimension))
-    return engine_cls(connection, **kwargs)
+    engine = engine_cls(connection, **kwargs)
+    if credentials is not None:
+        remember_credentials(engine, **dict(credentials))
+    return engine
 
 
 def pre_4_layout_tables(
