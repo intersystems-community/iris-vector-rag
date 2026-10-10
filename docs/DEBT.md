@@ -215,6 +215,25 @@ supported interface: the value hashes the selected class names and text, so it c
 with every ivg version and with `IVG_EMBEDDED_PYTHON`, and has to be rewritten on each
 bump (`class_deploy.fingerprint(sources)` over the selected set).
 
+**Re-checked against ivg 4.2.0 (2026-10-10).** `iris_vector_graph/_engine/class_deploy.py`,
+`iris_vector_graph/migrations/` and `_engine/schema.py` are identical in 4.1.1 and 4.2.0
+(`git diff v4.1.1 v4.2.0` over them is empty), so the probe is the same:
+
+```python
+    try:
+        iris_obj.classMethodObject("%SYS.Python", "Import", "sys")
+        return True
+```
+
+and ivg 4.2.0's `docs/KNOWN_ISSUES.md` does not mention the crash. On a fresh
+`intersystemsdc/iris-community:2026.1` container (IRIS 2026.1 Build 234U, arm64) the probe
+returned `True` in 0.1 s, and a deploy forced with `IVG_FORCE_CLASS_DEPLOY=1` and
+`IVG_EMBEDDED_PYTHON` unset compiled the Python-language classes in 6.2 s with no signal 11
+in `messages.log`. The build number is the dev container's (234), so the crash belongs to
+that container's image or configuration, not to the build alone. The dev container
+itself was not touched, so everything above still applies to it, and `IVG_EMBEDDED_PYTHON=0`
+stays the test default.
+
 ivg 4.1.1 fixed what 4.1.0 left open: the dry run no longer raises on a 2.x install,
 the wheel ships the `.cls` files, `delete_node` reaches routed vector tables, and the
 `SyntaxWarning` in `schema.py` is gone.

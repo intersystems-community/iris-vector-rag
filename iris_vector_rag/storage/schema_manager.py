@@ -12,7 +12,8 @@ import os
 import re
 import time
 import warnings
-from typing import Any, Dict, List, Optional, cast
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, List, Optional, cast
 
 from iris_vector_rag.exceptions import DestructiveMigrationError, SchemaIndexError
 from iris_vector_rag.integrations.ivg import (
@@ -25,6 +26,10 @@ from iris_vector_rag.integrations.ivg import (
     create_graph_engine,
     get_ivg_version,
     pre_4_layout_tables,
+)
+from iris_vector_rag.integrations.ivg_bm25 import (
+    Bm25UpgradeReport,
+    upgrade_bm25_indexes,
 )
 from iris_vector_rag.storage.catalog import IRISCatalogReader
 from iris_vector_rag.storage.collation import EXACT_CASE_COLUMNS, ensure_exact_collation
@@ -44,6 +49,20 @@ from iris_vector_rag.storage.text_search import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class IvgUpgrade:
+    """`SchemaManager.upgrade_iris_vector_graph`: the layout step and the BM25 step."""
+
+    #: ivg's `UpgradeReport` for the 4.0 storage layout.
+    storage: Any
+    #: BM25 indexes brought to schema 2 (ivg 4.2.0).
+    bm25: Bm25UpgradeReport
+
+    @property
+    def ok(self) -> bool:
+        return self.bm25.ok
 
 
 def _canonical_column_names(shape: TableShape) -> list:
@@ -572,18 +591,87 @@ class SchemaManager:
 
         connection = self.connection_manager.get_connection()
         if not dry_run:
-            dimension = self.base_embedding_dimension
-            create_graph_engine(
-                connection, embedding_dimension=dimension
-            ).initialize_schema()
+            self._graph_engine(connection).initialize_schema()
         return upgrade_to_4_0_0(connection, dry_run=dry_run, **options)
+
+    def upgrade_bm25_indexes(
+        self,
+        names: Optional[Iterable[str]] = None,
+        dry_run: bool = False,
+        continue_on_error: bool = False,
+    ) -> Bm25UpgradeReport:
+        """Bring BM25 indexes to ivg 4.2.0's schema 2.
+
+        ivg 4.2.0's `Insert` and `Delete` refuse an index built earlier until
+        `engine.bm25_upgrade(name)` has run once (`Search` is unaffected). This runs it
+        for every full-text index in the namespace, or for `names`, skipping the ones
+        already converted, so it can be repeated. A dry run reads each index and writes
+        nothing. One pass over each index's posting lists and writers are refused while
+        it runs: run it as a job. Scores change afterwards (docs/IVG_4X_UPGRADE.md).
+
+        An index that cannot be upgraded raises `Bm25UpgradeError` (its `report` holds
+        what was done before it); `continue_on_error=True` records it and goes on.
+
+        Needs the 4.2.0 `Graph.KG.BM25Index` class on the server, which
+        `initialize_schema()` (and so `upgrade_iris_vector_graph`) deploys.
+        """
+        engine = self._graph_engine(self.connection_manager.get_connection())
+        return upgrade_bm25_indexes(
+            engine, names=names, dry_run=dry_run, continue_on_error=continue_on_error
+        )
+
+    def upgrade_iris_vector_graph(
+        self,
+        dry_run: bool = False,
+        bm25_indexes: Optional[Iterable[str]] = None,
+        continue_on_error: bool = False,
+        **options,
+    ) -> IvgUpgrade:
+        """Everything an iris-vector-graph upgrade needs, in ivg's order.
+
+        1. `upgrade_iris_vector_graph_storage` -- `initialize_schema()` (which deploys
+           the `Graph.KG` classes of the installed ivg) and the 4.0 layout migration;
+        2. `upgrade_bm25_indexes` -- BM25 schema 2, which needs the classes step 1 put
+           on the server.
+
+        `dry_run` previews both and writes neither. `bm25_indexes` limits step 2 to
+        those names; `continue_on_error` is step 2's (see `upgrade_bm25_indexes`);
+        `options` go to step 1. Re-runnable.
+        """
+        storage = self.upgrade_iris_vector_graph_storage(dry_run=dry_run, **options)
+        bm25 = self.upgrade_bm25_indexes(
+            names=bm25_indexes, dry_run=dry_run, continue_on_error=continue_on_error
+        )
+        return IvgUpgrade(storage=storage, bm25=bm25)
+
+    def _graph_engine(self, connection):
+        """An ivg engine on `connection`, logging in as the session's account.
+
+        ivg 4.2.0 opens the engine's class-method connection (the class deploy
+        included) with the credentials it is given; it no longer uses `_SYSTEM`.
+        A connection manager that has no session identity gets an engine without
+        credentials, which then shares `connection`.
+        """
+        from ..session import SessionIdentity
+
+        options: Dict[str, Any] = {"embedding_dimension": self.base_embedding_dimension}
+        identity = getattr(
+            getattr(self.connection_manager, "session", None), "identity", None
+        )
+        if isinstance(identity, SessionIdentity):
+            options["credentials"] = {
+                "host": identity.host,
+                "port": identity.port,
+                "namespace": identity.namespace,
+                "username": identity.username,
+                "password": identity.password,
+            }
+        return create_graph_engine(connection, **options)
 
     def _initialize_ivg_schema(self) -> Dict[str, Any]:
         """Delegate Graph_KG schema creation to iris-vector-graph."""
         connection = self.connection_manager.get_connection()
-        dimension = self.base_embedding_dimension
-        engine = create_graph_engine(connection, embedding_dimension=dimension)
-        status = engine.initialize_schema()
+        status = self._graph_engine(connection).initialize_schema()
         return status if isinstance(status, dict) else {"status": status}
 
     def _validate_configuration(self):

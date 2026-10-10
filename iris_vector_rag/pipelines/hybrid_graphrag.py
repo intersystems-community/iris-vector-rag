@@ -16,6 +16,7 @@ from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..exceptions import DimensionMismatchError
+from ..integrations.ivg import remember_credentials
 from ..storage.catalog import IRISCatalogReader
 from ..storage.shape_resolver import TableShapeResolver
 from ..storage.table_shape import ColumnRole, TableShape
@@ -152,6 +153,17 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 self.iris_engine = modules["IRISGraphEngine"](
                     iris_connection,
                     embedding_dimension=self.embedding_manager.get_embedding_dimension(),
+                )
+                # ivg 4.2.0 opens the engine's class-method connection (BM25, vector,
+                # PLAID, ledger) with these credentials; it no longer logs in as
+                # _SYSTEM, and without them it would share the session's connection.
+                remember_credentials(
+                    self.iris_engine,
+                    host=str(host),
+                    port=int(port),
+                    namespace=str(namespace),
+                    username=str(username),
+                    password=str(password),
                 )
                 self.fusion_engine = modules["HybridSearchFusion"](self.iris_engine)
                 self.text_engine = modules["TextSearchEngine"](iris_connection)

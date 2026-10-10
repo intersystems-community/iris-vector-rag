@@ -46,6 +46,11 @@ retrieval:
   default_mode: "vector" # vector | text | hybrid | rrf
   top_k_default: 5
   similarity_threshold: 0.0
+  # BM25 text search through iris-vector-graph (IVGTextSearchBackend.from_config).
+  bm25:
+    # 0 = off. A number from 0 to 1 skips query terms found in more than that fraction
+    # of the documents (ivg 4.2.0); if every term is over it, the rarest is kept.
+    max_df_fraction: 0.0
 
 rerank:
   enabled: false # Default off; set rerank=True at query time to enable

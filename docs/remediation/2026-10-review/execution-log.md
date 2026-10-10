@@ -1380,3 +1380,69 @@ container):
   ("Cannot determine the embedding dimension ... Mock"): a unit test constructs
   `SchemaManager` with a Mock connection, which sets the class-level `_config_loaded`.
   The combined session does not include `tests/unit`, so it is unaffected.
+
+## ivg-4.2
+
+Branch `remediation/ivg-4.2`, from `remediation/integrated`. Moves IVR from iris-vector-graph
+4.1.1 to 4.2.0. ivg 4.2.0 is tagged (`v4.2.0`, same tree as the release merge `ef56705d`) but
+PyPI had only 4.1.1, so everything was built and tested against a wheel built from a clean
+checkout of the tag (`uv build --wheel`; 155 files, 57 `.cls`), in a venv outside any repo
+(`/Users/tdyar/ws/ivr-ivg42-venv`, third-party versions copied from the shared venv's freeze).
+Nothing pushed or published.
+
+- **Pin.** `iris-vector-graph>=4.2.0,<5` in pyproject (core, `embedding`, `hybrid-graphrag`),
+  both workflows, AGENTS.md, docs/IVG_4X_UPGRADE.md and the 0.15.0 release notes;
+  `tests/unit/test_ivg_pin_agreement.py` keeps them equal. Unsatisfiable on PyPI until 4.2.0
+  is published. `MIN_IVG_VERSION` stays `4.0.0` (the layout floor); the 4.2.0 calls are made
+  only where they are needed.
+- **(a) Login.** Verified in `engine.py` `_iris_obj`: credentials come from
+  `_connection_params` (set only by `from_connect`); with none, `createIRIS(self.conn)`, the
+  session's own connection. IVR builds all engines from the session's connection (HybridGraphRAG,
+  PLAID, VecIndex, SchemaManager). Decision: keep the session connection (unit tests and the
+  session registry depend on it) and record the resolved account on the engine
+  (`integrations.ivg.remember_credentials`), rather than `from_connect`, which opens a second
+  connection outside the session. Cost: IVR sets ivg's `_connection_params`; a unit test checks
+  against the installed ivg that `_iris_obj` reads it. The same attribute also makes ivg
+  reconnect on EPIPE and run its FETCH FIRST probe (both only used by Cypher paths IVR does not
+  use). Tested under reader / writer / no-class-execution roles on a throwaway container.
+- **(b) BM25.** IVR never builds, inserts into or deletes from a BM25 index; its only
+  `bm25_search` call is `IVGTextSearchBackend`, over an index the caller built. So no implicit
+  upgrade: `upgrade_bm25_indexes` (module and `SchemaManager`), `upgrade_iris_vector_graph`
+  (storage then BM25; dry run previews both). `bm25_info` wraps the class's `{}` for a missing
+  index in `{"type": "bm25"}`, so "exists" is "has `N`" (found by the e2e test, not the unit
+  fakes). Failures raise by default: the swallowed-error gate rejected record-and-continue, so
+  `continue_on_error=True` is the named parameter that opts in. `max_df_fraction` is only
+  passed when non-zero, so an older signature still works while it is off.
+- **(c) Arno / cache.** IVR calls `kg_TXT`, `kg_RRF_FUSE`, `kg_KNN_VEC`, `delete_node`,
+  `map_sql_table`, `validate_vector_table`, `multi_modal_search`, `vec_*`, `plaid_*` and
+  `bm25_*`. The 4.2.0 store diff touches `execute_ppr/pagerank/wcc/cdlp/subgraph` and chunks
+  `get_nodes`; none are IVR's. No IVR test depends on the old behaviour (full suite green).
+- **(d) ObjectScript fixes.** `git grep` over code, tests, scripts and docs finds no IVR
+  workaround for any listed fix; nothing removed.
+- **(e) Embedded-Python probe.** `class_deploy.py`, `migrations/` and `_engine/schema.py` are
+  identical in 4.1.1 and 4.2.0; KNOWN_ISSUES does not mention the crash. On a fresh
+  `intersystemsdc/iris-community:2026.1` (Build 234U) the probe returned True in 0.1 s and a
+  forced deploy with Python classes took 6.2 s, no signal 11. The dev container was not
+  touched, so entry 10 only gained a dated note; `IVG_EMBEDDED_PYTHON=0` stays the test default.
+- **Pre-existing, fixed on the way.** `test_ontology_removal` and `test_rest_api_removal`
+  failed at the base commit: the 0.15.0 release-notes draft names the removed packages. Added
+  the file to their history lists.
+- **Not changed.** `engine.index`/registry limits (an index created after the engine is not
+  listed) are documented, not worked around. The BM25 step needs the 4.2.0 classes on the
+  server, so `upgrade_bm25_indexes` before `initialize_schema()` reports a failure naming the
+  missing method.
+
+Acceptance, in the isolated venv with the 4.2.0 wheel (own throwaway containers,
+`IRIS_CONTAINER_NAME` unset):
+
+| Run                                                                    | Result                                    |
+| ---------------------------------------------------------------------- | ----------------------------------------- |
+| `tests/unit` (`--timeout=30`)                                          | 1800 passed, 4 skipped, 0 failed          |
+| `tests/contract` as release.yml runs it (ci_known_failures deselected) | 761 passed, 28 skipped, 56 deselected     |
+| `tests/contract/test_smoke.py`                                         | 1 passed                                  |
+| combined session (`integration`, `e2e`, `test_*.py`, `--timeout=1500`) | 738 passed, 26 skipped, 6 xfailed, 0 fail |
+| `verify.sh --boundary agent`, `antipatterns.py`                        | clean, 0 new findings                     |
+
+The previous clean combined result was 725 passed; the 13 extra are the new integration tests
+(`test_ivg_least_privilege.py` 5, `test_ivg_bm25_upgrade_e2e.py` 8). No 4.1.1 baseline run was
+needed: nothing failed.

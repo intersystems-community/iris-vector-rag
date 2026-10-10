@@ -224,6 +224,27 @@ class TestHybridGraphRAGPipeline:
             mock_session.return_value = Mock()
             return HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
 
+    def test_the_engine_remembers_the_configured_account(self):
+        """ivg 4.2.0 logs the engine's class-method connection in as these credentials.
+
+        It used to log in as _SYSTEM; an engine given none would share the session's
+        connection with cursor SQL.
+        """
+
+        class Engine:
+            def __init__(self, connection, **kwargs):
+                self.conn = connection
+
+        pipeline = self._build(engine_class=Engine)
+
+        assert pipeline.iris_engine._connection_params == {
+            "hostname": "localhost",
+            "port": 1972,
+            "namespace": "TEST",
+            "username": "test",
+            "password": "test",
+        }
+
     def _degraded_pipeline(self):
         """iris_vector_graph imports but its engine cannot start: no hybrid."""
 

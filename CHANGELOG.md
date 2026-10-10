@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+### Changed: iris-vector-graph 4.2.0 (BM25 schema 2, no default superuser login)
+
+IVR now requires `iris-vector-graph>=4.2.0,<5` (the pin cannot be installed from PyPI until
+4.2.0 is published). See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md), "From 4.1.1 to
+4.2.0". There is no storage migration between 4.1.1 and 4.2.0.
+
+- **BM25 indexes must be upgraded once before they are written to.** ivg 4.2.0 refuses
+  `Insert` and `Delete` on an index built earlier until `engine.bm25_upgrade(name)` has run
+  (`Search` is unaffected, but scores change). New: `SchemaManager.upgrade_bm25_indexes()`
+  (arguments `names`, `dry_run`, `continue_on_error`) converts only the indexes still on
+  schema 1, reports `upgraded` / `pending` / `current` / `missing` / `failed`, and can be repeated;
+  `SchemaManager.upgrade_iris_vector_graph()` runs the layout step and then the BM25 step.
+  The first failure raises `Bm25UpgradeError` unless `continue_on_error=True`. IVR owns no
+  BM25 index, so nothing is upgraded implicitly.
+- **The engine's class-method connection is IVR's account, not `_SYSTEM`.** ivg 4.2.0 stopped
+  logging in as `_SYSTEM`/`SYS`; an engine built from a bare connection would have run its
+  BM25, vector, PLAID and ledger calls on the session's connection. IVR records the session's
+  credentials on each engine it builds (`integrations.ivg.remember_credentials`;
+  `create_graph_engine(..., credentials=)`). A restricted account's role now decides what
+  those calls may do: without `%Native_ClassExecution` they are refused, where 4.1.1 ran
+  them as `_SYSTEM`. A superuser account sees no change.
+- **`retrieval.bm25.max_df_fraction`** (default `0`, off) is passed to `bm25_search` by
+  `IVGTextSearchBackend` (argument `max_df_fraction`, or `IVGTextSearchBackend.from_config`).
+  `IVGTextSearchBackend` also logs one warning when it searches a schema-1 index.
+- No IVR code changed for the Arno reader routing, the algorithm result cache or the
+  ObjectScript fixes: IVR calls none of the affected algorithms and had no workaround for the
+  fixed defects. `docs/DEBT.md` entry 10 records what was re-checked about the embedded-Python
+  probe.
+
 ### Fixed: the text leg of `text`, `hybrid` and `rrf` retrieval searches the real document table (existing tables gain an index)
 
 On a real deployment the text leg found nothing, so `hybrid` and `rrf` returned the

@@ -18,9 +18,10 @@ from typing import Any, Dict, Generator
 from unittest.mock import AsyncMock, Mock
 
 # No IVR test needs the ivg classes written in embedded Python (Communities, PyOps,
-# CypherEngine). ivg 4.1.1 probes for embedded Python with `%SYS.Python.Import` over the
-# Native API, and on the dev container that probe kills the server process (DEBT entry
-# 1) and stalls the connection. A caller's own setting wins.
+# CypherEngine). ivg 4.1.1 and 4.2.0 (class_deploy.py is the same in both) probe for
+# embedded Python with `%SYS.Python.Import` over the Native API, and on the dev container
+# that probe kills the server process (DEBT entry 1) and stalls the connection. A
+# caller's own setting wins.
 os.environ.setdefault("IVG_EMBEDDED_PYTHON", "0")
 
 import coverage
