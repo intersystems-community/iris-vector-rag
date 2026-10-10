@@ -15,7 +15,16 @@ import pytest
 
 import iris_vector_rag.note_search as note_search
 
-PURE = ["__init__", "tokens", "phrase", "sections", "polarity", "rollup", "api"]
+PURE = [
+    "__init__",
+    "tokens",
+    "phrase",
+    "sections",
+    "polarity",
+    "context",
+    "rollup",
+    "api",
+]
 
 SCRIPT = """
 import sys
@@ -28,7 +37,7 @@ class Forbid:
             raise ImportError("forbidden import: " + name)
 
 sys.meta_path.insert(0, Forbid())
-from vendored_ns import api, phrase, polarity, rollup, sections, tokens
+from vendored_ns import api, context, phrase, polarity, rollup, sections, tokens
 result = api.judge_section("Denies chest pain.", "chest pain")
 assert result["polarity"] == "negated", result
 assert sections.split_sections("HPI: x", sections.default_heading_detector)[0].label == "hpi"
