@@ -319,7 +319,17 @@ Install separately — see the iris-agentic-dev repo for setup instructions.
 Graph database layer for entity-relationship extraction and GraphRAG. IVR depends on
 `iris-vector-graph>=4.2.0,<5` for `graphrag` and `pylate_colbert` pipeline modes. A
 Graph_KG created before ivg 4.0 must be migrated once: see
-`docs/IVG_4X_UPGRADE.md`.
+`docs/IVG_4X_UPGRADE.md`. That file also covers 4.1.1 to 4.2.0:
+
+- BM25 indexes built before 4.2.0 refuse `Insert`/`Delete` until upgraded once:
+  `SchemaManager.upgrade_bm25_indexes(dry_run=...)`, or `upgrade_iris_vector_graph()`
+  for the layout step and the BM25 step together.
+- ivg 4.2.0 no longer logs the engine's class-method connection in as `_SYSTEM`. Build
+  every ivg engine through `create_graph_engine(..., credentials=)` or call
+  `integrations.ivg.remember_credentials(engine, ...)`, so BM25/vector/PLAID calls run
+  as the account IVR connected with.
+- `retrieval.bm25.max_df_fraction` (default 0 = off) goes to `bm25_search` through
+  `IVGTextSearchBackend`.
 
 ```python
 from iris_vector_rag import create_pipeline
