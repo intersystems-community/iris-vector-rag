@@ -1,12 +1,12 @@
 # Changelog
 
-## Unreleased
+## v0.15.0 — correctness release (2026-10-10)
 
 ### Changed: iris-vector-graph 4.2.0 (BM25 schema 2, no default superuser login)
 
-IVR now requires `iris-vector-graph>=4.2.0,<5` (the pin cannot be installed from PyPI until
-4.2.0 is published). See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md), "From 4.1.1 to
-4.2.0". There is no storage migration between 4.1.1 and 4.2.0.
+IVR now requires `iris-vector-graph>=4.2.0,<5` (4.2.0 is on PyPI). See
+[docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md), "From 4.1.1 to 4.2.0". There is no
+storage migration between 4.1.1 and 4.2.0.
 
 - **BM25 indexes must be upgraded once before they are written to.** ivg 4.2.0 refuses
   `Insert` and `Delete` on an index built earlier until `engine.bm25_upgrade(name)` has run

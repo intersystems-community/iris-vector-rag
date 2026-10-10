@@ -66,6 +66,19 @@ back. Each is announced in the [CHANGELOG](CHANGELOG.md) with the detail.
   `ensure_table_schema` runs**, without losing rows or indexes, and are
   case-sensitive from then on.
 
+### iris-vector-graph 4.2.0
+
+- **BM25 indexes need one upgrade before they are written to.** ivg 4.2.0
+  refuses `Insert` and `Delete` on an index built earlier until
+  `engine.bm25_upgrade(name)` has run; searching still works and scores change.
+  IVR owns no BM25 index, so nothing runs for you. **Action:** if you built a
+  BM25 index, call `SchemaManager.upgrade_bm25_indexes(dry_run=True)` to preview
+  and then without `dry_run`, as a job: writers are refused while it runs.
+- **The engine's class-method calls run as the account IVR connected with**, not
+  `_SYSTEM`. An account without `%Native_ClassExecution` is now refused where
+  4.1.1 ran the call as `_SYSTEM`. **Action:** none for a superuser account; for a
+  restricted one, grant the role.
+
 ### Schema changes made on first use
 
 - **Text search.** The text leg of `text`, `hybrid` and `rrf` used to find
@@ -115,9 +128,10 @@ back. Each is announced in the [CHANGELOG](CHANGELOG.md) with the detail.
 - **Table shape from the catalog.** Pipelines ask the database which column
   fills the content role instead of guessing names, so documents and chunks work
   on tables created by other versions.
-- **iris-vector-graph 4.1.** `validate_graph_prerequisites()` reports a 2.x
+- **iris-vector-graph 4.2.** `validate_graph_prerequisites()` reports a 2.x
   `Graph_KG` layout and `SchemaManager.upgrade_iris_vector_graph_storage()`
-  migrates it. See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md).
+  migrates it; `SchemaManager.upgrade_bm25_indexes()` brings BM25 indexes to
+  schema 2. See [docs/IVG_4X_UPGRADE.md](docs/IVG_4X_UPGRADE.md).
 - **LLM calls are bounded.** `get_llm_func` gives the OpenAI client a 60 second
   timeout and 2 retries (`llm.timeout`, `llm.max_retries`, or `RAG_LLM__TIMEOUT`
   and `RAG_LLM__MAX_RETRIES`), and a timeout raises `LLMTimeoutError` naming the
@@ -183,8 +197,11 @@ By area of the review. The CHANGELOG lists each finding.
 
 ## Verification
 
-On `remediation/integrated` at `28255b67`, against IRIS 2026.1 and the real
-OpenAI API: 1734 unit tests pass; the contract suite passes (767 passed, 0
-failed); the integration, end-to-end and root suites pass (725 passed, 26
-skipped, 6 xfailed, 0 failed, 0 errors); the quality gates and the
-swallowed-error detector are clean.
+On `remediation/integrated` after the iris-vector-graph 4.2.0 merge (branch head
+`42937278`, merged unchanged), against IRIS 2026.1 and the real OpenAI API: 1800 unit tests pass;
+the contract suite as `release.yml` runs it passes (761 passed, 28 skipped, 0
+failed); the integration, end-to-end and root suites pass in one session (738
+passed, 26 skipped, 6 xfailed, 0 failed, 0 errors); the quality gates and the
+swallowed-error detector are clean. These ran against a wheel built from the
+`v4.2.0` tag; `iris-vector-graph` 4.2.0 reached PyPI on 2026-10-10, and the
+install from PyPI is re-run before tagging.
