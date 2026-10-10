@@ -1,6 +1,6 @@
 # Upgrading to iris-vector-graph 4.x
 
-IVR requires `iris-vector-graph>=4.1.1,<5`. ivg 4.0 changed how `Graph_KG` is
+IVR requires `iris-vector-graph>=4.2.0,<5`. ivg 4.0 changed how `Graph_KG` is
 stored, so an install created under ivg 2.x has to be migrated once before
 `graphrag` or `pylate_colbert` can use it.
 

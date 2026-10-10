@@ -9,7 +9,7 @@ with eleven entry points, a test suite that passed against a mock. This release
 fixes those, and because the old behaviour was wrong, **several results
 change**. Read "Upgrading" before you install.
 
-Requires `iris-vector-graph>=4.1.1,<5`. Python 3.11 and 3.12.
+Requires `iris-vector-graph>=4.2.0,<5`. Python 3.11 and 3.12.
 
 ## Upgrading: read this first
 

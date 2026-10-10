@@ -33,7 +33,7 @@ jobs:
         run: |
           pip install -e ".[dev]" \
             "intersystems-irispython>=5.1.2" \
-            "iris-vector-graph>=4.1.1,<5"
+            "iris-vector-graph>=4.2.0,<5"
 
       - name: Run smoke tests
         env:
