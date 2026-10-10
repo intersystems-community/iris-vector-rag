@@ -37,6 +37,14 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
 - Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
   `specs/088-note-search-first-slice/contracts/query-semantics.md` and
   `tests/fixtures/note_search/vectors.json`.
+- **Concept postings with polarity (spec 091).** `note_search.concepts.DictionaryTagger` tags
+  text with concept ids from a dictionary you supply (no clinical vocabulary ships), and
+  `postings_for_section` gives one posting per concept with its polarity and mention count.
+  `note_search.concept_index.ConceptIndex` stores the postings per section in
+  `<schema>.SectionConcepts` and searches by concept id: a parent matches when it has a posting
+  for every concept. `QueryOptions(retrieval="concept", polarity=..., section=...)` runs it
+  with `RetrievalEngine(concept_index=..., concept_tagger=...)`. No model or embedding is used.
+  See `specs/091-concept-postings/spec.md`.
 
 ## v0.15.0 — correctness release (2026-10-10)
 

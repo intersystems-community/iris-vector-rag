@@ -31,6 +31,9 @@ class RetrievalEngine:
         keyword_extractor: Optional KeywordExtractor override (lazy-init if None).
         polarity_detector: Optional polarity detector for ``retrieval="phrase"``; the
             reference detector is used when None.
+        concept_index: A `ConceptIndex` for ``retrieval="concept"``.
+        concept_tagger: The tagger that finds concepts in the query for
+            ``retrieval="concept"``, e.g. a `DictionaryTagger`.
     """
 
     def __init__(
@@ -40,12 +43,16 @@ class RetrievalEngine:
         config_manager: Any = None,
         keyword_extractor: Any = None,
         polarity_detector: Any = None,
+        concept_index: Any = None,
+        concept_tagger: Any = None,
     ) -> None:
         self.vector_store = vector_store
         self.connection = connection
         self._config_manager = config_manager
         self.keyword_extractor = keyword_extractor
         self.polarity_detector = polarity_detector
+        self.concept_index = concept_index
+        self.concept_tagger = concept_tagger
 
     def retrieve(self, opts: Any) -> List[Any]:
         """Execute retrieval for the given options.
@@ -75,6 +82,8 @@ class RetrievalEngine:
             return self._retrieve_phrase(opts)
         elif mode_name in ("hybrid", "rrf"):
             return self._retrieve_fusion(opts, mode_name)
+        elif mode_name == "concept":
+            return self._retrieve_concept(opts)
         elif mode_name == "global":
             return self._retrieve_global(opts)
         elif mode_name == "mix":
@@ -165,6 +174,50 @@ class RetrievalEngine:
                 top_k=opts.top_k,
                 section=getattr(opts, "section", None),
                 detector=self.polarity_detector,
+            )
+        )
+
+    def _retrieve_concept(self, opts: Any) -> List[Any]:
+        """Parent documents that have every concept the query names (spec 091).
+
+        The tagger finds the concepts in ``opts.query``; the index returns the parents
+        that have postings for all of them, filtered by ``opts.polarity`` and
+        ``opts.section``.
+        """
+        if (getattr(opts, "similarity_threshold", 0.0) or 0.0) > 0.0:
+            raise ValueError(
+                "similarity_threshold does not apply to retrieval='concept': concept "
+                "hits are postings, not similarities."
+            )
+        if getattr(opts, "metadata_filter", None):
+            raise ValueError(
+                "metadata_filter does not apply to retrieval='concept'; narrow a concept "
+                "search with section=."
+            )
+        if self.concept_index is None:
+            raise NotImplementedError(
+                "retrieval='concept' needs a concept_index: build a ConceptIndex over "
+                "the vector store and pass it to RetrievalEngine(concept_index=...)."
+            )
+        if self.concept_tagger is None:
+            raise NotImplementedError(
+                "retrieval='concept' needs a concept_tagger to find the concepts in "
+                "the query: pass RetrievalEngine(concept_tagger=...)."
+            )
+        concept_ids = list(
+            dict.fromkeys(m.concept_id for m in self.concept_tagger(opts.query))
+        )
+        if not concept_ids:
+            raise ValueError(
+                f"The query {opts.query!r} names no known concept, so there is nothing "
+                f"to search for with retrieval='concept'."
+            )
+        return list(
+            self.concept_index.search(
+                concept_ids,
+                polarity=getattr(opts, "polarity", None),
+                section=getattr(opts, "section", None),
+                top_k=opts.top_k,
             )
         )
 
