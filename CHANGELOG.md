@@ -30,6 +30,9 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
   the entry point for embedded Python callers. The pure modules (`tokens`, `phrase`,
   `sections`, `polarity`, `rollup`, `api`) import only the standard library and each other
   by relative import, so they can be copied out as a package; a test proves it.
+- The reference detector also negates a mention that `negative` or `absent` closely
+  follows (`pregnancy test negative`); it still does not know who a finding belongs to
+  (`Mother had a stroke`), which is a later spec.
 - No schema change: the section label lives in the existing `metadata` column.
 - Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
   `specs/088-note-search-first-slice/contracts/query-semantics.md` and

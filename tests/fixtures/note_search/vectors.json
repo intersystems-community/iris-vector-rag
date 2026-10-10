@@ -549,6 +549,54 @@
       "phrase": "chest pain",
       "mention": 0,
       "expected": "unknown"
+    },
+    {
+      "text": "Urine pregnancy test negative; last menstrual period two weeks ago.",
+      "phrase": "pregnancy",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "Pregnancy test was negative.",
+      "phrase": "pregnancy",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "Chest pain, negative troponin.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "affirmed"
+    },
+    {
+      "text": "Troponin negative, chest pain persists.",
+      "phrase": "troponin",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "Troponin negative, chest pain persists.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "affirmed"
+    },
+    {
+      "text": "Chest pain absent.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "Negative for chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "negated"
+    },
+    {
+      "text": "Chest pain was evaluated by cardiology and the result came back negative.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "expected": "affirmed"
     }
   ]
 }

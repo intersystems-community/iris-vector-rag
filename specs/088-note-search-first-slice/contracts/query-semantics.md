@@ -86,6 +86,9 @@ implementation must match them for the vectors to pass):
    `no`, `not`, `denies`, `denied`, `without`, `negative for`, `absence of`.
 3. **Post-negation triggers**, after the mention in the same sentence: `ruled out`,
    `unlikely`.
+   Also `negative` and `absent` when they follow the mention within three tokens and no
+   comma, colon or semicolon lies between (`pregnancy test negative` negates `pregnancy`;
+   `chest pain, negative troponin` does not negate `chest pain`).
 4. **Uncertainty triggers**, before or after the mention in the same sentence, make it
    `unknown`: `possible`, `possibly`, `rule out`, `r/o`, `questionable`.
 5. **Terminators** end a trigger's reach: `but`, `however`, `although`. A trigger does
@@ -101,6 +104,11 @@ implementation must match them for the vectors to pass):
 A **section polarity** is `affirmed` if any mention is affirmed, else `negated` if any is
 negated, else `unknown`. A **rolled-up polarity** applies the same rule across the matched
 sections.
+
+Known limits, not handled and not claimed: who the finding belongs to (`Mother had a
+stroke` is judged affirmed for `stroke`), when it happened, and negation reaching across
+a long list. Experiencer and temporality are a later spec; the gold set will say how
+much they matter.
 
 This detector is a reference. It is not validated on emergency-department text and no
 accuracy is claimed for it.

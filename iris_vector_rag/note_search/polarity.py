@@ -30,6 +30,12 @@ POST_NEGATION_TRIGGERS: tuple[tuple[str, ...], ...] = (
     ("ruled", "out"),
     ("unlikely",),
 )
+# Single words that negate a mention they closely follow ("pregnancy test negative"):
+# within POST_WINDOW tokens, with no comma, colon or semicolon between, so that
+# "chest pain, negative troponin" does not negate the chest pain.
+NEAR_POST_NEGATION_TRIGGERS: frozenset[str] = frozenset({"negative", "absent"})
+POST_WINDOW = 3
+_CLAUSE_BREAKS = frozenset(",;:")
 UNCERTAINTY_TRIGGERS: tuple[tuple[str, ...], ...] = (
     ("possible",),
     ("possibly",),
@@ -87,6 +93,19 @@ def _triggered(
     return False
 
 
+def _near_post_negation(text: str, mention_end: int, post: list) -> bool:
+    """True if a near post-negation word closely follows the mention in its clause."""
+    for token in post[:POST_WINDOW]:
+        if token.text in TERMINATORS:
+            return False
+        if (
+            token.text in NEAR_POST_NEGATION_TRIGGERS
+            and not _CLAUSE_BREAKS.intersection(text[mention_end : token.start])
+        ):
+            return True
+    return False
+
+
 class ReferenceNegExDetector:
     """Reference polarity detector following section 5 of the query contract."""
 
@@ -102,13 +121,16 @@ class ReferenceNegExDetector:
         # Tokens inside the mention are ignored; a mention is judged in the
         # sentence where it starts.
         pre = [token.text for token in tokens if token.end <= start]
-        post = [token.text for token in tokens if token.start >= end]
+        after = [token for token in tokens if token.start >= end]
+        post = [token.text for token in after]
 
         uncertain = _triggered(pre, UNCERTAINTY_TRIGGERS, True) or _triggered(
             post, UNCERTAINTY_TRIGGERS, False
         )
-        negated = _triggered(pre, PRE_NEGATION_TRIGGERS, True) or _triggered(
-            post, POST_NEGATION_TRIGGERS, False
+        negated = (
+            _triggered(pre, PRE_NEGATION_TRIGGERS, True)
+            or _triggered(post, POST_NEGATION_TRIGGERS, False)
+            or _near_post_negation(text, end, after)
         )
         if uncertain:
             return UNKNOWN
