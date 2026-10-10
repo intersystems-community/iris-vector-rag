@@ -64,6 +64,10 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
 - **`AllowlistHeadingDetector(labels, accept=, colon=, standalone=)`** finds only headings
   named in a list you supply, in the casings you accept, with the colon optional, required
   or forbidden. Use it where a casing pattern alone over-catches.
+- **`iris_vector_rag.note_search.api`** (`classify`, `judge_section`, `judge_section_json`) is
+  the entry point for embedded Python callers. The pure modules (`tokens`, `phrase`,
+  `sections`, `polarity`, `rollup`, `api`) import only the standard library and each other
+  by relative import, so they can be copied out as a package; a test proves it.
 - No schema change: the section label lives in the existing `metadata` column.
 - Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
   `specs/088-note-search-first-slice/contracts/query-semantics.md` and

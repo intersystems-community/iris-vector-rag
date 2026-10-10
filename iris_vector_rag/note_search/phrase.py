@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
-from iris_vector_rag.note_search.tokens import tokenize
+from .tokens import tokenize
 
 __all__ = ["find_mentions", "phrase_search_string", "phrase_tokens"]
 

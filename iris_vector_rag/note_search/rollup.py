@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from iris_vector_rag.note_search.polarity import section_polarity
+from .polarity import section_polarity
 
 
 @dataclass(frozen=True)

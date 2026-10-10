@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 
-from iris_vector_rag.note_search.tokens import tokenize
+from .tokens import tokenize
 
 AFFIRMED = "affirmed"
 NEGATED = "negated"
