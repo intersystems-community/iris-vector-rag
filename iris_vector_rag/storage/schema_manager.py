@@ -595,7 +595,10 @@ class SchemaManager:
         return upgrade_to_4_0_0(connection, dry_run=dry_run, **options)
 
     def upgrade_bm25_indexes(
-        self, names: Optional[Iterable[str]] = None, dry_run: bool = False
+        self,
+        names: Optional[Iterable[str]] = None,
+        dry_run: bool = False,
+        continue_on_error: bool = False,
     ) -> Bm25UpgradeReport:
         """Bring BM25 indexes to ivg 4.2.0's schema 2.
 
@@ -606,16 +609,22 @@ class SchemaManager:
         nothing. One pass over each index's posting lists and writers are refused while
         it runs: run it as a job. Scores change afterwards (docs/IVG_4X_UPGRADE.md).
 
+        An index that cannot be upgraded raises `Bm25UpgradeError` (its `report` holds
+        what was done before it); `continue_on_error=True` records it and goes on.
+
         Needs the 4.2.0 `Graph.KG.BM25Index` class on the server, which
         `initialize_schema()` (and so `upgrade_iris_vector_graph`) deploys.
         """
         engine = self._graph_engine(self.connection_manager.get_connection())
-        return upgrade_bm25_indexes(engine, names=names, dry_run=dry_run)
+        return upgrade_bm25_indexes(
+            engine, names=names, dry_run=dry_run, continue_on_error=continue_on_error
+        )
 
     def upgrade_iris_vector_graph(
         self,
         dry_run: bool = False,
         bm25_indexes: Optional[Iterable[str]] = None,
+        continue_on_error: bool = False,
         **options,
     ) -> IvgUpgrade:
         """Everything an iris-vector-graph upgrade needs, in ivg's order.
@@ -626,10 +635,13 @@ class SchemaManager:
            on the server.
 
         `dry_run` previews both and writes neither. `bm25_indexes` limits step 2 to
-        those names; `options` go to step 1. Re-runnable.
+        those names; `continue_on_error` is step 2's (see `upgrade_bm25_indexes`);
+        `options` go to step 1. Re-runnable.
         """
         storage = self.upgrade_iris_vector_graph_storage(dry_run=dry_run, **options)
-        bm25 = self.upgrade_bm25_indexes(names=bm25_indexes, dry_run=dry_run)
+        bm25 = self.upgrade_bm25_indexes(
+            names=bm25_indexes, dry_run=dry_run, continue_on_error=continue_on_error
+        )
         return IvgUpgrade(storage=storage, bm25=bm25)
 
     def _graph_engine(self, connection):

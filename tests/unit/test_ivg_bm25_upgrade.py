@@ -13,6 +13,7 @@ import pytest
 
 from iris_vector_rag.integrations.ivg_bm25 import (
     Bm25IndexResult,
+    Bm25UpgradeError,
     Bm25UpgradeReport,
     upgrade_bm25_indexes,
 )
@@ -146,15 +147,43 @@ def test_an_index_that_vanishes_before_the_upgrade_is_missing_not_upgraded():
     assert report.upgraded == ()
 
 
-def test_one_failure_is_recorded_and_the_rest_still_run():
+def test_a_failure_raises_by_default_and_carries_what_was_done_before_it():
     engine = FakeEngine({"a": _old(), "b": _old(), "c": _old()}, fail_on={"b"})
 
-    report = upgrade_bm25_indexes(engine)
+    with pytest.raises(Bm25UpgradeError, match="'b'") as raised:
+        upgrade_bm25_indexes(engine)
+
+    error = raised.value
+    assert error.name == "b"
+    assert isinstance(error.__cause__, RuntimeError)
+    assert "locked by a writer" in str(error)
+    assert error.report.upgraded == ("a",)  # done before the failure
+    assert engine.upgrade_calls == ["a", "b"]  # "c" was not attempted
+
+
+def test_continue_on_error_records_the_failure_and_runs_the_rest():
+    engine = FakeEngine({"a": _old(), "b": _old(), "c": _old()}, fail_on={"b"})
+
+    report = upgrade_bm25_indexes(engine, continue_on_error=True)
 
     assert report.failed == ("b",)
     assert "locked by a writer" in report["b"].error
+    assert report["b"].schema == 1
     assert report.upgraded == ("a", "c")
     assert not report.ok
+
+
+def test_an_index_whose_info_cannot_be_read_is_a_failure_too():
+    class Broken(FakeEngine):
+        def bm25_info(self, name):
+            raise RuntimeError("<CLASS DOES NOT EXIST> Graph.KG.BM25Index")
+
+    with pytest.raises(Bm25UpgradeError, match="CLASS DOES NOT EXIST"):
+        upgrade_bm25_indexes(Broken({"a": _old()}))
+
+    report = upgrade_bm25_indexes(Broken({"a": _old()}), continue_on_error=True)
+    assert report.failed == ("a",)
+    assert report["a"].schema is None
 
 
 def test_no_fulltext_index_is_an_empty_report():
@@ -282,7 +311,7 @@ def test_the_full_upgrade_dry_run_previews_both_and_writes_neither():
     assert engine.upgrade_calls == []
 
 
-def test_the_full_upgrade_is_not_ok_when_an_index_fails():
+def test_the_full_upgrade_raises_when_an_index_fails_unless_told_to_continue():
     from unittest.mock import patch
 
     manager = _manager()
@@ -294,7 +323,9 @@ def test_the_full_upgrade_is_not_ok_when_an_index_fails():
         ),
         patch.object(manager, "_graph_engine", return_value=engine),
     ):
-        result = manager.upgrade_iris_vector_graph()
+        with pytest.raises(Bm25UpgradeError):
+            manager.upgrade_iris_vector_graph()
+        result = manager.upgrade_iris_vector_graph(continue_on_error=True)
 
     assert result.bm25.failed == ("logs",)
     assert not result.ok

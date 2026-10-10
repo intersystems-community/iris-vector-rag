@@ -102,7 +102,8 @@ class IVGTextSearchBackend:
         try:
             info = info_of(self.index_name) or {}
             schema = int(info.get("schema", 1)) if info else None
-        except Exception as exc:  # a search must not fail because Info did
+        except (RuntimeError, ValueError, TypeError, OSError) as exc:
+            # A search must not fail because Info did; anything stranger propagates.
             logger.debug("BM25 index %r: schema not read: %s", self.index_name, exc)
             return
         if schema is not None and schema < 2:

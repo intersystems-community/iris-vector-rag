@@ -59,6 +59,20 @@ class Bm25IndexResult:
         return f"engine.bm25_upgrade({self.name!r})"
 
 
+class Bm25UpgradeError(RuntimeError):
+    """One index could not be read or upgraded.
+
+    ``name`` is the index, ``__cause__`` the error ivg raised, and ``report`` what had
+    been done to the indexes before it (set by :func:`upgrade_bm25_indexes`).
+    """
+
+    def __init__(self, name: str, cause: BaseException, schema: Optional[int] = None):
+        super().__init__(f"BM25 index {name!r}: {cause}")
+        self.name = name
+        self.schema = schema
+        self.report: "Bm25UpgradeReport" = Bm25UpgradeReport()
+
+
 @dataclass(frozen=True)
 class Bm25UpgradeReport:
     """Every index's outcome, in the order they were handled."""
@@ -129,10 +143,11 @@ def _schema_of(info: Any) -> Optional[int]:
 
 
 def _upgrade_one(engine: Any, name: str, dry_run: bool) -> Bm25IndexResult:
+    """One index; an ivg failure is a :class:`Bm25UpgradeError`."""
     try:
         info = engine.bm25_info(name)
     except Exception as exc:  # the class is absent or the call is refused
-        return Bm25IndexResult(name, None, FAILED, error=str(exc))
+        raise Bm25UpgradeError(name, exc) from exc
     schema = _schema_of(info)
     if schema is None:
         return Bm25IndexResult(name, None, MISSING)
@@ -144,8 +159,7 @@ def _upgrade_one(engine: Any, name: str, dry_run: bool) -> Bm25IndexResult:
     try:
         answer = engine.bm25_upgrade(name) or {}
     except Exception as exc:
-        logger.error("BM25 index %r: upgrade failed: %s", name, exc)
-        return Bm25IndexResult(name, schema, FAILED, docs=docs, error=str(exc))
+        raise Bm25UpgradeError(name, exc, schema=schema) from exc
     if answer.get("missing"):  # dropped between the read and the upgrade
         return Bm25IndexResult(name, None, MISSING)
     if answer.get("already"):  # another process got there first
@@ -165,22 +179,39 @@ def upgrade_bm25_indexes(
     engine: Any,
     names: Optional[Iterable[str]] = None,
     dry_run: bool = False,
+    continue_on_error: bool = False,
 ) -> Bm25UpgradeReport:
     """Bring BM25 indexes to schema 2.
 
     ``names`` limits the run (default: every full-text index the engine lists). Each
     index is read first and upgraded only if it is still schema 1, so the call can be
-    repeated; ivg's own ``Upgrade`` is safe to re-run after an interruption. One index
-    failing does not stop the others: it is recorded with its error, and
-    ``report.ok`` is false.
+    repeated; ivg's own ``Upgrade`` is safe to re-run after an interruption.
+
+    An index that cannot be read or upgraded raises :class:`Bm25UpgradeError`, whose
+    ``report`` holds what was done before it. With ``continue_on_error=True`` the
+    failure is recorded in the report (``action="failed"``, ``error``) and the
+    remaining indexes still run; ``report.ok`` is then false.
 
     A dry run reads each index's ``Info`` and writes nothing.
 
     ``Upgrade`` is one pass over the posting lists and refuses writers while it runs
     (``Search`` keeps working); run it as a job, not on a request path.
     """
-    if not callable(getattr(engine, "bm25_upgrade", None)) and not dry_run:
+    if not dry_run and not callable(getattr(engine, "bm25_upgrade", None)):
         raise RuntimeError(_NEEDS_IVG_42)
     selected = tuple(names) if names is not None else bm25_index_names(engine)
-    results = tuple(_upgrade_one(engine, name, dry_run) for name in selected)
-    return Bm25UpgradeReport(results=results, dry_run=dry_run)
+    results: list = []
+    for name in selected:
+        try:
+            results.append(_upgrade_one(engine, name, dry_run))
+        except Bm25UpgradeError as failure:
+            if not continue_on_error:
+                failure.report = Bm25UpgradeReport(tuple(results), dry_run)
+                raise
+            logger.error("%s", failure)
+            results.append(
+                Bm25IndexResult(
+                    name, failure.schema, FAILED, error=str(failure.__cause__)
+                )
+            )
+    return Bm25UpgradeReport(results=tuple(results), dry_run=dry_run)

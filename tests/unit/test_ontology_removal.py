@@ -24,6 +24,7 @@ TAG = "archive/ontology-v1"
 # Places that may still name the removed package: history and design records.
 HISTORY = (
     "CHANGELOG.md",
+    "RELEASE_NOTES_v0.15.0.md",
     "docs/archived/",
     "docs/adr/",
     "docs/remediation/",
