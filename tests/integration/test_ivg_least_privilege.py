@@ -42,22 +42,7 @@ def _sys_object(target):
 
 
 @pytest.fixture(scope="module")
-def deployed(iris_target):
-    """The ivg tables and `Graph.KG` classes, installed by the superuser."""
-    from iris_vector_rag.config.manager import ConfigurationManager
-    from iris_vector_rag.core.connection import ConnectionManager
-    from iris_vector_rag.storage.schema_manager import SchemaManager
-
-    config = ConfigurationManager()
-    result = SchemaManager(
-        ConnectionManager(config), config
-    ).ensure_iris_vector_graph_tables("graphrag")
-    assert not result.error_messages, result.error_messages
-    return result
-
-
-@pytest.fixture(scope="module")
-def accounts(iris_target, deployed):
+def accounts(iris_target, ivg_deployed):
     """name -> role resources; the accounts exist for the module, then are removed."""
     assert iris_target.namespace == "USER", "the database resource below is USER's"
     suffix = uuid.uuid4().hex[:6].upper()
@@ -116,6 +101,14 @@ def _engine_as(target, username, password=PASSWORD):
     return connection, create_graph_engine(connection, credentials=credentials)
 
 
+def _close(connection, *engines):
+    for engine in engines:
+        native_connection = getattr(engine, "_native_conn", None)
+        if native_connection is not None:
+            native_connection.close()
+    connection.close()
+
+
 def _user_name(engine):
     """The IRIS account the engine's class-method connection is logged in as."""
     engine._iris_obj()  # opens the dedicated connection
@@ -138,7 +131,7 @@ def test_class_method_calls_run_as_the_account_the_engine_was_given(
         assert engine._native_conn is not None
         assert engine._native_conn is not connection
     finally:
-        connection.close()
+        _close(connection, engine)
 
 
 def test_a_read_role_can_search_a_bm25_index(iris_target, accounts):
@@ -156,8 +149,8 @@ def test_a_read_role_can_search_a_bm25_index(iris_target, accounts):
         assert [doc_id for doc_id, _ in hits] == ["d1"]
     finally:
         admin.bm25_drop(name)
-        reader_connection.close()
-        admin_connection.close()
+        _close(reader_connection, reader)
+        _close(admin_connection, admin)
 
 
 def test_a_read_role_cannot_write_the_index(iris_target, accounts):
@@ -167,7 +160,7 @@ def test_a_read_role_cannot_write_the_index(iris_target, accounts):
         with pytest.raises(Exception, match="PROTECT"):
             reader.bm25_insert(name, "d1", "nobody may write this")
     finally:
-        connection.close()
+        _close(connection, reader)
 
 
 def test_a_write_role_can_write_and_search(iris_target, accounts):
@@ -178,7 +171,7 @@ def test_a_write_role_can_write_and_search(iris_target, accounts):
         assert [i for i, _ in writer.bm25_search(name, "replica", 5)] == ["d1"]
     finally:
         writer.bm25_drop(name)
-        connection.close()
+        _close(connection, writer)
 
 
 def test_an_account_without_class_execution_is_refused_not_upgraded(
@@ -190,4 +183,4 @@ def test_an_account_without_class_execution_is_refused_not_upgraded(
         with pytest.raises(Exception, match="PROTECT|Native_ClassExecution"):
             engine.bm25_search("anything", "query", 5)
     finally:
-        connection.close()
+        _close(connection, engine)

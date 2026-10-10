@@ -276,3 +276,20 @@ def cleanup_test_data(iris_sql_connection):
             iris_sql_connection.commit()
         except Exception:
             pass  # Ignore cleanup errors
+
+
+@pytest.fixture(scope="module")
+def ivg_deployed(iris_target):
+    """The iris-vector-graph tables and `Graph.KG` classes, installed by the superuser.
+
+    Idempotent: ivg skips the class deploy when the installed set is unchanged.
+    """
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
+    from iris_vector_rag.storage.schema_manager import SchemaManager
+
+    config = ConfigurationManager()
+    manager = SchemaManager(ConnectionManager(config), config)
+    result = manager.ensure_iris_vector_graph_tables("graphrag")
+    assert not result.error_messages, result.error_messages
+    return manager
