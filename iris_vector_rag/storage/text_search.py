@@ -20,8 +20,9 @@ What was verified against IRIS 2026.1 (not assumed):
 
 from __future__ import annotations
 
+import json
 import re
-from typing import List, Optional
+from typing import Any, List, Optional
 
 __all__ = [
     "TEXT_INDEX_NAME",
@@ -29,6 +30,8 @@ __all__ = [
     "rank_procedure",
     "search_terms",
     "build_text_search_sql",
+    "json_member_predicate",
+    "section_filter_predicate",
 ]
 
 #: The iFind index this library keeps on the document table's text column.
@@ -122,3 +125,41 @@ def build_text_search_sql(
         f"FROM {table} WHERE {where} "
         f"ORDER BY CAST({rank} AS DOUBLE) DESC"
     )
+
+
+def json_member_predicate(key: str, value: Any, metadata_expr: str) -> str:
+    """LIKE predicate for the JSON member ``"key": value`` in ``metadata_expr``.
+
+    Matches the member with or without a space after the colon (``json.dumps`` emits
+    the space; hand-written JSON often does not). The literal is the JSON encoding of
+    the value, with single quotes doubled for SQL. The closing quote of a string
+    literal rules out prefix collisions; the caller's exact check removes the rest.
+    """
+    if not _IDENTIFIER.match(str(key)):
+        raise ValueError(f"Invalid metadata filter key: {key!r}")
+    literal = json.dumps(value).replace("'", "''")
+    return (
+        f"({metadata_expr} LIKE '%\"{key}\":{literal}%' "
+        f"OR {metadata_expr} LIKE '%\"{key}\": {literal}%')"
+    )
+
+
+def section_filter_predicate(
+    label: str,
+    column: Optional[str] = None,
+    metadata_expr: Optional[str] = None,
+) -> str:
+    """The SQL predicate that keeps the sections whose label is ``label``.
+
+    With ``column`` (the opt-in ``section_label`` column, bitmap-indexed) it is an
+    equality on that column; the column name is checked and the label's quotes are
+    doubled. Without it, it is the metadata form: the LIKE over the JSON member
+    ``section``, which is what ``IRISVectorStore`` has always used and which needs
+    ``metadata_expr``. Both return the same rows for the labels SectionStore writes.
+    """
+    if column is not None:
+        escaped = str(label).replace("'", "''")
+        return f"{_checked(column)} = '{escaped}'"
+    if metadata_expr is None:
+        raise ValueError("the metadata form needs metadata_expr")
+    return json_member_predicate("section", label, metadata_expr)

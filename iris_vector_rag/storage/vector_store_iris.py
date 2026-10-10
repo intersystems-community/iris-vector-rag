@@ -40,8 +40,10 @@ from .table_shape import (
 from .text_search import (
     TEXT_INDEX_NAME,
     build_text_search_sql,
+    json_member_predicate,
     rank_procedure,
     search_terms,
+    section_filter_predicate,
 )
 
 logger = logging.getLogger(__name__)
@@ -1084,11 +1086,7 @@ class IRISVectorStore(VectorStore):
         for key, value in filter.items():
             if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", str(key)):
                 raise VectorStoreDataError(f"Invalid metadata filter key: {key!r}")
-            literal = json.dumps(value).replace("'", "''")
-            conditions.append(
-                f"({metadata_expr} LIKE '%\"{key}\":{literal}%' "
-                f"OR {metadata_expr} LIKE '%\"{key}\": {literal}%')"
-            )
+            conditions.append(json_member_predicate(key, value, metadata_expr))
         return " AND ".join(conditions)
 
     @staticmethod
@@ -1801,6 +1799,7 @@ class IRISVectorStore(VectorStore):
             section_polarity,
         )
         from iris_vector_rag.note_search.rollup import SectionHit, roll_up
+        from iris_vector_rag.note_search.store import SECTION_COLUMN
 
         search_string = phrase_search_string(phrase)  # raises ValueError first
         detector = detector or ReferenceNegExDetector()
@@ -1818,9 +1817,16 @@ class IRISVectorStore(VectorStore):
 
         extra_where = None
         if section is not None:
-            extra_where = self._metadata_filter_predicate(
-                {"section": section}, self._metadata_filter_column_expr(metadata_column)
-            )
+            # The opt-in section_label column (bitmap-indexed) when the table has it;
+            # the metadata LIKE otherwise. Both are approximations that the parsed
+            # metadata check below makes exact, and they agree on every section row.
+            if SECTION_COLUMN in shape.columns:
+                extra_where = section_filter_predicate(section, column=SECTION_COLUMN)
+            else:
+                extra_where = section_filter_predicate(
+                    section,
+                    metadata_expr=self._metadata_filter_column_expr(metadata_column),
+                )
 
         page = max(int(top_k) * 4, 20)
         while True:

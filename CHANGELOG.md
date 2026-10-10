@@ -43,6 +43,11 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
 - Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
   `specs/088-note-search-first-slice/contracts/query-semantics.md` and
   `tests/fixtures/note_search/vectors.json`.
+- **Opt-in `section_label` column** (spec 089): `ensure_section_column(vector_store)` adds a
+  bitmap-indexed `section_label VARCHAR(100)` to a section table and backfills it from
+  `metadata["section"]`; it is idempotent. `SectionStore.store` then writes the label into
+  both places, and `phrase_search(section=...)` filters on the column. Tables without it
+  are unchanged, and the results are the same either way.
 
 ## v0.15.0 — correctness release (2026-10-10)
 
