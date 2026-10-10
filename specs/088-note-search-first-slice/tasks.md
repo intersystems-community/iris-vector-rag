@@ -49,6 +49,18 @@ contract, then integration, then e2e. Integration and e2e share one IRIS contain
       differences in the contract.
 - [ ] T043 After 0.15.0 ships, rebase onto the release branch.
 
+## 0.16.0 follow-ups
+
+- [x] T044 Embedded-Python entry points (`api.py`), pure modules importable by relative
+      name; Baystate ran `vectors.json` through their section search with 0 differences.
+- [x] T045 Negate a mention closely followed by `negative` or `absent`.
+- [x] T046 Section label benchmark (`research-section-label-benchmark.md`).
+- [ ] T047 Opt-in `section_label` bitmap column written and read alongside the metadata
+      label (new spec, test-first).
+- [ ] T048 Experiencer (who the finding belongs to) and temporality: a new axis next to
+      polarity, a known failing vector first.
+- [ ] T049 Concept postings with polarity (pluggable tagger).
+
 ## Later specs (not this slice)
 
 Concept postings with polarity; section column versus `metadata` label at scale;
