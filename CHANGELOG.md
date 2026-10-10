@@ -61,6 +61,9 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
   detector that is **not validated on clinical text**. Negated hits are never dropped.
 - **Roll-up.** Section hits come back as one hit per parent document, scored by its best
   section, with `metadata["matched_sections"]`.
+- **`AllowlistHeadingDetector(labels, accept=, colon=, standalone=)`** finds only headings
+  named in a list you supply, in the casings you accept, with the colon optional, required
+  or forbidden. Use it where a casing pattern alone over-catches.
 - No schema change: the section label lives in the existing `metadata` column.
 - Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
   `specs/088-note-search-first-slice/contracts/query-semantics.md` and

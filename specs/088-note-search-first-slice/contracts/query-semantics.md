@@ -29,8 +29,11 @@ index makes it (section 3.1), compared after lower-casing.
    then mapped through the caller's label map if there is one.
 5. Every non-whitespace character of a note belongs to a heading or to exactly one
    section.
-6. Ordinals count sections from 0 in order of appearance. A section's id is
-   `<parent id>#<ordinal>`. A parent id may not contain `#`.
+6. Ordinals count sections from 0 in order of appearance. A section is identified by the
+   pair (parent id, ordinal), which is unique. How an implementation spells that pair is
+   its own choice and is not part of the contract: fhir-017 has the composite key
+   (`ParentKey`, `ChunkIdx`); ivr writes the string `<parent id>#<ordinal>` and so
+   refuses a parent id that contains `#`. Vectors name sections by label, never by id.
 
 ## 3. Phrase matching
 
@@ -108,7 +111,8 @@ accuracy is claimed for it.
 2. One hit per parent. `id` = parent id. `text_score` = the best section's score. `text`
    = the best section's text.
 3. `matched_sections`: every matched section of that parent, best first, ties by
-   ordinal, each with `id`, `label`, `text_score`, `polarity`.
+   ordinal, each with its section identity (rule 2.6), `label`, `text_score` and
+   `polarity`.
 4. Parents are ordered by score descending, ties by parent id ascending.
 5. A page of K holds up to K distinct parents. Sections are read past K until K parents
    are found, the matches run out, or the engine's stated read bound is reached, in

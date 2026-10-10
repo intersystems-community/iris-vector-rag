@@ -92,6 +92,9 @@ text of the sections, concatenated in order, reproduces the note.
    are replaced, not duplicated.
 7. **Given** an empty note, **When** it is split, **Then** no section comes back and
    storing it writes nothing.
+8. **Given** an allowlist of known headings and a note with those headings in upper case
+   and Title Case plus other capitalised words, **When** it is split, **Then** only the
+   listed headings start sections, each labelled as the list names it.
 
 ---
 
@@ -195,7 +198,9 @@ filter and compare the notes returned.
 - A section longer than the column allows is stored whole in the text column; the
   metadata stays under its 2000-character column.
 - A parent id that already contains `#` is refused at storage with a named error,
-  because `<parent>#<n>` would be ambiguous.
+  because ivr's section id `<parent>#<n>` would be ambiguous. This is ivr's spelling of
+  the (parent, ordinal) pair; the contract does not fix it (fhir-017 uses a composite
+  key).
 - Mixed case and repeated whitespace in a phrase or a note change nothing about whether
   it matches. Hyphenation does: `Chest-Pain` is one token and is not the phrase
   `chest pain`.
@@ -223,6 +228,13 @@ filter and compare the notes returned.
   positions and raw text of its headings. The splitter MUST NOT contain heading names.
   The library MAY ship a default detector (a line that is an upper-case phrase ending in
   a colon); it MUST NOT be applied unless the caller names it.
+  The library MUST also ship `AllowlistHeadingDetector(labels, accept=, colon=,
+  standalone=)`, which finds only headings named in a caller-supplied list, in the
+  casings the caller accepts (`upper`, `title`, `any_case`), with the colon optional,
+  required or forbidden, and a colon-less heading standing alone on its line unless the
+  caller says otherwise. Reason: a casing pattern alone over-catches on real notes
+  (Baystate: 12.9 Title Case candidates per note), and the list of real headings comes
+  from the caller's own frequency counts, never from the library.
 - **FR-003**: Text before the first heading, and a note with no heading, MUST become a
   section labelled `rest`. An empty note MUST yield no section.
 - **FR-004**: Labels MUST be normalised (lower-case, whitespace collapsed, trailing colon
