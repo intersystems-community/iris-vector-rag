@@ -106,3 +106,8 @@ _Avoid_: filter (unqualified), where clause, post-filter
 Collapsing the hits of several sections of one parent document into a single hit for that
 parent, scored by its best section.
 _Avoid_: grouping, dedup, aggregation
+
+**Polarity**:
+Whether a matched mention is affirmed, negated or unknown in the text around it. Reported
+on each hit; whether to drop negated hits is the caller's choice.
+_Avoid_: negation flag, sentiment, assertion status
