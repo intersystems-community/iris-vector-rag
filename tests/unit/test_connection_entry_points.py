@@ -8,6 +8,7 @@ configuration.
 
 from __future__ import annotations
 
+import site
 import subprocess
 import sys
 import textwrap
@@ -331,6 +332,9 @@ def test_importing_the_package_does_not_load_a_dotenv_file(tmp_path):
             "PATH": "/usr/bin:/bin",
             "PYTHONPATH": str(PACKAGE.parent),
             "HOME": str(tmp_path),
+            # HOME moves the user site-packages away; where the packages were
+            # installed with `pip --user` (the CI runner) the child must still find them.
+            "PYTHONUSERBASE": site.getuserbase(),
         },
     )
     assert result.returncode == 0, result.stderr[-800:]
