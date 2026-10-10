@@ -29,6 +29,7 @@ class QueryOptions:
     high_level_keywords: Optional[List[str]] = None
     low_level_keywords: Optional[List[str]] = None
     section: Optional[str] = None  # label of the sections a phrase search is limited to
+    polarity: Optional[str] = None  # affirmed | negated | unknown, for concept search
 
 
 def normalize_query_params(
@@ -47,6 +48,7 @@ def normalize_query_params(
     high_level_keywords: Optional[List[str]] = None,
     low_level_keywords: Optional[List[str]] = None,
     section: Optional[str] = None,
+    polarity: Optional[str] = None,
     **_extra: Any,
 ) -> QueryOptions:
     """Resolve aliases, validate, and return a QueryOptions.
@@ -107,4 +109,5 @@ def normalize_query_params(
         high_level_keywords=high_level_keywords,
         low_level_keywords=low_level_keywords,
         section=section,
+        polarity=polarity,
     )

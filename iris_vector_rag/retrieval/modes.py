@@ -49,6 +49,13 @@ _register(
 )
 _register(
     RetrievalMode(
+        name="concept",
+        sources=["concept"],
+        requires=["concept_index"],
+    )
+)
+_register(
+    RetrievalMode(
         name="hybrid",
         sources=["vector", "text"],
         requires=["text_index"],
@@ -152,6 +159,10 @@ def check_prerequisites(mode_name: str, connection: Any = None) -> None:
                     f"or use retrieval='vector' for document-only search.",
                     missing="knowledge_graph",
                 )
+        elif req == "concept_index":
+            # Checked where it is used: `RetrievalEngine` raises NotImplementedError
+            # naming `concept_index` or `concept_tagger` when either is not given.
+            pass
         elif req == "relation_embeddings":
             # Soft check: empty index → graceful degradation (FR-009), not hard error.
             pass

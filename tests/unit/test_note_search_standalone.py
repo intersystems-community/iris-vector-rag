@@ -24,6 +24,7 @@ PURE = [
     "context",
     "rollup",
     "api",
+    "concepts",
 ]
 
 SCRIPT = """
@@ -37,7 +38,8 @@ class Forbid:
             raise ImportError("forbidden import: " + name)
 
 sys.meta_path.insert(0, Forbid())
-from vendored_ns import api, context, phrase, polarity, rollup, sections, tokens
+from vendored_ns import api, concepts, context, phrase, polarity, rollup, sections, tokens
+assert concepts.DictionaryTagger({"C-X": ["chest pain"]})("Chest pain.")[0].start == 0
 result = api.judge_section("Denies chest pain.", "chest pain")
 assert result["polarity"] == "negated", result
 assert sections.split_sections("HPI: x", sections.default_heading_detector)[0].label == "hpi"

@@ -37,8 +37,7 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
   `sections`, `polarity`, `rollup`, `api`) import only the standard library and each other
   by relative import, so they can be copied out as a package; a test proves it.
 - The reference detector also negates a mention that `negative` or `absent` closely
-  follows (`pregnancy test negative`); it still does not know who a finding belongs to
-  (`Mother had a stroke`), which is a later spec.
+  follows (`pregnancy test negative`).
 - No schema change: the section label lives in the existing `metadata` column.
 - Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
   `specs/088-note-search-first-slice/contracts/query-semantics.md` and
@@ -48,6 +47,14 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
   `metadata["section"]`; it is idempotent. `SectionStore.store` then writes the label into
   both places, and `phrase_search(section=...)` filters on the column. Tables without it
   are unchanged, and the results are the same either way.
+- **Concept postings with polarity (spec 091).** `note_search.concepts.DictionaryTagger` tags
+  text with concept ids from a dictionary you supply (no clinical vocabulary ships), and
+  `postings_for_section` gives one posting per concept with its polarity and mention count.
+  `note_search.concept_index.ConceptIndex` stores the postings per section in
+  `<schema>.SectionConcepts` and searches by concept id: a parent matches when it has a posting
+  for every concept. `QueryOptions(retrieval="concept", polarity=..., section=...)` runs it
+  with `RetrievalEngine(concept_index=..., concept_tagger=...)`. No model or embedding is used.
+  See `specs/091-concept-postings/spec.md`.
 
 ## v0.15.0 — correctness release (2026-10-10)
 
