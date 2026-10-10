@@ -4,6 +4,7 @@ Feature: 025-fixes-for-testing
 Contract: test_execution_contract.md
 """
 
+import os
 import subprocess
 import sys
 import time
@@ -61,10 +62,11 @@ def test_iris_connection_fixture_available():
 def test_iris_health_check_passes():
     """REQ-4: IRIS database is healthy."""
 
-    # This project owns exactly one IRIS container, on 51972 (see CLAUDE.md).
-    # Probing other projects' ports is how a test ends up asserting against
+    # The port is the one this run was told to use (CI starts its throwaway container on
+    # 1972 and sets IRIS_PORT); otherwise it is this project's container, 51972 (see
+    # CLAUDE.md). Probing other projects' ports is how a test ends up asserting against
     # someone else's database.
-    iris_ports = [51972]
+    iris_ports = [int(os.environ.get("IRIS_PORT", "51972"))]
     iris_available = False
 
     for port in iris_ports:
@@ -117,6 +119,10 @@ def test_pytest_markers_configured(pytestconfig):
         )
 
 
+# The test runs the whole unit suite in a child process (about 35 s on a CI runner), so
+# it needs more than the 30 s every other contract test gets; the thread timeout method
+# would otherwise end the entire pytest process, not just this test.
+@pytest.mark.timeout(300)
 def test_test_suite_execution_time():
     """REQ-6: Full test suite runs in < 2 minutes."""
     start = time.time()
