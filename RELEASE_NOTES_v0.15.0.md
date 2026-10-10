@@ -1,6 +1,6 @@
 # Release Notes: iris-vector-rag v0.15.0
 
-**DRAFT** for review. Not tagged, not published.
+Released 2026-10-10 as `v0.15.0` (PyPI and GitHub Release).
 
 0.15.0 is a correctness release. The October 2026 code review found that several
 parts of the library reported success they did not have: fake vectors stored as
