@@ -2,7 +2,7 @@
 
 **Feature Branch**: `feature/note-search`
 **Created**: 2026-10-10
-**Status**: Draft, awaiting approval before any implementation
+**Status**: Approved 2026-10-10; implementation test-first, task 0 first
 **Ships in**: 0.16.0, after 0.15.0
 **Input**: Search over very large sets of long clinical notes needs three things the
 library does not have: cut a note into labelled sections, find an exact phrase and say
@@ -44,23 +44,20 @@ known answers.
 - Q: What decides the first slice is done? → A: A synthetic fixture with known answers,
   against the real IRIS `iris-vector-rag-iris:51972`. No mocks of IRIS.
 
-### Open questions for approval
+### Session 2026-10-10 (decisions on the three open questions)
 
-1. **Where does the section label live?** Proposal: the `metadata` JSON column, key
-   `section`, filtered through the existing metadata filter. No schema change, and it
-   keeps the table in the canonical chunk shape. The research warns this costs a scan per
-   match at scale (about 28 million section rows); a bitmap-indexed `section` column
-   fixes that but makes the table non-canonical. The slice hides the choice behind one
-   accessor, so moving later changes one place. Is metadata-first acceptable?
-2. **Polarity of a rolled-up hit.** Proposal: `affirmed` if any matched mention in any
-   section is affirmed, else `negated` if any is negated, else `unknown`. Each matched
-   section keeps its own polarity in the hit. Rationale: "does this note affirm X" is the
-   usual question, and a negated hit never hides an affirmed one. Confirm?
-3. **Reference polarity detector.** Proposal: ship a small NegEx-style rule detector
-   (pre- and post-negation triggers, a sentence-bounded scope window, and a short list
-   of uncertainty triggers that yield `unknown`) as the default, documented as
-   unvalidated on emergency-department text. The alternative is to ship only the
-   interface and a deterministic test detector. Confirm?
+- Q: Where does the section label live? → A: The `metadata` JSON column, key `section`,
+  filtered through the existing metadata filter. No schema change; the table stays in the
+  canonical chunk shape. The cost is a scan per match at scale (about 28 million section
+  rows); a bitmap-indexed `section` column is the later fix, so the slice reads and writes
+  the label through one accessor.
+- Q: Polarity of a rolled-up hit? → A: `affirmed` if any matched mention in any section is
+  affirmed, else `negated` if any is negated, else `unknown`. Each matched section keeps
+  its own polarity in the hit.
+- Q: Reference polarity detector? → A: Ship a small NegEx-style rule detector (pre- and
+  post-negation triggers, a sentence-bounded scope, a short list of uncertainty triggers
+  yielding `unknown`) as the default, documented as unvalidated on emergency-department
+  text. The interface stays pluggable.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -199,8 +196,9 @@ filter and compare the notes returned.
   metadata stays under its 2000-character column.
 - A parent id that already contains `#` is refused at storage with a named error,
   because `<parent>#<n>` would be ambiguous.
-- Mixed case, punctuation and repeated whitespace in a phrase or a note change nothing
-  about whether it matches.
+- Mixed case and repeated whitespace in a phrase or a note change nothing about whether
+  it matches. Hyphenation does: `Chest-Pain` is one token and is not the phrase
+  `chest pain`.
 - Two sections with the same label in one note (a repeated heading) are two rows and
   both can match.
 - The match found by the index and the match found by the polarity detector must be the
@@ -244,7 +242,7 @@ filter and compare the notes returned.
   prerequisite `text_index`, and `RetrievalEngine.retrieve` MUST dispatch it. The
   prerequisite check of the existing text modes applies unchanged.
 - **FR-011**: A phrase query MUST match words adjacent and in order, ignoring case and
-  punctuation, with no stemming and no stop-word removal inside the phrase. Its exact
+  surrounding punctuation, with no stemming and no stop-word removal inside the phrase. Its exact
   semantics are in `contracts/query-semantics.md` and that file is normative.
 - **FR-012**: The search string MUST be built from the phrase with every operator
   character removed or escaped, as `search_terms` does for words; the SQL MUST stay
@@ -272,7 +270,7 @@ filter and compare the notes returned.
   `id` = parent id, score = the best section's `text_score`, `text` = the best section's
   text, and `metadata["matched_sections"]` listing every matched section's `id`,
   `label`, `text_score` and `polarity`, best first.
-- **FR-021**: The rolled-up polarity follows open question 2 (any-affirmed rule).
+- **FR-021**: The rolled-up polarity is `affirmed` if any matched mention in any section is affirmed, else `negated` if any is negated, else `unknown`.
 - **FR-022**: A page of K MUST hold up to K distinct parents. The engine MUST read more
   section hits, within a stated bound, until K parents are found or no more matches
   exist; it MUST say in the result when the bound stopped it short.
@@ -319,23 +317,13 @@ filter and compare the notes returned.
 - **SC-006**: No claim about accuracy on clinical text, throughput or latency is made by
   this slice, and none appears in its documentation.
 
-## Assumptions to verify before the contract is final (task 0 of the plan)
+## Task 0 outcome (IRIS 2026.1, run 2026-10-10)
 
-Each is a question about IRIS 2026.1 that the text leg has not answered. Settle them
-against the real container, record the answer in `contracts/query-semantics.md`, and only
-then write the tests that depend on it.
-
-1. Whether `%FIND search_index(Idx, '"chest pain"')` performs an adjacent, ordered phrase
-   match on a `%iFind.Index.Basic(LANGUAGE='en', LOWER=1)` index, and whether stop words
-   inside the quotes ("no chest pain") are kept.
-2. Whether the existing rank procedure scores a phrase query, and whether the score is
-   comparable across sections of different length (it is TF-IDF; order is asserted only
-   where the fixture makes it unambiguous).
-3. How to locate every match of the phrase in a section's text so the detector can judge
-   it: whether the index can return offsets (highlighting) or the library re-scans the
-   text with its own tokenizer, and whether the two agree on the fixture.
-4. Whether a `metadata` JSON filter on `section` works in SQL before ranking on a
-   chunk-shaped table, as `_metadata_filter_predicate` builds it for documents.
+The four questions that were open are answered in `contracts/query-semantics.md`
+section 8. Quoted phrases work and keep stop words; the rank procedure scores them; the
+existing metadata predicate filters before ranking; the index returns no offsets, so
+mentions are located by re-scanning, with `unknown` as the fallback; and tokenisation is
+the index's (hyphenated words are one token), which the contract now states.
 
 ## Test plan (test-first; every file is written and seen failing before its code)
 
