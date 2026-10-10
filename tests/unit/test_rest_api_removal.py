@@ -129,5 +129,7 @@ def test_nothing_outside_history_mentions_the_removed_package():
 
 
 def test_changelog_announces_the_removal():
-    unreleased = (ROOT / "CHANGELOG.md").read_text().split("\n## ", 2)[1]
+    sections = (ROOT / "CHANGELOG.md").read_text().split("\n## ")
+    # The release that announced the removal, wherever later sections sit above it.
+    unreleased = next(s for s in sections if s.startswith("v0.15.0"))
     assert "iris_vector_rag.api" in unreleased and TAG in unreleased
