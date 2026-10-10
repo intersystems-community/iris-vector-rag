@@ -1,5 +1,40 @@
 # Changelog
 
+## Unreleased
+
+### Added: note search, first slice (retrieval mode `phrase`, sections, polarity, roll-up)
+
+For long documents such as clinical notes (spec 088, `specs/088-note-search-first-slice/`).
+
+- **`iris_vector_rag.note_search`**: `split_sections(text, detector, label_map=None)` cuts a
+  document into labelled sections with a heading detector you supply (a default for
+  `UPPER CASE:` lines is provided and never applied implicitly). `SectionStore.store()`
+  (over an `IRISVectorStore` on a chunk-shaped table) writes one row per section
+  (`doc_id = <parent>#<n>`, `document_id` = the parent, the label in `metadata["section"]`),
+  replacing the parent's earlier sections in one transaction.
+- **`retrieval="phrase"`** (`RetrievalEngine`, `IRISVectorStore.phrase_search`): an exact
+  phrase (words adjacent, in order, no stemming, stop words kept) over the table's iFind
+  index, optionally limited with `QueryOptions(section="allergies")`, applied in SQL before
+  ranking. Each candidate is re-scanned and dropped if the phrase is not really there:
+  IRIS 2026.1 returns reverse-order false positives for two-word phrases at the start of a
+  text.
+- **Polarity.** Every hit says `affirmed`, `negated` or `unknown` (`metadata["polarity"]`),
+  from a pluggable `PolarityDetector`; the default is a small NegEx-style reference
+  detector that is **not validated on clinical text**. Negated hits are never dropped.
+- **Roll-up.** Section hits come back as one hit per parent document, scored by its best
+  section, with `metadata["matched_sections"]`.
+- **`AllowlistHeadingDetector(labels, accept=, colon=, standalone=)`** finds only headings
+  named in a list you supply, in the casings you accept, with the colon optional, required
+  or forbidden. Use it where a casing pattern alone over-catches.
+- **`iris_vector_rag.note_search.api`** (`classify`, `judge_section`, `judge_section_json`) is
+  the entry point for embedded Python callers. The pure modules (`tokens`, `phrase`,
+  `sections`, `polarity`, `rollup`, `api`) import only the standard library and each other
+  by relative import, so they can be copied out as a package; a test proves it.
+- No schema change: the section label lives in the existing `metadata` column.
+- Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
+  `specs/088-note-search-first-slice/contracts/query-semantics.md` and
+  `tests/fixtures/note_search/vectors.json`.
+
 ## v0.15.0 — correctness release (2026-10-10)
 
 ### Fixed: embedding width probe on sentence-transformers 6
@@ -39,39 +74,6 @@ storage migration between 4.1.1 and 4.2.0.
   ObjectScript fixes: IVR calls none of the affected algorithms and had no workaround for the
   fixed defects. `docs/DEBT.md` entry 10 records what was re-checked about the embedded-Python
   probe.
-
-### Added: note search, first slice (retrieval mode `phrase`, sections, polarity, roll-up)
-
-For long documents such as clinical notes (spec 088, `specs/088-note-search-first-slice/`).
-
-- **`iris_vector_rag.note_search`**: `split_sections(text, detector, label_map=None)` cuts a
-  document into labelled sections with a heading detector you supply (a default for
-  `UPPER CASE:` lines is provided and never applied implicitly). `SectionStore.store()`
-  (over an `IRISVectorStore` on a chunk-shaped table) writes one row per section
-  (`doc_id = <parent>#<n>`, `document_id` = the parent, the label in `metadata["section"]`),
-  replacing the parent's earlier sections in one transaction.
-- **`retrieval="phrase"`** (`RetrievalEngine`, `IRISVectorStore.phrase_search`): an exact
-  phrase (words adjacent, in order, no stemming, stop words kept) over the table's iFind
-  index, optionally limited with `QueryOptions(section="allergies")`, applied in SQL before
-  ranking. Each candidate is re-scanned and dropped if the phrase is not really there:
-  IRIS 2026.1 returns reverse-order false positives for two-word phrases at the start of a
-  text.
-- **Polarity.** Every hit says `affirmed`, `negated` or `unknown` (`metadata["polarity"]`),
-  from a pluggable `PolarityDetector`; the default is a small NegEx-style reference
-  detector that is **not validated on clinical text**. Negated hits are never dropped.
-- **Roll-up.** Section hits come back as one hit per parent document, scored by its best
-  section, with `metadata["matched_sections"]`.
-- **`AllowlistHeadingDetector(labels, accept=, colon=, standalone=)`** finds only headings
-  named in a list you supply, in the casings you accept, with the colon optional, required
-  or forbidden. Use it where a casing pattern alone over-catches.
-- **`iris_vector_rag.note_search.api`** (`classify`, `judge_section`, `judge_section_json`) is
-  the entry point for embedded Python callers. The pure modules (`tokens`, `phrase`,
-  `sections`, `polarity`, `rollup`, `api`) import only the standard library and each other
-  by relative import, so they can be copied out as a package; a test proves it.
-- No schema change: the section label lives in the existing `metadata` column.
-- Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
-  `specs/088-note-search-first-slice/contracts/query-semantics.md` and
-  `tests/fixtures/note_search/vectors.json`.
 
 ### Fixed: the text leg of `text`, `hybrid` and `rrf` retrieval searches the real document table (existing tables gain an index)
 
