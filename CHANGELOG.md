@@ -26,7 +26,8 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
   temporality (`current`, `historical` or `hypothetical`), from a pluggable
   `ContextDetector`; the reference rules are a small list, not validated on clinical text.
   `judge_section` adds `experiencer` and `temporality` to the section and each mention, and
-  `classify_context` answers per span. Polarity is unchanged.
+  `classify_context` answers per span. Polarity is unchanged. Discharge-instruction wording
+  (`call your doctor for`, `return to the ED for`, ...) is `hypothetical`.
 - **Roll-up.** Section hits come back as one hit per parent document, scored by its best
   section, with `metadata["matched_sections"]`.
 - **`AllowlistHeadingDetector(labels, accept=, colon=, standalone=)`** finds only headings

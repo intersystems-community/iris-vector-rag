@@ -129,8 +129,10 @@ same sentence bounds and terminators as section 5.
    Otherwise **`patient`**.
 2. **Temporality** is checked in this order, with the same terminator rule:
    a. `hypothetical` if one of `if`, `should`, `return for`, `return if`, `call if`,
-      `in case of`, `risk of`, `monitor for`, `worry about`, `worried about` occurs
-      before the mention.
+      `in case of`, `risk of`, `monitor for`, `worry about`, `worried about`, or
+      discharge-instruction wording (`call your doctor for`, `call 911 for`, `return to
+      the ED for`, `return to the ER for`, `return to the emergency department for`,
+      `seek medical attention for`, `seek care for`) occurs before the mention.
    b. `historical` if one of `history of`, `h/o`, `hx of`, `previous`, `previously`,
       `prior`, `past`, `remote`, `resolved` occurs before the mention, or `resolved`
       occurs after it.

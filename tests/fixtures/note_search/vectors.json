@@ -683,6 +683,55 @@
       "mention": 0,
       "experiencer": "patient",
       "temporality": "current"
+    },
+    {
+      "text": "Call your doctor for fever or chills.",
+      "phrase": "fever",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "hypothetical"
+    },
+    {
+      "text": "Return to the ED for chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "hypothetical"
+    },
+    {
+      "text": "Return to the emergency department for chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "hypothetical"
+    },
+    {
+      "text": "Seek medical attention for chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "hypothetical"
+    },
+    {
+      "text": "Call 911 for chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "hypothetical"
+    },
+    {
+      "text": "Called her doctor for fever.",
+      "phrase": "fever",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "current"
+    },
+    {
+      "text": "Returned to the ED with chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "current"
     }
   ]
 }

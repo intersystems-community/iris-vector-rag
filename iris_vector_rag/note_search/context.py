@@ -70,6 +70,14 @@ HYPOTHETICAL_TRIGGERS: tuple[tuple[str, ...], ...] = (
     ("monitor", "for"),
     ("worry", "about"),
     ("worried", "about"),
+    # Discharge-instruction wording: advice about what to do if a symptom appears.
+    ("call", "your", "doctor", "for"),
+    ("call", "911", "for"),
+    ("return", "to", "the", "ed", "for"),
+    ("return", "to", "the", "er", "for"),
+    ("return", "to", "the", "emergency", "department", "for"),
+    ("seek", "medical", "attention", "for"),
+    ("seek", "care", "for"),
 )
 HISTORICAL_BEFORE_TRIGGERS: tuple[tuple[str, ...], ...] = (
     ("history", "of"),
