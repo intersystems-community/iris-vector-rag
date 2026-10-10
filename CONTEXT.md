@@ -28,6 +28,18 @@ The outcome of ensuring a pipeline's tables: which tables exist, what was create
 altered, how many rows each holds, and whether any minimum is unmet.
 _Avoid_: validation report, validation result, readiness check
 
+**Section**:
+A labelled part of a long document, stored and searched as a document of its own that
+points back to its parent document. Its label (for example a heading) is a filterable
+fact about it, not part of its text.
+_Avoid_: chunk (when the part carries a label), note (a clinical word; the parent is just a
+document), span
+
+**Parent document**:
+The whole document that sections were cut from. The unit a user asks about and the unit
+an answer cites.
+_Avoid_: source document (ambiguous with the source of ingestion), note, record
+
 ### Connectivity
 
 **Session**:
@@ -89,3 +101,8 @@ _Avoid_: response, result dict, envelope
 A set of key/value conditions that a hit's document metadata must match exactly; it
 narrows the search itself rather than being applied afterwards.
 _Avoid_: filter (unqualified), where clause, post-filter
+
+**Roll-up**:
+Collapsing the hits of several sections of one parent document into a single hit for that
+parent, scored by its best section.
+_Avoid_: grouping, dedup, aggregation
