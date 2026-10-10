@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.16.0 — note search (2026-10-10)
 
 ### Added: note search, first slice (retrieval mode `phrase`, sections, polarity, roll-up)
 
