@@ -21,6 +21,12 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
 - **Polarity.** Every hit says `affirmed`, `negated` or `unknown` (`metadata["polarity"]`),
   from a pluggable `PolarityDetector`; the default is a small NegEx-style reference
   detector that is **not validated on clinical text**. Negated hits are never dropped.
+- **Context (experiencer and temporality).** `iris_vector_rag.note_search.context` gives
+  each mention an experiencer (`patient` or `other`, e.g. a family member's history) and a
+  temporality (`current`, `historical` or `hypothetical`), from a pluggable
+  `ContextDetector`; the reference rules are a small list, not validated on clinical text.
+  `judge_section` adds `experiencer` and `temporality` to the section and each mention, and
+  `classify_context` answers per span. Polarity is unchanged.
 - **Roll-up.** Section hits come back as one hit per parent document, scored by its best
   section, with `metadata["matched_sections"]`.
 - **`AllowlistHeadingDetector(labels, accept=, colon=, standalone=)`** finds only headings

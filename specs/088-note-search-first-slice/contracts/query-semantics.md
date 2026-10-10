@@ -105,13 +105,49 @@ A **section polarity** is `affirmed` if any mention is affirmed, else `negated` 
 negated, else `unknown`. A **rolled-up polarity** applies the same rule across the matched
 sections.
 
-Known limits, not handled and not claimed: who the finding belongs to (`Mother had a
-stroke` is judged affirmed for `stroke`), when it happened, and negation reaching across
-a long list. Experiencer and temporality are a later spec; the gold set will say how
-much they matter.
+Known limits, not claimed: negation reaching across a long list (a trigger's reach is
+the sentence or the nearest terminator, so a long list can be cut short or run on);
+who `she` or `he` refers to (pronouns are not resolved, so a finding is judged by the
+rules of section 5b alone). Experiencer and temporality are handled as section 5b
+describes, and the gold set will say how much that matters. Polarity does not change
+with them: `Mother had a stroke` is still `affirmed` for `stroke`.
 
 This detector is a reference. It is not validated on emergency-department text and no
 accuracy is claimed for it.
+
+## 5b. Context (experiencer and temporality)
+
+Context is a separate answer from polarity. A **context detector** is given a section's
+text and the span of one mention, and returns an experiencer (`patient`, `other`) and a
+temporality (`current`, `historical`, `hypothetical`). The reference detector uses the
+same sentence bounds and terminators as section 5.
+
+1. **Experiencer `other`** if a family term occurs before the mention in the same
+   sentence, with no terminator between it and the mention: `mother`, `father`,
+   `sister`, `brother`, `son`, `daughter`, `grandmother`, `grandfather`, `aunt`, `uncle`,
+   `cousin`, `parent`, `parents`, `sibling`, `siblings`, `family history`, `fh`, `fhx`.
+   Otherwise **`patient`**.
+2. **Temporality** is checked in this order, with the same terminator rule:
+   a. `hypothetical` if one of `if`, `should`, `return for`, `return if`, `call if`,
+      `in case of`, `risk of`, `monitor for`, `worry about`, `worried about` occurs
+      before the mention.
+   b. `historical` if one of `history of`, `h/o`, `hx of`, `previous`, `previously`,
+      `prior`, `past`, `remote`, `resolved` occurs before the mention, or `resolved`
+      occurs after it.
+   c. Otherwise `current`.
+3. The `family history` cue in rule 1 is not counted again for rule 2: `Family history
+   of stroke` is `other`, `current`. `Mother had a history of stroke` is `other`,
+   `historical`.
+4. **Terminators** (`but`, `however`, `although`) end a trigger's reach, as in section 5.
+5. Words are tokens as in section 3.1, so `brother-in-law` is not `brother`.
+6. **Section context** (`section_context`): experiencer is `patient` if any mention is,
+   else `other`. Temporality is `current` if any mention is, else `historical` if any
+   is, else `hypothetical` if any is. With no mentions both are `unknown`.
+7. Context does not change polarity. `Mother had a stroke` is `affirmed`, and its
+   experiencer is `other`.
+
+The vectors are in the `context` key of `vectors.json`. This detector is a reference. It
+is not validated on emergency-department text and no accuracy is claimed for it.
 
 ## 6. Roll-up
 

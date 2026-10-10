@@ -598,5 +598,91 @@
       "mention": 0,
       "expected": "affirmed"
     }
+  ],
+  "context": [
+    {
+      "text": "Mother had a stroke at 70; patient has no neurological history.",
+      "phrase": "stroke",
+      "mention": 0,
+      "experiencer": "other",
+      "temporality": "current"
+    },
+    {
+      "text": "Patient has a history of stroke.",
+      "phrase": "stroke",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "historical"
+    },
+    {
+      "text": "Family history of stroke.",
+      "phrase": "stroke",
+      "mention": 0,
+      "experiencer": "other",
+      "temporality": "current"
+    },
+    {
+      "text": "No family history of stroke.",
+      "phrase": "stroke",
+      "mention": 0,
+      "experiencer": "other",
+      "temporality": "current"
+    },
+    {
+      "text": "Return if chest pain worsens.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "hypothetical"
+    },
+    {
+      "text": "Return for chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "hypothetical"
+    },
+    {
+      "text": "Chest pain started today.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "current"
+    },
+    {
+      "text": "Her mother is healthy but she has chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "current"
+    },
+    {
+      "text": "Prior chest pain resolved.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "historical"
+    },
+    {
+      "text": "Patient reports chest pain; father had chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "current"
+    },
+    {
+      "text": "Patient reports chest pain; father had chest pain.",
+      "phrase": "chest pain",
+      "mention": 1,
+      "experiencer": "other",
+      "temporality": "current"
+    },
+    {
+      "text": "Brother-in-law drove her; she reports chest pain.",
+      "phrase": "chest pain",
+      "mention": 0,
+      "experiencer": "patient",
+      "temporality": "current"
+    }
   ]
 }
