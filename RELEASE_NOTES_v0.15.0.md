@@ -197,11 +197,12 @@ By area of the review. The CHANGELOG lists each finding.
 
 ## Verification
 
-On `remediation/integrated` after the iris-vector-graph 4.2.0 merge (branch head
-`42937278`, merged unchanged), against IRIS 2026.1 and the real OpenAI API: 1800 unit tests pass;
-the contract suite as `release.yml` runs it passes (761 passed, 28 skipped, 0
-failed); the integration, end-to-end and root suites pass in one session (738
-passed, 26 skipped, 6 xfailed, 0 failed, 0 errors); the quality gates and the
-swallowed-error detector are clean. These ran against a wheel built from the
-`v4.2.0` tag; `iris-vector-graph` 4.2.0 reached PyPI on 2026-10-10, and the
-install from PyPI is re-run before tagging.
+On `remediation/integrated` at `e6b60a5d`, against IRIS 2026.1: the unit suite passes
+(1805 passed on sentence-transformers 5.2.3; 1785 passed, 7 skipped on 6.0.1 without the
+`mcp` extra); the contract suite, run as `release.yml` runs it on a fresh container,
+passes (761 passed, 28 skipped, 56 deselected, 0 failed); the iris-vector-graph 4.2.0
+integration tests pass from a fresh install of `iris-vector-graph` from PyPI (13 passed).
+The integration, end-to-end and root suites passed in one session before the final
+embedding-width fix (738 passed, 26 skipped, 6 xfailed, 0 failed, 0 errors, at
+`42937278`); that fix touches only the dimension probe. The quality gates and the
+swallowed-error detector are clean.
