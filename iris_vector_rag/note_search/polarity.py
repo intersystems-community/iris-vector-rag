@@ -6,9 +6,11 @@ emergency-department text and no accuracy is claimed for it.
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from collections.abc import Callable, Iterable
+from functools import lru_cache
 
-from .tokens import tokenize
+from .tokens import Token, tokenize
 
 AFFIRMED = "affirmed"
 NEGATED = "negated"
@@ -58,18 +60,42 @@ def _is_boundary(text: str, index: int) -> bool:
     return False
 
 
+@lru_cache(maxsize=16)
+def _boundaries(text: str) -> tuple[int, ...]:
+    """The index of every sentence-ending character in text, found once per text."""
+    return tuple(i for i in range(len(text)) if _is_boundary(text, i))
+
+
+@lru_cache(maxsize=16)
+def _tokens(text: str) -> tuple[Token, ...]:
+    """The tokens of text, computed once and shared by every mention and detector."""
+    return tuple(tokenize(text))
+
+
+@lru_cache(maxsize=16)
+def _token_starts(text: str) -> tuple[int, ...]:
+    return tuple(token.start for token in _tokens(text))
+
+
 def _sentence_bounds(text: str, pos: int) -> tuple[int, int]:
     """Return the (start, end) character range of the sentence containing pos."""
-    start = 0
-    for index in range(pos):
-        if _is_boundary(text, index):
-            start = index + 1
-    end = len(text)
-    for index in range(pos, len(text)):
-        if _is_boundary(text, index):
-            end = index
-            break
+    boundaries = _boundaries(text)
+    at = bisect_left(boundaries, pos)
+    start = boundaries[at - 1] + 1 if at else 0
+    end = boundaries[at] if at < len(boundaries) else len(text)
     return start, end
+
+
+def _sentence_tokens(text: str, pos: int) -> list[Token]:
+    """The tokens inside the sentence that contains pos, in order."""
+    sent_start, sent_end = _sentence_bounds(text, pos)
+    tokens = _tokens(text)
+    found: list[Token] = []
+    for token in tokens[bisect_left(_token_starts(text), sent_start) :]:
+        if token.end > sent_end:
+            break
+        found.append(token)
+    return found
 
 
 def _triggered(
@@ -112,12 +138,7 @@ class ReferenceNegExDetector:
     def __call__(self, text: str, span: tuple[int, int]) -> str:
         """Return the polarity of the mention at span within text."""
         start, end = span
-        sent_start, sent_end = _sentence_bounds(text, start)
-        tokens = [
-            token
-            for token in tokenize(text)
-            if token.start >= sent_start and token.end <= sent_end
-        ]
+        tokens = _sentence_tokens(text, start)
         # Tokens inside the mention are ignored; a mention is judged in the
         # sentence where it starts.
         pre = [token.text for token in tokens if token.end <= start]

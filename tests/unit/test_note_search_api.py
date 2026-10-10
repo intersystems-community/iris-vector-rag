@@ -148,3 +148,45 @@ def test_classify_context_uses_the_context_detector_it_is_given():
 def test_classify_context_refuses_a_span_outside_the_text(span):
     with pytest.raises(ValueError, match="span"):
         classify_context("short", [span])
+
+
+# --- batch forms: one call for many sections -------------------------------------
+
+
+def test_judge_sections_answers_each_text_in_order():
+    from iris_vector_rag.note_search.api import judge_sections
+
+    texts = ["Denies chest pain.", "Reports chest pain.", "No fever."]
+    answers = judge_sections(texts, "chest pain")
+    assert [a["polarity"] for a in answers] == [NEGATED, AFFIRMED, UNKNOWN]
+    assert answers == [judge_section(t, "chest pain") for t in texts]
+
+
+def test_judge_sections_with_no_texts_is_empty():
+    from iris_vector_rag.note_search.api import judge_sections
+
+    assert judge_sections([], "chest pain") == []
+
+
+def test_judge_sections_refuses_a_bad_phrase_once_even_with_no_texts():
+    from iris_vector_rag.note_search.api import judge_sections
+
+    with pytest.raises(ValueError, match="letter or digit"):
+        judge_sections([], "...")
+
+
+def test_judge_sections_json_takes_and_returns_json_strings():
+    from iris_vector_rag.note_search.api import judge_sections_json
+
+    out = json.loads(
+        judge_sections_json(json.dumps(["Denies chest pain."]), "chest pain")
+    )
+    assert out[0]["polarity"] == NEGATED
+
+
+def test_judge_sections_json_refuses_something_that_is_not_a_list_of_strings():
+    from iris_vector_rag.note_search.api import judge_sections_json
+
+    for bad in ('{"a": 1}', "[1, 2]", "not json"):
+        with pytest.raises(ValueError):
+            judge_sections_json(bad, "chest pain")

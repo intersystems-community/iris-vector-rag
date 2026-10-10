@@ -38,6 +38,13 @@ For long documents such as clinical notes (spec 088, `specs/088-note-search-firs
   by relative import, so they can be copied out as a package; a test proves it.
 - The reference detector also negates a mention that `negative` or `absent` closely
   follows (`pregnancy test negative`).
+- **Faster polarity and context judgement.** The detectors used to re-tokenise a section and
+  walk it character by character for every mention, so the cost grew faster than the text
+  (about 46 ms per section on a synthetic mix of 800 to 7,000 characters, 138 ms at 7,000).
+  They now tokenise once per text and find the sentence by bisection: about 2 ms per
+  section, 6 ms at 7,000 characters, with identical answers. `judge_sections` and
+  `judge_sections_json` judge many sections in one call, which saves the call from
+  ObjectScript into Python for each candidate section.
 - No schema change: the section label lives in the existing `metadata` column.
 - Query semantics and shared test vectors for other implementations (fhir-017, ADR 0003):
   `specs/088-note-search-first-slice/contracts/query-semantics.md` and

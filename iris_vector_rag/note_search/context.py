@@ -13,8 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
-from .polarity import _sentence_bounds, _triggered
-from .tokens import tokenize
+from .polarity import _sentence_tokens, _triggered
 
 PATIENT = "patient"
 OTHER = "other"
@@ -106,12 +105,7 @@ class ReferenceContextDetector:
     def __call__(self, text: str, span: tuple[int, int]) -> Context:
         """Return the experiencer and temporality of the mention at span within text."""
         start, end = span
-        sent_start, sent_end = _sentence_bounds(text, start)
-        tokens = [
-            token
-            for token in tokenize(text)
-            if token.start >= sent_start and token.end <= sent_end
-        ]
+        tokens = _sentence_tokens(text, start)
         # As in polarity: tokens inside the mention are ignored, and a mention is judged
         # in the sentence where it starts.
         pre = [token.text for token in tokens if token.end <= start]

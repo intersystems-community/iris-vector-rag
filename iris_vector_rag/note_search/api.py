@@ -11,7 +11,7 @@ import json
 from typing import Any, Dict, List, Optional, Sequence
 
 from .context import ContextDetector, ReferenceContextDetector, section_context
-from .phrase import find_mentions
+from .phrase import find_mentions, phrase_tokens
 from .polarity import (
     UNKNOWN,
     PolarityDetector,
@@ -137,5 +137,51 @@ def judge_section_json(
     return json.dumps(
         judge_section(
             text, phrase, detector=detector, context_detector=context_detector
+        )
+    )
+
+
+def judge_sections(
+    texts: Sequence[str],
+    phrase: str,
+    detector: Optional[PolarityDetector] = None,
+    context_detector: Optional[ContextDetector] = None,
+) -> List[Dict[str, Any]]:
+    """``judge_section`` for many texts in one call, answers in the order given.
+
+    One call instead of one per candidate section saves the cost of crossing from
+    ObjectScript into Python for each section. The phrase is checked first, so a bad
+    phrase raises even when there are no texts.
+    """
+    phrase_tokens(phrase)
+    return [
+        judge_section(
+            text, phrase, detector=detector, context_detector=context_detector
+        )
+        for text in texts
+    ]
+
+
+def judge_sections_json(
+    texts_json: str,
+    phrase: str,
+    detector: Optional[PolarityDetector] = None,
+    context_detector: Optional[ContextDetector] = None,
+) -> str:
+    """``judge_sections`` over a JSON array of strings, returning a JSON array.
+
+    Raises:
+        ValueError: ``texts_json`` is not a JSON array of strings, or the phrase has no
+            letter or digit.
+    """
+    try:
+        texts = json.loads(texts_json)
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"texts_json is not valid JSON: {error}") from error
+    if not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
+        raise ValueError("texts_json must be a JSON array of strings")
+    return json.dumps(
+        judge_sections(
+            texts, phrase, detector=detector, context_detector=context_detector
         )
     )
