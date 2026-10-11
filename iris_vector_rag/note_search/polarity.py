@@ -6,11 +6,12 @@ emergency-department text and no accuracy is claimed for it.
 
 from __future__ import annotations
 
+import re
 from bisect import bisect_left
 from collections.abc import Callable, Iterable
 from functools import lru_cache
 
-from .tokens import Token, tokenize
+from .tokens import Token, tokenize_cached
 
 AFFIRMED = "affirmed"
 NEGATED = "negated"
@@ -60,21 +61,18 @@ def _is_boundary(text: str, index: int) -> bool:
     return False
 
 
+_BOUNDARY = re.compile(r"\n|[.?!;](?=\s|\Z)")
+
+
 @lru_cache(maxsize=16)
 def _boundaries(text: str) -> tuple[int, ...]:
     """The index of every sentence-ending character in text, found once per text."""
-    return tuple(i for i in range(len(text)) if _is_boundary(text, i))
-
-
-@lru_cache(maxsize=16)
-def _tokens(text: str) -> tuple[Token, ...]:
-    """The tokens of text, computed once and shared by every mention and detector."""
-    return tuple(tokenize(text))
+    return tuple(match.start() for match in _BOUNDARY.finditer(text))
 
 
 @lru_cache(maxsize=16)
 def _token_starts(text: str) -> tuple[int, ...]:
-    return tuple(token.start for token in _tokens(text))
+    return tuple(token.start for token in tokenize_cached(text))
 
 
 def _sentence_bounds(text: str, pos: int) -> tuple[int, int]:
@@ -89,13 +87,24 @@ def _sentence_bounds(text: str, pos: int) -> tuple[int, int]:
 def _sentence_tokens(text: str, pos: int) -> list[Token]:
     """The tokens inside the sentence that contains pos, in order."""
     sent_start, sent_end = _sentence_bounds(text, pos)
-    tokens = _tokens(text)
+    tokens = tokenize_cached(text)
     found: list[Token] = []
     for token in tokens[bisect_left(_token_starts(text), sent_start) :]:
         if token.end > sent_end:
             break
         found.append(token)
     return found
+
+
+@lru_cache(maxsize=32)
+def _by_first_word(
+    triggers: tuple[tuple[str, ...], ...],
+) -> dict[str, tuple[tuple[str, ...], ...]]:
+    """The triggers grouped by their first word, so one pass over the words finds them."""
+    grouped: dict[str, list[tuple[str, ...]]] = {}
+    for trigger in triggers:
+        grouped.setdefault(trigger[0], []).append(trigger)
+    return {word: tuple(found) for word, found in grouped.items()}
 
 
 def _triggered(
@@ -108,9 +117,10 @@ def _triggered(
     ``words`` is ordered outward from the mention: for a pre-mention list it
     ends at the mention, for a post-mention list it starts at the mention.
     """
-    for trigger in triggers:
-        size = len(trigger)
-        for index in range(len(words) - size + 1):
+    candidates = _by_first_word(triggers)
+    for index, word in enumerate(words):
+        for trigger in candidates.get(word, ()):
+            size = len(trigger)
             if tuple(words[index : index + size]) != trigger:
                 continue
             reach = words[index + size :] if before_mention else words[:index]

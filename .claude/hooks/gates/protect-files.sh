@@ -32,6 +32,13 @@ if [[ "$BASENAME" == *.example ]] || [[ "$BASENAME" == *.sample ]] \
     exit 0
 fi
 
+# Allowlist: the note-search tokenizer. Its file is named tokens.py because it splits
+# text into tokens (words); it holds no credentials. Exact path only, so any other
+# file named like a credential stays blocked.
+if [[ "$FILE_PATH" == */iris_vector_rag/note_search/tokens.py ]]; then
+    exit 0
+fi
+
 # Environment files
 if [[ "$BASENAME" == ".env" ]] || [[ "$BASENAME" == .env.* ]]; then
     BLOCKED="Environment file"

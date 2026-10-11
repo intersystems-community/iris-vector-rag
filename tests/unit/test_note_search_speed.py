@@ -11,9 +11,9 @@ import random
 
 import pytest
 
-from iris_vector_rag.note_search import context, phrase, polarity
+from iris_vector_rag.note_search import context, phrase, polarity, tokens
 from iris_vector_rag.note_search.api import judge_section
-from iris_vector_rag.note_search.tokens import tokenize
+from iris_vector_rag.note_search.tokens import Token, tokenize
 
 ALPHABET = list("ab c.\n;?!,-x ") + ["chest pain", " no ", "denies ", ". "]
 
@@ -61,21 +61,82 @@ def test_sentence_tokens_are_the_tokens_the_filter_gave(seed):
             ), (text, pos)
 
 
-def test_a_section_with_many_mentions_is_tokenised_once_by_the_detectors(monkeypatch):
+def _count_tokenize(monkeypatch):
     calls = []
-    real = polarity.tokenize
+    real = tokens.tokenize
 
     def counting(text):
-        calls.append(len(text))
+        calls.append(text)
         return real(text)
 
-    polarity._tokens.cache_clear()
-    monkeypatch.setattr(polarity, "tokenize", counting)
+    tokens.tokenize_cached.cache_clear()
+    phrase._phrase_tokens.cache_clear()
+    polarity._token_starts.cache_clear()
+    monkeypatch.setattr(tokens, "tokenize", counting)
+    monkeypatch.setattr(phrase, "tokenize", counting)
+    return calls
+
+
+def test_a_section_is_tokenised_once_however_many_mentions_it_has(monkeypatch):
+    calls = _count_tokenize(monkeypatch)
     text = " ".join("Denies chest pain. Reports chest pain." for _ in range(40))
     result = judge_section(text, "chest pain")
 
     assert len(result["mentions"]) == 80
-    assert len(calls) == 1, "polarity and context share one tokenisation per text"
+    assert calls.count(text) == 1, "phrase, polarity and context share one tokenisation"
+
+
+def test_the_phrase_is_tokenised_once_for_a_whole_batch(monkeypatch):
+    from iris_vector_rag.note_search.api import judge_sections
+
+    calls = _count_tokenize(monkeypatch)
+    texts = [f"Visit {n}: denies chest pain." for n in range(50)]
+    judge_sections(texts, "chest pain")
+
+    assert calls.count("chest pain") == 1
+    assert all(calls.count(t) == 1 for t in texts)
+
+
+def _old_tokenize(text: str):
+    """The original body: strips the edge characters one set at a time per word."""
+    import re
+
+    out = []
+    for match in re.finditer(r"\S+", text or ""):
+        word, start = match.group(), match.start()
+        edge = "".join({c for c in word if not c.isalnum()})
+        lead = len(word) - len(word.lstrip(edge))
+        trail = len(word) - len(word.rstrip(edge))
+        if lead + trail >= len(word):
+            out.append(Token(word.lower(), start, match.end()))
+            continue
+        out.append(
+            Token(
+                word[lead : len(word) - trail].lower(),
+                start + lead,
+                match.end() - trail,
+            )
+        )
+    return out
+
+
+TOKEN_ALPHABET = list("ab12 _-./,'\"()\t\n") + [
+    "é",
+    "ß",
+    "²",
+    "—",
+    "...",
+    "chest-pain",
+    "P_Q",
+]
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_tokenize_is_what_the_original_body_gave(seed):
+    rng = random.Random(seed)
+    for _ in range(300):
+        text = "".join(rng.choice(TOKEN_ALPHABET) for _ in range(rng.randint(0, 40)))
+        assert tokenize(text) == _old_tokenize(text), repr(text)
 
 
 def test_phrase_and_detectors_agree_on_the_same_mentions():
@@ -87,3 +148,47 @@ def test_phrase_and_detectors_agree_on_the_same_mentions():
         ("affirmed", "other"),
     ]
     assert context.section_context is not None and phrase.find_mentions is not None
+
+
+def _slow_triggered(words, triggers, before_mention):
+    """The original: every trigger against every position of the sentence."""
+    for trigger in triggers:
+        size = len(trigger)
+        for index in range(len(words) - size + 1):
+            if tuple(words[index : index + size]) != trigger:
+                continue
+            reach = words[index + size :] if before_mention else words[:index]
+            if not polarity.TERMINATORS.intersection(reach):
+                return True
+    return False
+
+
+TRIGGER_WORDS = [
+    "no",
+    "not",
+    "denies",
+    "negative",
+    "for",
+    "ruled",
+    "out",
+    "but",
+    "x",
+    "if",
+]
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_triggered_gives_the_answers_of_the_exhaustive_scan(seed):
+    rng = random.Random(seed)
+    lists = [
+        polarity.PRE_NEGATION_TRIGGERS,
+        polarity.POST_NEGATION_TRIGGERS,
+        polarity.UNCERTAINTY_TRIGGERS,
+    ]
+    for _ in range(400):
+        words = [rng.choice(TRIGGER_WORDS) for _ in range(rng.randint(0, 12))]
+        for triggers in lists:
+            for before in (True, False):
+                assert polarity._triggered(words, triggers, before) == _slow_triggered(
+                    words, triggers, before
+                ), (words, before)

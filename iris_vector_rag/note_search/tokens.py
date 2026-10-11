@@ -10,9 +10,13 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import List
 
-_WORD = re.compile(r"\S+")
+# A word is a run of non-space characters. Its token is the part from the first letter or
+# digit to the last one (so edge punctuation is dropped and inner punctuation stays); a
+# word with no letter or digit is its own token. `[^\W_]` is a letter or digit.
+_TOKEN = re.compile(r"\S*?([^\W_](?:\S*[^\W_])?)\S*|\S+")
 
 
 @dataclass(frozen=True)
@@ -27,24 +31,16 @@ class Token:
 def tokenize(text: str) -> List[Token]:
     """The tokens of ``text`` in order, with offsets into ``text``."""
     tokens: List[Token] = []
-    for match in _WORD.finditer(text or ""):
-        word, start = match.group(), match.start()
-        lead = len(word) - len(word.lstrip(_edge_punctuation(word)))
-        trail = len(word) - len(word.rstrip(_edge_punctuation(word)))
-        if lead + trail >= len(word):
-            # Nothing but punctuation: the word is its own token.
-            tokens.append(Token(word.lower(), start, match.end()))
-            continue
-        tokens.append(
-            Token(
-                word[lead : len(word) - trail].lower(),
-                start + lead,
-                match.end() - trail,
-            )
-        )
+    for match in _TOKEN.finditer(text or ""):
+        start, end = match.span(1) if match.lastindex else match.span()
+        tokens.append(Token(match.string[start:end].lower(), start, end))
     return tokens
 
 
-def _edge_punctuation(word: str) -> str:
-    """The characters of ``word`` that are not letters or digits."""
-    return "".join({c for c in word if not c.isalnum()})
+@lru_cache(maxsize=16)
+def tokenize_cached(text: str) -> tuple[Token, ...]:
+    """``tokenize`` for callers that look at the same text many times (one per mention).
+
+    Keeps the last few texts. The result is immutable, so sharing it is safe.
+    """
+    return tuple(tokenize(text))

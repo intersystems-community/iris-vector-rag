@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.16.1 — faster note judging (2026-10-10)
+
+### Changed: polarity and context judging is about four times faster
+
+Measured on 600 real sections by the Baystate session, `tokenize` was 87 percent of the
+time. It ran about three times per section, and a profile showed most of its cost in
+stripping edge punctuation one word at a time. On a synthetic mix of sections from 800 to
+7,000 characters (answers identical to 0.15.0 and 0.16.0 on all of them):
+
+| Release | Per section, mean | Per 7,000-character section |
+| ------- | ----------------- | --------------------------- |
+| 0.15.0  | 46 ms             | 138 ms                      |
+| 0.16.0  | 2.1 ms            | 5.8 ms                      |
+| 0.16.1  | 0.52 ms           | 1.4 ms                      |
+
+- `tokens.tokenize` finds each token with one regular expression, and
+  `tokens.tokenize_cached` keeps the last few texts, so phrase finding, polarity and
+  context share one tokenisation per section.
+- The phrase is tokenised once per batch, not once per section (`judge_sections`).
+- Sentence boundaries come from one regular expression, and triggers are looked up by their
+  first word instead of scanning every trigger at every position.
+- No behaviour change: the tests compare each new routine with the old one on fuzzed text,
+  including Unicode, underscores and punctuation-only words.
+- The protect-files hook now allows editing `iris_vector_rag/note_search/tokens.py` (its
+  name matched the credentials pattern); every other credential-named file stays blocked.
+
 ## v0.16.0 — note search (2026-10-10)
 
 ### Added: note search, first slice (retrieval mode `phrase`, sections, polarity, roll-up)

@@ -6,11 +6,22 @@ polarity can be judged per mention (contracts/query-semantics.md sections 3.2 an
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import List, Tuple
 
-from .tokens import tokenize
+from .tokens import tokenize, tokenize_cached
 
 __all__ = ["find_mentions", "phrase_search_string", "phrase_tokens"]
+
+
+@lru_cache(maxsize=64)
+def _phrase_tokens(phrase: str) -> Tuple[str, ...]:
+    tokens = tuple(t.text for t in tokenize((phrase or "").replace('"', " ")))
+    if not any(c.isalnum() for token in tokens for c in token):
+        raise ValueError(
+            f"A phrase needs at least one letter or digit, got {phrase!r}."
+        )
+    return tokens
 
 
 def phrase_tokens(phrase: str) -> List[str]:
@@ -20,12 +31,7 @@ def phrase_tokens(phrase: str) -> List[str]:
         ValueError: the phrase has no letter or digit, so nothing could match it. An
             empty answer would read as "no document matches".
     """
-    tokens = [t.text for t in tokenize((phrase or "").replace('"', " "))]
-    if not any(c.isalnum() for token in tokens for c in token):
-        raise ValueError(
-            f"A phrase needs at least one letter or digit, got {phrase!r}."
-        )
-    return tokens
+    return list(_phrase_tokens(phrase))
 
 
 def phrase_search_string(phrase: str) -> str:
@@ -39,11 +45,13 @@ def phrase_search_string(phrase: str) -> str:
 
 def find_mentions(text: str, phrase: str) -> List[Tuple[int, int]]:
     """Every occurrence of ``phrase`` in ``text`` as a (start, end) character span."""
-    wanted = phrase_tokens(phrase)
-    found = tokenize(text)
+    wanted = _phrase_tokens(phrase)
+    found = tokenize_cached(text)
     n = len(wanted)
+    first = wanted[0]
+    words = [token.text for token in found]
     spans: List[Tuple[int, int]] = []
-    for i in range(len(found) - n + 1):
-        if [t.text for t in found[i : i + n]] == wanted:
+    for i in range(len(words) - n + 1):
+        if words[i] == first and tuple(words[i : i + n]) == wanted:
             spans.append((found[i].start, found[i + n - 1].end))
     return spans
