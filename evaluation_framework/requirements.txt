@@ -15,7 +15,7 @@ plotly>=5.15.0
 torch>=2.0.0
 transformers>=4.30.0
 sentence-transformers>=2.2.0
-datasets>=5.0.1
+datasets>=5.1.0
 # Biomedical NLP
 spacy>=3.8.16
 scispacy>=0.6.2
