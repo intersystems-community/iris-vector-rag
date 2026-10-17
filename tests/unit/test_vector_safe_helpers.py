@@ -1,12 +1,13 @@
 """
 Unit tests for safe vector SQL helpers.
 
-The helpers embed a validated vector literal in the SQL text
-(``TO_VECTOR('[..]', FLOAT, dim)``) instead of binding it as a ``?`` parameter:
-IRIS does not accept a bound parameter there for every vector width (see
-docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.py). The injection defence
-is therefore ``validate_vector_string``, the identifier regexes and the
-dimension/top_k checks, all covered here.
+``build_safe_vector_dot_sql`` embeds a validated vector literal in the SQL text
+(``TO_VECTOR('[..]', FLOAT, dim)``); its injection defence is ``validate_vector_string``,
+the identifier regexes and the dimension/top_k checks. ``build_bound_vector_dot_sql``
+binds the vector as ``TO_VECTOR(?, <type>, <dim>)`` instead, which works for every
+element type on IRIS 2026.1 and later (the earlier report that it did not is corrected
+in docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md). The library uses the bound
+form.
 """
 
 from unittest.mock import Mock
@@ -281,3 +282,82 @@ class TestSafeVectorIntegration:
         assert "FROM RAG.Entities" in sql
         assert "entity_type = 'PERSON'" in sql
         assert len(results) == 1
+
+
+# --- the bound form: the query vector travels as a parameter -------------------
+
+
+class TestBuildBoundVectorDotSQL:
+    """``TO_VECTOR(?, <type>, <dim>)``: measured to work for FLOAT and DOUBLE columns on
+    IRIS 2026.1 (Build 234U) and 2026.3 with intersystems-irispython 5.3.1 and 5.4.1,
+    including the cached second run. Only the vector is a parameter: the element type
+    and dimension must be literals (``TO_VECTOR(?, ?, ?)`` is SQLCODE -262), and the
+    untyped ``TO_VECTOR(?)`` makes a FLOAT vector, so it fails on a DOUBLE column
+    (SQLCODE -259)."""
+
+    def test_the_vector_is_one_parameter_and_type_and_dimension_are_literals(self):
+        from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
+
+        sql = build_bound_vector_dot_sql("RAG.SourceDocuments", "embedding", 3)
+        assert "VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?, FLOAT, 3)) AS score" in sql
+        assert sql.count("?") == 1
+        assert "[" not in sql and "'" not in sql
+
+    def test_the_element_type_is_the_columns(self):
+        from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
+
+        sql = build_bound_vector_dot_sql(
+            "RAG.SourceDocuments", "embedding", 384, vector_data_type="DOUBLE"
+        )
+        assert "TO_VECTOR(?, DOUBLE, 384)" in sql
+
+    def test_columns_where_and_top_k_are_as_in_the_literal_form(self):
+        from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
+
+        sql = build_bound_vector_dot_sql(
+            "RAG.SourceDocuments",
+            "embedding",
+            3,
+            id_column="doc_id",
+            extra_columns=["title"],
+            top_k=7,
+            additional_where="title IS NOT NULL",
+        )
+        assert sql.startswith("SELECT TOP 7 doc_id, title, VECTOR_DOT_PRODUCT(")
+        assert "WHERE embedding IS NOT NULL AND (title IS NOT NULL)" in sql
+        assert sql.endswith("ORDER BY score DESC")
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"table": "RAG.Docs; DROP TABLE x"},
+            {"vector_column": "embedding)--"},
+            {"vector_dimension": 0},
+            {"top_k": 0},
+            {"vector_data_type": "FLOAT, 3)) --"},
+            {"vector_data_type": "?"},
+        ],
+    )
+    def test_unsafe_input_is_refused(self, kwargs):
+        from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
+
+        args = {
+            "table": "RAG.SourceDocuments",
+            "vector_column": "embedding",
+            "vector_dimension": 3,
+        }
+        args.update(kwargs)
+        with pytest.raises(ValueError):
+            build_bound_vector_dot_sql(**args)
+
+    def test_execute_passes_the_parameters(self):
+        cursor = Mock()
+        cursor.fetchall.return_value = [("d1", 0.5)]
+        assert execute_safe_vector_search(cursor, "SQL ?", [VEC3]) == [("d1", 0.5)]
+        cursor.execute.assert_called_once_with("SQL ?", [VEC3])
+
+    def test_execute_without_parameters_is_unchanged(self):
+        cursor = Mock()
+        cursor.fetchall.return_value = []
+        execute_safe_vector_search(cursor, "SQL")
+        cursor.execute.assert_called_once_with("SQL")

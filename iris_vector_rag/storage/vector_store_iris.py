@@ -1178,7 +1178,7 @@ class IRISVectorStore(VectorStore):
         try:
             # Use the safe vector utilities (proven pattern)
             from iris_vector_rag.common.vector_sql_utils import (
-                build_safe_vector_dot_sql,
+                build_bound_vector_dot_sql,
                 execute_safe_vector_search,
             )
 
@@ -1212,8 +1212,9 @@ class IRISVectorStore(VectorStore):
             # the page once if it actually drops rows.
             search_top_k = top_k
 
-            # Convert query embedding to bracketed string format for TO_VECTOR
-            # IMPORTANT: TO_VECTOR() does NOT accept parameter markers
+            # The query vector is bound: TO_VECTOR(?, <type>, <dim>), with the type and
+            # dimension as literals, works for FLOAT and DOUBLE columns on IRIS 2026.1
+            # and later (see build_bound_vector_dot_sql).
             embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
 
             # The older spelling of the text column is selected alongside the
@@ -1224,10 +1225,9 @@ class IRISVectorStore(VectorStore):
                 text_columns.append(legacy_text.name)
 
             def _build_sql(page_size: int) -> str:
-                return build_safe_vector_dot_sql(
+                return build_bound_vector_dot_sql(
                     table=self.table_name,
                     vector_column=embedding_column,
-                    vector_string=embedding_str,
                     vector_dimension=vector.dimension,
                     id_column=identifier.name,
                     extra_columns=text_columns,
@@ -1240,7 +1240,7 @@ class IRISVectorStore(VectorStore):
                 """Run the ranked query for one page and load its metadata."""
                 sql = _build_sql(page_size)
                 logger.debug(f"SQL query executed: {sql}")
-                page_rows = execute_safe_vector_search(cursor, sql)
+                page_rows = execute_safe_vector_search(cursor, sql, [embedding_str])
 
                 page_metadata = {}
                 if page_rows and metadata_column is not None:

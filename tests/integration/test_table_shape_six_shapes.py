@@ -763,3 +763,27 @@ def test_creating_a_non_canonical_shape_is_refused(live_shapes):
     assert statement.startswith(
         f"CREATE TABLE {SHAPE_SCHEMA}.{SHAPE_TABLES['canonical']} ("
     )
+
+
+@pytest.mark.parametrize("shape", ("canonical", "double_vector"))
+def test_a_bound_query_vector_ranks_correctly_on_a_reused_statement(
+    shape, store_for, clean_rows
+):
+    """The query vector is a bound `TO_VECTOR(?, <type>, <dim>)` parameter.
+
+    Two different queries in a row reuse the cached statement, so a binding the
+    server mishandled would show up as the second ranking matching the first. Each
+    ranking is checked against dot products computed here.
+    """
+    store = store_for(shape)
+    clean_rows.append(store)
+    store.add_documents(DOCUMENTS, EMBEDDINGS)
+
+    for seed in (1, 3, 2):
+        query = shape_vector(seed)
+        expected = sorted(
+            range(len(DOCUMENTS)),
+            key=lambda n: -sum(a * b for a, b in zip(EMBEDDINGS[n], query)),
+        )
+        got = [doc.id for doc, _ in store.similarity_search_by_embedding(query, 3)]
+        assert got == [DOCUMENTS[n].id for n in expected], (seed, got)

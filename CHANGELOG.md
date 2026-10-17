@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Changed: vector search binds the query vector
+
+Vector search sent its 384-number query vector written into the SQL text, because an old
+report said `TO_VECTOR()` cannot take a parameter marker. That does not hold on IRIS
+2026.1 (Build 234U) or 2026.3 with intersystems-irispython 5.3.1 and 5.4.1: measured on
+FLOAT and DOUBLE columns, including the cached second run, by the irispython-dx project
+and again on this project's container.
+
+- `IRISVectorStore.similarity_search_by_embedding` and CRAG's chunk search now bind the
+  vector as `TO_VECTOR(?, <type>, <dim>)`, with the type and dimension written as literals
+  (`TO_VECTOR(?, ?, ?)` fails at prepare, SQLCODE -262, and the untyped `TO_VECTOR(?)`
+  makes a FLOAT vector that a DOUBLE column refuses, SQLCODE -259). Results are unchanged;
+  each query no longer compiles a new statement.
+- New `vector_sql_utils.build_bound_vector_dot_sql`; `execute_safe_vector_search` takes the
+  parameters. `build_safe_vector_dot_sql` (the literal form) stays for outside callers.
+- `docs/IRIS_SQL_VECTOR_PARAMETERIZATION_BUG_REPORT.md` and
+  `docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md` carry a dated correction.
+
 ## v0.16.1 — faster note judging (2026-10-10)
 
 ### Changed: polarity and context judging is about four times faster
