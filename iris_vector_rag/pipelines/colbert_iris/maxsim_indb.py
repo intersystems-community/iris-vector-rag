@@ -59,7 +59,7 @@ class MaxSimInDB:
         cur = self._conn.cursor()
         try:
             for q_idx, q_vec in enumerate(q_vecs):
-                vec_str = "[" + ",".join(f"{v:.6f}" for v in q_vec) + "]"
+                vec_str = self._vector_text(q_vec)
                 for i in range(0, len(candidate_doc_ids), batch_size):
                     batch = candidate_doc_ids[i : i + batch_size]
                     placeholders = ",".join(["?"] * len(batch))
@@ -67,11 +67,11 @@ class MaxSimInDB:
                         f"""
                     SELECT doc_id,
                            VECTOR_DOT_PRODUCT(tok_vec,
-                               TO_VECTOR('{vec_str}', FLOAT, {self._token_dim})) AS sim
+                               TO_VECTOR(?, FLOAT, {self._token_dim})) AS sim
                     FROM RAG.DocumentTokenEmbeddings
                     WHERE doc_id IN ({placeholders})
                     """,
-                        batch,
+                        [vec_str, *batch],
                     )
                     for row in cur.fetchall():
                         doc_id, sim = row[0], float(row[1])
@@ -109,16 +109,7 @@ class MaxSimInDB:
         cur = self._conn.cursor()
         try:
             for q_idx, q_vec in enumerate(query_token_vecs):
-                vec_str = "[" + ",".join(f"{v:.6f}" for v in q_vec) + "]"
-                cur.execute(
-                    f"""
-                    SELECT TOP {k_per_token} doc_id,
-                           VECTOR_DOT_PRODUCT(tok_vec,
-                               TO_VECTOR('{vec_str}', FLOAT, {self._token_dim})) AS sim
-                    FROM RAG.DocumentTokenEmbeddings
-                    ORDER BY sim DESC
-                    """,
-                )
+                cur.execute(self._indb_sql(k_per_token), [self._vector_text(q_vec)])
                 for row in cur.fetchall():
                     doc_id, sim = row[0], float(row[1])
                     doc_sims = max_sim.setdefault(doc_id, {})
@@ -135,17 +126,15 @@ class MaxSimInDB:
     # ------------------------------------------------------------------
 
     def explain_indb_query(self, q_vec: np.ndarray, k_per_token: int = 50) -> str:
-        vec_str = "[" + ",".join(f"{v:.6f}" for v in q_vec) + "]"
-        sql = (
-            f"SELECT TOP {k_per_token} doc_id, "
-            f"VECTOR_DOT_PRODUCT(tok_vec, "
-            f"TO_VECTOR('{vec_str}', FLOAT, {self._token_dim})) AS sim "
-            f"FROM RAG.DocumentTokenEmbeddings "
-            f"ORDER BY sim DESC"
-        )
+        """The plan of the statement `indb_maxsim` runs.
+
+        EXPLAIN takes the statement with its `?` unbound: the DB-API refuses parameter
+        values for EXPLAIN ("Incorrect number of parameters"), and the plan of the
+        bound statement does not depend on the vector. ``q_vec`` is kept for callers.
+        """
         cur = self._conn.cursor()
         try:
-            cur.execute(f"EXPLAIN {sql}")
+            cur.execute(f"EXPLAIN {self._indb_sql(k_per_token)}")
             rows = cur.fetchall()
             return "\n".join(str(r) for r in rows)
         finally:
@@ -154,6 +143,22 @@ class MaxSimInDB:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    def _indb_sql(self, k_per_token: int) -> str:
+        """Per-token ANN query. The token vector is bound (TO_VECTOR(?, FLOAT, dim)),
+        so every query token reuses one statement; the element type and dimension must
+        stay literals."""
+        return (
+            f"SELECT TOP {int(k_per_token)} doc_id, "
+            f"VECTOR_DOT_PRODUCT(tok_vec, "
+            f"TO_VECTOR(?, FLOAT, {self._token_dim})) AS sim "
+            f"FROM RAG.DocumentTokenEmbeddings "
+            f"ORDER BY sim DESC"
+        )
+
+    @staticmethod
+    def _vector_text(q_vec) -> str:
+        return "[" + ",".join(f"{v:.6f}" for v in q_vec) + "]"
 
     @staticmethod
     def _parse_vec(raw) -> Optional[np.ndarray]:

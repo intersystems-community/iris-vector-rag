@@ -15,6 +15,13 @@ and again on this project's container.
   (`TO_VECTOR(?, ?, ?)` fails at prepare, SQLCODE -262, and the untyped `TO_VECTOR(?)`
   makes a FLOAT vector that a DOUBLE column refuses, SQLCODE -259). Results are unchanged;
   each query no longer compiles a new statement.
+- ColBERT's in-database MaxSim (`MaxSimInDB.bulk_fetch_maxsim`, `indb_maxsim`) binds each
+  query-token vector the same way, so every token reuses one statement.
+  `explain_indb_query` explains that same statement with its marker unbound: the DB-API
+  refuses parameter values for `EXPLAIN`.
+- Setup's untyped `TO_VECTOR(?)` writes are unchanged and now tested on DOUBLE columns:
+  writing an untyped vector into a DOUBLE column converts it (measured on 2026.1); only
+  comparing one with a DOUBLE column fails.
 - New `vector_sql_utils.build_bound_vector_dot_sql`; `execute_safe_vector_search` takes the
   parameters. `build_safe_vector_dot_sql` (the literal form) stays for outside callers.
 - `docs/IRIS_SQL_VECTOR_PARAMETERIZATION_BUG_REPORT.md` and
