@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from iris_vector_rag.common.db_vector_utils import insert_vector, normalize_vector
 
@@ -162,6 +162,7 @@ class IRISVectorStore(VectorStore):
             ("words", "prefix"),
             default="words",
         )
+        self._text_language = kwargs.get("text_language")
         #: The caller's embedder for query text (str -> vector), or None for the
         #: configured provider. It must produce vectors of the column's width.
         self.embedder = kwargs.get("embedder")
@@ -274,7 +275,9 @@ class IRISVectorStore(VectorStore):
         Read on each use, so a test or caller that changes ``storage_config`` is heard.
         It must match the language the table's text index was built in.
         """
-        return text_language(self.storage_config.get("text_language"))
+        return text_language(
+            self._text_language or self.storage_config.get("text_language")
+        )
 
     def _shape_resolver(self) -> TableShapeResolver:
         if self.shapes is None:
@@ -1773,17 +1776,48 @@ class IRISVectorStore(VectorStore):
         embedding = self._embed_query(query)
         return self._by_embedding(embedding, top_k, metadata_filter, where)
 
-    def _require_text_index(self, shape: TableShape) -> None:
-        """Raise `TextIndexMissingError` when the table has no full-text index."""
-        if not self.schema_manager.has_text_index(shape.qualified_name):
+    def _text_index(self, shape: TableShape) -> Optional[str]:
+        """The iFind index the text leg reads: the configured one, else the library's.
+
+        An attached table has no default: the library never builds one there, so
+        only an index the owner named can be read.
+        """
+        if self.text_index_name:
+            return self.text_index_name
+        return None if shape.attached else TEXT_INDEX_NAME
+
+    def _require_text_index(self, shape: TableShape) -> str:
+        """The text index name; `TextIndexMissingError` when the table has none."""
+        index = self._text_index(shape)
+        if index is None:
             raise TextIndexMissingError(
-                f"{shape.qualified_name} has no full-text index {TEXT_INDEX_NAME}, so "
-                f"text, phrase, hybrid and rrf retrieval cannot search it. Create it "
-                f"once with SchemaManager(...).ensure_text_index({shape.table!r}); it "
-                f"is built over the rows already in the table.",
+                f"{shape.qualified_name} is an attached table with no text index named, "
+                "so text, hybrid and rrf retrieval cannot search it. Set text_index to "
+                "the name of its iFind index; the library does not create one on a "
+                "table it does not own.",
                 table=shape.qualified_name,
-                index=TEXT_INDEX_NAME,
             )
+        if index == TEXT_INDEX_NAME:
+            present = self.schema_manager.has_text_index(shape.qualified_name)
+        else:
+            present = self.schema_manager.has_text_index(
+                shape.qualified_name, index_name=index
+            )
+        if not present:
+            if shape.attached:
+                fix = "Check text_index: the library will not create an index here."
+            else:
+                fix = (
+                    f"Create it once with SchemaManager(...).ensure_text_index("
+                    f"{shape.table!r}); it is built over the rows already in the table."
+                )
+            raise TextIndexMissingError(
+                f"{shape.qualified_name} has no full-text index {index}, so text, "
+                f"phrase, hybrid and rrf retrieval cannot search it. {fix}",
+                table=shape.qualified_name,
+                index=index,
+            )
+        return index
 
     def _ranked_text_rows(
         self,
@@ -1791,20 +1825,25 @@ class IRISVectorStore(VectorStore):
         search_string: str,
         page: int,
         extra_where: Optional[str],
+        index: str = TEXT_INDEX_NAME,
+        where_params: Sequence[Any] = (),
     ) -> List[tuple]:
         """``(id, rank)`` for the best ``page`` rows matching ``search_string``."""
         sql = build_text_search_sql(
             table=self.table_name,
             id_column=shape.column_for(ColumnRole.IDENTIFIER).name,
-            index_name=TEXT_INDEX_NAME,
-            rank_proc=rank_procedure(shape.schema, shape.class_name),
+            index_name=index,
+            rank_proc=rank_procedure(shape.schema, shape.class_name, index),
             top_k=page,
             extra_where=extra_where,
+            id_expression=shape.identifier_sql if shape.attached else None,
         )
         connection = self._get_connection()
         cursor = connection.cursor()
         try:
-            cursor.execute(sql, [search_string, search_string, search_string])
+            cursor.execute(
+                sql, [search_string, search_string, *where_params, search_string]
+            )
             return [(str(row[0]), float(row[1])) for row in cursor.fetchall()]
         except Exception as exc:
             raise VectorStoreConnectionError(
@@ -1818,6 +1857,7 @@ class IRISVectorStore(VectorStore):
         query: str,
         top_k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         """Full-text search over the document table, best match first.
 
@@ -1851,9 +1891,10 @@ class IRISVectorStore(VectorStore):
                 shape.table,
             )
 
-        self._require_text_index(shape)
+        where_sql, where_params = compile_where(where, shape, self.filter_spec)
+        index = self._require_text_index(shape)
 
-        terms = search_terms(query, language=self.text_language)
+        terms = search_terms(query, language=self.text_language, terms=self.text_terms)
         if not terms:
             return []
 
@@ -1862,9 +1903,13 @@ class IRISVectorStore(VectorStore):
             extra_where = self._metadata_filter_predicate(
                 metadata_filter, self._metadata_filter_column_expr(metadata_column)
             )
+        # The real-column predicate first: it never starts with "(" (see R2).
+        extra_where = " AND ".join(p for p in (where_sql, extra_where) if p) or None
         page = top_k
         for _ in range(2):
-            rows = self._ranked_text_rows(shape, terms, page, extra_where)
+            rows = self._ranked_text_rows(
+                shape, terms, page, extra_where, index, where_params
+            )
 
             by_id = {
                 str(d.id): d for d in self.fetch_documents_by_ids([r[0] for r in rows])

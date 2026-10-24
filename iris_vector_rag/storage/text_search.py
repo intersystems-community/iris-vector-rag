@@ -32,6 +32,7 @@ __all__ = [
     "create_text_index_statement",
     "rank_procedure",
     "search_terms",
+    "TEXT_TERMS",
     "build_text_search_sql",
     "json_member_predicate",
     "section_filter_predicate",
@@ -111,7 +112,27 @@ def rank_procedure(schema: str, class_name: str, index: str = TEXT_INDEX_NAME) -
     return f"{_checked(schema)}.{_checked(short_class)}_{_checked(index)}Rank"
 
 
-def search_terms(query: str, language: str = DEFAULT_TEXT_LANGUAGE) -> str:
+#: How query words become iFind terms: whole words, or prefixes for inflected
+#: languages (feature 092).
+TEXT_TERMS = ("words", "prefix")
+
+
+def _prefix(word: str) -> str:
+    """A prefix wildcard for an inflected word: ``vysazena`` -> ``vysaz*``.
+
+    Words under four letters stay whole. Longer ones keep the length less three
+    letters, at least four and at most seven, so ``antikoagulace`` -> ``antikoa*``.
+    The rule is the one the Štafeta team used with a Czech iFind index at Rakathon
+    2026 (IRIS has no Czech stemmer), reimplemented here.
+    """
+    if len(word) < 4:
+        return word
+    return word[: max(4, min(len(word) - 3, 7))] + "*"
+
+
+def search_terms(
+    query: str, language: str = DEFAULT_TEXT_LANGUAGE, terms: str = "words"
+) -> str:
     """The iFind search string for a natural-language ``query``, or ``""`` for none.
 
     The words are joined with ``OR`` and the rank procedure orders the rows, so a
@@ -121,11 +142,17 @@ def search_terms(query: str, language: str = DEFAULT_TEXT_LANGUAGE) -> str:
     string is always a plain list of words. A query made only of stop words keeps them
     rather than searching for nothing. Stop words are those of ``language``
     (``STOPWORDS``); a language with none listed keeps every word but the operators.
+    With ``terms="prefix"`` each word longer than three letters becomes a prefix
+    wildcard (see `_prefix`); the ``*`` is the only operator that reaches the index.
     """
+    if terms not in TEXT_TERMS:
+        raise ValueError(f"terms must be one of {', '.join(TEXT_TERMS)}, got {terms!r}")
     stopwords = STOPWORDS.get(text_language(language), frozenset())
     words = [w.lower() for w in _WORD.findall(query or "")]
     content = [w for w in words if w not in _OPERATORS]
     kept = [w for w in content if w not in stopwords] or content
+    if terms == "prefix":
+        kept = [_prefix(word) for word in kept]
     unique: List[str] = list(dict.fromkeys(kept))[:MAX_TERMS]
     return " OR ".join(unique)
 
@@ -138,12 +165,16 @@ def build_text_search_sql(
     rank_proc: str,
     top_k: int,
     extra_where: Optional[str] = None,
+    id_expression: Optional[str] = None,
 ) -> str:
     """``SELECT TOP n id, rank`` for one search string, best match first.
 
     Parameters, in order: the search string (rank), the search string (match), then the
-    search string again (ordering). ``extra_where`` is a trusted predicate built by the
-    caller (the metadata filter), never user text. It must be safe to follow ``AND``
+    search string again (ordering); the parameters of ``extra_where``, if it has any,
+    come after the match and before the ordering. ``extra_where`` is a trusted
+    predicate built by the caller (the real-column and metadata filters), never user
+    text. ``id_expression`` is selected instead of ``id_column`` when given: a trusted
+    expression from checked identifiers (a composite identifier, feature 092). It must be safe to follow ``AND``
     (each term parenthesised, as ``_metadata_filter_predicate`` builds them) and is
     not wrapped again: the IRIS DBAPI miscounts the parameters of a statement with a
     doubled ``((`` in its WHERE and a parameter in its ORDER BY ("Incorrect number of
@@ -156,7 +187,7 @@ def build_text_search_sql(
         where += f" AND {extra_where}"
     rank = f"{rank_proc}(%ID, ?)"
     return (
-        f"SELECT TOP {int(top_k)} {_checked(id_column)}, {rank} "
+        f"SELECT TOP {int(top_k)} {id_expression or _checked(id_column)}, {rank} "
         f"FROM {table} WHERE {where} "
         f"ORDER BY CAST({rank} AS DOUBLE) DESC"
     )

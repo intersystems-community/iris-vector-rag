@@ -223,3 +223,52 @@ def test_us3_basic_pipeline_from_configuration(
 
     with pytest.raises(RequiredFilterMissing):
         pipeline.query("apixaban", top_k=4, where={"PatientId": "P03"})
+
+
+# --- US4: the text leg on the table's own index -------------------------------------
+
+STF_TEXT = {
+    **STF_SCOPED,
+    "text_index": "DocChunkText",
+    "text_language": "cs",
+    "text_terms": "prefix",
+}
+
+
+def test_us4_stafeta_text_leg_matches_the_teams_ifind(byot_tables):
+    cursor = byot_tables.cursor()
+    try:
+        expected = T.stf_team_ifind(cursor)
+        unscoped = T.stf_team_ifind(cursor, as_of=False)
+    finally:
+        cursor.close()
+    assert expected != unscoped  # the as-of rule bites on the text leg too
+
+    store = store_for(STF_TEXT)
+    docs = store.text_search(T.STF_TEXT_QUERY, top_k=50, where=STF_WHERE)
+
+    assert sorted(d.id for d in docs) == expected
+
+
+def test_us4_rrf_keeps_every_leg_in_scope(byot_tables, use_test_embedder):
+    from iris_vector_rag.core.query_options import QueryOptions
+    from iris_vector_rag.retrieval.engine import RetrievalEngine
+
+    store = store_for(STF_TEXT)
+    engine = RetrievalEngine(vector_store=store, connection=None)
+    docs = engine.retrieve(
+        QueryOptions(query=T.STF_TEXT_QUERY, retrieval="rrf", top_k=10, where=STF_WHERE)
+    )
+
+    allowed = set(T.stf_team_ifind(byot_tables.cursor())) | {
+        doc_id for doc_id, _ in T.stf_team_vector_topk(byot_tables.cursor(), k=100)
+    }
+    assert docs and {d.id for d in docs} <= allowed
+
+
+def test_us4_an_attached_table_without_its_index_named_is_refused(byot_tables):
+    from iris_vector_rag.exceptions import TextIndexMissingError
+
+    store = store_for(STF_SCOPED)
+    with pytest.raises(TextIndexMissingError, match="text_index"):
+        store.text_search(T.STF_TEXT_QUERY, where=STF_WHERE)

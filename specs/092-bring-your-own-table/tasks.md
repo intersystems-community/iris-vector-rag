@@ -169,7 +169,7 @@ and no index creation on attached tables.
 
 **Independent test**: `tests/integration/test_byot_iris.py::test_us4_*`.
 
-- [ ] T028 [P] [US4] (FR-014, FR-015, FR-016) Unit tests in `tests/unit/test_byot_text.py`:
+- [X] T028 [P] [US4] (FR-014, FR-015, FR-016) Unit tests in `tests/unit/test_byot_text.py`:
   - `search_terms(..., terms="prefix")` gives `vysaz*` from `vysazena`, `antikoa*` from
     `antikoagulace` and `ecog*` from `ECOG`; words under 4 letters stay whole; stop words follow
     `text_language`;
@@ -178,17 +178,17 @@ and no index creation on attached tables.
     order);
   - an attached table with no index raises `TextIndexMissingError` with the read-only hint and
     never calls `ensure_text_index`.
-- [ ] T029 [US4] Integration tests `test_us4_*` in `tests/integration/test_byot_iris.py`:
+- [X] T029 [US4] Integration tests `test_us4_*` in `tests/integration/test_byot_iris.py`:
   - Štafeta's own `cs` iFind index, `text_terms=prefix` and the as-of `where` return the same
     rows as the team's iFind SQL (SC-002);
   - rrf with `where` returns no out-of-scope row;
   - an attached table with no index raises.
-- [ ] T030 [US4] (FR-015) Add the index name and prefix terms in `iris_vector_rag/storage/text_search.py`
+- [X] T030 [US4] (FR-015) Add the index name and prefix terms in `iris_vector_rag/storage/text_search.py`
   (`search_terms(query, language, terms)`, and `build_text_search_sql(..., where_sql)`).
-- [ ] T031 [US4] (FR-014, FR-016) Wire `text_index`, `text_terms` and `where` into `text_search`,
+- [X] T031 [US4] (FR-014, FR-016) Wire `text_index`, `text_terms` and `where` into `text_search`,
   `_ranked_text_rows` and `_require_text_index` in
   `iris_vector_rag/storage/vector_store_iris.py`.
-- [ ] T032 [US4] Gate: T028 and T029 pass on IRIS.
+- [X] T032 [US4] Gate: T028 and T029 pass on IRIS.
 
 ## Phase 7: User Story 5 - The similarity measure matches the table (P3)
 
