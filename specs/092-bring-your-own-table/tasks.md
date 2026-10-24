@@ -69,7 +69,7 @@ and ranking. The table is never written. The query dimension is checked.
 
 **Independent test**: `tests/integration/test_byot_iris.py::test_us1_*`.
 
-- [ ] T011 [P] [US1] (FR-005, FR-011, FR-012) Unit tests in `tests/unit/test_byot_store_vector.py` (fake cursor plus a
+- [X] T011 [P] [US1] (FR-005, FR-011, FR-012) Unit tests in `tests/unit/test_byot_store_vector.py` (fake cursor plus a
   recorded catalog of both teams' tables):
   - the vector SQL selects `identifier_sql` and the declared text column;
   - the metric is cosine on attached tables (`VECTOR_COSINE`) and dot on own tables;
@@ -82,18 +82,18 @@ and ranking. The table is never written. The query dimension is checked.
   - `fetch_documents_by_ids` filters on `identifier_sql`;
   - an `embedder` callable is used by `search_by_text`, `similarity_search_with_score` and the
     LangChain `similarity_search`.
-- [ ] T012 [P] [US1] Unit tests for the builder in `tests/unit/test_vector_safe_helpers.py`:
+- [X] T012 [P] [US1] Unit tests for the builder in `tests/unit/test_vector_safe_helpers.py`:
   `build_bound_vector_dot_sql(metric=..., id_expression=...)`, and an invalid metric raises.
-- [ ] T013 [US1] Integration tests `test_us1_*` in `tests/integration/test_byot_iris.py`:
+- [X] T013 [US1] Integration tests `test_us1_*` in `tests/integration/test_byot_iris.py`:
   - MedTeam top 5 equals the team SQL for both models (via `where` once US2 lands; for US1, via a
     table holding one model);
   - Štafeta composite ids are `DocumentReference/n#m`;
   - catalog and row counts are unchanged (SC-004);
   - a 384 query against a 1536 column raises.
-- [ ] T014 [US1] (FR-012, FR-020) Extend `build_bound_vector_dot_sql` in
+- [X] T014 [US1] (FR-012, FR-020) Extend `build_bound_vector_dot_sql` in
   `iris_vector_rag/common/vector_sql_utils.py` with `metric` (`dot`, `cosine`) and a trusted
   `id_expression`. Allow quoted identifiers in its name checks.
-- [ ] T015 [US1] (FR-005, FR-011, FR-012) In `iris_vector_rag/storage/vector_store_iris.py`:
+- [X] T015 [US1] (FR-005, FR-011, FR-012) In `iris_vector_rag/storage/vector_store_iris.py`:
   - add the metric default (cosine when the shape is attached, else dot) and the `metric`
     setting;
   - use `identifier_sql` in the vector search, the metadata fetch and `fetch_documents_by_ids`;
@@ -101,7 +101,7 @@ and ranking. The table is never written. The query dimension is checked.
     LangChain path through it;
   - add the read-only guard on the write methods;
   - put title and parent in metadata.
-- [ ] T016 [US1] Gate: T011 to T013 pass on IRIS, and so does the full unit suite (apart from the
+- [X] T016 [US1] Gate: T011 to T013 pass on IRIS, and so does the full unit suite (apart from the
   2 known ivg-credential failures from the venv's ivg 4.1.1).
 
 ## Phase 4: User Story 2 - Scope every search with real-column filters (P1)

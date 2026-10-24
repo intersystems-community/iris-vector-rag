@@ -254,6 +254,10 @@ def build_safe_vector_dot_sql(
     return sql
 
 
+#: The ranking function for each similarity measure (feature 092).
+_METRIC_FUNCTIONS = {"dot": "VECTOR_DOT_PRODUCT", "cosine": "VECTOR_COSINE"}
+
+
 def build_bound_vector_dot_sql(
     table: str,
     vector_column: str,
@@ -263,8 +267,10 @@ def build_bound_vector_dot_sql(
     top_k: int = 5,
     additional_where: Optional[str] = None,
     vector_data_type: str = "FLOAT",
+    metric: str = "dot",
+    id_expression: Optional[str] = None,
 ) -> str:
-    """Vector search SQL that takes the query vector as its one ``?`` parameter.
+    """Vector search SQL that takes the query vector as its first ``?`` parameter.
 
     ``TO_VECTOR(?, <type>, <dim>)`` with the type and dimension written as literals.
     Measured on IRIS 2026.1 (Build 234U) and 2026.3 with intersystems-irispython 5.3.1
@@ -272,13 +278,25 @@ def build_bound_vector_dot_sql(
     statement. The type and dimension cannot be parameters (``TO_VECTOR(?, ?, ?)`` is
     SQLCODE -262), and the untyped ``TO_VECTOR(?)`` makes a FLOAT vector, which a DOUBLE
     column refuses (SQLCODE -259). Pass the vector as ``"[x,y,...]"``.
-    ``additional_where`` must not hold ``?`` markers of its own.
+
+    ``metric`` is ``dot`` (``VECTOR_DOT_PRODUCT``) or ``cosine`` (``VECTOR_COSINE``).
+    Column names may be bare or double-quoted. ``id_expression``, when given, is
+    selected instead of ``id_column``: a trusted expression built by the caller from
+    checked identifiers (a composite identifier, feature 092). ``additional_where``
+    may hold ``?`` markers; they follow the vector's, which is in SELECT, so the
+    parameters are the vector and then the predicate's values. It must not begin with
+    ``(``: the DB-API miscounts parameters when a WHERE holds a doubled ``((``.
     """
     if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$", table):
         raise ValueError(f"Invalid table name: {table}")
     for col in [vector_column, id_column, *(extra_columns or [])]:
-        if not re.match(r"^[a-zA-Z0-9_]+$", col):
+        if not re.match(r'^(?:[a-zA-Z0-9_]+|"[A-Za-z_%][A-Za-z0-9_]*")$', col):
             raise ValueError(f"Invalid column name: {col}")
+    function = _METRIC_FUNCTIONS.get(metric)
+    if function is None:
+        raise ValueError(
+            f"Invalid metric: {metric!r} (expected one of {sorted(_METRIC_FUNCTIONS)})"
+        )
     if not isinstance(top_k, int) or top_k <= 0:
         raise ValueError(f"Invalid top_k value: {top_k}")
     if not isinstance(vector_dimension, int) or vector_dimension <= 0:
@@ -291,8 +309,8 @@ def build_bound_vector_dot_sql(
     if additional_where:
         where += f" AND ({additional_where})"
     return (
-        f"SELECT TOP {top_k} {id_column}{columns}, "
-        f"VECTOR_DOT_PRODUCT({vector_column}, "
+        f"SELECT TOP {top_k} {id_expression or id_column}{columns}, "
+        f"{function}({vector_column}, "
         f"TO_VECTOR(?, {vector_data_type.upper()}, {vector_dimension})) AS score"
         f" FROM {table}{where} ORDER BY score DESC"
     )
