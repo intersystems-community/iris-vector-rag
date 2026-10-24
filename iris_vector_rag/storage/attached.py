@@ -13,18 +13,32 @@ that `HybridGraphRAGPipeline.attach_existing_corpus` (069) and `RAG.SDK.Bridge`
 
 from __future__ import annotations
 
+import datetime as dt
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
-from iris_vector_rag.exceptions import FilterError, VectorStoreConfigurationError
+from iris_vector_rag.exceptions import (
+    FilterError,
+    RequiredFilterMissing,
+    VectorStoreConfigurationError,
+)
 from iris_vector_rag.storage.table_shape import (
     _IDENTIFIER,
     ColumnRole,
     Declared,
+    TableShape,
     quote_identifier,
 )
 
-__all__ = ["ColumnMapping", "FilterSpec", "quote_identifier"]
+__all__ = ["ColumnMapping", "FilterSpec", "compile_where", "quote_identifier"]
+
+#: The comparisons a filter may make; a list is ``IN``.
+_OPERATORS = frozenset({"=", "<", "<=", ">", ">="})
+_SCALARS = (str, int, float, bool, dt.date, dt.datetime)
+
+#: SQL types (as INFORMATION_SCHEMA reports them) a value is cast to before it is
+#: compared, so "2026-10-05" compares as a date and not as text.
+_CASTS = {"date": "DATE", "timestamp": "TIMESTAMP", "datetime": "TIMESTAMP"}
 
 #: Setting key -> the role it declares.
 _ROLE_KEYS: Mapping[str, ColumnRole] = {
@@ -118,3 +132,91 @@ class FilterSpec:
         """The declared spelling of ``key``, matched without regard to case."""
         lowered = key.lower()
         return next((c for c in self.filter_columns if c.lower() == lowered), None)
+
+
+def _bindable(column: str, value: Any) -> Any:
+    """A filter value as bound: dates as ISO text, other scalars as they are."""
+    if isinstance(value, bool) or not isinstance(value, _SCALARS):
+        raise FilterError(
+            f"filter on {column}: {type(value).__name__} is not a filter value "
+            "(use str, int, float, bool, date or datetime)"
+        )
+    if isinstance(value, dt.datetime):
+        return value.isoformat(sep=" ")
+    if isinstance(value, dt.date):
+        return value.isoformat()
+    return value
+
+
+def compile_where(
+    where: Optional[Mapping[str, Any]], shape: TableShape, spec: FilterSpec
+) -> Tuple[str, List[Any]]:
+    """``(predicate, params)`` for a search's ``where``; ``("", [])`` for none.
+
+    ``where`` maps a column to a value (``=``), an ``(op, value)`` tuple, or a
+    non-empty list (``IN``). Every key must be one of the spec's filter columns and
+    a column of the table; every required filter must be present. The predicate is
+    terms joined by ``AND`` with no outer parentheses (see `build_bound_vector_dot_sql`
+    on the DB-API's doubled-parenthesis defect), and it holds only quoted names and
+    ``?`` markers: every value is a parameter.
+
+    Raises:
+        RequiredFilterMissing: a required filter is absent.
+        FilterError: anything else that cannot be applied as written.
+    """
+    where = dict(where or {})
+    present = {key.lower() for key in where}
+    missing = [c for c in spec.required_filters if c.lower() not in present]
+    if missing:
+        raise RequiredFilterMissing(
+            f"{shape.qualified_name} requires a filter on {', '.join(missing)}; "
+            "a search without it would read every row",
+            rejected_keys=missing,
+            allowed_keys=list(spec.filter_columns),
+        )
+
+    terms: List[str] = []
+    params: List[Any] = []
+    for key, condition in where.items():
+        column = spec.column(key)
+        if column is None:
+            raise FilterError(
+                f"cannot filter on {key}: it is not in filter_columns "
+                f"({', '.join(spec.filter_columns) or 'none declared'})",
+                rejected_keys=[key],
+                allowed_keys=list(spec.filter_columns),
+            )
+        fact = shape.columns.get(column.lower())
+        if fact is None:
+            raise FilterError(
+                f"filter column {column} is not in {shape.qualified_name}",
+                rejected_keys=[column],
+            )
+        name = quote_identifier(fact.name)
+        cast = _CASTS.get(fact.sql_type)
+        marker = f"CAST(? AS {cast})" if cast else "?"
+
+        if isinstance(condition, (list, set, frozenset)):
+            values = list(condition)
+            if not values:
+                raise FilterError(
+                    f"filter on {fact.name}: an empty list matches nothing"
+                )
+            terms.append(f"{name} IN ({', '.join(marker for _ in values)})")
+            params.extend(_bindable(fact.name, v) for v in values)
+            continue
+
+        if isinstance(condition, tuple):
+            if len(condition) != 2 or condition[0] not in _OPERATORS:
+                raise FilterError(
+                    f"filter on {fact.name}: {condition!r} is not an (operator, value) "
+                    f"pair with an operator from {', '.join(sorted(_OPERATORS))} "
+                    "(use a list for IN)"
+                )
+            op, value = condition
+        else:
+            op, value = "=", condition
+        terms.append(f"{name} {op} {marker}")
+        params.append(_bindable(fact.name, value))
+
+    return " AND ".join(terms), params

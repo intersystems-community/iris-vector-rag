@@ -110,7 +110,7 @@ and ranking. The table is never written. The query dimension is checked.
 
 **Independent test**: `tests/integration/test_byot_iris.py::test_us2_*`.
 
-- [ ] T017 [P] [US2] (FR-006, FR-007, FR-008, FR-009, FR-020) Unit tests for `compile_where` in `tests/unit/test_byot_where.py`:
+- [X] T017 [P] [US2] (FR-006, FR-007, FR-008, FR-009, FR-020) Unit tests for `compile_where` in `tests/unit/test_byot_where.py`:
   - each op; a list gives `IN`; an empty list raises;
   - an unknown key raises naming the allowed ones;
   - a missing required filter raises `RequiredFilterMissing` naming it;
@@ -118,23 +118,23 @@ and ranking. The table is never written. The query dimension is checked.
   - date and timestamp columns get `CAST(? AS DATE)` / `CAST(? AS TIMESTAMP)`;
   - values are only in params; an injection string stays a param;
   - the predicate never starts with `(`; quoted names; deterministic order.
-- [ ] T018 [P] [US2] (FR-010) Unit tests in `tests/unit/test_byot_store_where.py`:
+- [X] T018 [P] [US2] (FR-010) Unit tests in `tests/unit/test_byot_store_where.py`:
   - the vector search appends the predicate and passes `[vector, *params]`;
   - it combines with a metadata filter by AND;
   - a required filter is checked before any SQL;
   - `search_by_text`, `search_by_vector`, `search_by_text_with_score` and
     `similarity_search_with_score` accept and forward `where`.
-- [ ] T019 [US2] Integration tests `test_us2_*` in `tests/integration/test_byot_iris.py`:
+- [X] T019 [US2] Integration tests `test_us2_*` in `tests/integration/test_byot_iris.py`:
   - MedTeam patient plus model `where` equals the team SQL for both models (SC-001);
   - Štafeta patient plus as-of dates (`AuthoredOn <`, `ReceivedOn <=`) equals the team SQL;
   - an `IN` list;
   - a missing required filter raises;
   - an injection value matches nothing;
   - the DB-API accepts the bound vector plus where params (the parenthesis guard).
-- [ ] T020 [US2] Implement `compile_where` in `iris_vector_rag/storage/attached.py`.
-- [ ] T021 [US2] (FR-009, FR-010) Wire `where` into `similarity_search_by_embedding` and every public search
+- [X] T020 [US2] Implement `compile_where` in `iris_vector_rag/storage/attached.py`.
+- [X] T021 [US2] (FR-009, FR-010) Wire `where` into `similarity_search_by_embedding` and every public search
   method in `iris_vector_rag/storage/vector_store_iris.py`, with the required-filter check first.
-- [ ] T022 [US2] Gate: T017 to T019 pass on IRIS.
+- [X] T022 [US2] Gate: T017 to T019 pass on IRIS.
 
 ## Phase 5: User Story 3 - Run a ready-made pipeline over the attached table (P2)
 

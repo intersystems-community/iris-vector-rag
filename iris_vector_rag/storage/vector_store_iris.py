@@ -27,6 +27,7 @@ from ..exceptions import (
     VectorStoreConnectionError,
     VectorStoreDataError,
 )
+from .attached import compile_where
 from .catalog import IRISCatalogReader
 from .clob_handler import ensure_string_content
 from .shape_resolver import TableShapeResolver
@@ -1208,6 +1209,7 @@ class IRISVectorStore(VectorStore):
         query_embedding: List[float],
         top_k: int,
         filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Perform similarity search using a query embedding.
@@ -1216,9 +1218,15 @@ class IRISVectorStore(VectorStore):
             query_embedding: The query vector for similarity search
             top_k: Maximum number of results to return
             filter: Optional metadata filters to apply
+            where: Optional filters on real columns (feature 092): ``{col: value}``,
+                ``{col: (op, value)}`` or ``{col: [values]}``, on ``filter_columns``
 
         Returns:
             List of tuples containing (Document, similarity_score)
+
+        Raises:
+            RequiredFilterMissing: a ``required_filters`` column is not in ``where``.
+            FilterError: ``where`` cannot be applied as written.
         """
         # Validate filter if provided
         if filter:
@@ -1229,6 +1237,7 @@ class IRISVectorStore(VectorStore):
         # vector search says so instead of failing inside a SQL error several
         # layers away, and so these errors are not caught by the handler below.
         shape = self.shape()
+        where_sql, where_params = compile_where(where, shape, self.filter_spec)
         vector = shape.vector_spec()
         identifier = shape.column_for(ColumnRole.IDENTIFIER)
         text = shape.column_for(ColumnRole.TEXT)
@@ -1274,6 +1283,11 @@ class IRISVectorStore(VectorStore):
                 additional_where = self._metadata_filter_predicate(
                     filter, self._metadata_filter_column_expr(metadata_column)
                 )
+            # The real-column predicate goes first: it never starts with "(", so the
+            # builder's own parenthesis is never doubled.
+            additional_where = (
+                " AND ".join(p for p in (where_sql, additional_where) if p) or None
+            )
 
             logger.debug(f"Query embedding dimensions: {len(query_embedding)}")
             logger.debug(f"Top-K parameter: {top_k}")
@@ -1317,7 +1331,9 @@ class IRISVectorStore(VectorStore):
                 """Run the ranked query for one page and load its metadata."""
                 sql = _build_sql(page_size)
                 logger.debug(f"SQL query executed: {sql}")
-                page_rows = execute_safe_vector_search(cursor, sql, [embedding_str])
+                page_rows = execute_safe_vector_search(
+                    cursor, sql, [embedding_str, *where_params]
+                )
 
                 page_metadata = {}
                 if page_rows and metadata_column is not None:
@@ -1666,6 +1682,8 @@ class IRISVectorStore(VectorStore):
             )
 
             # Get embedding function for text query
+            where = kwargs.get("where")
+            self._check_where(where)
             embedding_func = kwargs.get("embedding_func")
             if not embedding_func:
                 query_embedding = self._embed_query(query)
@@ -1673,9 +1691,7 @@ class IRISVectorStore(VectorStore):
                 query_embedding = embedding_func.embed_query(query)
 
             # Call our implementation and add scores to document metadata
-            results = self.similarity_search_by_embedding(
-                query_embedding, k, filter_param
-            )
+            results = self._by_embedding(query_embedding, k, filter_param, where)
             # Add score to each document's metadata for MCP/API compatibility
             documents_with_scores = []
             for doc, score in results:
@@ -1697,12 +1713,16 @@ class IRISVectorStore(VectorStore):
             top_k = args[1] if len(args) > 1 else kwargs.get("top_k", 5)
             filter_param = args[2] if len(args) > 2 else kwargs.get("filter")
 
-            return self.similarity_search_by_embedding(
-                query_embedding, top_k, filter_param
+            return self._by_embedding(
+                query_embedding, top_k, filter_param, kwargs.get("where")
             )
 
     def similarity_search_with_score(
-        self, query: str, k: int = 4, filter: Optional[Dict[str, Any]] = None
+        self,
+        query: str,
+        k: int = 4,
+        filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Perform similarity search and return results with scores.
@@ -1715,24 +1735,27 @@ class IRISVectorStore(VectorStore):
         Returns:
             List of tuples containing (Document, similarity_score)
         """
+        self._check_where(where)
         query_embedding = self._embed_query(query)
 
         # Call similarity_search_by_embedding which already returns (doc, score) tuples
-        return self.similarity_search_by_embedding(query_embedding, k, filter)
+        return self._by_embedding(query_embedding, k, filter, where)
 
     def search_by_text(
         self,
         query: str,
         top_k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         """Return List[Document] for a text query (FR-014).
 
         Embeds ``query`` and delegates to similarity_search_by_embedding.
         Always returns plain Documents — scores are available via search_by_vector.
         """
+        self._check_where(where)
         embedding = self._embed_query(query)
-        results = self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+        results = self._by_embedding(embedding, top_k, metadata_filter, where)
         return [doc for doc, _ in results]
 
     def search_by_text_with_score(
@@ -1740,13 +1763,15 @@ class IRISVectorStore(VectorStore):
         query: str,
         top_k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """Return (Document, similarity score) pairs for a text query, best first.
 
         The scored sibling of `search_by_text`, which stays score-free (FR-014).
         """
+        self._check_where(where)
         embedding = self._embed_query(query)
-        return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+        return self._by_embedding(embedding, top_k, metadata_filter, where)
 
     def _require_text_index(self, shape: TableShape) -> None:
         """Raise `TextIndexMissingError` when the table has no full-text index."""
@@ -2005,11 +2030,34 @@ class IRISVectorStore(VectorStore):
         embedding: List[float],
         top_k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """Return List[Tuple[Document, float]] for a pre-computed embedding (FR-014).
 
         Always returns (Document, score) tuples — use search_by_text for plain docs.
         """
+        return self._by_embedding(embedding, top_k, metadata_filter, where)
+
+    def _check_where(self, where: Optional[Dict[str, Any]]) -> None:
+        """Validate ``where`` (required filters first) before anything is embedded.
+
+        A store with no required filters and no ``where`` checks nothing, so the
+        search path is the one it was before feature 092.
+        """
+        spec = getattr(self, "filter_spec", None)
+        if where or (spec is not None and spec.required_filters):
+            compile_where(where, self.shape(), spec)
+
+    def _by_embedding(self, embedding, top_k, metadata_filter, where):
+        """`similarity_search_by_embedding`, passing ``where`` only when there is one.
+
+        An override written before feature 092 takes three arguments; it keeps
+        working for every search that does not filter on real columns.
+        """
+        if where:
+            return self.similarity_search_by_embedding(
+                embedding, top_k, metadata_filter, where=where
+            )
         return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
 
     def _embed_query(self, query: str) -> List[float]:

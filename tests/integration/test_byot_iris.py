@@ -105,3 +105,82 @@ def test_us1_writes_are_refused(byot_tables):
         store.add_documents([Document(id="x", page_content="t")])
     with pytest.raises(AttachedTableReadOnly):
         store.delete_documents(["P02-doc03#1"])
+
+
+# --- US2: every search scoped by real-column filters ----------------------------------
+
+MED_SCOPED = {
+    **MEDTEAM,
+    "filter_columns": ["PatientId", "EmbeddingModel", "DocDate"],
+    "required_filters": ["PatientId", "EmbeddingModel"],
+}
+STF_SCOPED = {
+    **STAFETA,
+    "filter_columns": ["PatientRef", "EmbeddingModel", "AuthoredOn", "ReceivedOn"],
+    "required_filters": ["PatientRef"],
+}
+STF_WHERE = {
+    "PatientRef": "Patient/2",
+    "EmbeddingModel": T.STF_MODEL,
+    "AuthoredOn": ("<", T.AS_OF_AUTHORED_BEFORE),
+    "ReceivedOn": ("<=", T.AS_OF_RECEIVED_UNTIL),
+}
+
+
+@pytest.mark.parametrize("model", T.MODELS)
+def test_us2_medteam_patient_and_model_match_the_teams_sql(byot_tables, model):
+    cursor = byot_tables.cursor()
+    try:
+        expected = T.med_team_topk(cursor, model)
+    finally:
+        cursor.close()
+
+    store = store_for(MED_SCOPED)
+    results = store.similarity_search_by_embedding(
+        T.MED_QUERY, 5, where={"PatientId": "P02", "EmbeddingModel": model}
+    )
+
+    assert ranked(results) == expected
+
+
+def test_us2_stafeta_as_of_rule_matches_the_teams_sql(byot_tables):
+    cursor = byot_tables.cursor()
+    try:
+        expected = T.stf_team_vector_topk(cursor)
+        unscoped = T.stf_team_vector_topk(cursor, as_of=False)
+    finally:
+        cursor.close()
+    assert expected != unscoped  # the as-of rule bites on these rows
+
+    store = store_for(STF_SCOPED)
+    results = store.similarity_search_by_embedding(T.STF_QUERY, 5, where=STF_WHERE)
+
+    assert ranked(results) == expected
+
+
+def test_us2_a_list_is_in(byot_tables):
+    store = store_for(MED_SCOPED)
+    results = store.similarity_search_by_embedding(
+        T.MED_QUERY,
+        10,
+        where={"PatientId": ["P01", "P03"], "EmbeddingModel": T.MODELS[0]},
+    )
+    assert results and all(doc.id[:3] in ("P01", "P03") for doc, _ in results)
+
+
+def test_us2_a_missing_required_filter_is_refused(byot_tables):
+    from iris_vector_rag.exceptions import RequiredFilterMissing
+
+    store = store_for(MED_SCOPED)
+    with pytest.raises(RequiredFilterMissing, match="EmbeddingModel"):
+        store.similarity_search_by_embedding(T.MED_QUERY, 5, where={"PatientId": "P02"})
+
+
+def test_us2_an_injection_value_matches_nothing(byot_tables):
+    store = store_for(MED_SCOPED)
+    results = store.similarity_search_by_embedding(
+        T.MED_QUERY,
+        5,
+        where={"PatientId": "P02' OR 1=1 --", "EmbeddingModel": T.MODELS[0]},
+    )
+    assert results == []
