@@ -143,24 +143,24 @@ through `QueryOptions` and the engine.
 
 **Independent test**: `tests/integration/test_byot_iris.py::test_us3_*`.
 
-- [ ] T023 [P] [US3] (FR-010) Unit tests in `tests/unit/test_byot_engine.py`:
+- [X] T023 [P] [US3] (FR-010) Unit tests in `tests/unit/test_byot_engine.py`:
   - `normalize_query_params(where=...)` gives `QueryOptions.where`;
   - the engine's vector, text and fusion legs pass `where` to the store;
   - phrase, concept, global and mix raise `ValueError` when `where` is set;
   - a constructor kwarg overrides config.
-- [ ] T024 [US3] Integration test `test_us3_basic_pipeline_from_config` in
+- [X] T024 [US3] Integration test `test_us3_basic_pipeline_from_config` in
   `tests/integration/test_byot_iris.py`:
   - set the mapping with `RAG_STORAGE__IRIS__*` environment variables only;
   - build the basic pipeline with a stub LLM and the test embedder;
   - query with the patient and model `where`;
   - every retrieved document is that patient's row, with its declared id and text (SC-003).
-- [ ] T025 [US3] Add `where` to `QueryOptions` and `normalize_query_params` in
+- [X] T025 [US3] Add `where` to `QueryOptions` and `normalize_query_params` in
   `iris_vector_rag/core/query_options.py`.
-- [ ] T026 [US3] (FR-010) Pass `where` in `_vector_leg`, `_text_leg` and `_retrieve_fusion`, and refuse it
+- [X] T026 [US3] (FR-010) Pass `where` in `_vector_leg`, `_text_leg` and `_retrieve_fusion`, and refuse it
   in phrase, concept, global and mix, in `iris_vector_rag/retrieval/engine.py`. Check that the
   basic pipeline's query path forwards `QueryOptions` to the engine; if it calls the store
   directly, forward `where` there (`iris_vector_rag/pipelines/basic.py`).
-- [ ] T027 [US3] Gate: T023 and T024 pass on IRIS.
+- [X] T027 [US3] Gate: T023 and T024 pass on IRIS.
 
 ## Phase 6: User Story 4 - Full-text and hybrid search on the table's own index (P2)
 

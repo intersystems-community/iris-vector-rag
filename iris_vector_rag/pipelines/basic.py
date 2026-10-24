@@ -514,6 +514,7 @@ class BasicRAGPipeline(RAGPipeline):
                         "rerank",
                         "retrieval",
                         "weights",
+                        "where",
                     )
                     if k in kwargs
                 },
@@ -612,7 +613,7 @@ class BasicRAGPipeline(RAGPipeline):
                     retrieved_documents = [doc for doc, _ in raw]
                 else:
                     retrieved_documents = self._search_text(
-                        query, top_k, metadata_filter
+                        query, top_k, metadata_filter, opts.where
                     )
             else:
                 logger.warning("No vector store available")
@@ -741,7 +742,11 @@ class BasicRAGPipeline(RAGPipeline):
         return response
 
     def _search_text(
-        self, query: str, top_k: int, metadata_filter: Optional[Dict[str, Any]]
+        self,
+        query: str,
+        top_k: int,
+        metadata_filter: Optional[Dict[str, Any]],
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         """Documents for a text query, each carrying its score when the store has one.
 
@@ -752,9 +757,12 @@ class BasicRAGPipeline(RAGPipeline):
         on the class so that a test double is not mistaken for a scoring store.
         """
         store = self.vector_store
+        # Real-column filters (feature 092) are passed only when set, so a store
+        # whose searches take no `where` keeps working.
+        scope = {"where": where} if where else {}
         if callable(getattr(type(store), "search_by_text_with_score", None)):
             scored = store.search_by_text_with_score(
-                query, top_k=top_k, metadata_filter=metadata_filter
+                query, top_k=top_k, metadata_filter=metadata_filter, **scope
             )
             return [
                 Document(
@@ -764,7 +772,9 @@ class BasicRAGPipeline(RAGPipeline):
                 )
                 for doc, score in scored
             ]
-        return store.search_by_text(query, top_k=top_k, metadata_filter=metadata_filter)
+        return store.search_by_text(
+            query, top_k=top_k, metadata_filter=metadata_filter, **scope
+        )
 
     def _require_llm_for_answer(self, generate_answer: bool, label: str) -> None:
         """Fail loudly when an answer is asked for and nothing can produce it.

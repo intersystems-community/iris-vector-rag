@@ -184,3 +184,42 @@ def test_us2_an_injection_value_matches_nothing(byot_tables):
         where={"PatientId": "P02' OR 1=1 --", "EmbeddingModel": T.MODELS[0]},
     )
     assert results == []
+
+
+# --- US3: a ready-made pipeline from configuration alone -------------------------------
+
+
+def test_us3_basic_pipeline_from_configuration(
+    byot_tables, monkeypatch, use_test_embedder
+):
+    for key, value in {
+        "TABLE_NAME": T.MED,
+        "ID_COL": "EvidenceId",
+        "TEXT_COL": "Text",
+        "EMBEDDING_COL": "Embedding",
+        "FILTER_COLUMNS": "PatientId,EmbeddingModel",
+        "REQUIRED_FILTERS": "PatientId,EmbeddingModel",
+    }.items():
+        monkeypatch.setenv(f"RAG_STORAGE__IRIS__{key}", value)
+    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+
+    config = ConfigurationManager()
+    pipeline = BasicRAGPipeline(
+        ConnectionManager(config), config, llm_func=lambda p: "ok"
+    )
+
+    result = pipeline.query(
+        "apixaban vysazen",
+        top_k=4,
+        where={"PatientId": "P03", "EmbeddingModel": T.MODELS[1]},
+    )
+
+    docs = result["retrieved_documents"]
+    assert len(docs) == 4
+    assert all(doc.id.startswith("P03-") for doc in docs)
+    assert all(doc.page_content for doc in docs)
+
+    from iris_vector_rag.exceptions import RequiredFilterMissing
+
+    with pytest.raises(RequiredFilterMissing):
+        pipeline.query("apixaban", top_k=4, where={"PatientId": "P03"})
