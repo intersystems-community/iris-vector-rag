@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Added: the text language is a setting
+
+`storage:iris:text_language` (default `en`, environment `RAG_STORAGE__IRIS__TEXT_LANGUAGE`)
+replaces the English that was hard-coded in three places:
+
+- the iFind index `ensure_text_index` builds (`LANGUAGE='<code>'`);
+- the stop words `search_terms` drops (`text_search.STOPWORDS`, English only so far; another
+  language keeps every word but `AND`/`OR`/`NOT`);
+- the default polarity detector of phrase search.
+
+The note-search detectors take `language=` or a caller's own lexicon:
+`ReferenceNegExDetector(lexicon=NegationLexicon(...))` and
+`ReferenceContextDetector(lexicon=ContextLexicon(...))`. Only English lexicons ship. A
+language with none is a `ValueError`, not a silent fallback to English triggers. Verified on
+IRIS with a Czech (`cs`) index. English behaviour is unchanged.
+
 ## v0.16.1 — faster note judging (2026-10-10)
 
 ### Changed: polarity and context judging is about four times faster

@@ -11,6 +11,12 @@ storage:
   iris:
     table_name: "RAG.SourceDocuments"
     vector_dimension: 384
+    # Language of the text: the iFind index (built once, by ensure_text_index), the stop
+    # words dropped from text queries, and the default polarity detector of phrase
+    # search. A two-letter code. Only "en" ships stop words and negation triggers; for
+    # another language, queries keep every word and note-search detectors need a
+    # caller's lexicon. Changing it does not rebuild an existing index.
+    text_language: "en"
     # Custom metadata filter keys for multi-tenant isolation (User Story 1 - P1)
     # These fields can be used in metadata_filter parameter for queries
     # Default filter keys (always enabled): document_id, source, title, author,

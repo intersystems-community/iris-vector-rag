@@ -2176,7 +2176,12 @@ class SchemaManager:
             logger.info(
                 f"Building text index {TEXT_INDEX_NAME} on {schema}.{table}.{column}"
             )
-            cursor.execute(create_text_index_statement(schema, snapshot.table, column))
+            language = self.config_manager.get("storage:iris:text_language")
+            cursor.execute(
+                create_text_index_statement(
+                    schema, snapshot.table, column, language=language
+                )
+            )
             connection.commit()
             return TEXT_INDEX_NAME
         except Exception as exc:

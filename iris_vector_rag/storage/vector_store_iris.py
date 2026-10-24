@@ -44,6 +44,7 @@ from .text_search import (
     rank_procedure,
     search_terms,
     section_filter_predicate,
+    text_language,
 )
 
 logger = logging.getLogger(__name__)
@@ -209,6 +210,15 @@ class IRISVectorStore(VectorStore):
             schema, _, table = name.partition(".")
             return schema, table
         return getattr(self.schema_manager, "schema_prefix", "RAG") or "RAG", name
+
+    @property
+    def text_language(self) -> str:
+        """The language of text queries and polarity: ``storage:iris:text_language``.
+
+        Read on each use, so a test or caller that changes ``storage_config`` is heard.
+        It must match the language the table's text index was built in.
+        """
+        return text_language(self.storage_config.get("text_language"))
 
     def _shape_resolver(self) -> TableShapeResolver:
         if self.shapes is None:
@@ -1726,7 +1736,7 @@ class IRISVectorStore(VectorStore):
 
         self._require_text_index(shape)
 
-        terms = search_terms(query)
+        terms = search_terms(query, language=self.text_language)
         if not terms:
             return []
 
@@ -1802,7 +1812,7 @@ class IRISVectorStore(VectorStore):
         from iris_vector_rag.note_search.store import SECTION_COLUMN
 
         search_string = phrase_search_string(phrase)  # raises ValueError first
-        detector = detector or ReferenceNegExDetector()
+        detector = detector or ReferenceNegExDetector(language=self.text_language)
 
         shape = self.shape()
         shape.column_for(ColumnRole.TEXT)

@@ -26,6 +26,9 @@ from typing import Any, List, Optional
 
 __all__ = [
     "TEXT_INDEX_NAME",
+    "DEFAULT_TEXT_LANGUAGE",
+    "STOPWORDS",
+    "text_language",
     "create_text_index_statement",
     "rank_procedure",
     "search_terms",
@@ -37,15 +40,25 @@ __all__ = [
 #: The iFind index this library keeps on the document table's text column.
 TEXT_INDEX_NAME = "SourceDocumentsTextIdx"
 
+#: The language of the text index and of query terms when none is configured.
+DEFAULT_TEXT_LANGUAGE = "en"
+
 #: Words that match nearly every document and would turn an ``OR`` query into a scan.
-_STOPWORDS = frozenset(
+_ENGLISH_STOPWORDS = frozenset(
     "a an and are as at be but by can did do does for from had has have how i if in "
     "into is it its me my no not of on or our so such than that the their then there "
     "these they this to was we were what when where which who whom why will with you "
     "your".split()
 )
 
+#: Stop words by language code. A language with none listed keeps every word.
+STOPWORDS: dict[str, frozenset[str]] = {"en": _ENGLISH_STOPWORDS}
+
+_OPERATORS = frozenset({"and", "or", "not"})
+
 _WORD = re.compile(r"\w+", re.UNICODE)
+
+_LANGUAGE = re.compile(r"^[a-z]{2}$")
 
 #: The terms one query may put in the search string.
 MAX_TERMS = 32
@@ -59,11 +72,32 @@ def _checked(identifier: str) -> str:
     return identifier
 
 
-def create_text_index_statement(schema: str, table: str, column: str) -> str:
-    """The DDL for the full-text index on ``column`` of ``schema.table``."""
+def text_language(language: Optional[str]) -> str:
+    """``language`` as the two-letter code iFind takes, ``en`` if unset.
+
+    Raises:
+        ValueError: it is not two letters. The code goes into DDL as a literal.
+    """
+    code = (language or "").strip().lower() or DEFAULT_TEXT_LANGUAGE
+    if not _LANGUAGE.match(code):
+        raise ValueError(
+            f"text language must be a two-letter code such as 'en' or 'cs', "
+            f"got {language!r}"
+        )
+    return code
+
+
+def create_text_index_statement(
+    schema: str, table: str, column: str, language: Optional[str] = None
+) -> str:
+    """The DDL for the full-text index on ``column`` of ``schema.table``, in ``language``.
+
+    An unset ``language`` is ``DEFAULT_TEXT_LANGUAGE``.
+    """
     return (
         f"CREATE INDEX {TEXT_INDEX_NAME} ON {_checked(schema)}.{_checked(table)} "
-        f"({_checked(column)}) AS %iFind.Index.Basic(LANGUAGE='en', LOWER=1)"
+        f"({_checked(column)}) "
+        f"AS %iFind.Index.Basic(LANGUAGE='{text_language(language)}', LOWER=1)"
     )
 
 
@@ -77,7 +111,7 @@ def rank_procedure(schema: str, class_name: str, index: str = TEXT_INDEX_NAME) -
     return f"{_checked(schema)}.{_checked(short_class)}_{_checked(index)}Rank"
 
 
-def search_terms(query: str) -> str:
+def search_terms(query: str, language: str = DEFAULT_TEXT_LANGUAGE) -> str:
     """The iFind search string for a natural-language ``query``, or ``""`` for none.
 
     The words are joined with ``OR`` and the rank procedure orders the rows, so a
@@ -85,12 +119,13 @@ def search_terms(query: str) -> str:
     of requiring every word (stop words included) to appear. Punctuation, wildcards and
     the ``AND``/``OR``/``NOT`` operators a user might type are dropped; the search
     string is always a plain list of words. A query made only of stop words keeps them
-    rather than searching for nothing.
+    rather than searching for nothing. Stop words are those of ``language``
+    (``STOPWORDS``); a language with none listed keeps every word but the operators.
     """
+    stopwords = STOPWORDS.get(text_language(language), frozenset())
     words = [w.lower() for w in _WORD.findall(query or "")]
-    kept = [w for w in words if w not in _STOPWORDS] or [
-        w for w in words if w not in {"and", "or", "not"}
-    ]
+    content = [w for w in words if w not in _OPERATORS]
+    kept = [w for w in content if w not in stopwords] or content
     unique: List[str] = list(dict.fromkeys(kept))[:MAX_TERMS]
     return " OR ".join(unique)
 

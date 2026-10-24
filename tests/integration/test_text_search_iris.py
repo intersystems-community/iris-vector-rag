@@ -351,3 +351,43 @@ def test_the_old_tables_the_engine_used_to_read_are_not_needed(
     _manager(stack, A).ensure_text_index("Legacy")
 
     assert _store(stack, monkeypatch, A, "Legacy").text_search("insulin")
+
+
+# --- the language setting ----------------------------------------------------
+
+CZECH = [
+    ("c1", "Pacient bez bolesti na hrudi, ale s horečkou.", '{"source": "er"}'),
+    ("c2", "Bolest hlavy trvá tři dny.", '{"source": "er"}'),
+    ("c3", "Insulin regulates blood glucose levels.", '{"source": "bio"}'),
+]
+
+
+def _index_language(connection, schema, table, index):
+    rows = _run(
+        connection,
+        "SELECT Parameters FROM %Dictionary.CompiledIndex "
+        "WHERE parent = ? AND Name = ?",
+        [f"{schema}.{table}", index],
+    )
+    if not rows:
+        return None
+    # "NAME,value,NAME,value,..." as the class compiler records the index parameters.
+    flat = str(rows[0][0]).split(",")
+    return dict(zip(flat[::2], flat[1::2])).get("LANGUAGE")
+
+
+def test_the_configured_language_builds_the_index_and_drives_the_query(
+    stack, clean, monkeypatch
+):
+    monkeypatch.setenv("RAG_STORAGE__IRIS__TEXT_LANGUAGE", "cs")
+    _legacy_table(clean, A, rows=CZECH)
+    config = ConfigurationManager()
+    manager = SchemaManager(ConnectionManager(config), config, schema_prefix=A)
+    assert manager.ensure_text_index("Legacy") == TEXT_INDEX_NAME
+    assert _index_language(clean, A, "Legacy", TEXT_INDEX_NAME) == "cs"
+
+    store = _store(stack, monkeypatch, A, "Legacy")
+    assert store.text_language == "cs"
+    docs = store.text_search("bolest hlavy", top_k=3)
+    assert [d.id for d in docs][0] == "c2"
+    assert {d.id for d in docs} <= {"c1", "c2"}
