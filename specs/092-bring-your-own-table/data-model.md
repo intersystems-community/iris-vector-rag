@@ -27,7 +27,7 @@ No tables are added. The model is the in-memory description of a table the libra
 **A search's `where`:** `Mapping[str, value | (op, value) | list]`.
 - `op` is one of `=`, `<`, `<=`, `>`, `>=`.
 - A list means `IN` and must not be empty.
-- Values are `str`, `int`, `float`, `bool`, `date` or `datetime`.
+- Values are `str`, `int`, `float`, `date` or `datetime`. A `bool` is refused: IRIS has no boolean type, so use 0 or 1 for a `BIT` column.
 
 ## SearchSettings (new fields on the store)
 

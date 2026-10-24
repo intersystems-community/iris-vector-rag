@@ -21,6 +21,7 @@ from ..exceptions import (
     AttachedTableReadOnly,
     DimensionMismatchError,
     EmbeddingError,
+    RequiredFilterMissing,
     TextIndexMissingError,
     VectorStoreCLOBError,
     VectorStoreConfigurationError,
@@ -464,6 +465,9 @@ class IRISVectorStore(VectorStore):
         Raises:
             VectorStoreConnectionError: If EMBEDDING support not enabled or query fails
         """
+        # Feature 092: this search takes no `where`, so a table that requires
+        # filters cannot be searched through it.
+        self._check_where(None)
         if not self.use_iris_embedding:
             raise VectorStoreConnectionError(
                 "IRIS EMBEDDING support not enabled. Initialize with embedding_config parameter."
@@ -1357,7 +1361,9 @@ class IRISVectorStore(VectorStore):
                             f"FROM {self.table_name} "
                             f"WHERE {id_sql} IN ({placeholders})"
                         )
-                        cursor.execute(metadata_sql, doc_ids)
+                        if where_sql:
+                            metadata_sql += f" AND {where_sql}"
+                        cursor.execute(metadata_sql, [*doc_ids, *where_params])
                         for doc_id, metadata_json in cursor.fetchall():
                             if isinstance(metadata_json, dict):
                                 page_metadata[doc_id] = metadata_json
@@ -1585,12 +1591,21 @@ class IRISVectorStore(VectorStore):
             documents.append(document)
         return documents
 
-    def fetch_documents_by_ids(self, ids: List[str]) -> List[Document]:
+    def fetch_documents_by_ids(
+        self,
+        ids: List[str],
+        where_sql: str = "",
+        where_params: Sequence[Any] = (),
+    ) -> List[Document]:
         """
         Fetch documents by their IDs.
 
         Args:
             ids: List of document IDs to fetch
+            where_sql: A predicate from `compile_where`, ANDed with the id list, so a
+                search hydrates its hits under the scope it ranked them in: an id
+                need only be unique within the required filters (feature 092).
+            where_params: That predicate's parameters.
 
         Returns:
             List of Document objects with guaranteed string content
@@ -1611,7 +1626,9 @@ class IRISVectorStore(VectorStore):
                 f"SELECT {', '.join(columns)} FROM {self.table_name} "
                 f"WHERE {columns[0]} IN ({placeholders})"
             )
-            cursor.execute(select_sql, ids)
+            if where_sql:
+                select_sql += f" AND {where_sql}"
+            cursor.execute(select_sql, [*ids, *where_params])
             documents = self._documents_from_rows(cursor.fetchall(), columns)
             logger.debug(f"Fetched {len(documents)} documents by IDs")
             return documents
@@ -1948,7 +1965,10 @@ class IRISVectorStore(VectorStore):
             )
 
             by_id = {
-                str(d.id): d for d in self.fetch_documents_by_ids([r[0] for r in rows])
+                str(d.id): d
+                for d in self.fetch_documents_by_ids(
+                    [r[0] for r in rows], where_sql, where_params
+                )
             }
             hits = []
             for doc_id, score in rows:
@@ -1998,6 +2018,14 @@ class IRISVectorStore(VectorStore):
             ValueError: the phrase has no letter or digit.
             TextIndexMissingError: the table has no full-text index.
         """
+        required = self.filter_spec.required_filters
+        if required:
+            raise RequiredFilterMissing(
+                f"{self.table_name} requires a filter on {', '.join(required)}, and "
+                "phrase search takes no where=, so it would read every row. Use "
+                "retrieval 'text', 'hybrid' or 'rrf' with where=.",
+                rejected_keys=list(required),
+            )
         from iris_vector_rag.note_search.phrase import (
             find_mentions,
             phrase_search_string,

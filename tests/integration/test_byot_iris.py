@@ -327,3 +327,48 @@ def test_us5_cosine_and_dot_rank_non_unit_vectors_differently(iris_connection):
         cursor.execute(f"DROP TABLE IF EXISTS {table}")
         iris_connection.commit()
         cursor.close()
+
+
+# --- review fix: an id that repeats outside the scope --------------------------------
+
+
+def test_text_leg_returns_the_in_scope_row_of_a_repeated_id(iris_connection):
+    """MedTeam's EvidenceId repeats once per embedding model. The text leg must
+    present the row of the model the search is scoped to, not whichever row of
+    that id the database returns last (FR-010)."""
+    table = "BYOTDup.Chunk"
+    cursor = iris_connection.cursor()
+    try:
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        cursor.execute(
+            f"CREATE TABLE {table} (EvidenceId VARCHAR(20), EmbeddingModel VARCHAR(20), "
+            "Body VARCHAR(200), Vec VECTOR(DOUBLE, 2))"
+        )
+        for model, body in (("m1", "alpha apple"), ("m2", "alpha banana")):
+            cursor.execute(
+                f"INSERT INTO {table} VALUES (?, ?, ?, TO_VECTOR('[1,0]', DOUBLE, 2))",
+                ["e1", model, body],
+            )
+        cursor.execute(
+            f"CREATE INDEX DupText ON {table} (Body) "
+            "AS %iFind.Index.Basic(LANGUAGE='en', LOWER=1)"
+        )
+        iris_connection.commit()
+        settings = {
+            "table_name": table,
+            "id_col": "EvidenceId",
+            "text_col": "Body",
+            "embedding_col": "Vec",
+            "filter_columns": ["EmbeddingModel"],
+            "required_filters": ["EmbeddingModel"],
+            "text_index": "DupText",
+        }
+        for model, body in (("m1", "alpha apple"), ("m2", "alpha banana")):
+            docs = store_for(settings).text_search(
+                "alpha", top_k=5, where={"EmbeddingModel": model}
+            )
+            assert [(d.id, d.page_content) for d in docs] == [("e1", body)]
+    finally:
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        iris_connection.commit()
+        cursor.close()

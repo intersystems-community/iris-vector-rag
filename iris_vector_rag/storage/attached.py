@@ -34,7 +34,7 @@ __all__ = ["ColumnMapping", "FilterSpec", "compile_where", "quote_identifier"]
 
 #: The comparisons a filter may make; a list is ``IN``.
 _OPERATORS = frozenset({"=", "<", "<=", ">", ">="})
-_SCALARS = (str, int, float, bool, dt.date, dt.datetime)
+_SCALARS = (str, int, float, dt.date, dt.datetime)
 
 #: SQL types (as INFORMATION_SCHEMA reports them) a value is cast to before it is
 #: compared, so "2026-10-05" compares as a date and not as text.
@@ -136,10 +136,13 @@ class FilterSpec:
 
 def _bindable(column: str, value: Any) -> Any:
     """A filter value as bound: dates as ISO text, other scalars as they are."""
-    if isinstance(value, bool) or not isinstance(value, _SCALARS):
+    if isinstance(value, bool):
+        # IRIS has no boolean type; a BIT column holds 0 and 1.
+        raise FilterError(f"filter on {column}: {value!r} is a bool; use 0 or 1")
+    if not isinstance(value, _SCALARS):
         raise FilterError(
             f"filter on {column}: {type(value).__name__} is not a filter value "
-            "(use str, int, float, bool, date or datetime)"
+            "(use str, int, float, date or datetime)"
         )
     if isinstance(value, dt.datetime):
         return value.isoformat(sep=" ")
@@ -164,6 +167,13 @@ def compile_where(
         RequiredFilterMissing: a required filter is absent.
         FilterError: anything else that cannot be applied as written.
     """
+    absent = [c for c in spec.filter_columns if c.lower() not in shape.columns]
+    if absent:
+        raise FilterError(
+            f"filter_columns names {', '.join(absent)}, which "
+            f"{shape.qualified_name} does not have",
+            rejected_keys=absent,
+        )
     where = dict(where or {})
     present = {key.lower() for key in where}
     missing = [c for c in spec.required_filters if c.lower() not in present]
@@ -186,12 +196,7 @@ def compile_where(
                 rejected_keys=[key],
                 allowed_keys=list(spec.filter_columns),
             )
-        fact = shape.columns.get(column.lower())
-        if fact is None:
-            raise FilterError(
-                f"filter column {column} is not in {shape.qualified_name}",
-                rejected_keys=[column],
-            )
+        fact = shape.columns[column.lower()]
         name = quote_identifier(fact.name)
         cast = _CASTS.get(fact.sql_type)
         marker = f"CAST(? AS {cast})" if cast else "?"
