@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.16.2 — the query vector is bound (2026-10-24)
 
 ### Changed: vector search binds the query vector
 
