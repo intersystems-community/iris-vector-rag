@@ -18,20 +18,20 @@ The commands run from `/Users/tdyar/ws/ivr-language`. Commit with `SKIP=tdd-comp
 
 ## Phase 1: Setup
 
-- [ ] T001 Port the S3 spike's team fixtures into `tests/fixtures/byot/teams.py`:
+- [X] T001 Port the S3 spike's team fixtures into `tests/fixtures/byot/teams.py`:
   - MedTeam `EvidenceChunk` and Štafeta `DocChunk` DDL (from `spikes/s3/setup_tables.py`), in
     schemas `BYOTMed` and `BYOTStf`;
   - a seeded generator of synthetic rows: 4 patients, dates, 2 embedding models for MedTeam,
     unit and non-unit vectors of dim 384;
   - each team's own query, as SQL strings (from `spikes/s3/team_queries.py`);
   - `create(conn)` and `drop(conn)` helpers.
-- [ ] T002 [P] Add a `byot_tables` fixture in `tests/integration/conftest_byot.py` (imported by
-  the integration test) that creates both tables before a test and drops them after. It also
+- [X] T002 [P] Add a `byot_tables` fixture (in `tests/integration/test_byot_iris.py` itself, with
+  the recorded catalogs in `tests/fixtures/byot/catalog/`) that creates both tables before a test and drops them after. It also
   records a catalog and row-count snapshot, for SC-004.
 
 ## Phase 2: Foundational (blocks every story)
 
-- [ ] T003 [P] (FR-001, FR-002, FR-003) Unit tests for declared roles in `tests/unit/test_byot_shape.py`:
+- [X] T003 [P] (FR-001, FR-002, FR-003) Unit tests for declared roles in `tests/unit/test_byot_shape.py`:
   - a declared column outranks `ROLE_PRECEDENCE`;
   - an undeclared role still resolves by name;
   - a declared column missing from the table raises `ShapeUnresolvable` naming it;
@@ -41,24 +41,24 @@ The commands run from `/Users/tdyar/ws/ivr-language`. Commit with `SKIP=tdd-comp
   - `attached` is true only when declared;
   - the six recorded 082 shapes are unchanged with no declaration;
   - the resolver cache keys on the mapping.
-- [ ] T004 [P] Unit tests for the pure module in `tests/unit/test_byot_attached.py`:
+- [X] T004 [P] Unit tests for the pure module in `tests/unit/test_byot_attached.py`:
   - `ColumnMapping.from_settings` (config plus kwargs, kwargs win, string or list `id_col`);
   - `FilterSpec` validation.
-- [ ] T005 (FR-001, FR-002, FR-003) Add `ColumnRole.PARENT`, declared roles in `TableShape.from_snapshot(snapshot,
+- [X] T005 (FR-001, FR-002, FR-003) Add `ColumnRole.PARENT`, declared roles in `TableShape.from_snapshot(snapshot,
   declared=None)` and `_resolve_roles`, plus `identifier_columns`, `identifier_sql` and
   `attached`, in `iris_vector_rag/storage/table_shape.py`. Make `column_for` and
   `legacy_column_for` tolerate roles outside `ROLE_PRECEDENCE` and `ROLE_ALIASES`.
-- [ ] T006 Add the `declared` argument and the mapping in the cache key to
+- [X] T006 Add the `declared` argument and the mapping in the cache key to
   `TableShapeResolver.resolve` in `iris_vector_rag/storage/shape_resolver.py`.
-- [ ] T007 Create `iris_vector_rag/storage/attached.py` with `ColumnMapping`, `FilterSpec`,
+- [X] T007 Create `iris_vector_rag/storage/attached.py` with `ColumnMapping`, `FilterSpec`,
   `quote_identifier`, and the new errors `FilterError`, `RequiredFilterMissing` and
   `AttachedTableReadOnly` (the errors go in `iris_vector_rag/exceptions.py`, re-exported).
-- [ ] T008 (FR-004) Read the mapping and filter settings in `IRISVectorStore.__init__`, with kwargs
+- [X] T008 (FR-004) Read the mapping and filter settings in `IRISVectorStore.__init__`, with kwargs
   overriding `storage:iris:` keys, and pass `declared` to the resolver in `shape()` and
   `refresh_shape()`, in `iris_vector_rag/storage/vector_store_iris.py`.
-- [ ] T009 (FR-004) Document every new `storage:iris:` key, unset, in
+- [X] T009 (FR-004) Document every new `storage:iris:` key, unset, in
   `iris_vector_rag/config/default_config.yaml`.
-- [ ] T010 Gate: T003 and T004 pass, and the existing shape suites pass
+- [X] T010 Gate: T003 and T004 pass, and the existing shape suites pass
   (`tests/unit/test_vector_store_shape.py`, `tests/unit/test_table_shape*.py`,
   `tests/integration/test_table_shape_six_shapes.py`).
 

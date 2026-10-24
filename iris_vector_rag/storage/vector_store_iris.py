@@ -50,6 +50,17 @@ from .text_search import (
 logger = logging.getLogger(__name__)
 
 
+def _resolve(resolver, schema: str, table: str, declared) -> TableShape:
+    """Resolve, passing a declaration only when there is one.
+
+    A resolver written before feature 092 (a test double, a caller's own) takes
+    ``(schema, table)``; it keeps working for every table that declares nothing.
+    """
+    if declared:
+        return resolver.resolve(schema, table, declared=declared)
+    return resolver.resolve(schema, table)
+
+
 class IRISVectorStore(VectorStore):
     """
     IRIS-specific implementation of the VectorStore interface.
@@ -108,7 +119,16 @@ class IRISVectorStore(VectorStore):
 
         # Get storage configuration
         self.storage_config = self.config_manager.get("storage:iris", {})
-        self.table_name = self.storage_config.get("table_name", "RAG.SourceDocuments")
+        self.table_name = kwargs.get("table_name") or self.storage_config.get(
+            "table_name", "RAG.SourceDocuments"
+        )
+
+        # Feature 092: a table someone else owns, read through declared columns.
+        # Constructor arguments override the `storage:iris:` keys of the same name.
+        from .attached import ColumnMapping, FilterSpec
+
+        self.column_mapping = ColumnMapping.from_settings(self.storage_config, kwargs)
+        self.filter_spec = FilterSpec.from_settings(self.storage_config, kwargs)
 
         # Get chunking configuration
         self.chunking_config = self.config_manager.get("storage:chunking", {})
@@ -238,17 +258,19 @@ class IRISVectorStore(VectorStore):
         """
         schema, table = self._schema_and_table()
         resolver = self._shape_resolver()
+        declared = self.column_mapping.declared
         try:
-            return resolver.resolve(schema, table)
+            return _resolve(resolver, schema, table, declared)
         except TableNotFound:
-            if cursor is None:
+            if cursor is None or declared:
+                # An attached table is never created on the owner's behalf.
                 raise
         # `_ensure_table_exists` invalidates what it changed, so the resolve below
         # reads the table it just created. If creation failed this raises
         # TableNotFound naming the table, which is the error the caller needs; the
         # old code let the next statement fail instead.
         self._ensure_table_exists(cursor)
-        return resolver.resolve(schema, table)
+        return _resolve(resolver, schema, table, declared)
 
     def refresh_shape(self, table: Optional[str] = None) -> TableShape:
         """Read a table's shape again, for a table changed outside this library.
@@ -260,7 +282,9 @@ class IRISVectorStore(VectorStore):
         schema, name = self._schema_and_table(table)
         resolver = self._shape_resolver()
         resolver.invalidate(schema, name)
-        return resolver.resolve(schema, name)
+        own_table = table is None or name.lower() == self._schema_and_table()[1].lower()
+        declared = self.column_mapping.declared if own_table else None
+        return _resolve(resolver, schema, name, declared)
 
     def _get_vector_data_type(self) -> str:
         """The embedding column's element type, e.g. 'FLOAT' or 'DOUBLE'.

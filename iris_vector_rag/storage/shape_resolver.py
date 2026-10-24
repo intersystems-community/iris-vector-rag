@@ -12,18 +12,20 @@ other's question.
 
 from __future__ import annotations
 
-from typing import Dict, Optional, Tuple
+from typing import Dict, Mapping, Optional, Tuple
 
 from iris_vector_rag.storage.catalog import CatalogReader
 from iris_vector_rag.storage.table_shape import (
     CatalogUnavailable,
+    ColumnRole,
+    Declared,
     TableNotFound,
     TableShape,
 )
 
 __all__ = ["TableShapeResolver"]
 
-CacheKey = Tuple[str, str]
+CacheKey = Tuple[str, str, Tuple]
 
 
 class TableShapeResolver:
@@ -39,8 +41,18 @@ class TableShapeResolver:
         """Catalog snapshots actually taken. SC-002 is measured on this."""
         return self._reads
 
-    def resolve(self, schema: str, table: str) -> TableShape:
-        key = _key(schema, table)
+    def resolve(
+        self,
+        schema: str,
+        table: str,
+        declared: Optional[Mapping[ColumnRole, Declared]] = None,
+    ) -> TableShape:
+        """The table's shape, with ``declared`` columns bound first (feature 092).
+
+        The declaration is part of the cache key, so two stores that read one table
+        through different mappings never share a shape.
+        """
+        key = _key(schema, table, declared)
         cached = self._shapes.get(key)
         if cached is not None:
             return cached
@@ -63,28 +75,50 @@ class TableShapeResolver:
             raise TableNotFound("no such table in this namespace", schema, table)
 
         self._reads += 1
-        shape = TableShape.from_snapshot(snapshot)
+        shape = TableShape.from_snapshot(snapshot, declared=declared)
         self._shapes[key] = shape
         return shape
 
     def invalidate(self, schema: str, table: str) -> None:
-        """Forget one table. A no-op if it was never resolved."""
-        self._shapes.pop(_key(schema, table), None)
+        """Forget one table, under every declaration. A no-op if never resolved."""
+        prefix = _key(schema, table)[:2]
+        for key in [k for k in self._shapes if k[:2] == prefix]:
+            del self._shapes[key]
 
     def invalidate_all(self) -> None:
         self._shapes.clear()
 
-    def cached(self, schema: str, table: str) -> Optional[TableShape]:
+    def cached(
+        self,
+        schema: str,
+        table: str,
+        declared: Optional[Mapping[ColumnRole, Declared]] = None,
+    ) -> Optional[TableShape]:
         """The cached shape, without resolving. For diagnostics and tests."""
-        return self._shapes.get(_key(schema, table))
+        return self._shapes.get(_key(schema, table, declared))
 
     def __repr__(self) -> str:  # pragma: no cover - diagnostics
         return (
-            f"TableShapeResolver(cached={sorted('.'.join(k) for k in self._shapes)}, "
+            f"TableShapeResolver(cached={sorted('.'.join(k[:2]) for k in self._shapes)}, "
             f"reads={self._reads})"
         )
 
 
-def _key(schema: str, table: str) -> CacheKey:
+def _key(
+    schema: str, table: str, declared: Optional[Mapping[ColumnRole, Declared]] = None
+) -> CacheKey:
     """IRIS identifiers are case-insensitive, so the cache key must be too."""
-    return (schema.lower(), table.lower())
+    frozen = tuple(
+        sorted(
+            (
+                role.value,
+                (
+                    names.lower()
+                    if isinstance(names, str)
+                    else tuple(n.lower() for n in names)
+                ),
+            )
+            for role, names in (declared or {}).items()
+        )
+    )
+    return (schema.lower(), table.lower(), frozen)

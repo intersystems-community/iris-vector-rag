@@ -23,9 +23,10 @@ Two IRIS facts shape the design, both measured rather than assumed (see
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Mapping, Optional, Sequence
+from typing import TYPE_CHECKING, Mapping, Optional, Sequence, Tuple, Union
 
 if TYPE_CHECKING:  # pragma: no cover - import cycle avoidance
     from iris_vector_rag.storage.catalog import CatalogSnapshot
@@ -47,12 +48,29 @@ __all__ = [
     "TableShapeError",
     "VectorSpec",
     "create_table_statement",
+    "quote_identifier",
 ]
 
 CANONICAL_VECTOR_TYPE = "FLOAT"
 VECTOR_CLASS_TYPE = "%Library.Vector"
 STREAM_CLASS_PREFIX = "%Stream."
 LONG_TEXT_SQL_TYPE = "longvarchar"
+
+#: One declared column, or several for a composite identifier (feature 092).
+Declared = Union[str, Sequence[str]]
+
+_IDENTIFIER = re.compile(r"^[A-Za-z_%][A-Za-z0-9_]*$")
+
+
+def quote_identifier(name: str) -> str:
+    """``name`` as a delimited SQL identifier, after checking it is a plain name.
+
+    The check is what makes quoting safe: a name that could close the quotes never
+    gets this far.
+    """
+    if not _IDENTIFIER.match(name or ""):
+        raise ValueError(f"not a plain SQL identifier: {name!r}")
+    return f'"{name}"'
 
 
 class ColumnRole(Enum):
@@ -64,6 +82,9 @@ class ColumnRole(Enum):
     METADATA = "metadata"
     EMBEDDING = "embedding"
     CREATED_AT = "created_at"
+    #: The document a chunk belongs to. Only ever declared (feature 092): no name
+    #: list guesses it, so no existing table gains or loses a role.
+    PARENT = "parent"
 
 
 #: Role resolution order. The canonical column is first in every list, so
@@ -96,6 +117,7 @@ ROLE_ALIASES: Mapping[ColumnRole, Sequence[str]] = {
     ColumnRole.METADATA: (),
     ColumnRole.EMBEDDING: ("chunk_embedding", "entity_embedding"),
     ColumnRole.CREATED_AT: (),
+    ColumnRole.PARENT: (),
 }
 
 #: A table that cannot answer these is not usable as a document table.
@@ -119,6 +141,8 @@ class ShapeKind(Enum):
     FIXTURE = "fixture"
     MIXED = "mixed"
     DOUBLE_VECTOR = "double_vector"
+    #: A table someone else owns, read through declared columns (feature 092).
+    ATTACHED = "attached"
     UNKNOWN = "unknown"
 
 
@@ -256,12 +280,26 @@ class TableShape:
     columns: Mapping[str, ColumnFact] = field(default_factory=dict)
     roles: Mapping[ColumnRole, str] = field(default_factory=dict)
     kind: ShapeKind = ShapeKind.UNKNOWN
+    #: The identifier's columns when it is composite; empty for a single column.
+    identifier_columns: Tuple[str, ...] = ()
+    #: True when any role was declared: the table belongs to someone else (092).
+    attached: bool = False
 
     # -- construction --------------------------------------------------------
 
     @classmethod
-    def from_snapshot(cls, snapshot: "CatalogSnapshot") -> "TableShape":
-        """Build a shape from recorded catalog rows. Pure: no I/O, no environment."""
+    def from_snapshot(
+        cls,
+        snapshot: "CatalogSnapshot",
+        declared: Optional[Mapping[ColumnRole, Declared]] = None,
+    ) -> "TableShape":
+        """Build a shape from recorded catalog rows. Pure: no I/O, no environment.
+
+        ``declared`` names the column for a role, or several for a composite
+        identifier (feature 092). A declared column outranks the name lists; a role
+        not declared still resolves by name. Declaring any role makes the shape
+        ``attached``.
+        """
         schema, table = snapshot.schema, snapshot.table
         if not snapshot.columns:
             raise ShapeUnresolvable(
@@ -302,7 +340,9 @@ class TableShape:
                 vector=vector,
             )
 
-        roles = _resolve_roles(columns, keys, schema, table)
+        roles, identifier_columns = _resolve_roles(
+            columns, keys, schema, table, declared or {}
+        )
         for role in roles:
             column = columns[roles[role]]
             if column.class_type is None:
@@ -319,6 +359,8 @@ class TableShape:
             class_name=snapshot.class_name or f"{schema}.{table}",
             columns=columns,
             roles=roles,
+            identifier_columns=identifier_columns,
+            attached=bool(declared),
         )
         return cls(
             schema=shape.schema,
@@ -326,7 +368,9 @@ class TableShape:
             class_name=shape.class_name,
             columns=shape.columns,
             roles=shape.roles,
-            kind=_classify(shape),
+            kind=ShapeKind.ATTACHED if shape.attached else _classify(shape),
+            identifier_columns=shape.identifier_columns,
+            attached=shape.attached,
         )
 
     # -- role access ---------------------------------------------------------
@@ -341,9 +385,14 @@ class TableShape:
     def column_for(self, role: ColumnRole) -> ColumnFact:
         column = self.optional_column_for(role)
         if column is None:
+            candidates = ROLE_PRECEDENCE.get(role)
             raise RoleNotPresent(
                 f"no column fills the {role.name} role "
-                f"(candidates: {', '.join(ROLE_PRECEDENCE[role])})",
+                + (
+                    f"(candidates: {', '.join(candidates)})"
+                    if candidates
+                    else "(it is only ever declared)"
+                ),
                 self.schema,
                 self.table,
             )
@@ -360,10 +409,30 @@ class TableShape:
         bound = self.roles.get(role)
         if not bound:
             return None
-        for candidate in ROLE_ALIASES[role]:
+        for candidate in ROLE_ALIASES.get(role, ()):
             if candidate != bound.lower() and candidate in self.columns:
                 return self.columns[candidate]
         return None
+
+    # -- SQL names -----------------------------------------------------------
+
+    def sql_name(self, role: ColumnRole) -> str:
+        """The column for ``role`` as it goes into SQL.
+
+        Quoted on an attached table, so a team's reserved-word column (``Section``)
+        works; bare on the library's own tables, whose statements are unchanged.
+        """
+        name = self.column_for(role).name
+        return quote_identifier(name) if self.attached else name
+
+    @property
+    def identifier_sql(self) -> str:
+        """The identifier as a SQL expression: one column, or columns joined by ``#``."""
+        if self.identifier_columns:
+            return " || '#' || ".join(
+                quote_identifier(name) for name in self.identifier_columns
+            )
+        return self.sql_name(ColumnRole.IDENTIFIER)
 
     # -- derived answers -----------------------------------------------------
 
@@ -432,14 +501,39 @@ def _is_yes(value) -> bool:
 
 
 def _resolve_roles(
-    columns: Mapping[str, ColumnFact], keys: set[str], schema: str, table: str
-) -> Mapping[ColumnRole, str]:
+    columns: Mapping[str, ColumnFact],
+    keys: set[str],
+    schema: str,
+    table: str,
+    declared: Mapping[ColumnRole, Declared],
+) -> Tuple[Mapping[ColumnRole, str], Tuple[str, ...]]:
     roles: dict[ColumnRole, str] = {}
+    identifier_columns: Tuple[str, ...] = ()
+
+    def known(name: str) -> str:
+        key = name.lower()
+        if key not in columns:
+            raise ShapeUnresolvable(
+                f"declared column {name} is not in the table "
+                f"(it has: {', '.join(c.name for c in columns.values())})",
+                schema,
+                table,
+            )
+        return key
+
+    for role, names in declared.items():
+        if isinstance(names, str):
+            roles[role] = known(names)
+            continue
+        keys_declared = tuple(known(name) for name in names)
+        roles[role] = keys_declared[0]
+        if role is ColumnRole.IDENTIFIER and len(keys_declared) > 1:
+            identifier_columns = tuple(columns[k].name for k in keys_declared)
 
     # A declared single-column key outranks name precedence: an identity column
     # cannot be written to, so picking the wrong identifier by name fails at insert
     # time rather than at resolution time.
-    if len(keys) == 1:
+    if len(keys) == 1 and ColumnRole.IDENTIFIER not in roles:
         only_key = next(iter(keys))
         if only_key in columns:
             roles[ColumnRole.IDENTIFIER] = only_key
@@ -461,7 +555,7 @@ def _resolve_roles(
                 schema,
                 table,
             )
-    return roles
+    return roles, identifier_columns
 
 
 def _classify(shape: TableShape) -> ShapeKind:
