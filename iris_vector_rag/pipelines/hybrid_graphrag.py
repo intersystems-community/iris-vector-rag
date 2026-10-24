@@ -255,6 +255,10 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         package reads and writes. Supplying one still wins -- a table whose columns
         are named `note_id`/`note_text`/`note_embedding` is not describable by role
         precedence and naming it explicitly is the point of this method.
+
+        This bridges the table to the graph engine only. For the document store, the
+        retrieval modes and the other pipelines, declare the same columns under
+        ``storage:iris:`` (feature 092, docs/BRING_YOUR_OWN_TABLE.md).
         """
         if self.iris_engine is None:
             raise RuntimeError(

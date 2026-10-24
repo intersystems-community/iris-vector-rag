@@ -5,6 +5,10 @@
 **Status**: Draft
 **Input**: Attach existing corpus to graph — zero-copy bridge from RAG.SourceDocuments or any IRIS table to IVG graph nodes + vector search, reusing existing HNSW indexes without re-embedding or data duplication
 
+> **Superseded in part by [092-bring-your-own-table](../092-bring-your-own-table/spec.md):** the
+> document store, retrieval modes and pipelines now read an attached table through the same
+> `id_col` / `text_col` / `embedding_col` names, with real-column filters.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Attach RAG corpus to graph (Priority: P1)

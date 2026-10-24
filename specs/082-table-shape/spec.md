@@ -5,6 +5,10 @@
 **Status**: Draft
 **Input**: User description: "TableShape: one module owns the physical shape of RAG document tables (SourceDocuments, DocumentChunks): resolves six observed shapes once per session, canonical wins, only canonical is created, every column-naming SQL fragment comes from it."
 
+> **Superseded in part by [092-bring-your-own-table](../092-bring-your-own-table/spec.md):** a
+> table's columns can now be declared, which outranks the name lists; undeclared roles still
+> resolve as described here.
+
 ## Background
 
 The document tables this project reads and writes exist in the field in several

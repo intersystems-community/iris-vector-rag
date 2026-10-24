@@ -213,17 +213,17 @@ and no index creation on attached tables.
 
 ## Phase 8: Polish and cross-cutting
 
-- [ ] T038 [P] (FR-018) Write `docs/BRING_YOUR_OWN_TABLE.md` from `quickstart.md`:
+- [X] T038 [P] (FR-018) Write `docs/BRING_YOUR_OWN_TABLE.md` from `quickstart.md`:
   - MedTeam and Štafeta;
   - `where=` next to RAG.SDK's predicate;
   - the model-identity filter advice.
 
   Link it from `README.md`.
-- [ ] T039 [P] (FR-019) Add "Superseded in part by 092" lines to `specs/069-attach-existing-corpus/spec.md`
+- [X] T039 [P] (FR-019) Add "Superseded in part by 092" lines to `specs/069-attach-existing-corpus/spec.md`
   and `specs/082-table-shape/spec.md`, and a docstring pointer in
   `HybridGraphRAGPipeline.attach_existing_corpus`.
-- [ ] T040 Add a CHANGELOG Unreleased entry for 092.
-- [ ] T041 (FR-017) Full run:
+- [X] T040 Add a CHANGELOG Unreleased entry for 092.
+- [X] T041 (FR-017) Full run:
   - unit suite;
   - integration suites `test_byot_iris.py`, `test_text_search_iris.py`,
     `test_table_shape_six_shapes.py`, `test_hybrid_rrf_modes.py` and `test_note_search_iris.py`;
