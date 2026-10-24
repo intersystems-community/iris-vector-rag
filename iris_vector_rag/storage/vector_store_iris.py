@@ -62,6 +62,9 @@ def _choice(value, key: str, allowed, default: str) -> str:
     return chosen
 
 
+#: An HNSW index's Distance (lower-cased) -> the metric that can use it.
+_HNSW_DISTANCES = {"cosine": "cosine", "dotproduct": "dot"}
+
 #: Optional roles an attached table may surface in Document.metadata, by key.
 _METADATA_ROLES = (("title", ColumnRole.TITLE), ("parent_id", ColumnRole.PARENT))
 
@@ -125,6 +128,8 @@ class IRISVectorStore(VectorStore):
         # Tables already warned about dropping metadata, by qualified name. One line
         # per table is a warning; one line per document is a scrollback (FR-016).
         self._metadata_drop_warned: set = set()
+        # Tables whose HNSW index was compared with the metric, by qualified name.
+        self._hnsw_checked: set = set()
         self.config_manager = config_manager
         if self.config_manager is None:
             # Create a default config manager for testing
@@ -1241,6 +1246,8 @@ class IRISVectorStore(VectorStore):
         # layers away, and so these errors are not caught by the handler below.
         shape = self.shape()
         where_sql, where_params = compile_where(where, shape, self.filter_spec)
+        if shape.attached:
+            self._warn_on_index_mismatch(shape)
         vector = shape.vector_spec()
         identifier = shape.column_for(ColumnRole.IDENTIFIER)
         text = shape.column_for(ColumnRole.TEXT)
@@ -1493,6 +1500,35 @@ class IRISVectorStore(VectorStore):
             for key, role in _METADATA_ROLES
             if shape.has(role)
         ]
+
+    def _warn_on_index_mismatch(self, shape: TableShape) -> None:
+        """Warn once per table when its HNSW index was built for another measure.
+
+        IRIS uses an HNSW index only for the query function its ``Distance`` names,
+        so a mismatch means every search scans the table (FR-013).
+        """
+        if shape.qualified_name in self._hnsw_checked or not shape.has(
+            ColumnRole.EMBEDDING
+        ):
+            return
+        self._hnsw_checked.add(shape.qualified_name)
+        resolver = self._shape_resolver()
+        ask = getattr(resolver, "hnsw_index", None)
+        found = (
+            ask(shape.class_name, shape.column_for(ColumnRole.EMBEDDING).name)
+            if ask
+            else None
+        )
+        if not found:
+            return
+        index, distance = found
+        if _HNSW_DISTANCES.get(distance.lower()) != self.metric:
+            logger.warning(
+                f"HNSW index {index} on {shape.qualified_name} was built with "
+                f"Distance='{distance}' but this store ranks by metric={self.metric!r}, "
+                "so IRIS will not use the index and every search scans the table. "
+                f"Set metric to match the index, or rebuild it."
+            )
 
     def _guard_writable(self) -> None:
         """Refuse to write a table the library reads through declared columns (092)."""

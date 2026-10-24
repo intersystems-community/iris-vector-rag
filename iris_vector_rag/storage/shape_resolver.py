@@ -34,6 +34,7 @@ class TableShapeResolver:
     def __init__(self, reader: CatalogReader) -> None:
         self._reader = reader
         self._shapes: Dict[CacheKey, TableShape] = {}
+        self._hnsw: Dict[Tuple[str, str], Optional[Tuple[str, str]]] = {}
         self._reads = 0
 
     @property
@@ -78,6 +79,22 @@ class TableShapeResolver:
         shape = TableShape.from_snapshot(snapshot, declared=declared)
         self._shapes[key] = shape
         return shape
+
+    def hnsw_index(self, class_name: str, column: str) -> Optional[Tuple[str, str]]:
+        """``(index, Distance)`` of the HNSW index on a column, or None (feature 092).
+
+        None too when the reader cannot answer (a recorded catalog has no index
+        rows) or the catalog query fails: the answer only ever feeds a warning, so
+        "could not tell" must not stop a search.
+        """
+        key = (class_name.lower(), column.lower())
+        if key not in self._hnsw:
+            ask = getattr(self._reader, "hnsw_index", None)
+            try:
+                self._hnsw[key] = ask(class_name, column) if ask else None
+            except CatalogUnavailable:
+                self._hnsw[key] = None
+        return self._hnsw[key]
 
     def invalidate(self, schema: str, table: str) -> None:
         """Forget one table, under every declaration. A no-op if never resolved."""

@@ -272,3 +272,58 @@ def test_us4_an_attached_table_without_its_index_named_is_refused(byot_tables):
     store = store_for(STF_SCOPED)
     with pytest.raises(TextIndexMissingError, match="text_index"):
         store.text_search(T.STF_TEXT_QUERY, where=STF_WHERE)
+
+
+# --- US5: the similarity measure and the table's HNSW index ---------------------------
+
+
+def test_us5_a_measure_the_hnsw_index_was_not_built_for_is_warned_about(
+    byot_tables, caplog
+):
+    import logging
+
+    with caplog.at_level(logging.WARNING):
+        store_for(STAFETA, metric="dot").similarity_search_by_embedding(T.STF_QUERY, 3)
+    warnings = [r.getMessage() for r in caplog.records if "HNSW" in r.getMessage()]
+    assert len(warnings) == 1 and "DocChunkHNSW" in warnings[0]
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        store_for(STAFETA).similarity_search_by_embedding(T.STF_QUERY, 3)
+    assert not [r for r in caplog.records if "HNSW" in r.getMessage()]
+
+
+def test_us5_cosine_and_dot_rank_non_unit_vectors_differently(iris_connection):
+    """Why the default matters: vectors that are not unit length (Gemini at reduced
+    dimensions) rank differently under the two measures."""
+    table = "BYOTMetric.Chunk"
+    cursor = iris_connection.cursor()
+    try:
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        cursor.execute(
+            f"CREATE TABLE {table} (ChunkId VARCHAR(20), Body VARCHAR(200), "
+            "Vec VECTOR(DOUBLE, 2))"
+        )
+        # a: same direction as the query, short; b: off direction, long.
+        for chunk_id, vec in (("a", "[1,0]"), ("b", "[6,3]")):
+            cursor.execute(
+                f"INSERT INTO {table} VALUES (?, ?, TO_VECTOR(?, DOUBLE, 2))",
+                [chunk_id, chunk_id, vec],
+            )
+        iris_connection.commit()
+        settings = {
+            "table_name": table,
+            "id_col": "ChunkId",
+            "text_col": "Body",
+            "embedding_col": "Vec",
+        }
+        cosine = store_for(settings).similarity_search_by_embedding([1.0, 0.0], 2)
+        dot = store_for(settings, metric="dot").similarity_search_by_embedding(
+            [1.0, 0.0], 2
+        )
+        assert [d.id for d, _ in cosine] == ["a", "b"]
+        assert [d.id for d, _ in dot] == ["b", "a"]
+    finally:
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        iris_connection.commit()
+        cursor.close()

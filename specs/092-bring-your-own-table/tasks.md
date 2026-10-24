@@ -196,20 +196,20 @@ and no index creation on attached tables.
 
 **Independent test**: `tests/integration/test_byot_iris.py::test_us5_*`.
 
-- [ ] T033 [P] [US5] (FR-013) Unit tests in `tests/unit/test_byot_metric.py`:
+- [X] T033 [P] [US5] (FR-013) Unit tests in `tests/unit/test_byot_metric.py`:
   - `catalog.hnsw_distance` parses the `Parameters` list;
   - the store logs one warning per table on a mismatch and none on a match or with no index;
   - `metric=dot` overrides the attached default.
-- [ ] T034 [US5] Integration tests `test_us5_*` in `tests/integration/test_byot_iris.py`:
+- [X] T034 [US5] Integration tests `test_us5_*` in `tests/integration/test_byot_iris.py`:
   - on Štafeta's table (HNSW `Distance='Cosine'`), `metric=dot` logs the warning naming the index;
   - the default does not warn;
   - non-unit vectors rank differently under cosine and dot.
-- [ ] T035 [US5] (FR-013) Add `hnsw_distance(schema, table, column)` in
+- [X] T035 [US5] (FR-013) Add `hnsw_distance(schema, table, column)` in
   `iris_vector_rag/storage/catalog.py`, and the once-per-table check in the store's vector search.
-- [ ] T036 [US5] Write `scripts/perf/byot_hnsw_probe.py`: 5,000 rows, cosine and dot, `EXPLAIN`
+- [X] T036 [US5] Write `scripts/perf/byot_hnsw_probe.py`: 5,000 rows, cosine and dot, `EXPLAIN`
   plus timings, with and without a patient filter. Record the results in `plan.md` under
   "Measured" (SC-007).
-- [ ] T037 [US5] Gate: T033 and T034 pass on IRIS, and T036 is recorded.
+- [X] T037 [US5] Gate: T033 and T034 pass on IRIS, and T036 is recorded.
 
 ## Phase 8: Polish and cross-cutting
 

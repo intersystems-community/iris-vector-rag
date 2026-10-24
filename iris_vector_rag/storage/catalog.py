@@ -77,6 +77,14 @@ INDEX_SQL = """
     WHERE UPPER(TABLE_SCHEMA) = UPPER(?) AND UPPER(TABLE_NAME) = UPPER(?)
 """
 
+#: The class of an HNSW index in %Dictionary.CompiledIndex.TypeClass.
+HNSW_CLASS = "%SQL.Index.HNSW"
+
+HNSW_SQL = """
+    SELECT Name, Properties, TypeClass, Parameters FROM %Dictionary.CompiledIndex
+    WHERE parent = ?
+"""
+
 INDEX_COLUMN_SQL = """
     SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.INDEXES
     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
@@ -172,6 +180,37 @@ class IRISCatalogReader:
             properties=properties,
             key_columns=keys,
         )
+
+    def hnsw_index(self, class_name: str, column: str) -> Optional[tuple[str, str]]:
+        """``(index name, Distance)`` of the HNSW index on ``column``, or None.
+
+        IRIS records an index's parameters as a flat ``NAME,value,...`` list and its
+        columns as class property names, which drop underscores (`chunk_embedding` is
+        property `chunkembedding`). Feature 092 asks this to warn when a search's
+        measure is not the one the index was built for: IRIS only uses an HNSW index
+        whose ``Distance`` matches the query function.
+        """
+        cursor = self._connection.cursor()
+        try:
+            cursor.execute(HNSW_SQL, [class_name])
+            rows = cursor.fetchall()
+        except Exception as exc:  # noqa: BLE001 - the driver error becomes the cause
+            schema, _, table = class_name.rpartition(".")
+            raise CatalogUnavailable(
+                f"index dictionary query failed: {exc}", schema, table
+            ) from exc
+        finally:
+            _close(cursor)
+        wanted = column.replace("_", "").lower()
+        for name, properties, type_class, parameters in rows:
+            if str(type_class or "") != HNSW_CLASS:
+                continue
+            if str(properties or "").replace('"', "").lower() != wanted:
+                continue
+            flat = str(parameters or "").split(",")
+            distance = dict(zip(flat[::2], flat[1::2])).get("Distance")
+            return (str(name), distance) if distance else None
+        return None
 
     def index_names(self, schema: str, table: str, cursor: Any = None) -> set[str]:
         """The indexes declared on a table, upper-cased.

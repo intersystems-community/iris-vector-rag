@@ -159,3 +159,25 @@ seams: a resolver with declared roles, and a predicate appended to the vector SQ
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | No .DAT fixture (Principle 3)         | The fixtures reproduce two external teams' DDL with a few hundred synthetic rows; building them takes about a second.            | A .DAT would freeze foreign DDL in a binary and need regeneration whenever the S3 harness changes. |
 | `ColumnRole.PARENT` outside precedence | Parent is a declared-only role (Štafeta's `DocRef`, FHIR keys).                                                                   | Adding it to `ROLE_PRECEDENCE` would make every existing canonical table non-canonical. |
+
+## Measured (SC-007)
+
+`scripts/perf/byot_hnsw_probe.py`, 2026-10-24, `iris-vector-rag-iris` (IRIS 2026.1, Apple
+M-series laptop): 5,000 rows, dimension 384, an HNSW index with `Distance='Cosine'`, top 10,
+20 queries through `IRISVectorStore`.
+
+| metric | filter          | median ms | p90 ms | plan uses HNSW |
+| ------ | --------------- | --------: | -----: | -------------- |
+| cosine | none            |       7.5 |    9.4 | yes            |
+| cosine | patient (5 %)   |       1.3 |    1.5 | no             |
+| dot    | none            |       6.9 |    9.6 | no             |
+| dot    | patient (5 %)   |       1.9 |    2.4 | no             |
+
+What this shows:
+
+- **The warning is justified.** A dot-product query never uses a cosine HNSW index (FR-013).
+- **Filtered searches use the filter's index.** With a selective real-column filter, IRIS
+  plans through the patient index (250 rows) instead of HNSW, and that is the fastest shape
+  at this size. HNSW pays off on unfiltered searches over much larger tables; 5,000 rows is
+  too small to show it, since a scan costs about the same.
+- **Pushing `where=` into SQL is what makes the scoped search fast,** not the vector index.
