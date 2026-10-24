@@ -150,3 +150,25 @@ def test_a_malformed_embedder_result_is_an_error_not_a_guess():
     pipeline.embedding_func = lambda texts: [0.1, 0.2]  # flat list: wrong convention
     with pytest.raises(TypeError, match="embedding_func"):
         pipeline._knowledge_base_expansion("q", top_k=1)
+
+
+def test_enhance_retrieval_binds_the_query_vector(monkeypatch):
+    """The chunk search sends the vector as a parameter (TO_VECTOR(?, FLOAT, 4))."""
+    executed = []
+
+    class ParamCursor(RecordingCursor):
+        def execute(self, sql, params=None):
+            executed.append((sql, params))
+
+    class ParamConnection(RecordingConnection):
+        def cursor(self):
+            return ParamCursor(self.sql, self.rows)
+
+    pipeline = make_pipeline(ParamConnection(rows=[("c1", "chunk one", 0.8)]))
+    monkeypatch.setattr(pipeline, "_chunk_shape", lambda conn: legacy_chunk_shape())
+    pipeline._enhance_retrieval("q", [], top_k=3)
+
+    ((sql, params),) = executed
+    assert "TO_VECTOR(?, FLOAT, 4)" in sql
+    assert "'[" not in sql
+    assert len(params) == 1 and params[0].startswith("[0.25")

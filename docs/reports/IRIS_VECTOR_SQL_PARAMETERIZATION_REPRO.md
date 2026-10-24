@@ -1,6 +1,27 @@
 # IRIS Vector SQL Parameterization Repro — Minimal, Fully Reproducible Example
 
-Status: OPEN bug report for InterSystems IRIS SQL cached query compilation with VECTOR operations
+Status: NOT REPRODUCED on 2026.1+ (2026-10-17); originally an OPEN bug report for InterSystems IRIS SQL cached query compilation with VECTOR operations
+
+**Correction, 2026-10-17.** The failure below does not reproduce on IRIS 2026.1 (Build
+234U) or 2026.3 (Build 196) with intersystems-irispython 5.3.1 and 5.4.1. Measured over
+DB-API against FLOAT and DOUBLE columns, each statement run twice so the second run used
+the cached query, rankings checked against ones computed on the client:
+
+- Works: `TO_VECTOR(?, DOUBLE, 384)` and `TO_VECTOR(?, FLOAT, 384)` in `INSERT`, `UPDATE`
+  and `VECTOR_DOT_PRODUCT` / `VECTOR_COSINE`; a bare `?` into a `VECTOR` column; `SELECT
+TOP ?`; literal `TOP 5` with a literal `TO_VECTOR('[..]', DOUBLE, 384)` on repeated
+  runs (the `:%qpar` rewrite did not happen).
+- Fails: `TO_VECTOR(?, ?, ?)` at prepare (SQLCODE -262: the type must be a keyword, not a
+  parameter); the untyped `TO_VECTOR(?)` against a DOUBLE column (SQLCODE -259: it makes
+  a FLOAT vector). Untyped works against FLOAT columns only.
+
+The pattern that works for every element type is `TO_VECTOR(?, <type>, <dim>)` with the
+type written as a keyword and the dimension as a literal; this library now binds the query
+vector that way (`build_bound_vector_dot_sql` in `iris_vector_rag/common/vector_sql_utils.py`). The examples below quote the type (`'FLOAT'`), which is not
+the form measured here. The build and driver this report was written against were not
+recorded. DP-441802 is closed and may be the fix. Evidence:
+`~/ws/irispython-dx/docs/friction/to-vector-parameter-markers.md` and its probe; the same
+results were reproduced on this project's container (2026.1 Build 234U, driver 5.3.1).
 
 Owner: RAG Templates Team
 Related files:
@@ -15,7 +36,7 @@ Related files:
 
 - Ingestion is fixed and compliant (all embeddings stored with 384 dims using vector utilities).
 - Vector search fails when IRIS rewrites SQL literals (TOP N, TO_VECTOR type/dimension) into parameters during cached query compilation, producing invalid SQL.
-- The ONLY reliable pattern we've found is binding a SINGLE vector string parameter (TO_VECTOR(?)) and leaving TOP as a literal in the SQL string. Attempts to include explicit type/dimension ('FLOAT', 384) get auto-parameterized by IRIS internally and fail.
+- (Superseded, see the correction above.) The pattern recorded here was binding a single vector string parameter (`TO_VECTOR(?)`) and leaving TOP as a literal. That holds only for FLOAT columns; for every element type use `TO_VECTOR(?, <type>, <dim>)` with the type as a keyword and the dimension as a literal.
 
 This document provides a minimal, copy-paste reproducible script and expected outputs for Confluence review by InterSystems engineering and product.
 

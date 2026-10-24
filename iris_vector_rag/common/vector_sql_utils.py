@@ -8,7 +8,7 @@ with vector operations.
 
 import logging
 import re
-from typing import Any, List, Tuple, Optional
+from typing import Any, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +208,10 @@ def build_safe_vector_dot_sql(
     vector_data_type: str = "FLOAT",
 ) -> str:
     """
-    Build safe vector search SQL with embedded vector string.
+    Build vector search SQL with the vector written into it as a validated literal.
+
+    Kept for callers outside this package. The library itself binds the vector with
+    `build_bound_vector_dot_sql`; writing it in makes every query a new statement.
     """
     if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$", table):
         raise ValueError(f"Invalid table name: {table}")
@@ -251,9 +254,58 @@ def build_safe_vector_dot_sql(
     return sql
 
 
-def execute_safe_vector_search(cursor, sql: str) -> List[Tuple]:
-    """Execute safe vector search with embedded vector string."""
-    cursor.execute(sql)
+def build_bound_vector_dot_sql(
+    table: str,
+    vector_column: str,
+    vector_dimension: int,
+    id_column: str = "doc_id",
+    extra_columns: Optional[List[str]] = None,
+    top_k: int = 5,
+    additional_where: Optional[str] = None,
+    vector_data_type: str = "FLOAT",
+) -> str:
+    """Vector search SQL that takes the query vector as its one ``?`` parameter.
+
+    ``TO_VECTOR(?, <type>, <dim>)`` with the type and dimension written as literals.
+    Measured on IRIS 2026.1 (Build 234U) and 2026.3 with intersystems-irispython 5.3.1
+    and 5.4.1, for FLOAT and DOUBLE columns, including the cached second run of the
+    statement. The type and dimension cannot be parameters (``TO_VECTOR(?, ?, ?)`` is
+    SQLCODE -262), and the untyped ``TO_VECTOR(?)`` makes a FLOAT vector, which a DOUBLE
+    column refuses (SQLCODE -259). Pass the vector as ``"[x,y,...]"``.
+    ``additional_where`` must not hold ``?`` markers of its own.
+    """
+    if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$", table):
+        raise ValueError(f"Invalid table name: {table}")
+    for col in [vector_column, id_column, *(extra_columns or [])]:
+        if not re.match(r"^[a-zA-Z0-9_]+$", col):
+            raise ValueError(f"Invalid column name: {col}")
+    if not isinstance(top_k, int) or top_k <= 0:
+        raise ValueError(f"Invalid top_k value: {top_k}")
+    if not isinstance(vector_dimension, int) or vector_dimension <= 0:
+        raise ValueError(f"Invalid vector_dimension: {vector_dimension}")
+    if not re.match(r"^[A-Za-z]+$", vector_data_type or ""):
+        raise ValueError(f"Invalid vector element type: {vector_data_type!r}")
+
+    columns = "".join(f", {col}" for col in extra_columns or [])
+    where = f" WHERE {vector_column} IS NOT NULL"
+    if additional_where:
+        where += f" AND ({additional_where})"
+    return (
+        f"SELECT TOP {top_k} {id_column}{columns}, "
+        f"VECTOR_DOT_PRODUCT({vector_column}, "
+        f"TO_VECTOR(?, {vector_data_type.upper()}, {vector_dimension})) AS score"
+        f" FROM {table}{where} ORDER BY score DESC"
+    )
+
+
+def execute_safe_vector_search(
+    cursor, sql: str, params: Optional[List[Any]] = None
+) -> List[Tuple]:
+    """Run a vector search: ``params`` for the bound form, none for the literal form."""
+    if params is None:
+        cursor.execute(sql)
+    else:
+        cursor.execute(sql, params)
     return cursor.fetchall()
 
 

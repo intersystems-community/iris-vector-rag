@@ -11,7 +11,7 @@ This pipeline implements Corrective Retrieval-Augmented Generation:
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, List, Literal, Optional, cast
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, cast
 
 from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
@@ -591,8 +591,14 @@ class CRAGPipeline(RAGPipeline):
         )
 
     @staticmethod
-    def _chunk_search_sql(shape, query_embedding: List[float], top_k: int) -> str:
-        """Ranked chunk search written from the chunk table's own column names."""
+    def _chunk_search_sql(
+        shape, query_embedding: List[float], top_k: int
+    ) -> Tuple[str, List[str]]:
+        """Ranked chunk search written from the chunk table's own column names.
+
+        Returns the SQL and its one parameter, the query vector, which is bound as
+        ``TO_VECTOR(?, <type>, <dim>)`` (works for FLOAT and DOUBLE on IRIS 2026.1+).
+        """
         from ..common.vector_sql_utils import validate_vector_string
         from ..exceptions import DimensionMismatchError
         from ..storage.table_shape import ColumnRole
@@ -613,9 +619,10 @@ class CRAGPipeline(RAGPipeline):
         return (
             f"SELECT TOP {int(top_k)} {identifier.name}, {text.name}, "
             f"VECTOR_COSINE({embedding.name}, "
-            f"TO_VECTOR('{vector_string}', {vector.element_type}, {vector.dimension})) "
+            f"TO_VECTOR(?, {vector.element_type}, {vector.dimension})) "
             f"AS similarity_score FROM {shape.qualified_name} "
-            f"WHERE {embedding.name} IS NOT NULL ORDER BY similarity_score DESC"
+            f"WHERE {embedding.name} IS NOT NULL ORDER BY similarity_score DESC",
+            [vector_string],
         )
 
     def _initial_retrieval(self, query: str, top_k: int) -> List[Document]:
@@ -751,10 +758,10 @@ class CRAGPipeline(RAGPipeline):
 
         try:
             query_embedding = self._embed_query(query)
-            chunk_sql = self._chunk_search_sql(
+            chunk_sql, chunk_params = self._chunk_search_sql(
                 self._chunk_shape(connection), query_embedding, top_k
             )
-            cursor.execute(chunk_sql)
+            cursor.execute(chunk_sql, chunk_params)
             chunk_results = cursor.fetchall()
             logger.debug(
                 f"CRAG _enhance_retrieval() chunk-based query returned {len(chunk_results)} chunks"

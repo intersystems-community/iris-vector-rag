@@ -512,3 +512,29 @@ def test_the_shape_is_resolved_once_per_store(recorded_catalog):
         store.similarity_search_by_embedding(EMBEDDING, 5)
 
     assert store.shapes.reads == 1
+
+
+# --- the query vector is bound, not written into the SQL ---------------------
+
+
+@pytest.mark.parametrize(
+    "shape_name,element_type", [("canonical", "FLOAT"), ("double_vector", "DOUBLE")]
+)
+def test_the_query_vector_is_a_bound_parameter(
+    recorded_catalog, shape_name, element_type
+):
+    """TO_VECTOR(?, <type>, <dim>) binds on IRIS 2026.1 and later for every element
+    type; writing a 384-number literal into the SQL made every query a new statement."""
+    cursor = FakeCursor(
+        ranked_rows=[("doc-1", "the text", 0.9)], metadata_rows=[("doc-1", "{}")]
+    )
+    store = make_store(shape_name, cursor, recorded_catalog)
+    store.similarity_search_by_embedding(EMBEDDING, 5)
+
+    ranked = [
+        (sql, params) for sql, params in cursor.executed if "VECTOR_DOT_PRODUCT" in sql
+    ]
+    ((sql, params),) = ranked
+    assert f"TO_VECTOR(?, {element_type}, {DIM})" in sql
+    assert "[0.1" not in sql
+    assert params == ["[" + ",".join(map(str, EMBEDDING)) + "]"]
