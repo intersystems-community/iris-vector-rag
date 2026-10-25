@@ -2099,8 +2099,13 @@ class SchemaManager:
             return schema, table
         return self.schema_prefix, table_name
 
-    def has_text_index(self, table_name: str = "SourceDocuments") -> bool:
+    def has_text_index(
+        self, table_name: str = "SourceDocuments", index_name: str = TEXT_INDEX_NAME
+    ) -> bool:
         """Whether the table carries the full-text index ``ensure_text_index`` creates.
+
+        ``index_name`` asks about another index instead: an attached table's own
+        (feature 092), which this library reads but never creates.
 
         Raises:
             SchemaIndexError: the catalog could not be read. "Could not tell" is not
@@ -2116,7 +2121,7 @@ class SchemaManager:
                 f"Cannot tell whether {schema}.{table} has its full-text index: {exc}",
                 table=table,
             ) from exc
-        return TEXT_INDEX_NAME.upper() in names
+        return index_name.upper() in names
 
     def _ensure_text_index_once(self, table_name: str) -> None:
         """`ensure_text_index`, skipped once this instance has seen it succeed."""
@@ -2176,7 +2181,12 @@ class SchemaManager:
             logger.info(
                 f"Building text index {TEXT_INDEX_NAME} on {schema}.{table}.{column}"
             )
-            cursor.execute(create_text_index_statement(schema, snapshot.table, column))
+            language = self.config_manager.get("storage:iris:text_language")
+            cursor.execute(
+                create_text_index_statement(
+                    schema, snapshot.table, column, language=language
+                )
+            )
             connection.commit()
             return TEXT_INDEX_NAME
         except Exception as exc:

@@ -311,6 +311,52 @@ class TestBuildBoundVectorDotSQL:
         )
         assert "TO_VECTOR(?, DOUBLE, 384)" in sql
 
+    def test_cosine_ranks_with_vector_cosine(self):
+        # Feature 092: attached tables rank by cosine unless told otherwise.
+        from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
+
+        sql = build_bound_vector_dot_sql(
+            "RAG.SourceDocuments", "embedding", 3, metric="cosine"
+        )
+        assert "VECTOR_COSINE(embedding, TO_VECTOR(?, FLOAT, 3)) AS score" in sql
+        assert "VECTOR_DOT_PRODUCT" not in sql
+
+    def test_an_unknown_metric_is_refused(self):
+        from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
+
+        with pytest.raises(ValueError, match="metric"):
+            build_bound_vector_dot_sql("RAG.Docs", "embedding", 3, metric="l2")
+
+    def test_quoted_names_and_an_identifier_expression(self):
+        from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
+
+        sql = build_bound_vector_dot_sql(
+            "BYOTStf.DocChunk",
+            '"Embedding"',
+            384,
+            id_expression='"DocRef" || \'#\' || "Seq"',
+            extra_columns=['"Text"'],
+            top_k=2,
+            vector_data_type="DOUBLE",
+        )
+        assert sql.startswith(
+            'SELECT TOP 2 "DocRef" || \'#\' || "Seq", "Text", VECTOR_DOT_PRODUCT('
+        )
+        assert 'WHERE "Embedding" IS NOT NULL' in sql
+
+    def test_a_where_may_carry_parameters_that_follow_the_vector(self):
+        from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
+
+        sql = build_bound_vector_dot_sql(
+            "BYOTMed.EvidenceChunk",
+            '"Embedding"',
+            384,
+            additional_where='"PatientId" = ? AND "EmbeddingModel" = ?',
+        )
+        # The vector's marker is in SELECT, so it is the first parameter.
+        assert sql.index("TO_VECTOR(?") < sql.index('"PatientId" = ?')
+        assert sql.count("?") == 3
+
     def test_columns_where_and_top_k_are_as_in_the_literal_form(self):
         from iris_vector_rag.common.vector_sql_utils import build_bound_vector_dot_sql
 

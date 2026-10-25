@@ -7,9 +7,11 @@ iris_vector_graph integration.
 
 import logging
 import time
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from ..core.models import Document
+from ..exceptions import FilterError
+from ..storage.attached import FilterSpec, compile_where, where_kwargs
 from ._hybrid_utils import (
     convert_fusion_results_to_documents,
     convert_rrf_results_to_documents,
@@ -63,6 +65,161 @@ def _ivg_scope(kwargs: Dict[str, Any], *names: str) -> Dict[str, Any]:
     predates the keyword working.
     """
     return {name: kwargs[name] for name in names if kwargs.get(name) is not None}
+
+
+class ScopedRetrievalMixin:
+    """What `HybridGraphRAGPipeline` needs to read documents inside a ``where``.
+
+    Feature 092, FR-021: a leg that reads the document table filters in SQL, and a
+    document a graph leg names is read under the same predicate, so none outside the
+    scope reaches a result. The pipeline supplies the vector store, the embedding
+    manager and the GraphRAG entity helpers these call.
+    """
+
+    __slots__ = ()
+
+    #: A scoped graph leg asks the engine for this many times ``top_k`` hits: the
+    #: engine ranks every entity, `where` removes the ones outside the scope, and the
+    #: leg should still fill the page.
+    SCOPED_OVERFETCH = 4
+
+    def _where_scope(self, where: Optional[Dict[str, Any]]) -> Tuple[str, List[Any]]:
+        """``(predicate, params)`` for ``where`` on the document table (feature 092).
+
+        ``("", [])`` when there is nothing to apply, which leaves every query as it
+        was. A required filter left out, or a key the table cannot filter on, raises:
+        no leg is allowed to drop what it cannot apply (FR-021).
+        """
+        store = self.vector_store
+        if store is None:
+            if where:
+                raise FilterError(
+                    "where cannot be applied: this pipeline has no vector store",
+                    rejected_keys=list(where),
+                )
+            return "", []
+        spec = getattr(store, "filter_spec", None) or FilterSpec()
+        if not where and not spec.required_filters:
+            return "", []
+        return compile_where(where, store.shape(), spec)
+
+    def _content_getter(
+        self, where: Optional[Dict[str, Any]]
+    ) -> Callable[[str], Optional[str]]:
+        """Entity id -> document text, for documents inside ``where`` only."""
+        predicate, params = self._where_scope(where)
+        if not predicate:
+            return self._get_document_content_for_entity
+        return lambda entity_id: self._get_document_content_for_entity(
+            entity_id, predicate, params
+        )
+
+    def _graph_leg(
+        self, leg: str, query_text: str, top_k: int, **kwargs
+    ) -> tuple[List[Document], str]:
+        """One iris_vector_graph leg, its documents read under ``where``.
+
+        The engine names entities, never documents; each one is turned into text by
+        `_get_document_content_for_entity`, which is where the scope applies. When it
+        leaves nothing, or the leg fails, the vector store answers in the same scope.
+        """
+        where = kwargs.get("where")
+        scoped = bool(self._where_scope(where)[0])
+        fetch_k = top_k * self.SCOPED_OVERFETCH if scoped else top_k
+        try:
+            documents, method = getattr(self.retrieval_methods, f"retrieve_via_{leg}")(
+                query_text, fetch_k, self._content_getter(where), **kwargs
+            )
+            if documents:
+                return documents[:top_k], method
+            logger.warning("%s returned 0 results. Falling back to vector search.", leg)
+        except FilterError:
+            raise
+        except Exception as e:
+            logger.error(f"{leg} retrieval failed: {e}")
+            logger.info("Falling back to IRISVectorStore vector search")
+        return self._fallback_to_vector_search(query_text, top_k, where), (
+            "vector_fallback"
+        )
+
+    def _fallback_to_vector_search(
+        self,
+        query_text: str,
+        top_k: int,
+        where: Optional[Dict[str, Any]] = None,
+    ) -> List[Document]:
+        """The vector store's nearest chunks, inside ``where`` when one is given."""
+        if not self.vector_store:
+            return []
+        query_embedding = self.embedding_manager.embed_text(query_text)
+        results = self.vector_store.search_by_vector(
+            query_embedding, top_k=top_k, **where_kwargs(where)
+        )
+        return [r[0] for r in results]
+
+    def _source_doc_ids(self, entity_ids: Set[str]) -> List[str]:
+        """The documents the entities were extracted from, in id order."""
+        schema = self.vector_store.shape().schema
+        ordered = sorted(entity_ids)
+        size = self.NEIGHBORHOOD_CHUNK_SIZE
+        found: Set[str] = set()
+        for offset in range(0, len(ordered), size):
+            chunk = ordered[offset : offset + size]
+            placeholders = ",".join("?" for _ in chunk)
+            for row in self._execute_sql(
+                f"SELECT DISTINCT source_doc_id FROM {schema}.Entities "
+                f"WHERE entity_id IN ({placeholders})",
+                chunk,
+            ):
+                doc_id = row.get("source_doc_id") or row.get("SOURCE_DOC_ID")
+                if doc_id:
+                    found.add(str(doc_id))
+        return sorted(found)
+
+    def _entity_documents(
+        self,
+        entity_ids: Set[str],
+        top_k: int,
+        where: Optional[Dict[str, Any]] = None,
+    ) -> List[Document]:
+        """Documents holding the entities, only those inside ``where``.
+
+        Fetched through the store under the compiled predicate, so a document the
+        scope excludes is never read. Without a scope this is GraphRAG's own join.
+        """
+        predicate, params = self._where_scope(where)
+        if not predicate:
+            return self._get_documents_from_entities(entity_ids, top_k)
+        doc_ids = self._source_doc_ids(entity_ids)
+        size = self.NEIGHBORHOOD_CHUNK_SIZE
+        documents: List[Document] = []
+        for offset in range(0, len(doc_ids), size):
+            documents.extend(
+                self.vector_store.fetch_documents_by_ids(
+                    doc_ids[offset : offset + size], predicate, params
+                )
+            )
+        documents.sort(key=lambda doc: str(doc.id))
+        return [
+            Document(
+                id=doc.id,
+                page_content=doc.page_content,
+                metadata={**doc.metadata, "retrieval_method": "knowledge_graph"},
+            )
+            for doc in documents[:top_k]
+        ]
+
+    def _kg_documents(
+        self, query_text: str, top_k: int, where: Optional[Dict[str, Any]] = None
+    ) -> Tuple[List[Document], str]:
+        """`_retrieve_via_kg`, with the documents read inside ``where``."""
+        if not self._where_scope(where)[0]:
+            return self._retrieve_via_kg(query_text, top_k)
+        seeds = self._find_seed_entities(query_text)
+        if not seeds:
+            return [], "no_matching_entities"
+        entities = self._expand_neighborhood(set(seeds), depth=self.max_depth)
+        return self._entity_documents(entities, top_k, where), "knowledge_graph"
 
 
 class HybridRetrievalMethods:

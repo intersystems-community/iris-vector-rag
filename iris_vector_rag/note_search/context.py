@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
-from .polarity import _sentence_tokens, _triggered
+from .polarity import TERMINATORS, _sentence_tokens, _triggered
 
 PATIENT = "patient"
 OTHER = "other"
@@ -93,13 +93,56 @@ HISTORICAL_BEFORE_TRIGGERS: tuple[tuple[str, ...], ...] = (
 HISTORICAL_AFTER_TRIGGERS: tuple[tuple[str, ...], ...] = (("resolved",),)
 
 
-def _without_family_history_cue(words: list[str]) -> list[str]:
+@dataclass(frozen=True)
+class ContextLexicon:
+    """The words one language uses for who a mention is about, and when it is."""
+
+    family_terms: tuple[tuple[str, ...], ...]
+    family_history_cue: tuple[str, ...]
+    hypothetical: tuple[tuple[str, ...], ...]
+    historical_before: tuple[tuple[str, ...], ...]
+    historical_after: tuple[tuple[str, ...], ...]
+    terminators: frozenset[str]
+
+
+ENGLISH = ContextLexicon(
+    family_terms=FAMILY_TERMS,
+    family_history_cue=FAMILY_HISTORY_CUE,
+    hypothetical=HYPOTHETICAL_TRIGGERS,
+    historical_before=HISTORICAL_BEFORE_TRIGGERS,
+    historical_after=HISTORICAL_AFTER_TRIGGERS,
+    terminators=TERMINATORS,
+)
+
+#: The lexicons shipped, by language code. Another language is a caller's ``lexicon=``.
+CONTEXT_LEXICONS: dict[str, ContextLexicon] = {"en": ENGLISH}
+
+
+def context_lexicon(language: str) -> ContextLexicon:
+    """The shipped lexicon for ``language``.
+
+    Raises:
+        ValueError: none is shipped; there is no fallback to English.
+    """
+    try:
+        return CONTEXT_LEXICONS[language.lower()]
+    except KeyError:
+        raise ValueError(
+            f"no context lexicon for language {language!r}; shipped: "
+            f"{sorted(CONTEXT_LEXICONS)}. Pass lexicon=ContextLexicon(...) to "
+            "supply one."
+        ) from None
+
+
+def _without_family_history_cue(
+    words: list[str], cue: tuple[str, ...] = FAMILY_HISTORY_CUE
+) -> list[str]:
     """``words`` with each family-history cue removed, so its words cannot trigger."""
-    size = len(FAMILY_HISTORY_CUE)
+    size = len(cue)
     kept: list[str] = []
     index = 0
     while index < len(words):
-        if tuple(words[index : index + size]) == FAMILY_HISTORY_CUE:
+        if size and tuple(words[index : index + size]) == cue:
             index += size
             continue
         kept.append(words[index])
@@ -108,7 +151,16 @@ def _without_family_history_cue(words: list[str]) -> list[str]:
 
 
 class ReferenceContextDetector:
-    """Reference experiencer and temporality detector, section 5b of the query contract."""
+    """Reference experiencer and temporality detector, section 5b of the query contract.
+
+    ``language`` picks a shipped lexicon (``CONTEXT_LEXICONS``); ``lexicon`` supplies one
+    and wins over ``language``.
+    """
+
+    def __init__(
+        self, language: str = "en", lexicon: ContextLexicon | None = None
+    ) -> None:
+        self.lexicon = lexicon or context_lexicon(language)
 
     def __call__(self, text: str, span: tuple[int, int]) -> Context:
         """Return the experiencer and temporality of the mention at span within text."""
@@ -119,16 +171,18 @@ class ReferenceContextDetector:
         pre = [token.text for token in tokens if token.end <= start]
         post = [token.text for token in tokens if token.start >= end]
 
-        if _triggered(pre, FAMILY_TERMS, True):
+        lex = self.lexicon
+        stops = lex.terminators
+        if _triggered(pre, lex.family_terms, True, stops):
             experiencer = OTHER
         else:
             experiencer = PATIENT
 
-        pre_for_time = _without_family_history_cue(pre)
-        if _triggered(pre_for_time, HYPOTHETICAL_TRIGGERS, True):
+        pre_for_time = _without_family_history_cue(pre, lex.family_history_cue)
+        if _triggered(pre_for_time, lex.hypothetical, True, stops):
             temporality = HYPOTHETICAL
-        elif _triggered(pre_for_time, HISTORICAL_BEFORE_TRIGGERS, True) or _triggered(
-            post, HISTORICAL_AFTER_TRIGGERS, False
+        elif _triggered(pre_for_time, lex.historical_before, True, stops) or _triggered(
+            post, lex.historical_after, False, stops
         ):
             temporality = HISTORICAL
         else:

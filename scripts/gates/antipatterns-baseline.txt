@@ -19,8 +19,8 @@ hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:31
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:57
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:75
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/ingest.py:188
-hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:117
-hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:142
+hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:148
+hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:154
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py:70
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:63
 hardcoded-vector-type	iris_vector_rag/pipelines/colbert_iris/schema.py:71
@@ -36,7 +36,7 @@ inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:51
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:68
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:9
 inline-standard-ddl	iris_vector_rag/common/llm_cache_iris.py:143
-inline-standard-ddl	iris_vector_rag/storage/table_shape.py:600
+inline-standard-ddl	iris_vector_rag/storage/table_shape.py:715
 swallowed-error	iris_vector_rag/common/batch_utils.py::extract_batch_with_retry#1
 swallowed-error	iris_vector_rag/common/connection_manager.py::LegacyConnectionManager.cursor#1
 swallowed-error	iris_vector_rag/common/iris_connection.py::_get_iris_dbapi_module#1
@@ -159,11 +159,8 @@ swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipe
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._initialize_graph_core#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._intelligent_hybrid_search#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._intelligent_hybrid_search#2
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._retrieve_via_enhanced_text#1
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._retrieve_via_hnsw_vector#1
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._retrieve_via_hybrid_fusion#1
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._retrieve_via_rrf#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline.attach_existing_corpus#1
+swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::ScopedRetrievalMixin._graph_leg#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline.query#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::HybridRetrievalMethods.benchmark_search_methods#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::HybridRetrievalMethods.check_hnsw_optimization#1

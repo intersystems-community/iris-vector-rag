@@ -30,6 +30,9 @@ class QueryOptions:
     low_level_keywords: Optional[List[str]] = None
     section: Optional[str] = None  # label of the sections a phrase search is limited to
     polarity: Optional[str] = None  # affirmed | negated | unknown, for concept search
+    # Filters on real columns of an attached table (feature 092): {col: value},
+    # {col: (op, value)} or {col: [values]}; vector, text, hybrid and rrf only.
+    where: Optional[Dict[str, Any]] = None
 
 
 def normalize_query_params(
@@ -49,6 +52,7 @@ def normalize_query_params(
     low_level_keywords: Optional[List[str]] = None,
     section: Optional[str] = None,
     polarity: Optional[str] = None,
+    where: Optional[Dict[str, Any]] = None,
     **_extra: Any,
 ) -> QueryOptions:
     """Resolve aliases, validate, and return a QueryOptions.
@@ -110,4 +114,5 @@ def normalize_query_params(
         low_level_keywords=low_level_keywords,
         section=section,
         polarity=polarity,
+        where=where,
     )

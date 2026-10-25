@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from iris_vector_rag.common.db_vector_utils import insert_vector, normalize_vector
 
@@ -18,14 +18,17 @@ from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..core.vector_store import VectorStore
 from ..exceptions import (
+    AttachedTableReadOnly,
     DimensionMismatchError,
     EmbeddingError,
+    RequiredFilterMissing,
     TextIndexMissingError,
     VectorStoreCLOBError,
     VectorStoreConfigurationError,
     VectorStoreConnectionError,
     VectorStoreDataError,
 )
+from .attached import compile_where, where_kwargs
 from .catalog import IRISCatalogReader
 from .clob_handler import ensure_string_content
 from .shape_resolver import TableShapeResolver
@@ -44,9 +47,38 @@ from .text_search import (
     rank_procedure,
     search_terms,
     section_filter_predicate,
+    text_language,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _choice(value, key: str, allowed, default: str) -> str:
+    """A setting from ``allowed``, lower-cased, or ``default`` when unset."""
+    chosen = str(value).strip().lower() if value not in (None, "") else default
+    if chosen not in allowed:
+        raise ValueError(
+            f"storage:iris:{key} must be one of {', '.join(allowed)}, got {value!r}"
+        )
+    return chosen
+
+
+#: An HNSW index's Distance (lower-cased) -> the metric that can use it.
+_HNSW_DISTANCES = {"cosine": "cosine", "dotproduct": "dot"}
+
+#: Optional roles an attached table may surface in Document.metadata, by key.
+_METADATA_ROLES = (("title", ColumnRole.TITLE), ("parent_id", ColumnRole.PARENT))
+
+
+def _resolve(resolver, schema: str, table: str, declared) -> TableShape:
+    """Resolve, passing a declaration only when there is one.
+
+    A resolver written before feature 092 (a test double, a caller's own) takes
+    ``(schema, table)``; it keeps working for every table that declares nothing.
+    """
+    if declared:
+        return resolver.resolve(schema, table, declared=declared)
+    return resolver.resolve(schema, table)
 
 
 class IRISVectorStore(VectorStore):
@@ -97,6 +129,8 @@ class IRISVectorStore(VectorStore):
         # Tables already warned about dropping metadata, by qualified name. One line
         # per table is a warning; one line per document is a scrollback (FR-016).
         self._metadata_drop_warned: set = set()
+        # Tables whose HNSW index was compared with the metric, by qualified name.
+        self._hnsw_checked: set = set()
         self.config_manager = config_manager
         if self.config_manager is None:
             # Create a default config manager for testing
@@ -107,7 +141,37 @@ class IRISVectorStore(VectorStore):
 
         # Get storage configuration
         self.storage_config = self.config_manager.get("storage:iris", {})
-        self.table_name = self.storage_config.get("table_name", "RAG.SourceDocuments")
+        self.table_name = kwargs.get("table_name") or self.storage_config.get(
+            "table_name", "RAG.SourceDocuments"
+        )
+
+        # Feature 092: a table someone else owns, read through declared columns.
+        # Constructor arguments override the `storage:iris:` keys of the same name.
+        from .attached import ColumnMapping, FilterSpec
+
+        self.column_mapping = ColumnMapping.from_settings(self.storage_config, kwargs)
+        self.filter_spec = FilterSpec.from_settings(self.storage_config, kwargs)
+        self.metric = _choice(
+            kwargs.get("metric") or self.storage_config.get("metric"),
+            "metric",
+            ("cosine", "dot"),
+            # Attached tables rank by cosine, the industry default; the library's own
+            # tables keep dot product, so nothing changes for them.
+            default="cosine" if self.column_mapping.attached else "dot",
+        )
+        self.text_index_name = kwargs.get("text_index") or self.storage_config.get(
+            "text_index"
+        )
+        self.text_terms = _choice(
+            kwargs.get("text_terms") or self.storage_config.get("text_terms"),
+            "text_terms",
+            ("words", "prefix"),
+            default="words",
+        )
+        self._text_language = kwargs.get("text_language")
+        #: The caller's embedder for query text (str -> vector), or None for the
+        #: configured provider. It must produce vectors of the column's width.
+        self.embedder = kwargs.get("embedder")
 
         # Get chunking configuration
         self.chunking_config = self.config_manager.get("storage:chunking", {})
@@ -210,6 +274,17 @@ class IRISVectorStore(VectorStore):
             return schema, table
         return getattr(self.schema_manager, "schema_prefix", "RAG") or "RAG", name
 
+    @property
+    def text_language(self) -> str:
+        """The language of text queries and polarity: ``storage:iris:text_language``.
+
+        Read on each use, so a test or caller that changes ``storage_config`` is heard.
+        It must match the language the table's text index was built in.
+        """
+        return text_language(
+            self._text_language or self.storage_config.get("text_language")
+        )
+
     def _shape_resolver(self) -> TableShapeResolver:
         if self.shapes is None:
             self.shapes = TableShapeResolver(IRISCatalogReader(self._get_connection()))
@@ -228,17 +303,19 @@ class IRISVectorStore(VectorStore):
         """
         schema, table = self._schema_and_table()
         resolver = self._shape_resolver()
+        declared = self.column_mapping.declared
         try:
-            return resolver.resolve(schema, table)
+            return _resolve(resolver, schema, table, declared)
         except TableNotFound:
-            if cursor is None:
+            if cursor is None or declared:
+                # An attached table is never created on the owner's behalf.
                 raise
         # `_ensure_table_exists` invalidates what it changed, so the resolve below
         # reads the table it just created. If creation failed this raises
         # TableNotFound naming the table, which is the error the caller needs; the
         # old code let the next statement fail instead.
         self._ensure_table_exists(cursor)
-        return resolver.resolve(schema, table)
+        return _resolve(resolver, schema, table, declared)
 
     def refresh_shape(self, table: Optional[str] = None) -> TableShape:
         """Read a table's shape again, for a table changed outside this library.
@@ -250,7 +327,9 @@ class IRISVectorStore(VectorStore):
         schema, name = self._schema_and_table(table)
         resolver = self._shape_resolver()
         resolver.invalidate(schema, name)
-        return resolver.resolve(schema, name)
+        own_table = table is None or name.lower() == self._schema_and_table()[1].lower()
+        declared = self.column_mapping.declared if own_table else None
+        return _resolve(resolver, schema, name, declared)
 
     def _get_vector_data_type(self) -> str:
         """The embedding column's element type, e.g. 'FLOAT' or 'DOUBLE'.
@@ -386,6 +465,9 @@ class IRISVectorStore(VectorStore):
         Raises:
             VectorStoreConnectionError: If EMBEDDING support not enabled or query fails
         """
+        # Feature 092: this search takes no `where`, so a table that requires
+        # filters cannot be searched through it.
+        self._check_where(None)
         if not self.use_iris_embedding:
             raise VectorStoreConnectionError(
                 "IRIS EMBEDDING support not enabled. Initialize with embedding_config parameter."
@@ -747,6 +829,7 @@ class IRISVectorStore(VectorStore):
         Returns:
             List of document IDs that were stored
         """
+        self._guard_writable()
         if not documents:
             return []
 
@@ -926,6 +1009,7 @@ class IRISVectorStore(VectorStore):
         vector,
     ) -> None:
         """UPDATE an existing row, its vector included. The width is already checked."""
+        self._guard_writable()
         processed = normalize_vector(embedding, vector.dimension)
         assignments = [f"{column} = ?" for column in values]
         assignments.append(
@@ -960,6 +1044,7 @@ class IRISVectorStore(VectorStore):
             VectorStoreDataError: If document data is malformed
             VectorStoreConnectionError: If there are connection issues
         """
+        self._guard_writable()
         if not documents:
             return []
 
@@ -1023,6 +1108,7 @@ class IRISVectorStore(VectorStore):
         Returns:
             True if any documents were deleted, False otherwise
         """
+        self._guard_writable()
         if not ids:
             return True
 
@@ -1135,6 +1221,7 @@ class IRISVectorStore(VectorStore):
         query_embedding: List[float],
         top_k: int,
         filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Perform similarity search using a query embedding.
@@ -1143,9 +1230,15 @@ class IRISVectorStore(VectorStore):
             query_embedding: The query vector for similarity search
             top_k: Maximum number of results to return
             filter: Optional metadata filters to apply
+            where: Optional filters on real columns (feature 092): ``{col: value}``,
+                ``{col: (op, value)}`` or ``{col: [values]}``, on ``filter_columns``
 
         Returns:
             List of tuples containing (Document, similarity_score)
+
+        Raises:
+            RequiredFilterMissing: a ``required_filters`` column is not in ``where``.
+            FilterError: ``where`` cannot be applied as written.
         """
         # Validate filter if provided
         if filter:
@@ -1156,6 +1249,8 @@ class IRISVectorStore(VectorStore):
         # vector search says so instead of failing inside a SQL error several
         # layers away, and so these errors are not caught by the handler below.
         shape = self.shape()
+        where_sql, where_params = compile_where(where, shape, self.filter_spec)
+        self._warn_on_index_mismatch(shape)
         vector = shape.vector_spec()
         identifier = shape.column_for(ColumnRole.IDENTIFIER)
         text = shape.column_for(ColumnRole.TEXT)
@@ -1201,11 +1296,16 @@ class IRISVectorStore(VectorStore):
                 additional_where = self._metadata_filter_predicate(
                     filter, self._metadata_filter_column_expr(metadata_column)
                 )
+            # The real-column predicate goes first: it never starts with "(", so the
+            # builder's own parenthesis is never doubled.
+            additional_where = (
+                " AND ".join(p for p in (where_sql, additional_where) if p) or None
+            )
 
             logger.debug(f"Query embedding dimensions: {len(query_embedding)}")
             logger.debug(f"Top-K parameter: {top_k}")
 
-            embedding_column = shape.column_for(ColumnRole.EMBEDDING).name
+            embedding_column = shape.sql_name(ColumnRole.EMBEDDING)
 
             # The filter is applied in SQL; the page is top_k. The exact-match
             # check below is only a backstop for LIKE approximations and widens
@@ -1220,9 +1320,11 @@ class IRISVectorStore(VectorStore):
             # The older spelling of the text column is selected alongside the
             # canonical one on a mixed table, so a row written before 0.15 can be
             # presented from whichever column actually holds its text (FR-004).
-            text_columns = [text.name]
-            if legacy_text is not None:
+            text_columns = [shape.sql_name(ColumnRole.TEXT)]
+            if legacy_text is not None and not shape.attached:
                 text_columns.append(legacy_text.name)
+            # An attached table's title and parent ride along, for Document.metadata.
+            extras = self._metadata_extras(shape)
 
             def _build_sql(page_size: int) -> str:
                 return build_bound_vector_dot_sql(
@@ -1230,17 +1332,21 @@ class IRISVectorStore(VectorStore):
                     vector_column=embedding_column,
                     vector_dimension=vector.dimension,
                     id_column=identifier.name,
-                    extra_columns=text_columns,
+                    extra_columns=text_columns + [sql for _, sql in extras],
                     top_k=page_size,
                     additional_where=additional_where,
                     vector_data_type=vector.element_type,
+                    metric=self.metric,
+                    id_expression=shape.identifier_sql if shape.attached else None,
                 )
 
             def _fetch_page(page_size: int):
                 """Run the ranked query for one page and load its metadata."""
                 sql = _build_sql(page_size)
                 logger.debug(f"SQL query executed: {sql}")
-                page_rows = execute_safe_vector_search(cursor, sql, [embedding_str])
+                page_rows = execute_safe_vector_search(
+                    cursor, sql, [embedding_str, *where_params]
+                )
 
                 page_metadata = {}
                 if page_rows and metadata_column is not None:
@@ -1248,12 +1354,15 @@ class IRISVectorStore(VectorStore):
                     try:
                         doc_ids = [row[0] for row in page_rows]
                         placeholders = ",".join(["?" for _ in doc_ids])
+                        id_sql = shape.identifier_sql
                         metadata_sql = (
-                            f"SELECT {identifier.name}, {metadata_column.name} "
+                            f"SELECT {id_sql}, {shape.sql_name(ColumnRole.METADATA)} "
                             f"FROM {self.table_name} "
-                            f"WHERE {identifier.name} IN ({placeholders})"
+                            f"WHERE {id_sql} IN ({placeholders})"
                         )
-                        cursor.execute(metadata_sql, doc_ids)
+                        if where_sql:
+                            metadata_sql += f" AND {where_sql}"
+                        cursor.execute(metadata_sql, [*doc_ids, *where_params])
                         for doc_id, metadata_json in cursor.fetchall():
                             if isinstance(metadata_json, dict):
                                 page_metadata[doc_id] = metadata_json
@@ -1317,8 +1426,10 @@ class IRISVectorStore(VectorStore):
                 # One presented form regardless of which column holds the text:
                 # the canonical column when it is populated, the older spelling
                 # otherwise (FR-004). Column order follows `text_columns`.
+                text_end = 1 + len(text_columns)
                 content = next(
-                    (value for value in row[1:-1] if value not in (None, "")), ""
+                    (value for value in row[1:text_end] if value not in (None, "")),
+                    "",
                 )
 
                 # Get metadata from the map
@@ -1332,6 +1443,9 @@ class IRISVectorStore(VectorStore):
                 }
 
                 document = self._ensure_string_content(document_data)
+                for (key, _), value in zip(extras, row[text_end:-1]):
+                    if value is not None:
+                        document.metadata[key] = value
                 # Handle similarity_score that might be a list or single value
                 if isinstance(similarity_score, (list, tuple)):
                     # If it's a list/tuple, take the first element
@@ -1379,55 +1493,118 @@ class IRISVectorStore(VectorStore):
         finally:
             cursor.close()
 
+    def _metadata_extras(self, shape: TableShape) -> List[Tuple[str, str]]:
+        """(metadata key, SQL column) for an attached table's title and parent.
+
+        Empty for the library's own tables, so their statements are unchanged.
+        """
+        if not shape.attached:
+            return []
+        return [
+            (key, shape.sql_name(role))
+            for key, role in _METADATA_ROLES
+            if shape.has(role)
+        ]
+
+    def _warn_on_index_mismatch(self, shape: TableShape) -> None:
+        """Warn once per table when its HNSW index was built for another measure.
+
+        IRIS uses an HNSW index only for the query function its ``Distance`` names,
+        so a mismatch means every search scans the table (FR-013).
+        """
+        if shape.qualified_name in self._hnsw_checked or not shape.has(
+            ColumnRole.EMBEDDING
+        ):
+            return
+        self._hnsw_checked.add(shape.qualified_name)
+        resolver = self._shape_resolver()
+        ask = getattr(resolver, "hnsw_index", None)
+        found = (
+            ask(shape.class_name, shape.column_for(ColumnRole.EMBEDDING).name)
+            if ask
+            else None
+        )
+        if not found:
+            return
+        index, distance = found
+        if _HNSW_DISTANCES.get(distance.lower()) != self.metric:
+            logger.warning(
+                f"HNSW index {index} on {shape.qualified_name} was built with "
+                f"Distance='{distance}' but this store ranks by metric={self.metric!r}, "
+                "so IRIS will not use the index and every search scans the table. "
+                f"Set metric to match the index, or rebuild it."
+            )
+
+    def _guard_writable(self) -> None:
+        """Refuse to write a table the library reads through declared columns (092)."""
+        if self.column_mapping.attached:
+            raise AttachedTableReadOnly(
+                f"{self.table_name} is an attached table: the library reads it through "
+                "declared columns and never writes, alters or deletes from it. Write "
+                "through the code that owns the table.",
+                table=self.table_name,
+            )
+
     def _read_columns(self) -> List[str]:
         """The columns a plain read selects, in order.
 
         Identifier, then the text column and the older spelling of it where the
-        table carries both, then metadata where the table has it.
+        table carries both, then metadata where the table has it, then an attached
+        table's title and parent.
         """
         shape = self.shape()
-        columns = [
-            shape.column_for(ColumnRole.IDENTIFIER).name,
-            shape.column_for(ColumnRole.TEXT).name,
-        ]
+        columns = [shape.identifier_sql, shape.sql_name(ColumnRole.TEXT)]
         legacy_text = shape.legacy_column_for(ColumnRole.TEXT)
-        if legacy_text is not None:
+        if legacy_text is not None and not shape.attached:
             columns.append(legacy_text.name)
-        metadata = shape.optional_column_for(ColumnRole.METADATA)
-        if metadata is not None:
-            columns.append(metadata.name)
+        if shape.has(ColumnRole.METADATA):
+            columns.append(shape.sql_name(ColumnRole.METADATA))
+        columns.extend(sql for _, sql in self._metadata_extras(shape))
         return columns
 
     def _documents_from_rows(self, rows, columns: List[str]) -> List[Document]:
         """Rows selected through `_read_columns`, presented as documents."""
-        metadata = self.shape().optional_column_for(ColumnRole.METADATA)
-        metadata_index = columns.index(metadata.name) if metadata is not None else None
-        text_end = len(columns) if metadata_index is None else metadata_index
+        shape = self.shape()
+        extras = self._metadata_extras(shape)
+        data_end = len(columns) - len(extras)
+        metadata_index = data_end - 1 if shape.has(ColumnRole.METADATA) else None
+        text_end = data_end if metadata_index is None else metadata_index
 
         documents = []
         for row in rows:
             text = next(
                 (value for value in row[1:text_end] if value not in (None, "")), ""
             )
-            documents.append(
-                self._ensure_string_content(
-                    {
-                        "doc_id": row[0],
-                        "text_content": text,
-                        "metadata": (
-                            None if metadata_index is None else row[metadata_index]
-                        ),
-                    }
-                )
+            document = self._ensure_string_content(
+                {
+                    "doc_id": row[0],
+                    "text_content": text,
+                    "metadata": (
+                        None if metadata_index is None else row[metadata_index]
+                    ),
+                }
             )
+            for (key, _), value in zip(extras, row[data_end:]):
+                if value is not None:
+                    document.metadata[key] = value
+            documents.append(document)
         return documents
 
-    def fetch_documents_by_ids(self, ids: List[str]) -> List[Document]:
+    def fetch_documents_by_ids(
+        self,
+        ids: List[str],
+        where_sql: str = "",
+        where_params: Sequence[Any] = (),
+    ) -> List[Document]:
         """
         Fetch documents by their IDs.
 
         Args:
             ids: List of document IDs to fetch
+            where_sql: A predicate from `compile_where`, ANDed with the id list, so a
+                search hydrates its hits under the scope it ranked them in: an id
+                need only be unique within the required filters (feature 092).
+            where_params: That predicate's parameters.
 
         Returns:
             List of Document objects with guaranteed string content
@@ -1448,7 +1625,9 @@ class IRISVectorStore(VectorStore):
                 f"SELECT {', '.join(columns)} FROM {self.table_name} "
                 f"WHERE {columns[0]} IN ({placeholders})"
             )
-            cursor.execute(select_sql, ids)
+            if where_sql:
+                select_sql += f" AND {where_sql}"
+            cursor.execute(select_sql, [*ids, *where_params])
             documents = self._documents_from_rows(cursor.fetchall(), columns)
             logger.debug(f"Fetched {len(documents)} documents by IDs")
             return documents
@@ -1518,6 +1697,7 @@ class IRISVectorStore(VectorStore):
 
         Warning: This operation is irreversible.
         """
+        self._guard_writable()
         connection = self._get_connection()
         cursor = connection.cursor()
 
@@ -1557,19 +1737,16 @@ class IRISVectorStore(VectorStore):
             )
 
             # Get embedding function for text query
+            where = kwargs.get("where")
+            self._check_where(where)
             embedding_func = kwargs.get("embedding_func")
             if not embedding_func:
-                from ..embeddings.manager import EmbeddingManager
-
-                embedding_manager = EmbeddingManager(self.config_manager)
-                query_embedding = embedding_manager.embed_text(query)
+                query_embedding = self._embed_query(query)
             else:
                 query_embedding = embedding_func.embed_query(query)
 
             # Call our implementation and add scores to document metadata
-            results = self.similarity_search_by_embedding(
-                query_embedding, k, filter_param
-            )
+            results = self._by_embedding(query_embedding, k, filter_param, where)
             # Add score to each document's metadata for MCP/API compatibility
             documents_with_scores = []
             for doc, score in results:
@@ -1591,12 +1768,16 @@ class IRISVectorStore(VectorStore):
             top_k = args[1] if len(args) > 1 else kwargs.get("top_k", 5)
             filter_param = args[2] if len(args) > 2 else kwargs.get("filter")
 
-            return self.similarity_search_by_embedding(
-                query_embedding, top_k, filter_param
+            return self._by_embedding(
+                query_embedding, top_k, filter_param, kwargs.get("where")
             )
 
     def similarity_search_with_score(
-        self, query: str, k: int = 4, filter: Optional[Dict[str, Any]] = None
+        self,
+        query: str,
+        k: int = 4,
+        filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Perform similarity search and return results with scores.
@@ -1609,28 +1790,27 @@ class IRISVectorStore(VectorStore):
         Returns:
             List of tuples containing (Document, similarity_score)
         """
-        # Get embedding function for text query
-        from ..embeddings.manager import EmbeddingManager
-
-        embedding_manager = EmbeddingManager(self.config_manager)
-        query_embedding = embedding_manager.embed_text(query)
+        self._check_where(where)
+        query_embedding = self._embed_query(query)
 
         # Call similarity_search_by_embedding which already returns (doc, score) tuples
-        return self.similarity_search_by_embedding(query_embedding, k, filter)
+        return self._by_embedding(query_embedding, k, filter, where)
 
     def search_by_text(
         self,
         query: str,
         top_k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         """Return List[Document] for a text query (FR-014).
 
         Embeds ``query`` and delegates to similarity_search_by_embedding.
         Always returns plain Documents — scores are available via search_by_vector.
         """
+        self._check_where(where)
         embedding = self._embed_query(query)
-        results = self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+        results = self._by_embedding(embedding, top_k, metadata_filter, where)
         return [doc for doc, _ in results]
 
     def search_by_text_with_score(
@@ -1638,25 +1818,58 @@ class IRISVectorStore(VectorStore):
         query: str,
         top_k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """Return (Document, similarity score) pairs for a text query, best first.
 
         The scored sibling of `search_by_text`, which stays score-free (FR-014).
         """
+        self._check_where(where)
         embedding = self._embed_query(query)
-        return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+        return self._by_embedding(embedding, top_k, metadata_filter, where)
 
-    def _require_text_index(self, shape: TableShape) -> None:
-        """Raise `TextIndexMissingError` when the table has no full-text index."""
-        if not self.schema_manager.has_text_index(shape.qualified_name):
+    def _text_index(self, shape: TableShape) -> Optional[str]:
+        """The iFind index the text leg reads: the configured one, else the library's.
+
+        An attached table has no default: the library never builds one there, so
+        only an index the owner named can be read.
+        """
+        if self.text_index_name:
+            return self.text_index_name
+        return None if shape.attached else TEXT_INDEX_NAME
+
+    def _require_text_index(self, shape: TableShape) -> str:
+        """The text index name; `TextIndexMissingError` when the table has none."""
+        index = self._text_index(shape)
+        if index is None:
             raise TextIndexMissingError(
-                f"{shape.qualified_name} has no full-text index {TEXT_INDEX_NAME}, so "
-                f"text, phrase, hybrid and rrf retrieval cannot search it. Create it "
-                f"once with SchemaManager(...).ensure_text_index({shape.table!r}); it "
-                f"is built over the rows already in the table.",
+                f"{shape.qualified_name} is an attached table with no text index named, "
+                "so text, hybrid and rrf retrieval cannot search it. Set text_index to "
+                "the name of its iFind index; the library does not create one on a "
+                "table it does not own.",
                 table=shape.qualified_name,
-                index=TEXT_INDEX_NAME,
             )
+        if index == TEXT_INDEX_NAME:
+            present = self.schema_manager.has_text_index(shape.qualified_name)
+        else:
+            present = self.schema_manager.has_text_index(
+                shape.qualified_name, index_name=index
+            )
+        if not present:
+            if shape.attached:
+                fix = "Check text_index: the library will not create an index here."
+            else:
+                fix = (
+                    f"Create it once with SchemaManager(...).ensure_text_index("
+                    f"{shape.table!r}); it is built over the rows already in the table."
+                )
+            raise TextIndexMissingError(
+                f"{shape.qualified_name} has no full-text index {index}, so text, "
+                f"phrase, hybrid and rrf retrieval cannot search it. {fix}",
+                table=shape.qualified_name,
+                index=index,
+            )
+        return index
 
     def _ranked_text_rows(
         self,
@@ -1664,20 +1877,25 @@ class IRISVectorStore(VectorStore):
         search_string: str,
         page: int,
         extra_where: Optional[str],
+        index: str = TEXT_INDEX_NAME,
+        where_params: Sequence[Any] = (),
     ) -> List[tuple]:
         """``(id, rank)`` for the best ``page`` rows matching ``search_string``."""
         sql = build_text_search_sql(
             table=self.table_name,
             id_column=shape.column_for(ColumnRole.IDENTIFIER).name,
-            index_name=TEXT_INDEX_NAME,
-            rank_proc=rank_procedure(shape.schema, shape.class_name),
+            index_name=index,
+            rank_proc=rank_procedure(shape.schema, shape.class_name, index),
             top_k=page,
             extra_where=extra_where,
+            id_expression=shape.identifier_sql if shape.attached else None,
         )
         connection = self._get_connection()
         cursor = connection.cursor()
         try:
-            cursor.execute(sql, [search_string, search_string, search_string])
+            cursor.execute(
+                sql, [search_string, search_string, *where_params, search_string]
+            )
             return [(str(row[0]), float(row[1])) for row in cursor.fetchall()]
         except Exception as exc:
             raise VectorStoreConnectionError(
@@ -1691,6 +1909,7 @@ class IRISVectorStore(VectorStore):
         query: str,
         top_k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         """Full-text search over the document table, best match first.
 
@@ -1724,9 +1943,10 @@ class IRISVectorStore(VectorStore):
                 shape.table,
             )
 
-        self._require_text_index(shape)
+        where_sql, where_params = compile_where(where, shape, self.filter_spec)
+        index = self._require_text_index(shape)
 
-        terms = search_terms(query)
+        terms = search_terms(query, language=self.text_language, terms=self.text_terms)
         if not terms:
             return []
 
@@ -1735,12 +1955,19 @@ class IRISVectorStore(VectorStore):
             extra_where = self._metadata_filter_predicate(
                 metadata_filter, self._metadata_filter_column_expr(metadata_column)
             )
+        # The real-column predicate first: it never starts with "(" (see R2).
+        extra_where = " AND ".join(p for p in (where_sql, extra_where) if p) or None
         page = top_k
         for _ in range(2):
-            rows = self._ranked_text_rows(shape, terms, page, extra_where)
+            rows = self._ranked_text_rows(
+                shape, terms, page, extra_where, index, where_params
+            )
 
             by_id = {
-                str(d.id): d for d in self.fetch_documents_by_ids([r[0] for r in rows])
+                str(d.id): d
+                for d in self.fetch_documents_by_ids(
+                    [r[0] for r in rows], where_sql, where_params
+                )
             }
             hits = []
             for doc_id, score in rows:
@@ -1790,6 +2017,14 @@ class IRISVectorStore(VectorStore):
             ValueError: the phrase has no letter or digit.
             TextIndexMissingError: the table has no full-text index.
         """
+        required = self.filter_spec.required_filters
+        if required:
+            raise RequiredFilterMissing(
+                f"{self.table_name} requires a filter on {', '.join(required)}, and "
+                "phrase search takes no where=, so it would read every row. Use "
+                "retrieval 'text', 'hybrid' or 'rrf' with where=.",
+                rejected_keys=list(required),
+            )
         from iris_vector_rag.note_search.phrase import (
             find_mentions,
             phrase_search_string,
@@ -1802,7 +2037,7 @@ class IRISVectorStore(VectorStore):
         from iris_vector_rag.note_search.store import SECTION_COLUMN
 
         search_string = phrase_search_string(phrase)  # raises ValueError first
-        detector = detector or ReferenceNegExDetector()
+        detector = detector or ReferenceNegExDetector(language=self.text_language)
 
         shape = self.shape()
         shape.column_for(ColumnRole.TEXT)
@@ -1903,15 +2138,34 @@ class IRISVectorStore(VectorStore):
         embedding: List[float],
         top_k: int = 5,
         metadata_filter: Optional[Dict[str, Any]] = None,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """Return List[Tuple[Document, float]] for a pre-computed embedding (FR-014).
 
         Always returns (Document, score) tuples — use search_by_text for plain docs.
         """
-        return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+        return self._by_embedding(embedding, top_k, metadata_filter, where)
+
+    def _check_where(self, where: Optional[Dict[str, Any]]) -> None:
+        """Validate ``where`` (required filters first) before anything is embedded.
+
+        A store with no required filters and no ``where`` checks nothing, so the
+        search path is the one it was before feature 092.
+        """
+        spec = getattr(self, "filter_spec", None)
+        if where or (spec is not None and spec.required_filters):
+            compile_where(where, self.shape(), spec)
+
+    def _by_embedding(self, embedding, top_k, metadata_filter, where):
+        """`similarity_search_by_embedding`, with ``where`` passed as `where_kwargs`."""
+        return self.similarity_search_by_embedding(
+            embedding, top_k, metadata_filter, **where_kwargs(where)
+        )
 
     def _embed_query(self, query: str) -> List[float]:
-        """Embed a text query using the configured EmbeddingManager."""
+        """Embed a text query: the caller's embedder, else the configured provider."""
+        if self.embedder is not None:
+            return list(self.embedder(query))
         from ..embeddings.manager import EmbeddingManager
 
         embedding_manager = EmbeddingManager(self.config_manager)

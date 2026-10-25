@@ -412,6 +412,30 @@ class DimensionMismatchError(VectorStoreDataError, ValueError):
         self.expected = expected
 
 
+class FilterError(VectorStoreConfigurationError):
+    """A real-column filter (``where=``) that cannot be applied as written (feature 092).
+
+    Raised before any SQL runs: a key outside ``filter_columns``, an unknown operator,
+    an empty list, a value of an unsupported type, or a filter column the table lacks.
+    """
+
+
+class RequiredFilterMissing(FilterError):
+    """A search left out a filter its table declares as required (feature 092).
+
+    A search without it would read every patient (or tenant) instead of one, so the
+    absence is an error, never a wider search.
+    """
+
+
+class AttachedTableReadOnly(VectorStoreDataError):
+    """A write was asked of a table the library reads through declared columns.
+
+    An attached table (feature 092) belongs to its owner: the library never creates,
+    alters, indexes or writes it. Write through the owner's own code.
+    """
+
+
 class DestructiveMigrationError(VectorStoreError):
     """`SchemaManager.migrate_table` would drop a table that holds rows.
 

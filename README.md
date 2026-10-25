@@ -34,6 +34,11 @@ print(result['answer'])
 "
 ```
 
+### Already have a table?
+
+Search your own IRIS table, with your column names, embedding model and mandatory filters,
+without copying it: see [Bring your own table](docs/BRING_YOUR_OWN_TABLE.md).
+
 ## Pipelines
 
 All pipelines share the same interface — switch with one line:

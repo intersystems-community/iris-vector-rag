@@ -514,6 +514,7 @@ class BasicRAGPipeline(RAGPipeline):
                         "rerank",
                         "retrieval",
                         "weights",
+                        "where",
                     )
                     if k in kwargs
                 },
@@ -600,11 +601,8 @@ class BasicRAGPipeline(RAGPipeline):
                 engine_applied_threshold = True
             elif hasattr(self, "vector_store") and self.vector_store:
                 # FR-016: native EMBEDDING path when configured and no explicit embedding_func
-                explicit_embed_func = kwargs.get("embedding_func")
-                if (
-                    not explicit_embed_func
-                    and getattr(self, "use_iris_embedding", False)
-                    and getattr(self.vector_store, "use_iris_embedding", False)
+                if self._iris_embedding_applies(
+                    where=opts.where, embedding_func=kwargs.get("embedding_func")
                 ):
                     raw = self.vector_store.search_with_embedding(
                         query, top_k=top_k, filter=metadata_filter
@@ -612,7 +610,7 @@ class BasicRAGPipeline(RAGPipeline):
                     retrieved_documents = [doc for doc, _ in raw]
                 else:
                     retrieved_documents = self._search_text(
-                        query, top_k, metadata_filter
+                        query, top_k, metadata_filter, opts.where
                     )
             else:
                 logger.warning("No vector store available")
@@ -740,8 +738,25 @@ class BasicRAGPipeline(RAGPipeline):
         )
         return response
 
+    def _iris_embedding_applies(self, where, embedding_func) -> bool:
+        """Whether the query goes through IRIS EMBEDDING (FR-016 of feature 051).
+
+        Not with an explicit embedding function, and not with real-column filters:
+        that search takes no ``where`` (feature 092).
+        """
+        return (
+            not embedding_func
+            and not where
+            and getattr(self, "use_iris_embedding", False)
+            and getattr(self.vector_store, "use_iris_embedding", False)
+        )
+
     def _search_text(
-        self, query: str, top_k: int, metadata_filter: Optional[Dict[str, Any]]
+        self,
+        query: str,
+        top_k: int,
+        metadata_filter: Optional[Dict[str, Any]],
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         """Documents for a text query, each carrying its score when the store has one.
 
@@ -751,10 +766,13 @@ class BasicRAGPipeline(RAGPipeline):
         keys the similarity-threshold filter and the MCP serializer read). The check is
         on the class so that a test double is not mistaken for a scoring store.
         """
+        from iris_vector_rag.storage.attached import where_kwargs
+
         store = self.vector_store
+        scope = where_kwargs(where)
         if callable(getattr(type(store), "search_by_text_with_score", None)):
             scored = store.search_by_text_with_score(
-                query, top_k=top_k, metadata_filter=metadata_filter
+                query, top_k=top_k, metadata_filter=metadata_filter, **scope
             )
             return [
                 Document(
@@ -764,7 +782,9 @@ class BasicRAGPipeline(RAGPipeline):
                 )
                 for doc, score in scored
             ]
-        return store.search_by_text(query, top_k=top_k, metadata_filter=metadata_filter)
+        return store.search_by_text(
+            query, top_k=top_k, metadata_filter=metadata_filter, **scope
+        )
 
     def _require_llm_for_answer(self, generate_answer: bool, label: str) -> None:
         """Fail loudly when an answer is asked for and nothing can produce it.

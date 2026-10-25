@@ -11,6 +11,26 @@ storage:
   iris:
     table_name: "RAG.SourceDocuments"
     vector_dimension: 384
+    # Language of the text: the iFind index (built once, by ensure_text_index), the stop
+    # words dropped from text queries, and the default polarity detector of phrase
+    # search. A two-letter code. Only "en" ships stop words and negation triggers; for
+    # another language, queries keep every word and note-search detectors need a
+    # caller's lexicon. Changing it does not rebuild an existing index.
+    text_language: "en"
+    # Bring your own table (feature 092, docs/BRING_YOUR_OWN_TABLE.md). Set table_name
+    # to a table you own and declare its columns; any *_col key makes the table
+    # "attached": the library reads it and never creates, alters, indexes or writes it.
+    #   id_col: "EvidenceId"            # or a list for a composite id: ["DocRef", "Seq"]
+    #   text_col: "Text"
+    #   embedding_col: "Embedding"
+    #   metadata_col: "Meta"            # JSON metadata, for the metadata_filter
+    #   title_col: "Title"              # -> Document.metadata["title"]
+    #   parent_col: "ResourceId"        # -> Document.metadata["parent_id"]
+    #   filter_columns: ["PatientId", "EmbeddingModel", "DocDate"]   # usable in where=
+    #   required_filters: ["PatientId", "EmbeddingModel"]            # a search without them fails
+    #   metric: "cosine"                # cosine (default for attached tables) or dot
+    #   text_index: "DocChunkText"      # the table's own iFind index, for text/hybrid/rrf
+    #   text_terms: "words"             # or "prefix": vysazena -> vysaz*
     # Custom metadata filter keys for multi-tenant isolation (User Story 1 - P1)
     # These fields can be used in metadata_filter parameter for queries
     # Default filter keys (always enabled): document_id, source, title, author,

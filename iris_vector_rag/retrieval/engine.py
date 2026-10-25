@@ -103,9 +103,10 @@ class RetrievalEngine:
         """
         threshold = getattr(opts, "similarity_threshold", 0.0) or 0.0
         metadata_filter = getattr(opts, "metadata_filter", None)
+        scope = _where(opts)
         if threshold > 0.0:
             scored = self.vector_store.similarity_search_with_score(
-                query, k=opts.top_k, filter=metadata_filter
+                query, k=opts.top_k, filter=metadata_filter, **scope
             )
             docs = []
             for doc, score in scored:
@@ -115,7 +116,7 @@ class RetrievalEngine:
             return docs
         return list(
             self.vector_store.search_by_text(
-                query, top_k=opts.top_k, metadata_filter=metadata_filter
+                query, top_k=opts.top_k, metadata_filter=metadata_filter, **scope
             )
         )
 
@@ -139,6 +140,7 @@ class RetrievalEngine:
                 opts.query,
                 top_k=opts.top_k,
                 metadata_filter=getattr(opts, "metadata_filter", None),
+                **_where(opts),
             )
         )
 
@@ -163,6 +165,7 @@ class RetrievalEngine:
                 "metadata_filter does not apply to retrieval='phrase'; narrow a phrase "
                 "search with section=."
             )
+        _refuse_where(opts, "phrase")
         if not hasattr(self.vector_store, "phrase_search"):
             raise NotImplementedError(
                 f"{type(self.vector_store).__name__} has no phrase_search(), so "
@@ -194,6 +197,7 @@ class RetrievalEngine:
                 "metadata_filter does not apply to retrieval='concept'; narrow a concept "
                 "search with section=."
             )
+        _refuse_where(opts, "concept")
         if self.concept_index is None:
             raise NotImplementedError(
                 "retrieval='concept' needs a concept_index: build a ConceptIndex over "
@@ -288,6 +292,7 @@ class RetrievalEngine:
         Falls back gracefully when index empty (FR-009); hard error when KG absent
         handled by check_prerequisites in retrieve().
         """
+        _refuse_where(opts, "global")
         if getattr(opts, "metadata_filter", None):
             raise ValueError(
                 "metadata_filter cannot be applied to retrieval='global': relation "
@@ -368,6 +373,7 @@ class RetrievalEngine:
         Fuses: low-level entity search, high-level relation embedding search,
         and naive chunk vector search. Optional weights override RRF.
         """
+        _refuse_where(opts, "mix")
         high_kws, low_kws = self._get_or_extract_keywords(opts)
         rel_store = self._get_relation_store()
 
@@ -487,6 +493,23 @@ class RetrievalEngine:
                 "extraction_model": extraction_model,
             },
         }
+
+
+def _where(opts: Any) -> Dict[str, Any]:
+    """The options' real-column filters as keyword arguments (`where_kwargs`)."""
+    from iris_vector_rag.storage.attached import where_kwargs
+
+    return where_kwargs(getattr(opts, "where", None))
+
+
+def _refuse_where(opts: Any, mode: str) -> None:
+    """Real-column filters scope document rows; ``mode`` does not search them."""
+    if getattr(opts, "where", None):
+        raise ValueError(
+            f"where does not apply to retrieval={mode!r}: it filters the rows of the "
+            "document table, which this mode does not search. Use 'vector', 'text', "
+            "'hybrid' or 'rrf'."
+        )
 
 
 def _make_doc(

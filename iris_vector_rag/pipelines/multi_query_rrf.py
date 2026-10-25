@@ -30,6 +30,8 @@ from typing import Any, Dict, List, Optional
 from iris_vector_rag.common.utils import get_llm_func
 from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.core.models import Document
+from iris_vector_rag.exceptions import VectorStoreConfigurationError
+from iris_vector_rag.storage.attached import where_kwargs
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 
@@ -339,6 +341,7 @@ Return only the alternative queries, one per line, without numbering.
                     "metadata_filter",
                     "similarity_threshold",
                     "custom_prompt",
+                    "where",
                 )
             },
         )
@@ -363,8 +366,13 @@ Return only the alternative queries, one per line, without numbering.
             logger.debug(f"Executing search {i}/{len(queries)}: {q}")
 
             try:
+                # Every variation is searched under the caller's scope: the
+                # metadata filter and the real-column filters (feature 092).
                 results = self.vector_store.similarity_search(
-                    query=q, k=self.retrieved_k
+                    query=q,
+                    k=self.retrieved_k,
+                    filter=opts.metadata_filter,
+                    **where_kwargs(opts.where),
                 )
 
                 # Add source query to metadata
@@ -376,6 +384,10 @@ Return only the alternative queries, one per line, without numbering.
                 all_results.append(results)
                 logger.debug(f"  → {len(results)} results")
 
+            except VectorStoreConfigurationError:
+                # A filter that cannot be applied (a missing required filter, an
+                # unknown column) is the caller's error, not one search failing.
+                raise
             except Exception as e:
                 logger.error(f"Search {i} failed: {e}")
                 all_results.append([])

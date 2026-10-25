@@ -2,6 +2,48 @@
 
 ## v0.16.2 — the query vector is bound (2026-10-24)
 
+### Added: bring your own table (spec 092)
+
+Search an IRIS table you already have, through declared columns, without copying it
+([docs/BRING_YOUR_OWN_TABLE.md](docs/BRING_YOUR_OWN_TABLE.md)):
+
+- **Declared columns:** `id_col` (one column or several, joined with `#`), `text_col`,
+  `embedding_col`, `metadata_col`, `title_col` and `parent_col`, under `storage:iris:` or as
+  `IRISVectorStore` arguments. A declared column outranks the name lists.
+- **Read only:** such a table is attached and only ever read; writes raise
+  `AttachedTableReadOnly`.
+- **Real-column filters:** `where={col: value | (op, value) | [values]}` on declared
+  `filter_columns`, always bound, with `CAST` for dates. A missing `required_filters` column
+  raises `RequiredFilterMissing` before anything runs. It applies to every search method and
+  to the `vector`, `text`, `hybrid` and `rrf` retrieval modes, and `pipeline.query(where=...)`
+  passes it through.
+- **Similarity measure:** `metric` defaults to `cosine` for attached tables; the library's own
+  tables keep dot product. A table whose HNSW index was built for another measure is warned
+  about once.
+- **Text search:** `text_index` names the table's own iFind index, and `text_terms: prefix`
+  adds prefix wildcards for inflected languages.
+- **Embedding:** `embedder=` embeds every text query with the caller's model, and the
+  dimension is checked against the column.
+
+Verified on IRIS against MedTeam's and Štafeta's Rakathon 2026 table shapes (synthetic rows):
+the same top five and scores as each team's own SQL, and the tables unchanged afterwards.
+
+### Added: the text language is a setting
+
+`storage:iris:text_language` (default `en`, environment `RAG_STORAGE__IRIS__TEXT_LANGUAGE`)
+replaces the English that was hard-coded in three places:
+
+- the iFind index `ensure_text_index` builds (`LANGUAGE='<code>'`);
+- the stop words `search_terms` drops (`text_search.STOPWORDS`, English only so far; another
+  language keeps every word but `AND`/`OR`/`NOT`);
+- the default polarity detector of phrase search.
+
+The note-search detectors take `language=` or a caller's own lexicon:
+`ReferenceNegExDetector(lexicon=NegationLexicon(...))` and
+`ReferenceContextDetector(lexicon=ContextLexicon(...))`. Only English lexicons ship. A
+language with none is a `ValueError`, not a silent fallback to English triggers. Verified on
+IRIS with a Czech (`cs`) index. English behaviour is unchanged.
+
 ### Changed: vector search binds the query vector
 
 Vector search sent its 384-number query vector written into the SQL text, because an old

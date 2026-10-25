@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from bisect import bisect_left
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 from functools import lru_cache
 
 from .tokens import Token, tokenize_cached
@@ -47,6 +48,51 @@ UNCERTAINTY_TRIGGERS: tuple[tuple[str, ...], ...] = (
     ("questionable",),
 )
 TERMINATORS: frozenset[str] = frozenset({"but", "however", "although"})
+
+
+@dataclass(frozen=True)
+class NegationLexicon:
+    """The words one language uses to negate or hedge a mention.
+
+    Every entry is lower case, matched against the tokens of ``tokens.tokenize``. A
+    terminator ends the reach of a trigger ("no fever but cough": the cough is affirmed).
+    """
+
+    pre_negation: tuple[tuple[str, ...], ...]
+    post_negation: tuple[tuple[str, ...], ...]
+    near_post_negation: frozenset[str]
+    uncertainty: tuple[tuple[str, ...], ...]
+    terminators: frozenset[str]
+
+
+ENGLISH = NegationLexicon(
+    pre_negation=PRE_NEGATION_TRIGGERS,
+    post_negation=POST_NEGATION_TRIGGERS,
+    near_post_negation=NEAR_POST_NEGATION_TRIGGERS,
+    uncertainty=UNCERTAINTY_TRIGGERS,
+    terminators=TERMINATORS,
+)
+
+#: The lexicons shipped, by language code. Another language is a caller's ``lexicon=``.
+NEGATION_LEXICONS: dict[str, NegationLexicon] = {"en": ENGLISH}
+
+
+def negation_lexicon(language: str) -> NegationLexicon:
+    """The shipped lexicon for ``language``.
+
+    Raises:
+        ValueError: none is shipped. English triggers on another language's text would
+            give confident wrong answers, so there is no fallback.
+    """
+    try:
+        return NEGATION_LEXICONS[language.lower()]
+    except KeyError:
+        raise ValueError(
+            f"no negation lexicon for language {language!r}; shipped: "
+            f"{sorted(NEGATION_LEXICONS)}. Pass lexicon=NegationLexicon(...) to "
+            "supply one."
+        ) from None
+
 
 _SENTENCE_PUNCTUATION = ".?!;"
 
@@ -111,6 +157,7 @@ def _triggered(
     words: list[str],
     triggers: tuple[tuple[str, ...], ...],
     before_mention: bool,
+    terminators: frozenset[str] = TERMINATORS,
 ) -> bool:
     """True if a trigger occurs with no terminator between it and the mention.
 
@@ -124,18 +171,20 @@ def _triggered(
             if tuple(words[index : index + size]) != trigger:
                 continue
             reach = words[index + size :] if before_mention else words[:index]
-            if not TERMINATORS.intersection(reach):
+            if not terminators.intersection(reach):
                 return True
     return False
 
 
-def _near_post_negation(text: str, mention_end: int, post: list) -> bool:
+def _near_post_negation(
+    text: str, mention_end: int, post: list, lexicon: NegationLexicon = ENGLISH
+) -> bool:
     """True if a near post-negation word closely follows the mention in its clause."""
     for token in post[:POST_WINDOW]:
-        if token.text in TERMINATORS:
+        if token.text in lexicon.terminators:
             return False
         if (
-            token.text in NEAR_POST_NEGATION_TRIGGERS
+            token.text in lexicon.near_post_negation
             and not _CLAUSE_BREAKS.intersection(text[mention_end : token.start])
         ):
             return True
@@ -143,7 +192,16 @@ def _near_post_negation(text: str, mention_end: int, post: list) -> bool:
 
 
 class ReferenceNegExDetector:
-    """Reference polarity detector following section 5 of the query contract."""
+    """Reference polarity detector following section 5 of the query contract.
+
+    ``language`` picks a shipped lexicon (``NEGATION_LEXICONS``); ``lexicon`` supplies
+    one and wins over ``language``.
+    """
+
+    def __init__(
+        self, language: str = "en", lexicon: NegationLexicon | None = None
+    ) -> None:
+        self.lexicon = lexicon or negation_lexicon(language)
 
     def __call__(self, text: str, span: tuple[int, int]) -> str:
         """Return the polarity of the mention at span within text."""
@@ -155,13 +213,15 @@ class ReferenceNegExDetector:
         after = [token for token in tokens if token.start >= end]
         post = [token.text for token in after]
 
-        uncertain = _triggered(pre, UNCERTAINTY_TRIGGERS, True) or _triggered(
-            post, UNCERTAINTY_TRIGGERS, False
+        lex = self.lexicon
+        stops = lex.terminators
+        uncertain = _triggered(pre, lex.uncertainty, True, stops) or _triggered(
+            post, lex.uncertainty, False, stops
         )
         negated = (
-            _triggered(pre, PRE_NEGATION_TRIGGERS, True)
-            or _triggered(post, POST_NEGATION_TRIGGERS, False)
-            or _near_post_negation(text, end, after)
+            _triggered(pre, lex.pre_negation, True, stops)
+            or _triggered(post, lex.post_negation, False, stops)
+            or _near_post_negation(text, end, after, lex)
         )
         if uncertain:
             return UNKNOWN
