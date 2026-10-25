@@ -38,6 +38,23 @@ reopening them:
 
 ## Clarifications
 
+### Session 2026-10-24 (review with Tom)
+
+- **Q:** On an attached table, are undeclared roles guessed from column names? → **A:** No.
+  Only declared columns are used; `id_col` and `text_col` must be declared.
+- **Q:** Does the HNSW measure warning cover the library's own tables? → **A:** Yes, once per
+  table.
+- **Q:** Does `where` accept LangChain's operator spellings? → **A:** Yes: `$eq`, `$gt`,
+  `$gte`, `$lt`, `$lte` and `$in`, in the tuple or nested form. `$or`, `$and`, `$ne`, `$nin` and
+  `$like` are refused.
+- **Q:** Is a text index discovered when none is named? → **A:** No; it must be named.
+- **Q:** Which pipelines honour `where`? → **A:** All of them. Legs that read the document
+  table filter in SQL; graph legs are scoped when their documents are fetched.
+- **Q:** Does IRIS keep `ORDER BY` under `SELECT TOP`? → **A:** Measured on 2026.1 at 5,000
+  rows, scanned and through HNSW: yes. A test guards it.
+- **Q:** Does the answer model come from AI Hub's ConfigStore? → **A:** Not in 092; it is a
+  follow-up spec after 0.17.0.
+
 ### Session 2026-10-23 (with Tom, in the Rakathon follow-up map)
 
 - **Q:** Does the library write to an attached table? → **A:** No. It is read only: the library
@@ -176,7 +193,7 @@ filters.
 1. **Given** `text_index=DocChunkText`, `text_language=cs` and `text_terms=prefix`, **When** a
    text search for the team's query runs with its filters, **Then** it returns the same rows as
    the team's iFind SQL (`vysaz* OR antikoa*`).
-2. **Given** an attached table with no text index declared or found, **When** a text search
+2. **Given** an attached table with no text index named, **When** a text search
    runs, **Then** it raises an error saying the table has no text index and that the library will
    not create one on a table it does not own.
 3. **Given** `text_terms=words` (the default), **When** a query runs, **Then** its terms are
@@ -231,8 +248,9 @@ attached table is cosine, that `metric=dot` changes it, and that a cosine HNSW i
 ### Functional Requirements
 
 - **FR-001**: The document store MUST accept a declared column for each role (`id_col`,
-  `text_col`, `embedding_col`, `metadata_col`, `title_col`, `parent_col`). A declared column
-  takes precedence over the name lists, and an undeclared role still resolves by name (082).
+  `text_col`, `embedding_col`, `metadata_col`, `title_col`, `parent_col`). On a table with any
+  declared column, only declared columns fill roles: nothing is guessed from the name lists
+  (082), and `id_col` and `text_col` are required. Tables with no declaration resolve as before.
 - **FR-002**: `id_col` MUST accept one column or an ordered list. For a list, a result's id is
   the columns' values joined with `#`.
 - **FR-003**: Every declared column MUST be checked against the table's catalog before the first
@@ -242,7 +260,10 @@ attached table is cosine, that `metric=dot` changes it, and that a cosine HNSW i
 - **FR-005**: A table with any declared column is an attached table. The library MUST NOT send
   it any statement that creates, alters, indexes, inserts, updates or deletes.
 - **FR-006**: Searches MUST accept `where=` with values of the form `value` (equals),
-  `(op, value)` with `op` in `=, <, <=, >, >=`, or a non-empty list (`IN`).
+  `(op, value)` with `op` in `=, <, <=, >, >=`, or a non-empty list (`IN`). LangChain's spellings
+  MUST also work: `$eq`, `$gt`, `$gte`, `$lt`, `$lte` and `$in`, in the tuple or in the nested
+  form `{col: {"$gte": a, "$lt": b}}`. `$or`, `$and`, `$ne`, `$nin` and `$like` MUST be refused
+  by name.
 - **FR-007**: `where` keys MUST be in the declared `filter_columns`, and every one of those MUST
   exist in the table. An undeclared key MUST raise an error naming it and the allowed columns.
 - **FR-008**: Filter values MUST be bound as parameters, never written into SQL text. A value
@@ -257,11 +278,11 @@ attached table is cosine, that `metric=dot` changes it, and that a cosine HNSW i
 - **FR-012**: A `metric` setting (`cosine` or `dot`) MUST choose the vector ranking. The default
   MUST be `cosine` for attached tables and `dot` for the library's own tables.
 - **FR-013**: When the embedding column has an HNSW index whose distance differs from the
-  effective `metric`, the store MUST log one warning naming the index, its distance and the
-  metric.
+  effective `metric`, on any table (attached or the library's own), the store MUST log one
+  warning naming the index, its distance and the metric.
 - **FR-014**: `text_index` MUST name an existing iFind index for the text leg on an attached
-  table. When no index is named or found, a text, hybrid or rrf search MUST raise an error saying
-  so, and MUST NOT create one.
+  table; the library does not look for one. When none is named, a text, hybrid or rrf search MUST
+  raise an error saying so, and MUST NOT create one.
 - **FR-015**: Text queries MUST use `text_language` (from `feat/text-language-setting`) for stop
   words. `text_terms` MUST accept `words` (default, today's behaviour) or `prefix`, which turns
   each word at or above a minimum length into a prefix wildcard. The minimum length MUST be
@@ -277,6 +298,10 @@ attached table is cosine, that `metric=dot` changes it, and that a cosine HNSW i
   here.
 - **FR-020**: Column names written into SQL by this feature MUST be checked as identifiers and
   quoted, so reserved words work.
+- **FR-021**: Every pipeline's `query(..., where=...)` MUST honour `where`: legs that read the
+  document table filter in SQL, and documents that graph legs bring back are fetched under the
+  same predicate, so no out-of-scope document reaches any pipeline's result. A pipeline that
+  cannot apply `where` MUST refuse it, never drop it.
 
 ### Key Entities
 

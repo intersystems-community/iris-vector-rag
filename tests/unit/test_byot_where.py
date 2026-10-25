@@ -147,3 +147,55 @@ def test_the_predicate_never_starts_with_a_parenthesis(stafeta):
     )
     assert not sql.startswith("(")
     assert "((" not in sql
+
+
+# --- LangChain's spellings (review, 2026-10-24) -----------------------------------------
+
+
+@pytest.mark.parametrize(
+    "op,sql_op",
+    [("$eq", "="), ("$gt", ">"), ("$gte", ">="), ("$lt", "<"), ("$lte", "<=")],
+)
+def test_langchain_operator_names_work_in_the_tuple(stafeta, op, sql_op):
+    sql, params = compile_where(
+        {"PatientRef": "Patient/2", "Seq": (op, 3)}, stafeta, SPEC
+    )
+    assert sql == f'"PatientRef" = ? AND "Seq" {sql_op} ?'
+    assert params == ["Patient/2", 3]
+
+
+def test_langchains_nested_form_compiles_to_the_same_predicate(stafeta):
+    nested = compile_where(
+        {
+            "PatientRef": {"$eq": "Patient/2"},
+            "Seq": {"$gte": 1, "$lt": 4},
+            "EmbeddingModel": {"$in": ["a", "b"]},
+        },
+        stafeta,
+        SPEC,
+    )
+    assert nested == (
+        '"PatientRef" = ? AND "Seq" >= ? AND "Seq" < ? AND "EmbeddingModel" IN (?, ?)',
+        ["Patient/2", 1, 4, "a", "b"],
+    )
+
+
+@pytest.mark.parametrize(
+    "where",
+    [
+        {"PatientRef": "Patient/2", "Seq": {"$ne": 1}},
+        {"PatientRef": {"$like": "Patient/%"}},
+        {"PatientRef": "Patient/2", "Seq": {"$nin": [1]}},
+        {"$or": [{"PatientRef": "Patient/1"}, {"PatientRef": "Patient/2"}]},
+        {"$and": [{"PatientRef": "Patient/1"}]},
+    ],
+    ids=["$ne", "$like", "$nin", "$or", "$and"],
+)
+def test_operators_ivr_does_not_support_are_refused_by_name(stafeta, where):
+    with pytest.raises(FilterError, match=r"\$(ne|like|nin|or|and)"):
+        compile_where(where, stafeta, SPEC)
+
+
+def test_an_empty_operator_dict_is_refused(stafeta):
+    with pytest.raises(FilterError, match="PatientRef"):
+        compile_where({"PatientRef": {}}, stafeta, SPEC)

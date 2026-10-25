@@ -36,7 +36,7 @@ inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:51
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:68
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:9
 inline-standard-ddl	iris_vector_rag/common/llm_cache_iris.py:143
-inline-standard-ddl	iris_vector_rag/storage/table_shape.py:694
+inline-standard-ddl	iris_vector_rag/storage/table_shape.py:715
 swallowed-error	iris_vector_rag/common/batch_utils.py::extract_batch_with_retry#1
 swallowed-error	iris_vector_rag/common/connection_manager.py::LegacyConnectionManager.cursor#1
 swallowed-error	iris_vector_rag/common/iris_connection.py::_get_iris_dbapi_module#1

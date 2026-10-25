@@ -149,20 +149,18 @@ def test_an_unknown_metric_is_refused_when_the_store_is_built():
 
 def test_a_composite_identifier_comes_back_joined_with_a_hash():
     cursor = TeamCursor(
-        ranked=[
-            ("DocumentReference/11#3", "text", "Biopsie", "DocumentReference/11", 0.82)
-        ]
+        ranked=[("DocumentReference/11#3", "text", "DocumentReference/11", 0.82)]
     )
     store = team_store(STAFETA, cursor)
 
     ((doc, _),) = store.similarity_search_by_embedding(QUERY, 1)
 
-    # `Title` is not declared, but the name list finds it (FR-001).
+    # `Title` matches a name list but is not declared, so it is not read.
     assert cursor.sql[0].startswith(
-        'SELECT TOP 1 "DocRef" || \'#\' || "Seq", "Text", "Title", "DocRef"'
+        'SELECT TOP 1 "DocRef" || \'#\' || "Seq", "Text", "DocRef", VECTOR_COSINE'
     )
     assert doc.id == "DocumentReference/11#3"
-    assert doc.metadata["title"] == "Biopsie"
+    assert "title" not in doc.metadata
     assert doc.metadata["parent_id"] == "DocumentReference/11"
 
 
@@ -197,7 +195,7 @@ def test_writes_to_an_attached_table_are_refused_without_sql(write):
 
 def test_fetch_by_id_filters_on_the_identifier_expression():
     cursor = TeamCursor(
-        by_id=[("DocumentReference/11#3", "text", "Biopsie", "DocumentReference/11")]
+        by_id=[("DocumentReference/11#3", "text", "DocumentReference/11")]
     )
     store = team_store(STAFETA, cursor)
 

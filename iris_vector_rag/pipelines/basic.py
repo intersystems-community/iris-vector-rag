@@ -766,10 +766,10 @@ class BasicRAGPipeline(RAGPipeline):
         keys the similarity-threshold filter and the MCP serializer read). The check is
         on the class so that a test double is not mistaken for a scoring store.
         """
+        from iris_vector_rag.storage.attached import where_kwargs
+
         store = self.vector_store
-        # Real-column filters (feature 092) are passed only when set, so a store
-        # whose searches take no `where` keeps working.
-        scope = {"where": where} if where else {}
+        scope = where_kwargs(where)
         if callable(getattr(type(store), "search_by_text_with_score", None)):
             scored = store.search_by_text_with_score(
                 query, top_k=top_k, metadata_filter=metadata_filter, **scope

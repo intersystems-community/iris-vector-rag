@@ -71,13 +71,24 @@ def test_a_declared_column_is_matched_without_regard_to_case(teams):
     assert shape.column_for(ColumnRole.TEXT).name == "Text"
 
 
-def test_an_undeclared_role_still_resolves_by_name(teams):
-    # Štafeta's vector column is called `Embedding`, which the name list knows.
+def test_an_attached_table_uses_only_what_was_declared(teams):
+    # Decided in review (2026-10-24): once anything is declared, nothing is guessed.
+    # Štafeta's `Embedding` and `Title` match the name lists, but are not declared.
     shape = TableShape.from_snapshot(
         teams.snapshot("BYOTStf", "DocChunk"),
         declared={ColumnRole.IDENTIFIER: ("DocRef", "Seq"), ColumnRole.TEXT: "Text"},
     )
-    assert shape.column_for(ColumnRole.EMBEDDING).name == "Embedding"
+    assert not shape.has(ColumnRole.EMBEDDING)
+    assert not shape.has(ColumnRole.TITLE)
+    assert not shape.has(ColumnRole.METADATA)
+
+
+def test_an_attached_table_must_declare_its_identifier_and_text(teams):
+    with pytest.raises(ShapeUnresolvable, match="text_col"):
+        TableShape.from_snapshot(
+            teams.snapshot("BYOTStf", "DocChunk"),
+            declared={ColumnRole.IDENTIFIER: ("DocRef", "Seq")},
+        )
 
 
 def test_a_declared_column_the_table_lacks_names_the_table_and_the_column(teams):

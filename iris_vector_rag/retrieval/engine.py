@@ -496,13 +496,10 @@ class RetrievalEngine:
 
 
 def _where(opts: Any) -> Dict[str, Any]:
-    """``{"where": ...}`` when the options carry real-column filters, else ``{}``.
+    """The options' real-column filters as keyword arguments (`where_kwargs`)."""
+    from iris_vector_rag.storage.attached import where_kwargs
 
-    Passed only when set, so a store written before feature 092 (whose searches take
-    no ``where``) keeps working for every query that does not use it.
-    """
-    where = getattr(opts, "where", None)
-    return {"where": where} if where else {}
+    return where_kwargs(getattr(opts, "where", None))
 
 
 def _refuse_where(opts: Any, mode: str) -> None:

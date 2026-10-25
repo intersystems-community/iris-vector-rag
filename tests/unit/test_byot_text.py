@@ -107,7 +107,6 @@ def test_the_store_searches_the_named_index_with_prefix_terms_and_where():
             (
                 "DocumentReference/11#1",
                 "apixaban vysazen",
-                "Dokument 11",
                 "DocumentReference/11",
             )
         ],

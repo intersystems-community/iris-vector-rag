@@ -28,7 +28,7 @@ from ..exceptions import (
     VectorStoreConnectionError,
     VectorStoreDataError,
 )
-from .attached import compile_where
+from .attached import compile_where, where_kwargs
 from .catalog import IRISCatalogReader
 from .clob_handler import ensure_string_content
 from .shape_resolver import TableShapeResolver
@@ -1250,8 +1250,7 @@ class IRISVectorStore(VectorStore):
         # layers away, and so these errors are not caught by the handler below.
         shape = self.shape()
         where_sql, where_params = compile_where(where, shape, self.filter_spec)
-        if shape.attached:
-            self._warn_on_index_mismatch(shape)
+        self._warn_on_index_mismatch(shape)
         vector = shape.vector_spec()
         identifier = shape.column_for(ColumnRole.IDENTIFIER)
         text = shape.column_for(ColumnRole.TEXT)
@@ -2158,16 +2157,10 @@ class IRISVectorStore(VectorStore):
             compile_where(where, self.shape(), spec)
 
     def _by_embedding(self, embedding, top_k, metadata_filter, where):
-        """`similarity_search_by_embedding`, passing ``where`` only when there is one.
-
-        An override written before feature 092 takes three arguments; it keeps
-        working for every search that does not filter on real columns.
-        """
-        if where:
-            return self.similarity_search_by_embedding(
-                embedding, top_k, metadata_filter, where=where
-            )
-        return self.similarity_search_by_embedding(embedding, top_k, metadata_filter)
+        """`similarity_search_by_embedding`, with ``where`` passed as `where_kwargs`."""
+        return self.similarity_search_by_embedding(
+            embedding, top_k, metadata_filter, **where_kwargs(where)
+        )
 
     def _embed_query(self, query: str) -> List[float]:
         """Embed a text query: the caller's embedder, else the configured provider."""

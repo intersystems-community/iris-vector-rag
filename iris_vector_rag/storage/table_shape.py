@@ -123,6 +123,12 @@ ROLE_ALIASES: Mapping[ColumnRole, Sequence[str]] = {
 #: A table that cannot answer these is not usable as a document table.
 REQUIRED_ROLES = (ColumnRole.IDENTIFIER, ColumnRole.TEXT)
 
+#: The setting that declares a role on an attached table (feature 092).
+_SETTING_FOR_ROLE: Mapping[ColumnRole, str] = {
+    ColumnRole.IDENTIFIER: "id_col",
+    ColumnRole.TEXT: "text_col",
+}
+
 CANONICAL_COLUMNS: Mapping[ColumnRole, str] = {
     role: names[0] for role, names in ROLE_PRECEDENCE.items()
 }
@@ -530,10 +536,25 @@ def _resolve_roles(
         if role is ColumnRole.IDENTIFIER and len(keys_declared) > 1:
             identifier_columns = tuple(columns[k].name for k in keys_declared)
 
+    if declared:
+        # An attached table is read through exactly the columns its owner declared:
+        # a column that only happens to match a name list (a free-text `metadata`
+        # column, say) is never bound to a role behind the owner's back.
+        for role in REQUIRED_ROLES:
+            if role not in roles:
+                raise ShapeUnresolvable(
+                    f"an attached table must declare its {role.name.lower()} column "
+                    f"({_SETTING_FOR_ROLE[role]}); undeclared columns are never "
+                    "guessed",
+                    schema,
+                    table,
+                )
+        return roles, identifier_columns
+
     # A declared single-column key outranks name precedence: an identity column
     # cannot be written to, so picking the wrong identifier by name fails at insert
     # time rather than at resolution time.
-    if len(keys) == 1 and ColumnRole.IDENTIFIER not in roles:
+    if len(keys) == 1:
         only_key = next(iter(keys))
         if only_key in columns:
             roles[ColumnRole.IDENTIFIER] = only_key

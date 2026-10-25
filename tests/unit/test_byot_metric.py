@@ -128,3 +128,22 @@ def test_a_reader_without_the_question_is_not_asked():
     # The plain recorded catalog has no hnsw_index: no check, no error.
     store = team_store(STAFETA, TeamCursor(), metric="dot")
     store.similarity_search_by_embedding(QUERY, 3)
+
+
+def test_the_library_s_own_tables_are_checked_too(recorded_catalog, caplog):
+    """Review decision (2026-10-24): an unused index is a performance bug on any table."""
+    from tests.unit.test_vector_store_shape import FakeCursor, make_store
+
+    class OwnHnsw(RecordedCatalog):
+        def __init__(self, base):
+            super().__init__({(s, t): base.snapshot(s, t) for s, t in base.tables})
+
+        def hnsw_index(self, class_name, column):
+            return ("OwnHNSW", "Cosine")
+
+    store = make_store("canonical", FakeCursor(), recorded_catalog)
+    store.shapes = TableShapeResolver(OwnHnsw(recorded_catalog))
+    with caplog.at_level(logging.WARNING):
+        store.similarity_search_by_embedding([0.1] * 384, 3)
+    warnings = [r.getMessage() for r in caplog.records if "HNSW" in r.getMessage()]
+    assert len(warnings) == 1 and "OwnHNSW" in warnings[0] and "'dot'" in warnings[0]

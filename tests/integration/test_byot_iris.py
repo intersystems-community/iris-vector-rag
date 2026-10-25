@@ -372,3 +372,73 @@ def test_text_leg_returns_the_in_scope_row_of_a_repeated_id(iris_connection):
         cursor.execute(f"DROP TABLE IF EXISTS {table}")
         iris_connection.commit()
         cursor.close()
+
+
+# --- review: does IRIS keep ORDER BY under SELECT TOP? -------------------------------
+
+
+@pytest.mark.parametrize("hnsw", [False, True], ids=["scan", "hnsw"])
+def test_top_k_comes_back_in_rank_order_at_5000_rows(iris_connection, hnsw):
+    """A langchain-intersystems commit (9c4b085) says IRIS drops ORDER BY under
+    SELECT TOP. ivr ranks with `SELECT TOP k ... ORDER BY score DESC`, so check it at
+    a realistic size: without HNSW the top k must equal the exact sort of every row;
+    with HNSW (approximate by design) the rows must still come back best first."""
+    import random
+
+    table, dim, rows, k = "BYOTOrder.Chunk", 32, 5000, 10
+    rng = random.Random(3)
+
+    def vec():
+        return [rng.uniform(-1, 1) for _ in range(dim)]
+
+    cursor = iris_connection.cursor()
+    try:
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        cursor.execute(
+            f"CREATE TABLE {table} (ChunkId VARCHAR(20), Body VARCHAR(50), "
+            f"Vec VECTOR(DOUBLE, {dim}))"
+        )
+        cursor.executemany(
+            f"INSERT INTO {table} VALUES (?, ?, TO_VECTOR(?, DOUBLE, {dim}))",
+            [[f"c{i}", f"b{i}", T.vlit(vec())] for i in range(rows)],
+        )
+        if hnsw:
+            cursor.execute(
+                f"CREATE INDEX OrderHNSW ON TABLE {table} (Vec) AS HNSW(Distance='Cosine')"
+            )
+        iris_connection.commit()
+        query = vec()
+
+        cursor.execute(
+            f"SELECT ChunkId, VECTOR_COSINE(Vec, TO_VECTOR(?, DOUBLE, {dim})) FROM {table}",
+            [T.vlit(query)],
+        )
+        exact = sorted(
+            ((r[0], round(float(r[1]), 9)) for r in cursor.fetchall()),
+            key=lambda pair: -pair[1],
+        )[:k]
+
+        store = store_for(
+            {
+                "table_name": table,
+                "id_col": "ChunkId",
+                "text_col": "Body",
+                "embedding_col": "Vec",
+            }
+        )
+        got = [
+            (d.id, round(s, 9))
+            for d, s in store.similarity_search_by_embedding(query, k)
+        ]
+
+        scores = [s for _, s in got]
+        assert scores == sorted(
+            scores, reverse=True
+        ), "rows did not come back best first"
+        assert len(got) == k
+        if not hnsw:
+            assert got == exact
+    finally:
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        iris_connection.commit()
+        cursor.close()

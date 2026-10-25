@@ -30,10 +30,26 @@ from iris_vector_rag.storage.table_shape import (
     quote_identifier,
 )
 
-__all__ = ["ColumnMapping", "FilterSpec", "compile_where", "quote_identifier"]
+__all__ = [
+    "ColumnMapping",
+    "FilterSpec",
+    "compile_where",
+    "quote_identifier",
+    "where_kwargs",
+]
 
 #: The comparisons a filter may make; a list is ``IN``.
 _OPERATORS = frozenset({"=", "<", "<=", ">", ">="})
+
+#: LangChain's operator names (review, 2026-10-24), so a LangChain filter works as is.
+_LANGCHAIN_OPERATORS = {
+    "$eq": "=",
+    "$gt": ">",
+    "$gte": ">=",
+    "$lt": "<",
+    "$lte": "<=",
+    "$in": "IN",
+}
 _SCALARS = (str, int, float, dt.date, dt.datetime)
 
 #: SQL types (as INFORMATION_SCHEMA reports them) a value is cast to before it is
@@ -156,8 +172,9 @@ def compile_where(
 ) -> Tuple[str, List[Any]]:
     """``(predicate, params)`` for a search's ``where``; ``("", [])`` for none.
 
-    ``where`` maps a column to a value (``=``), an ``(op, value)`` tuple, or a
-    non-empty list (``IN``). Every key must be one of the spec's filter columns and
+    ``where`` maps a column to a value (``=``), an ``(op, value)`` tuple, a
+    non-empty list (``IN``), or LangChain's ``{"$gte": a, "$lt": b}`` (see
+    `_conditions`). Every key must be one of the spec's filter columns and
     a column of the table; every required filter must be present. The predicate is
     terms joined by ``AND`` with no outer parentheses (see `build_bound_vector_dot_sql`
     on the DB-API's doubled-parenthesis defect), and it holds only quoted names and
@@ -175,6 +192,13 @@ def compile_where(
             rejected_keys=absent,
         )
     where = dict(where or {})
+    for key in where:
+        if key.startswith("$"):
+            raise FilterError(
+                f"{key} is not supported in where: conditions on several columns are "
+                "always ANDed, so list them as keys",
+                rejected_keys=[key],
+            )
     present = {key.lower() for key in where}
     missing = [c for c in spec.required_filters if c.lower() not in present]
     if missing:
@@ -197,31 +221,70 @@ def compile_where(
                 allowed_keys=list(spec.filter_columns),
             )
         fact = shape.columns[column.lower()]
-        name = quote_identifier(fact.name)
-        cast = _CASTS.get(fact.sql_type)
-        marker = f"CAST(? AS {cast})" if cast else "?"
-
-        if isinstance(condition, (list, set, frozenset)):
-            values = list(condition)
-            if not values:
-                raise FilterError(
-                    f"filter on {fact.name}: an empty list matches nothing"
-                )
-            terms.append(f"{name} IN ({', '.join(marker for _ in values)})")
-            params.extend(_bindable(fact.name, v) for v in values)
-            continue
-
-        if isinstance(condition, tuple):
-            if len(condition) != 2 or condition[0] not in _OPERATORS:
-                raise FilterError(
-                    f"filter on {fact.name}: {condition!r} is not an (operator, value) "
-                    f"pair with an operator from {', '.join(sorted(_OPERATORS))} "
-                    "(use a list for IN)"
-                )
-            op, value = condition
-        else:
-            op, value = "=", condition
-        terms.append(f"{name} {op} {marker}")
-        params.append(_bindable(fact.name, value))
+        for op, value in _conditions(fact.name, condition):
+            term, values = _term(fact, op, value)
+            terms.append(term)
+            params.extend(values)
 
     return " AND ".join(terms), params
+
+
+def _conditions(column: str, condition: Any) -> List[Tuple[str, Any]]:
+    """``(op, value)`` pairs for one column's condition, in any accepted spelling.
+
+    A value means ``=``, a list means ``IN``, a tuple is ``(op, value)``, and a dict
+    is LangChain's form, ``{"$gte": a, "$lt": b}``. LangChain's ``$eq``, ``$gt``,
+    ``$gte``, ``$lt``, ``$lte`` and ``$in`` are accepted everywhere an operator is.
+    """
+    if isinstance(condition, dict):
+        if not condition:
+            raise FilterError(f"filter on {column}: an empty condition matches nothing")
+        return [(_operator(column, op), value) for op, value in condition.items()]
+    if isinstance(condition, tuple):
+        if len(condition) != 2:
+            raise FilterError(
+                f"filter on {column}: {condition!r} is not an (operator, value) pair"
+            )
+        return [(_operator(column, condition[0]), condition[1])]
+    if isinstance(condition, (list, set, frozenset)):
+        return [("IN", condition)]
+    return [("=", condition)]
+
+
+def _operator(column: str, op: Any) -> str:
+    """The SQL operator for ``op``, given as SQL (``>=``) or as LangChain (``$gte``)."""
+    sql = _LANGCHAIN_OPERATORS.get(op, op) if isinstance(op, str) else op
+    if sql not in _OPERATORS and sql != "IN":
+        raise FilterError(
+            f"filter on {column}: operator {op!r} is not supported; use one of "
+            f"{', '.join(sorted(_OPERATORS))} (or {', '.join(sorted(_LANGCHAIN_OPERATORS))})"
+        )
+    return sql
+
+
+def _term(fact, op: str, value: Any) -> Tuple[str, List[Any]]:
+    """One predicate term and its parameters."""
+    name = quote_identifier(fact.name)
+    cast = _CASTS.get(fact.sql_type)
+    marker = f"CAST(? AS {cast})" if cast else "?"
+    if op == "IN":
+        if not isinstance(value, (list, tuple, set, frozenset)):
+            raise FilterError(f"filter on {fact.name}: IN takes a list, got {value!r}")
+        values = list(value)
+        if not values:
+            raise FilterError(f"filter on {fact.name}: an empty list matches nothing")
+        return (
+            f"{name} IN ({', '.join(marker for _ in values)})",
+            [_bindable(fact.name, v) for v in values],
+        )
+    return f"{name} {op} {marker}", [_bindable(fact.name, value)]
+
+
+def where_kwargs(where: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
+    """``{"where": where}`` when there are real-column filters, else ``{}``.
+
+    The one place that decides how ``where`` is handed on. It is passed only when
+    set, so a store or override written before feature 092, whose searches take no
+    ``where``, keeps working for every query that does not filter on real columns.
+    """
+    return {"where": where} if where else {}
