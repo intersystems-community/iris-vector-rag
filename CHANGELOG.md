@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.16.2 — the query vector is bound (2026-10-24)
+## v0.17.0 — bring your own table (2026-10-25)
 
 ### Added: bring your own table (spec 092)
 
@@ -9,17 +9,22 @@ Search an IRIS table you already have, through declared columns, without copying
 
 - **Declared columns:** `id_col` (one column or several, joined with `#`), `text_col`,
   `embedding_col`, `metadata_col`, `title_col` and `parent_col`, under `storage:iris:` or as
-  `IRISVectorStore` arguments. A declared column outranks the name lists.
-- **Read only:** such a table is attached and only ever read; writes raise
+  `IRISVectorStore` arguments. On such a table only declared columns are used: nothing is
+  guessed from column names, and `id_col` and `text_col` are required.
+- **Read only:** the table is attached and only ever read; writes raise
   `AttachedTableReadOnly`.
 - **Real-column filters:** `where={col: value | (op, value) | [values]}` on declared
-  `filter_columns`, always bound, with `CAST` for dates. A missing `required_filters` column
-  raises `RequiredFilterMissing` before anything runs. It applies to every search method and
-  to the `vector`, `text`, `hybrid` and `rrf` retrieval modes, and `pipeline.query(where=...)`
-  passes it through.
+  `filter_columns`, always bound, with `CAST` for dates. LangChain's `$eq`, `$gt`, `$gte`,
+  `$lt`, `$lte` and `$in` also work, in the tuple or the nested `{col: {"$gte": a}}` form;
+  `$or`, `$and`, `$ne`, `$nin` and `$like` are refused by name. A missing `required_filters`
+  column raises `RequiredFilterMissing` before anything runs.
+- **Every route is scoped:** all search methods, the `vector`, `text`, `hybrid` and `rrf`
+  retrieval modes, and every pipeline's `query(..., where=...)`: basic, basic + rerank, CRAG,
+  multi-query rrf, GraphRAG and HybridGraphRAG. Phrase search and global GraphRAG cannot
+  apply it and refuse it rather than drop it.
 - **Similarity measure:** `metric` defaults to `cosine` for attached tables; the library's own
-  tables keep dot product. A table whose HNSW index was built for another measure is warned
-  about once.
+  tables keep dot product. A table whose HNSW index was built for the other measure is warned
+  about once, on any table.
 - **Text search:** `text_index` names the table's own iFind index, and `text_terms: prefix`
   adds prefix wildcards for inflected languages.
 - **Embedding:** `embedder=` embeds every text query with the caller's model, and the
@@ -27,6 +32,14 @@ Search an IRIS table you already have, through declared columns, without copying
 
 Verified on IRIS against MedTeam's and Štafeta's Rakathon 2026 table shapes (synthetic rows):
 the same top five and scores as each team's own SQL, and the tables unchanged afterwards.
+
+### Fixed
+
+- **multi-query rrf:** it dropped `metadata_filter`, and a filter error only reached the log.
+- **CRAG:** filter errors were swallowed into its fallback answer.
+- **HybridGraphRAG:** seed entities were read as the first character of each entity id.
+- **Tested on 2026.1:** `SELECT TOP k ... ORDER BY` keeps rank order at 5,000 rows, scanned
+  and through HNSW. A test guards it.
 
 ### Added: the text language is a setting
 
@@ -43,6 +56,8 @@ The note-search detectors take `language=` or a caller's own lexicon:
 `ReferenceContextDetector(lexicon=ContextLexicon(...))`. Only English lexicons ship. A
 language with none is a `ValueError`, not a silent fallback to English triggers. Verified on
 IRIS with a Czech (`cs`) index. English behaviour is unchanged.
+
+## v0.16.2 — the query vector is bound (2026-10-24)
 
 ### Changed: vector search binds the query vector
 
