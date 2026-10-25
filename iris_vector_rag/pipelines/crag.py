@@ -11,11 +11,12 @@ This pipeline implements Corrective Retrieval-Augmented Generation:
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, cast
+from typing import Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, cast
 
 from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..core.models import Document, coerce_documents
+from ..exceptions import FilterError
 
 logger = logging.getLogger(__name__)
 
@@ -322,11 +323,13 @@ class CRAGPipeline(RAGPipeline):
                     "metadata_filter",
                     "similarity_threshold",
                     "custom_prompt",
+                    "where",
                 )
             },
         )
         query = opts.query
         top_k = opts.top_k
+        where = opts.where
 
         # Validation: query parameter is required and cannot be empty
         if not query or query.strip() == "":
@@ -379,6 +382,10 @@ class CRAGPipeline(RAGPipeline):
                 "Fix: initialize the pipeline with a vector store or check configuration."
             )
 
+        # Feature 092 (FR-009, FR-021): a missing required filter, or a `where` this
+        # pipeline cannot apply, is the caller's error, raised before anything runs.
+        self._check_where(where)
+
         start_time = time.time()
         retrieval_method = kwargs.get("method", "crag_corrective")
         effective_retrieval_method = retrieval_method
@@ -386,7 +393,9 @@ class CRAGPipeline(RAGPipeline):
         try:
             # Stage 1: Initial retrieval
             try:
-                initial_docs = self._initial_retrieval(query_text, top_k)
+                initial_docs = self._initial_retrieval(query_text, top_k, where=where)
+            except FilterError:
+                raise
             except Exception as exc:
                 logger.warning(
                     "CRAG initial retrieval failed; falling back to empty vector results: %s",
@@ -421,8 +430,10 @@ class CRAGPipeline(RAGPipeline):
 
                     # Stage 3: Apply corrective actions based on evaluation
                     corrected_docs = self._apply_corrective_actions(
-                        query_text, initial_docs, retrieval_status, top_k
+                        query_text, initial_docs, retrieval_status, top_k, where=where
                     )
+                except FilterError:
+                    raise
                 except Exception as exc:
                     logger.warning(
                         "CRAG evaluator failed; falling back to vector search: %s",
@@ -512,6 +523,8 @@ class CRAGPipeline(RAGPipeline):
             logger.info(f"CRAG: Completed in {execution_time:.2f}s")
             return result
 
+        except FilterError:
+            raise
         except Exception as e:
             logger.error(f"CRAG pipeline failed: {e}")
             # Ensure answer is a string even in error case
@@ -579,8 +592,82 @@ class CRAGPipeline(RAGPipeline):
             )
         return [float(x) for x in vector]
 
+    def _filter_spec(self):
+        """The store's filter settings, or None when it has none (feature 092)."""
+        from ..storage.attached import FilterSpec
+
+        spec = getattr(self.vector_store, "filter_spec", None)
+        return spec if isinstance(spec, FilterSpec) else None
+
+    def _check_where(self, where: Optional[Dict[str, Any]]) -> None:
+        """Refuse a ``where`` the pipeline cannot apply, before anything is read.
+
+        A store that declares required filters is checked even with no ``where``, so
+        a query that would read every patient raises `RequiredFilterMissing` here
+        instead of surfacing as a fallback answer.
+        """
+        from ..storage.attached import compile_where
+
+        spec = self._filter_spec()
+        if spec is None:
+            if where:
+                raise FilterError(
+                    f"{type(self.vector_store).__name__} takes no where=, so CRAG "
+                    "cannot scope its searches by it; it will not drop it",
+                    rejected_keys=list(where),
+                )
+            return
+        if where or spec.required_filters:
+            compile_where(where, self.vector_store.shape(), spec)
+
+    def _chunk_scope(self, shape, where) -> Tuple[str, List[Any]]:
+        """``(predicate, params)`` for the chunk search; ``("", [])`` when unscoped.
+
+        Compiled against the table the chunk search reads, so a chunk table that
+        lacks a filter column raises `FilterError` instead of ignoring it.
+        """
+        from ..storage.attached import compile_where
+
+        spec = self._filter_spec()
+        if spec is None or not (where or spec.required_filters):
+            return "", []
+        return compile_where(where, shape, spec)
+
+    def _vector_search(
+        self,
+        query_embedding: List[float],
+        top_k: int,
+        where: Optional[Dict[str, Any]] = None,
+    ) -> List[Tuple[Document, float]]:
+        """The store's vector search, scoped by ``where`` when there is one."""
+        if not where:
+            return self._retrieve_documents_by_vector(
+                query_embedding=query_embedding, top_k=top_k
+            )
+        from ..storage.attached import where_kwargs
+
+        return self.vector_store.similarity_search(
+            query_embedding=query_embedding,
+            top_k=top_k,
+            filter=None,
+            **where_kwargs(where),
+        )
+
     def _chunk_shape(self, connection):
-        """The shape of the chunk table, read from the catalog rather than assumed."""
+        """The shape of the chunk table, read from the catalog rather than assumed.
+
+        A store on an attached table (feature 092) is itself the chunk table: the
+        library's own ``RAG.DocumentChunks`` holds none of that data, so reading it
+        would answer from documents the caller never attached. The rule: on an
+        attached store the library's own corpus is never mixed in, with or without
+        ``where``.
+        """
+        from ..storage.attached import ColumnMapping
+
+        mapping = getattr(self.vector_store, "column_mapping", None)
+        if isinstance(mapping, ColumnMapping) and mapping.attached:
+            return self.vector_store.shape()
+
         from ..storage.catalog import IRISCatalogReader
         from ..storage.shape_resolver import TableShapeResolver
 
@@ -592,12 +679,18 @@ class CRAGPipeline(RAGPipeline):
 
     @staticmethod
     def _chunk_search_sql(
-        shape, query_embedding: List[float], top_k: int
-    ) -> Tuple[str, List[str]]:
+        shape,
+        query_embedding: List[float],
+        top_k: int,
+        where_sql: str = "",
+        where_params: Sequence[Any] = (),
+    ) -> Tuple[str, List[Any]]:
         """Ranked chunk search written from the chunk table's own column names.
 
-        Returns the SQL and its one parameter, the query vector, which is bound as
-        ``TO_VECTOR(?, <type>, <dim>)`` (works for FLOAT and DOUBLE on IRIS 2026.1+).
+        Returns the SQL and its parameters: the query vector, bound as
+        ``TO_VECTOR(?, <type>, <dim>)`` (works for FLOAT and DOUBLE on IRIS 2026.1+),
+        then the values of ``where_sql`` (a `compile_where` predicate) in SQL text
+        order. The predicate is ANDed on without outer parentheses.
         """
         from ..common.vector_sql_utils import validate_vector_string
         from ..exceptions import DimensionMismatchError
@@ -605,33 +698,37 @@ class CRAGPipeline(RAGPipeline):
 
         vector = shape.vector_spec()
         embedding = shape.column_for(ColumnRole.EMBEDDING)
-        identifier = shape.column_for(ColumnRole.IDENTIFIER)
-        text = shape.column_for(ColumnRole.TEXT)
         if len(query_embedding) != vector.dimension:
             raise DimensionMismatchError(
                 len(query_embedding),
                 vector.dimension,
                 f"{shape.qualified_name}.{embedding.name} (query)",
             )
+        embedding_sql = shape.sql_name(ColumnRole.EMBEDDING)
+        scope = f" AND {where_sql}" if where_sql else ""
         vector_string = "[" + ",".join(f"{x:.10f}" for x in query_embedding) + "]"
         if not validate_vector_string(vector_string):
             raise ValueError("query embedding holds a non-finite value")
         return (
-            f"SELECT TOP {int(top_k)} {identifier.name}, {text.name}, "
-            f"VECTOR_COSINE({embedding.name}, "
+            f"SELECT TOP {int(top_k)} {shape.identifier_sql}, "
+            f"{shape.sql_name(ColumnRole.TEXT)}, "
+            f"VECTOR_COSINE({embedding_sql}, "
             f"TO_VECTOR(?, {vector.element_type}, {vector.dimension})) "
             f"AS similarity_score FROM {shape.qualified_name} "
-            f"WHERE {embedding.name} IS NOT NULL ORDER BY similarity_score DESC",
-            [vector_string],
+            f"WHERE {embedding_sql} IS NOT NULL{scope} ORDER BY similarity_score DESC",
+            [vector_string, *where_params],
         )
 
-    def _initial_retrieval(self, query: str, top_k: int) -> List[Document]:
+    def _initial_retrieval(
+        self, query: str, top_k: int, where: Optional[Dict[str, Any]] = None
+    ) -> List[Document]:
         """
         Perform initial document retrieval using vector store.
 
         Args:
             query: Query string
             top_k: Number of documents to retrieve
+            where: Filters on real columns (feature 092)
 
         Returns:
             List of initially retrieved documents
@@ -645,9 +742,7 @@ class CRAGPipeline(RAGPipeline):
         )
 
         # Use vector store helper method
-        results = self._retrieve_documents_by_vector(
-            query_embedding=query_embedding, top_k=top_k
-        )
+        results = self._vector_search(query_embedding, top_k, where)
 
         retrieved_docs = []
         for doc, similarity_score in results:
@@ -671,6 +766,7 @@ class CRAGPipeline(RAGPipeline):
         initial_docs: List[Document],
         status: RetrievalStatus,
         top_k: int,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         """
         Apply corrective actions based on retrieval evaluation.
@@ -680,6 +776,7 @@ class CRAGPipeline(RAGPipeline):
             initial_docs: Initially retrieved documents
             status: Retrieval evaluation status
             top_k: Number of documents to retrieve
+            where: Filters on real columns (feature 092), kept on every leg
 
         Returns:
             Corrected/enhanced document list
@@ -703,7 +800,9 @@ class CRAGPipeline(RAGPipeline):
             logger.debug(
                 "CRAG _apply_corrective_actions(): Ambiguous results - enhancing with additional retrieval"
             )
-            enhanced_docs = self._enhance_retrieval(query, initial_docs, top_k)
+            enhanced_docs = self._enhance_retrieval(
+                query, initial_docs, top_k, where=where
+            )
             logger.debug(
                 f"CRAG _apply_corrective_actions() exit (ambiguous): returning {len(enhanced_docs)} enhanced documents"
             )
@@ -714,7 +813,7 @@ class CRAGPipeline(RAGPipeline):
             logger.debug(
                 "CRAG _apply_corrective_actions(): Low confidence - performing knowledge base expansion"
             )
-            expanded_docs = self._knowledge_base_expansion(query, top_k)
+            expanded_docs = self._knowledge_base_expansion(query, top_k, where=where)
             logger.debug(
                 f"CRAG _apply_corrective_actions() exit (disoriented): returning {len(expanded_docs)} expanded documents"
             )
@@ -730,7 +829,11 @@ class CRAGPipeline(RAGPipeline):
         }.get(status)
 
     def _enhance_retrieval(
-        self, query: str, initial_docs: List[Document], top_k: int
+        self,
+        query: str,
+        initial_docs: List[Document],
+        top_k: int,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         """
         Enhance retrieval with additional strategies for ambiguous cases.
@@ -739,6 +842,7 @@ class CRAGPipeline(RAGPipeline):
             query: Original query
             initial_docs: Initially retrieved documents
             top_k: Number of documents to retrieve
+            where: Filters on real columns (feature 092), applied in the chunk SQL
 
         Returns:
             Enhanced document list
@@ -758,8 +862,10 @@ class CRAGPipeline(RAGPipeline):
 
         try:
             query_embedding = self._embed_query(query)
+            chunk_shape = self._chunk_shape(connection)
+            where_sql, where_params = self._chunk_scope(chunk_shape, where)
             chunk_sql, chunk_params = self._chunk_search_sql(
-                self._chunk_shape(connection), query_embedding, top_k
+                chunk_shape, query_embedding, top_k, where_sql, where_params
             )
             cursor.execute(chunk_sql, chunk_params)
             chunk_results = cursor.fetchall()
@@ -810,13 +916,16 @@ class CRAGPipeline(RAGPipeline):
         finally:
             cursor.close()
 
-    def _knowledge_base_expansion(self, query: str, top_k: int) -> List[Document]:
+    def _knowledge_base_expansion(
+        self, query: str, top_k: int, where: Optional[Dict[str, Any]] = None
+    ) -> List[Document]:
         """
         Perform knowledge base expansion for disoriented cases.
 
         Args:
             query: Original query
             top_k: Number of documents to retrieve
+            where: Filters on real columns (feature 092)
 
         Returns:
             Expanded document list from knowledge base
@@ -829,9 +938,7 @@ class CRAGPipeline(RAGPipeline):
         # store, which knows the document table's name and columns; there is no
         # second, hand-written query against them here.
         query_embedding = self._embed_query(query)
-        results = self._retrieve_documents_by_vector(
-            query_embedding=query_embedding, top_k=top_k * 2
-        )
+        results = self._vector_search(query_embedding, top_k * 2, where)
         logger.debug(
             f"CRAG _knowledge_base_expansion() vector search returned {len(results)} documents"
         )

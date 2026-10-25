@@ -442,3 +442,64 @@ def test_top_k_comes_back_in_rank_order_at_5000_rows(iris_connection, hnsw):
         cursor.execute(f"DROP TABLE IF EXISTS {table}")
         iris_connection.commit()
         cursor.close()
+
+
+# --- FR-021: the reranking and multi-query pipelines ------------------------------------
+
+
+def _med_env(monkeypatch):
+    for key, value in {
+        "TABLE_NAME": T.MED,
+        "ID_COL": "EvidenceId",
+        "TEXT_COL": "Text",
+        "EMBEDDING_COL": "Embedding",
+        "FILTER_COLUMNS": "PatientId,EmbeddingModel",
+        "REQUIRED_FILTERS": "PatientId,EmbeddingModel",
+    }.items():
+        monkeypatch.setenv(f"RAG_STORAGE__IRIS__{key}", value)
+
+
+def test_fr021_reranking_pipeline_stays_in_scope(
+    byot_tables, monkeypatch, use_test_embedder
+):
+    _med_env(monkeypatch)
+    from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+
+    config = ConfigurationManager()
+    # A reranker that reverses the order: no model download, and the result still
+    # has to come from the scoped candidates.
+    pipeline = BasicRAGRerankingPipeline(
+        ConnectionManager(config),
+        config,
+        llm_func=lambda p: "ok",
+        reranker_func=lambda query, docs: [(d, float(i)) for i, d in enumerate(docs)],
+    )
+    result = pipeline.query(
+        "apixaban", top_k=3, where={"PatientId": "P01", "EmbeddingModel": T.MODELS[0]}
+    )
+    docs = result["retrieved_documents"]
+    assert docs and all(d.id.startswith("P01-") for d in docs)
+
+
+def test_fr021_multi_query_pipeline_stays_in_scope(
+    byot_tables, monkeypatch, use_test_embedder
+):
+    _med_env(monkeypatch)
+    from iris_vector_rag.exceptions import RequiredFilterMissing
+    from iris_vector_rag.pipelines.multi_query_rrf import MultiQueryRRFPipeline
+
+    config = ConfigurationManager()
+    pipeline = MultiQueryRRFPipeline(
+        ConnectionManager(config), config, llm_func=lambda p: "ok", num_queries=2
+    )
+    result = pipeline.query(
+        "apixaban biopsie",
+        top_k=4,
+        where={"PatientId": "P03", "EmbeddingModel": T.MODELS[1]},
+        generate_answer=False,
+    )
+    docs = result["retrieved_documents"]
+    assert docs and all(d.id.startswith("P03-") for d in docs)
+
+    with pytest.raises(RequiredFilterMissing):
+        pipeline.query("apixaban", top_k=4, generate_answer=False)

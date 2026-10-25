@@ -9,11 +9,13 @@ from ..core.connection import ConnectionManager
 from ..core.exceptions import RAGException
 from ..core.models import Document, coerce_documents
 from ..embeddings.manager import EmbeddingManager
+from ..exceptions import FilterError
 
 if TYPE_CHECKING:
     from ..executor import SqlExecutor
 
 from ..services.entity_extraction import EntityExtractionService
+from ..storage.attached import FilterSpec, compile_where, where_kwargs
 from ..storage.schema_manager import SchemaManager
 from ..storage.table_shape import ColumnRole, TableShape
 
@@ -228,23 +230,34 @@ class GraphRAGPipeline(RAGPipeline):
         generate_answer: bool = True,
         **kwargs,
     ) -> Dict[str, Any]:
-        """Query the GraphRAG pipeline."""
+        """Query the GraphRAG pipeline.
+
+        ``where`` (feature 092) filters on real columns of the document table: the
+        vector fallback searches under it, and the documents the knowledge graph names
+        are fetched under it, so no out-of-scope document is returned. It is checked
+        first, so a required filter that is missing fails before any graph or model work.
+        """
         start_time = time.time()
 
         if not query_text or query_text.strip() == "":
             raise ValueError("Query text cannot be empty")
 
+        where = kwargs.get("where")
+        self._where_scope(where)
+
         # Robust top_k handling for tests
         effective_top_k = max(1, top_k)
 
-        retrieved_documents, method = self._retrieve_via_kg(query_text, effective_top_k)
+        retrieved_documents, method = self._retrieve_via_kg(
+            query_text, effective_top_k, **where_kwargs(where)
+        )
 
         # Fallback if KG returned nothing and fallback enabled
         if not retrieved_documents and self.pipeline_config.get(
             "enable_vector_fallback", True
         ):
             retrieved_documents = self._fallback_to_vector_search(
-                query_text, effective_top_k
+                query_text, effective_top_k, **where_kwargs(where)
             )
             method = "vector_fallback"
 
@@ -283,9 +296,32 @@ class GraphRAGPipeline(RAGPipeline):
             },
         }
 
+    def _where_scope(self, where: Optional[Dict[str, Any]]) -> Tuple[str, List[Any]]:
+        """``(predicate, params)`` that scope every read of the document table.
+
+        ``("", [])`` when there is nothing to apply: no ``where`` and no required
+        filter. A required filter missing from ``where`` raises, so a leg that is
+        called without ``where`` cannot read a table the store says must be scoped.
+        A ``where`` the store cannot apply raises too; it is never dropped.
+        """
+        store = self.vector_store
+        spec = getattr(store, "filter_spec", None)
+        if not isinstance(spec, FilterSpec):
+            if where:
+                raise FilterError(
+                    "where= cannot be applied: the vector store "
+                    f"({type(store).__name__}) declares no filter columns, and "
+                    "ignoring where would return documents outside it"
+                )
+            return "", []
+        if not where and not spec.required_filters:
+            return "", []
+        return compile_where(where, store.shape(), spec)
+
     def _retrieve_via_kg(
-        self, query_text: str, top_k: int
+        self, query_text: str, top_k: int, where: Optional[Dict[str, Any]] = None
     ) -> Tuple[List[Document], str]:
+        self._where_scope(where)
         # Find entities in query
         start_nodes = self._find_seed_entities(query_text)
         if not start_nodes:
@@ -294,7 +330,9 @@ class GraphRAGPipeline(RAGPipeline):
         relevant_entities = self._expand_neighborhood(
             set(start_nodes), depth=self.max_depth
         )
-        docs = self._get_documents_from_entities(relevant_entities, top_k)
+        docs = self._get_documents_from_entities(
+            relevant_entities, top_k, **where_kwargs(where)
+        )
 
         return docs, "knowledge_graph"
 
@@ -380,11 +418,74 @@ class GraphRAGPipeline(RAGPipeline):
         """
         return self.vector_store.shape()
 
+    def _scoped_documents_from_entities(
+        self,
+        entity_ids: Set[str],
+        top_k: int,
+        where_sql: str,
+        where_params: List[Any],
+    ) -> List[Document]:
+        """The entities' source documents, read back from the store under ``where``.
+
+        The graph names documents by id; the store fetches them under the same
+        predicate the vector search ranks in (feature 092, FR-021). Ids are read in
+        order, in chunks, until ``top_k`` documents are in scope: an id outside the
+        scope is dropped by the fetch and takes no slot. Errors propagate: an empty
+        list here would read as "the graph found nothing" and fall back to a search
+        that does not know why.
+        """
+        shape = self._document_shape()
+        # The knowledge graph is the library's own, in RAG, whatever schema the
+        # attached document table lives in.
+        schema = "RAG" if shape.attached else shape.schema
+        entity_list = sorted(entity_ids)[:50]
+        placeholders = ",".join(["?" for _ in entity_list])
+        rows = self._execute_sql(
+            f"SELECT DISTINCT source_doc_id FROM {schema}.Entities "
+            f"WHERE entity_id IN ({placeholders})",
+            entity_list,
+        )
+        doc_ids = sorted(
+            {
+                str(value)
+                for row in rows
+                if (value := row.get("source_doc_id") or row.get("SOURCE_DOC_ID"))
+            }
+        )
+        docs: List[Document] = []
+        size = self.NEIGHBORHOOD_CHUNK_SIZE
+        for offset in range(0, len(doc_ids), size):
+            fetched = self.vector_store.fetch_documents_by_ids(
+                doc_ids[offset : offset + size], where_sql, where_params
+            )
+            for doc in sorted(fetched, key=lambda d: str(d.id)):
+                docs.append(
+                    Document(
+                        id=doc.id,
+                        page_content=doc.page_content,
+                        metadata={
+                            **doc.metadata,
+                            "retrieval_method": "knowledge_graph",
+                        },
+                    )
+                )
+            if len(docs) >= top_k:
+                break
+        return docs[:top_k]
+
     def _get_documents_from_entities(
-        self, entity_ids: Set[str], top_k: int
+        self,
+        entity_ids: Set[str],
+        top_k: int,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
         if not entity_ids:
             return []
+        where_sql, where_params = self._where_scope(where)
+        if where_sql:
+            return self._scoped_documents_from_entities(
+                entity_ids, top_k, where_sql, where_params
+            )
         shape = self._document_shape()
         identifier = shape.column_for(ColumnRole.IDENTIFIER).name
         text = shape.column_for(ColumnRole.TEXT).name
@@ -425,11 +526,16 @@ class GraphRAGPipeline(RAGPipeline):
             cursor.close()
         return docs
 
-    def _fallback_to_vector_search(self, query_text: str, top_k: int) -> List[Document]:
+    def _fallback_to_vector_search(
+        self, query_text: str, top_k: int, where: Optional[Dict[str, Any]] = None
+    ) -> List[Document]:
         if not self.vector_store:
             return []
+        self._where_scope(where)
         query_embedding = self.embedding_manager.embed_text(query_text)
-        results = self.vector_store.search_by_vector(query_embedding, top_k=top_k)
+        results = self.vector_store.search_by_vector(
+            query_embedding, top_k=top_k, **where_kwargs(where)
+        )
         return [r[0] for r in results]
 
     def _generate_answer(

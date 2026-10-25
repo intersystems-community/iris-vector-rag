@@ -8,6 +8,10 @@ The library treats such a table as **attached** and only reads it: it never crea
 alters, indexes, inserts into or deletes from it. A write method raises
 `AttachedTableReadOnly`.
 
+**Only what you declare is used.** `id_col` and `text_col` are required. A column you don't
+declare is never guessed from its name, so a column that happens to be called `metadata` or
+`title` is ignored unless you name it.
+
 ## Five lines
 
 ```python
@@ -73,6 +77,10 @@ result = pipeline.query(
 | `{"Kind": ["a", "b"]}`   | `"Kind" IN (?, ?)`             |
 
 - **Operators:** `=`, `<`, `<=`, `>` and `>=`.
+- **LangChain filters work as they are.** `$eq`, `$gt`, `$gte`, `$lt`, `$lte` and `$in`, in the
+  tuple (`("$gte", d)`) or in the nested form
+  `{"DocDate": {"$gte": a, "$lt": b}, "Kind": {"$in": ["a", "b"]}}`. `$or`, `$and`, `$ne`,
+  `$nin` and `$like` are refused by name: conditions on several columns are always ANDed.
 - **Allowed columns:** keys must be in `filter_columns`, and those must be columns of the table.
 - **Values:** always bound as parameters. A date or time column gets a `CAST`, so
   `"2026-10-05"` compares as a date.
@@ -117,8 +125,12 @@ pipeline.query(
 
 ## HNSW
 
-IRIS uses an HNSW index only for the query function its `Distance` names. When the table's
-index was built for a different measure than `metric`, the store logs one warning.
+IRIS uses an HNSW index only for the query function its `Distance` names. When a table's
+index was built for a different measure than `metric`, the store logs one warning. That
+covers any table, the library's own included.
+
+Measured on IRIS 2026.1 at 5,000 rows: `SELECT TOP k ... ORDER BY` returns rows in rank order,
+both scanned and through HNSW, and a test guards it.
 
 Measured at 5,000 rows (spec 092, `plan.md`): a selective `where=` plans through the filter's
 own index. That is faster than HNSW at that size, so pushing the filter into SQL is what makes

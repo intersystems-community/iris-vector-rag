@@ -272,11 +272,11 @@ Polish:   T038 (docs) ‖ T039 (spec notes)
 - [X] T045 `SELECT TOP k ... ORDER BY` rank order at 5,000 rows, scanned and through HNSW
   (`tests/integration/test_byot_iris.py`).
 - [X] T046 One `where_kwargs` helper for handing on `where`.
-- [ ] T047 [P] (FR-021) Unit tests: every pipeline's `query(..., where=...)` reaches its
+- [X] T047 [P] (FR-021) Unit tests: every pipeline's `query(..., where=...)` reaches its
   document-table legs, and graph-leg documents are fetched under the predicate
   (`tests/unit/test_byot_pipelines.py`).
-- [ ] T048 (FR-021) Integration test per pipeline on the MedTeam table: no out-of-scope row in
+- [X] T048 (FR-021) Integration test per pipeline on the MedTeam table: no out-of-scope row in
   any pipeline's result (`tests/integration/test_byot_pipelines_iris.py`).
-- [ ] T049 (FR-021) Wire `where` into basic + rerank, CRAG, multi-query rrf, HybridGraphRAG,
+- [X] T049 (FR-021) Wire `where` into basic + rerank, CRAG, multi-query rrf, HybridGraphRAG,
   GraphRAG and global GraphRAG (`iris_vector_rag/pipelines/*.py`), or refuse it where a
   pipeline cannot apply it.

@@ -159,11 +159,8 @@ swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipe
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._initialize_graph_core#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._intelligent_hybrid_search#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._intelligent_hybrid_search#2
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._retrieve_via_enhanced_text#1
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._retrieve_via_hnsw_vector#1
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._retrieve_via_hybrid_fusion#1
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._retrieve_via_rrf#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline.attach_existing_corpus#1
+swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::ScopedRetrievalMixin._graph_leg#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline.query#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::HybridRetrievalMethods.benchmark_search_methods#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::HybridRetrievalMethods.check_hnsw_optimization#1

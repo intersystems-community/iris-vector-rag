@@ -27,6 +27,13 @@ from ..storage.table_shape import CANONICAL_VECTOR_TYPE
 
 logger = logging.getLogger(__name__)
 
+_WHERE_REFUSAL = (
+    "where= is not supported by IRISGlobalGraphRAGPipeline: it answers from its own "
+    "paper tables and graph globals, not from a document table the filter could "
+    "scope, so ignoring it would return papers outside the filter (feature 092, "
+    "FR-021). Use GraphRAGPipeline or HybridGraphRAGPipeline with an attached table."
+)
+
 
 class IRISGlobalGraphRAGException(RAGException):
     """Exceptions specific to IRIS Global GraphRAG pipeline."""
@@ -400,6 +407,10 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
         """
         start_time = time.time()
 
+        # Outside the try below, which would wrap the refusal as a pipeline failure.
+        if kwargs.get("where"):
+            raise ValueError(_WHERE_REFUSAL)
+
         try:
             if not self.global_graphrag_module:
                 raise IRISGlobalGraphRAGException("Pipeline not properly initialized")
@@ -513,6 +524,9 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
         Returns:
             Dict containing responses from all three modes
         """
+        if kwargs.get("where"):
+            raise ValueError(_WHERE_REFUSAL)
+
         try:
             top_k = kwargs.get("top_k", self.config.get("top_k", 5))
 
