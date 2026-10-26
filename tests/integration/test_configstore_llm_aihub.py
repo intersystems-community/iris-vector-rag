@@ -116,7 +116,7 @@ def test_missing_entry(aihub_iris):
     err = build_error(aihub_iris, "nosuch")
 
     assert err.entry == "nosuch"
-    assert "no ConfigStore entry AI.LLM.nosuch" in str(err)
+    assert "AI.LLM.nosuch does not exist" in str(err)
 
 
 def test_no_wallet_privilege(aihub_iris):

@@ -48,7 +48,7 @@
 
 ## Phase 4: US2 – clear errors at build time (P1)
 
-- [ ] T011 [P] [US2] (FR-007, FR-008) Unit tests in `tests/unit/test_configstore_llm_errors.py`. Each of the 9
+- [X] T011 [P] [US2] (FR-007, FR-008) Unit tests in `tests/unit/test_configstore_llm_errors.py`. Each of the 9
   failures raises `LLMConfigError` with the entry and the fix:
   - an invalid name, with no call made;
   - #5809, a missing entry;
@@ -59,11 +59,11 @@
   - a disabled entry;
   - an `ImportError` for the provider, naming the package;
   - a leftover `secret://` value.
-- [ ] T012 [US2] Integration tests (`aihub` marker) for a missing entry, no Wallet privilege, no native privilege,
+- [X] T012 [US2] Integration tests (`aihub` marker) for a missing entry, no Wallet privilege, no native privilege,
   missing keys and a disabled entry. Plus `tests/integration/test_configstore_llm_version_gate.py` on
   `iris-vector-rag-iris` (2026.1), with no marker.
-- [ ] T013 [US2] Implement the error mapping in `configstore_llm.py`.
-- [ ] T014 [US2] Gate: T011 and T012 pass.
+- [X] T013 [US2] Implement the error mapping in `configstore_llm.py`.
+- [X] T014 [US2] Gate: T011 and T012 pass.
 
 ## Phase 5: Polish
 
