@@ -39,6 +39,12 @@ print(result['answer'])
 Search your own IRIS table, with your column names, embedding model and mandatory filters,
 without copying it: see [Bring your own table](docs/BRING_YOUR_OWN_TABLE.md).
 
+### Models configured in IRIS?
+
+On IRIS 2026.3 with AI Hub, take the answer model from a ConfigStore entry, with its key
+kept in the IRIS Wallet: `create_pipeline("basic", llm_config="opsreview")`. See
+[The answer model from AI Hub ConfigStore](docs/LLM_FROM_CONFIGSTORE.md).
+
 ## Pipelines
 
 All pipelines share the same interface — switch with one line:

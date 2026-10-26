@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Added: the answer model from AI Hub ConfigStore (spec 093)
+
+Name an AI Hub ConfigStore entry `AI.LLM.<name>` and the pipeline takes its answer model
+from it, with the key resolved from the IRIS Wallet
+([docs/LLM_FROM_CONFIGSTORE.md](docs/LLM_FROM_CONFIGSTORE.md)):
+
+- **Three ways to name it:** `create_pipeline(..., llm_config="opsreview")`, the
+  `llm.config_name` setting (`RAG_LLM__CONFIG_NAME`), or
+  `llm_func=configstore_llm("opsreview", connections)` for a pipeline built directly.
+- **Read once, at build,** over the pipeline's own IRIS connection, and handed to LangChain's
+  `init_chat_model` unchanged. No key is taken from the environment.
+- **Precedence:** an explicit `llm_func`, then the entry, then the YAML `llm:` settings. With
+  no entry named, nothing changes.
+- **One error, `LLMConfigError`,** for every failure, naming the entry and the fix: an
+  invalid name, a missing or disabled entry, a missing `model` or `model_provider`, a Wallet
+  reference the user cannot read, a missing `%Native_ClassExecution:USE`, an IRIS without
+  ConfigStore (with its version), or a provider package that is not installed.
+
 ## v0.17.0 — bring your own table (2026-10-25)
 
 ### Added: bring your own table (spec 092)

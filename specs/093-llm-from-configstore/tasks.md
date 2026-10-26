@@ -67,14 +67,14 @@
 
 ## Phase 5: Polish
 
-- [ ] T015 [P] (FR-011) `docs/LLM_FROM_CONFIGSTORE.md`:
+- [X] T015 [P] (FR-011) `docs/LLM_FROM_CONFIGSTORE.md`:
   - how an administrator creates the entry and Wallet secret (ObjectScript);
   - the reference format, with `#field` required;
   - the two privileges;
   - the three ways to select it.
 
   Link it from the README.
-- [ ] T016 CHANGELOG Unreleased entry.
+- [X] T016 CHANGELOG Unreleased entry.
 - [ ] T017 Full run:
   - the unit suite;
   - the integration suites, including `aihub` locally;

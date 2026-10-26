@@ -80,10 +80,7 @@ class _Reader:
         )
 
     def version(self) -> str:
-        try:
-            return str(self.native.classMethodValue("%SYSTEM.Version", "GetNumber"))
-        except Exception:  # the version only decorates the message
-            return "unknown version"
+        return str(self.native.classMethodValue("%SYSTEM.Version", "GetNumber"))
 
     def get(self) -> Any:
         found = self.iris.IRISReference(None)
@@ -102,12 +99,15 @@ class _Reader:
                     "check the name (names are case-sensitive), or ask the IRIS "
                     "administrator to create the entry",
                 )
-            raise LLMConfigError(
-                self.name,
-                f"could not be read: {text}",
-                "check the entry in %ConfigStore.Configuration",
-            )
+            raise self.unreadable(text)
         return found.getValue()
+
+    def unreadable(self, text: str) -> LLMConfigError:
+        return LLMConfigError(
+            self.name,
+            f"could not be read: {text}",
+            "check the entry in %ConfigStore.Configuration",
+        )
 
     def native_failure(self, exc: Exception) -> Exception:
         text = str(exc)
@@ -136,11 +136,7 @@ class _Reader:
                 raise _wallet_error(
                     self.name, list(_references(stored)), self.error_text(status)
                 )
-            raise LLMConfigError(
-                self.name,
-                f"could not be read: {self.error_text(status)}",
-                "check the entry in %ConfigStore.Configuration",
-            )
+            raise self.unreadable(self.error_text(status))
         return json.loads(copy.getValue().invoke("%ToJSON"))
 
     def read(self) -> Dict[str, Any]:
