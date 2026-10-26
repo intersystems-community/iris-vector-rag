@@ -75,7 +75,7 @@
 
   Link it from the README.
 - [X] T016 CHANGELOG Unreleased entry.
-- [ ] T017 Full run:
+- [X] T017 Full run:
   - the unit suite;
   - the integration suites, including `aihub` locally;
   - `scripts/gates/antipatterns.py`;
