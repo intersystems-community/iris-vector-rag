@@ -1,0 +1,9 @@
+ROUTINE ivrteardown
+ // Removes everything ivrsetup creates. Run in %SYS.
+ for n="ivrtest","ivrnokey","ivroff" { do ##class(%ConfigStore.Configuration).Delete("AI.LLM."_n) }
+ do ##class(%Wallet.Secret).Delete("ivrprobe.openai")
+ do ##class(%Wallet.Collection).Delete("ivrprobe")
+ for u="ivr_nowallet","ivr_nonative" { do ##class(Security.Users).Delete(u) }
+ for r="ivr_base","ivr_role_nonative","ivr_nonative" { do ##class(Security.Roles).Delete(r) }
+ do ##class(Security.Resources).Delete("IvrWalletUse")
+ quit

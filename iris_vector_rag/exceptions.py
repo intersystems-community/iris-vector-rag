@@ -361,6 +361,21 @@ class LLMTimeoutError(GenerationError):
         self.max_retries = max_retries
 
 
+class LLMConfigError(RAGException):
+    """An AI Hub ConfigStore entry (``AI.LLM.<name>``) gave no usable answer model (spec 093).
+
+    Raised when the pipeline is built, never at the first question. The message names the
+    entry, what is wrong and what to do. It is built from Wallet references, never from
+    resolved values, so a key cannot reach a log through it.
+    """
+
+    def __init__(self, entry: str, problem: str, fix: str):
+        super().__init__(f"ConfigStore entry AI.LLM.{entry} {problem}. Fix: {fix}.")
+        self.entry = entry
+        self.problem = problem
+        self.fix = fix
+
+
 class VectorStoreError(RAGException):
     """
     Base exception for vector store operations.

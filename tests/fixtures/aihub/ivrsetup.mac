@@ -1,0 +1,27 @@
+ROUTINE ivrsetup
+ // Spec 093 test fixtures on the AI Hub lab. Idempotent; run in %SYS.
+ do ^ivrteardown
+ set sc=##class(Security.Resources).Create("IvrWalletUse","ivr test wallet use","")
+ do ##class(%Wallet.Collection).Create("ivrprobe",{"UseResource":"IvrWalletUse","EditResource":"%Admin_Secure"})
+ set sc=##class(%Wallet.KeyValue).Create("ivrprobe.openai",{"Usage":"CUSTOM","Secret":{"api_key":"sk-probe-123"}})
+ if 'sc write "FAIL secret ",$system.Status.GetErrorText(sc),! quit
+ set ok={"model":"gpt-4o-mini","model_provider":"openai","temperature":0.1,"api_key":"secret://ivrprobe.openai#api_key"}
+ set sc=##class(%ConfigStore.Configuration).Create("AI","LLM","","ivrtest",ok)
+ if 'sc write "FAIL ivrtest ",$system.Status.GetErrorText(sc),! quit
+ set sc=##class(%ConfigStore.Configuration).Create("AI","LLM","","ivrnokey",{"model_provider":"openai"})
+ if 'sc write "FAIL ivrnokey ",$system.Status.GetErrorText(sc),! quit
+ set sc=##class(%ConfigStore.Configuration).Create("AI","LLM","","ivroff",ok)
+ if 'sc write "FAIL ivroff ",$system.Status.GetErrorText(sc),! quit
+ set sc=##class(%ConfigStore.Configuration).Get("AI.LLM.ivroff",.cfg)
+ set cfg.Enabled=0 set sc=cfg.%Save()
+ if 'sc write "FAIL disable ",$system.Status.GetErrorText(sc),! quit
+ set sc=##class(Security.Roles).Create("ivr_base","ivr test base","%DB_USER:RW,%Native_ClassExecution:U")
+ if 'sc write "FAIL role ivr_base ",$system.Status.GetErrorText(sc),! quit
+ set sc=##class(Security.Roles).Create("ivr_role_nonative","ivr test without native execution","%DB_USER:RW")
+ if 'sc write "FAIL role ivr_role_nonative ",$system.Status.GetErrorText(sc),! quit
+ set sc=##class(Security.Users).Create("ivr_nowallet","ivr_base","ivr-pw","ivr test: no wallet privilege")
+ set sc=##class(Security.Users).Create("ivr_nonative","ivr_role_nonative","ivr-pw","ivr test: no native execution")
+ set p("Password")="SYS",p("ChangePassword")=0 do ##class(Security.Users).Modify("_SYSTEM",.p)
+ for u="ivr_nowallet","ivr_nonative" { kill p set p("ChangePassword")=0 do ##class(Security.Users).Modify(u,.p) }
+ write "SETUP-OK",!
+ quit

@@ -2,6 +2,7 @@
 
 from typing import Any, Callable, Dict, List, Optional
 
+from iris_vector_rag.common.configstore_llm import configstore_llm
 from iris_vector_rag.common.utils import get_llm_func, llm_limits_from_config
 from iris_vector_rag.executor import SqlExecutor
 
@@ -45,6 +46,7 @@ def create_pipeline(
     engine: Optional["IRISVectorEngine"] = None,
     validate_requirements: bool = False,
     auto_setup: bool = False,
+    llm_config: Optional[str] = None,
     **kwargs,
 ) -> RAGPipeline:
     """
@@ -65,6 +67,9 @@ def create_pipeline(
         engine: Optional pre-built IRISVectorEngine instance. If provided, uses its managers.
         validate_requirements: Whether to validate pipeline requirements before creation.
         auto_setup: Whether to automatically set up missing requirements.
+        llm_config: Name of an AI Hub ConfigStore entry (``AI.LLM.<name>``) to take the
+            answer model from, read now over the pipeline's IRIS connection. Defaults to
+            the ``llm.config_name`` setting. An explicit ``llm_func`` wins over both.
         **kwargs: Additional configuration parameters.
 
     Returns:
@@ -73,11 +78,15 @@ def create_pipeline(
     Raises:
         ValueError: If the pipeline_type is unknown.
         PipelineValidationError: If validation fails and auto_setup is False.
+        LLMConfigError: If the named ConfigStore entry gives no usable answer model.
     """
     # engine= shortcut: extract managers from pre-built engine
     if engine is not None:
         config_manager = engine.config_manager
         connection_manager = engine.connection_manager
+        llm_func = _answer_model(
+            llm_func, llm_config, config_manager, connection_manager
+        )
         if validate_requirements:
             factory = ValidatedPipelineFactory(connection_manager, config_manager)
             if embedding_func:
@@ -91,18 +100,7 @@ def create_pipeline(
             )
         if embedding_func:
             kwargs["embedding_func"] = embedding_func
-        effective_llm_func = llm_func
-        if effective_llm_func is None:
-            import os
-
-            default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
-            llm_provider = config_manager.get("llm.provider", default_provider)
-            llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
-            effective_llm_func = get_llm_func(
-                provider=llm_provider,
-                model_name=llm_model_name,
-                **llm_limits_from_config(config_manager),
-            )
+        effective_llm_func = llm_func or _yaml_answer_model(config_manager)
         return _create_pipeline_legacy(
             pipeline_type,
             connection_manager,
@@ -122,6 +120,8 @@ def create_pipeline(
         )
     else:
         connection_manager = ConnectionManager(config_manager)
+
+    llm_func = _answer_model(llm_func, llm_config, config_manager, connection_manager)
 
     # Use validated factory if validation is requested
     if validate_requirements:
@@ -143,22 +143,42 @@ def create_pipeline(
     if embedding_func:
         kwargs["embedding_func"] = embedding_func
 
-    # If no llm_func is provided, get one using the utility function
-    effective_llm_func = llm_func
-    if effective_llm_func is None:
-        import os
-
-        default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
-        llm_provider = config_manager.get("llm.provider", default_provider)
-        llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
-        effective_llm_func = get_llm_func(
-            provider=llm_provider,
-            model_name=llm_model_name,
-            **llm_limits_from_config(config_manager),
-        )
+    # With no answer model chosen, the YAML `llm:` settings give one.
+    effective_llm_func = llm_func or _yaml_answer_model(config_manager)
 
     return _create_pipeline_legacy(
         pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs
+    )
+
+
+def _answer_model(
+    llm_func: Optional[Callable[[str], str]],
+    llm_config: Optional[str],
+    config_manager: ConfigurationManager,
+    connection_manager: Any,
+) -> Optional[Callable[[str], str]]:
+    """The chosen answer model: ``llm_func``, else the named ConfigStore entry, else None.
+
+    None leaves the choice where it was before spec 093: the YAML ``llm:`` settings, or
+    the pipeline's own default on the validated path.
+    """
+    if llm_func is not None:
+        return llm_func
+    name = llm_config or config_manager.get("llm:config_name")
+    if not name:
+        return None
+    return configstore_llm(name, connection_manager)
+
+
+def _yaml_answer_model(config_manager: ConfigurationManager) -> Callable[[str], str]:
+    """The answer model the YAML ``llm:`` settings describe."""
+    import os
+
+    default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
+    return get_llm_func(
+        provider=config_manager.get("llm.provider", default_provider),
+        model_name=config_manager.get("llm.model_name", "gpt-4.1-mini"),
+        **llm_limits_from_config(config_manager),
     )
 
 

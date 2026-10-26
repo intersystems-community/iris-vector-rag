@@ -141,7 +141,8 @@ jobs:
           OPENAI_API_KEY: sk-ci-placeholder
         run: |
           DESELECT=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_known_failures.txt | sed 's/^/--deselect=/' | tr '\n' ' ')
-          python -m pytest tests/integration/ $DESELECT \
+          # -m 'not aihub': the AI Hub tests (spec 093) need an internal image GitHub cannot pull.
+          python -m pytest tests/integration/ $DESELECT -m 'not aihub' \
             --timeout=120 \
             --timeout-method=thread \
             --tb=short \

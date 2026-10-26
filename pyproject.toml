@@ -294,6 +294,7 @@ markers = [
     "iris_required: needs IRIS reachable on the project port",
     "clean_iris: needs the IRIS tables emptied first",
     "mcp: MCP integration test",
+    "aihub: needs the ivr-aihub-lab IRIS 2026.3 AI build (internal image; deselected in GitHub CI)",
     # Fixtures a test opts into
     "dat_fixture: uses the DAT-restored fixture database",
     "pmc_data: uses the PMC document corpus",

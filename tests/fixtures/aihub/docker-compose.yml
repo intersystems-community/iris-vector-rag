@@ -1,0 +1,12 @@
+# Throwaway IRIS for Health Community 2026.3 AI build, for spec 093's ConfigStore tests.
+# Registered as ivr-aihub-lab (ports 56972/56773) in the container registry; holds no project
+# data. tests/integration/conftest_aihub.py starts it on demand and removes it at session end.
+services:
+  iris:
+    image: docker.iscinternal.com/docker-intersystems/intersystems/irishealth-community:2026.3.0AI.126.0
+    container_name: ivr-aihub-lab
+    network_mode: bridge
+    mem_limit: 4g
+    ports:
+      - "56972:1972"
+      - "56773:52773"
