@@ -27,7 +27,7 @@ pingouin>=0.6.1
 ragas>=0.1.0
 
 # Text processing
-nltk>=3.10.3
+nltk>=3.10.4
 ftfy>=6.1.0
 
 # Report generation
