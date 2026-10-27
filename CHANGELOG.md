@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.18.0 — the answer model from AI Hub ConfigStore (2026-10-27)
 
 ### Added: the answer model from AI Hub ConfigStore (spec 093)
 
