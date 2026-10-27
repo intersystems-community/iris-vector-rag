@@ -109,7 +109,7 @@ dev = [
     "twine>=4.0.0"
 ]
 mcp = [
-    "mcp>=1.9.0,<2"
+    "mcp>=1.9.0,<3"
 ]
 dspy = [
     "dspy-ai>=2.4.0"
@@ -129,7 +129,7 @@ all = [
     "pre-commit>=3.0.0",
     "build>=0.10.0",
     "twine>=4.0.0",
-    "mcp>=1.9.0,<2",
+    "mcp>=1.9.0,<3",
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
     "opentelemetry-exporter-otlp>=1.20.0",
@@ -156,7 +156,7 @@ dev = [
     "gitpython==3.1.61",
 ]
 mcp = [
-    "mcp>=1.9.0,<2"
+    "mcp>=1.9.0,<3"
 ]
 
 [project.urls]
