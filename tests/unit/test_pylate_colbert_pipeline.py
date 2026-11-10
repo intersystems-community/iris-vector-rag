@@ -729,9 +729,11 @@ class TestPyLateColBERTPipeline:
             assert result["metadata"]["generated_answer"] is False
             assert len(result["retrieved_documents"]) == 3
 
-    def test_query_no_llm_func_provided(self, test_pipeline, sample_documents):
-        """Test query when no LLM function is provided."""
-        # Remove LLM function
+    def test_query_no_llm_func_provided(
+        self, test_pipeline, sample_documents, monkeypatch
+    ):
+        """With an OpenAI key but no LLM function, the documents come back alone."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-placeholder")
         test_pipeline.llm_func = None
 
         with patch(
@@ -1006,3 +1008,40 @@ class TestPyLateColBERTPipeline:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestAnswerSourceWithoutOpenAIKey:
+    """An injected llm_func is the answer source; the OpenAI key is needed only without one."""
+
+    def test_a_supplied_llm_func_answers_with_no_openai_key(
+        self, mock_dependencies, sample_documents, monkeypatch
+    ):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        pipeline = PyLateColBERTPipeline(
+            mock_dependencies["connection_manager"],
+            mock_dependencies["config_manager"],
+            llm_func=lambda prompt: "Metformin is the first-line drug.",
+            vector_store=mock_dependencies["vector_store"],
+        )
+        pipeline.vector_store.search_by_text = Mock(return_value=sample_documents[:2])
+
+        result = pipeline.query("What is the first-line drug?", top_k=2)
+
+        assert result["answer"] == "Metformin is the first-line drug."
+
+    def test_no_llm_func_and_no_key_names_both_fixes(
+        self, mock_dependencies, monkeypatch
+    ):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        pipeline = PyLateColBERTPipeline(
+            mock_dependencies["connection_manager"],
+            mock_dependencies["config_manager"],
+            vector_store=mock_dependencies["vector_store"],
+        )
+        pipeline.llm_func = None
+
+        with pytest.raises(ValueError) as raised:
+            pipeline.query("What is the first-line drug?", top_k=2)
+
+        assert "OPENAI_API_KEY" in str(raised.value)
+        assert "llm_func" in str(raised.value)

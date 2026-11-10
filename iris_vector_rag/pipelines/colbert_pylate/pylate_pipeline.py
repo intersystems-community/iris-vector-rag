@@ -276,15 +276,9 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
                 "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
             )
 
-        if kwargs.get("generate_answer", True) and not os.environ.get("OPENAI_API_KEY"):
-            logger.error(
-                "Missing OPENAI_API_KEY for PyLate ColBERT query. "
-                "Pipeline=pylate_colbert, operation=query, state=missing_api_key."
-            )
-            raise ValueError(
-                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
-                "or configure your API key before running PyLate ColBERT queries."
-            )
+        self._require_llm_for_answer(
+            kwargs.get("generate_answer", True), "PyLate ColBERT"
+        )
 
         # Validate top_k
         if top_k < 1 or top_k > 100:
