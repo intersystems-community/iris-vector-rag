@@ -99,6 +99,11 @@ tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegr
 tests/integration/test_graphrag_vector_search.py::TestGraphRAGVectorSearchIntegration::test_graphrag_vector_search_retrieval
 tests/integration/test_pipelines_rag_llm_iris.py::test_create_pipeline_with_embedding_func_and_a_key_reaches_a_real_pipeline
 tests/integration/test_reingest_existing_document.py::test_second_ingest_updates_without_an_error_log
-# ci-integration-on: on Community IRIS this file runs out of licenses ("Unable to allocate a license") at its last two tests, even run alone. Needs connection cleanup in its fixtures, or an enterprise key.
-tests/integration/test_ivg_bm25_upgrade_e2e.py::test_the_backend_warns_about_schema_1_and_searches
+# ci-integration-on: on Community IRIS this file runs out of licenses ("Unable to allocate a license"), which test depends on order, even run alone: every test that opens a connection is listed. Needs connection cleanup in its fixtures, or an enterprise key.
+tests/integration/test_ivg_bm25_upgrade_e2e.py::test_a_schema_1_index_searches_but_refuses_writes
+tests/integration/test_ivg_bm25_upgrade_e2e.py::test_the_dry_run_finds_the_index_and_changes_nothing
+tests/integration/test_ivg_bm25_upgrade_e2e.py::test_the_upgrade_converts_the_index_and_writes_then_work
+tests/integration/test_ivg_bm25_upgrade_e2e.py::test_upgrading_again_changes_nothing
 tests/integration/test_ivg_bm25_upgrade_e2e.py::test_the_full_upgrade_previews_then_converts
+tests/integration/test_ivg_bm25_upgrade_e2e.py::test_the_backend_warns_about_schema_1_and_searches
+tests/integration/test_ivg_bm25_upgrade_e2e.py::test_max_df_fraction_skips_a_term_in_most_documents
