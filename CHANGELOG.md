@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **PyLate ColBERT answers with your own `llm_func`:** `query()` refused to run without
+  `OPENAI_API_KEY` even when an `llm_func` was passed, including one from
+  `configstore_llm`. The key is now needed only when no `llm_func` is given, as in BasicRAG
+  and CRAG.
+
+### Changed
+
+- **Dependencies:** `transformers` <5.21, `sentence-transformers` <6.3, `gitpython` 3.2.1
+  (dev group), and newer floors in `evaluation_framework/requirements.txt`. The `dev` and
+  `all` extras now declare `sqlalchemy-iris>=0.20.0`, which the test fixtures use and
+  `iris-devtester` 1.21 no longer installs. `mcp` stays below 2: version 2 is a rewrite and
+  needs its own migration.
+
 ## v0.18.0 — the answer model from AI Hub ConfigStore (2026-10-27)
 
 ### Added: the answer model from AI Hub ConfigStore (spec 093)

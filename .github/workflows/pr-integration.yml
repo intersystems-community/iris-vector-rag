@@ -25,7 +25,7 @@ jobs:
         run: bash scripts/ci/start-iris.sh --container iris --port 1972 --recreate
 
       - name: Set up Python ${{ env.PYTHON_DEFAULT_VERSION }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
 
