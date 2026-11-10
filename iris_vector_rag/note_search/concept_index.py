@@ -24,6 +24,7 @@ from iris_vector_rag.note_search.polarity import (
     UNKNOWN,
     section_polarity,
 )
+from iris_vector_rag.storage.catalog import IRISCatalogReader
 
 __all__ = [
     "ConceptIndex",
@@ -89,15 +90,9 @@ class ConceptIndex:
     def _connection(self) -> Any:
         return self.vector_store._get_connection()
 
-    def _exists(self, cursor: Any) -> bool:
+    def _exists(self, connection: Any, cursor: Any) -> bool:
         schema, table = self._split()
-        cursor.execute(
-            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
-            "WHERE UPPER(TABLE_SCHEMA) = UPPER(?) AND UPPER(TABLE_NAME) = UPPER(?)",
-            [schema, table],
-        )
-        row = cursor.fetchone()
-        return bool(row and int(row[0]) > 0)
+        return IRISCatalogReader(connection).table_exists(schema, table, cursor)
 
     def _missing(self) -> ConceptIndexMissingError:
         return ConceptIndexMissingError(
@@ -122,7 +117,7 @@ class ConceptIndex:
         connection = self._connection()
         cursor = connection.cursor()
         try:
-            if self._exists(cursor):
+            if self._exists(connection, cursor):
                 return
             cursor.execute(
                 f"CREATE TABLE {table} ("
@@ -193,7 +188,7 @@ class ConceptIndex:
         connection = self._connection()
         cursor = connection.cursor()
         try:
-            if not self._exists(cursor):
+            if not self._exists(connection, cursor):
                 raise self._missing()
             # The session connection autocommits, and a rollback cannot undo a statement
             # that already committed, so the replace opens its own transaction.
@@ -266,7 +261,7 @@ class ConceptIndex:
         connection = self._connection()
         cursor = connection.cursor()
         try:
-            if not self._exists(cursor):
+            if not self._exists(connection, cursor):
                 raise self._missing()
             placeholders = ", ".join("?" for _ in wanted)
             sql = (

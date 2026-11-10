@@ -57,6 +57,7 @@ class FakeCursor:
         self.executed.append((sql, params))
         self.description = None
         if "INFORMATION_SCHEMA.INDEXES" in sql:
+            self.description = [("INDEX_NAME",)]
             self._result = list(self._indexes)
         elif sql.startswith("SELECT") and SECTION_COLUMN in sql.split("FROM")[0]:
             self._result = list(self._labels)

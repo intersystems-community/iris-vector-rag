@@ -212,6 +212,24 @@ class IRISCatalogReader:
             return (str(name), distance) if distance else None
         return None
 
+    def table_exists(self, schema: str, table: str, cursor: Any = None) -> bool:
+        """Whether the catalog lists the table, its names compared without case.
+
+        Cheaper than `snapshot` for a caller that only needs the yes or no. A caller
+        inside its own transaction passes its cursor, which is left open.
+        """
+        own_cursor = cursor is None
+        cursor = self._connection.cursor() if own_cursor else cursor
+        try:
+            return bool(self._rows(cursor, IDENTITY_SQL, [schema, table]))
+        except Exception as exc:  # noqa: BLE001 - the driver error becomes the cause
+            raise CatalogUnavailable(
+                f"table query failed: {exc}", schema, table
+            ) from exc
+        finally:
+            if own_cursor:
+                _close(cursor)
+
     def index_names(self, schema: str, table: str, cursor: Any = None) -> set[str]:
         """The indexes declared on a table, upper-cased.
 

@@ -14,6 +14,7 @@ import logging
 from typing import Any, Callable, List, Mapping, Optional, Sequence
 
 from iris_vector_rag.note_search.sections import Heading, Section, split_sections
+from iris_vector_rag.storage.catalog import IRISCatalogReader
 from iris_vector_rag.storage.table_shape import ColumnRole
 
 logger = logging.getLogger(__name__)
@@ -149,16 +150,6 @@ def _check_label_width(label: str, where: str) -> None:
         )
 
 
-def _has_index(cursor: Any, schema: str, table: str) -> bool:
-    cursor.execute(
-        "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES "
-        "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?",
-        [schema, table],
-    )
-    wanted = SECTION_INDEX.upper()
-    return any(str(row[0]).upper() == wanted for row in cursor.fetchall())
-
-
 def ensure_section_column(vector_store: Any) -> bool:
     """Add the opt-in bitmap-indexed `section_label` column to a section table.
 
@@ -218,7 +209,10 @@ def ensure_section_column(vector_store: Any) -> bool:
             altered = True
             # The cached shape predates the column; the next read must see it.
             vector_store.refresh_shape()
-        if not _has_index(cursor, shape.schema, shape.table):
+        indexes = IRISCatalogReader(connection).index_names(
+            shape.schema, shape.table, cursor
+        )
+        if SECTION_INDEX.upper() not in indexes:
             cursor.execute(
                 f"CREATE BITMAP INDEX {SECTION_INDEX} ON {table} ({SECTION_COLUMN})"
             )

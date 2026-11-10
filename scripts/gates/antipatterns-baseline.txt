@@ -11,8 +11,8 @@ catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:194
 catalog-read-outside-shape	iris_vector_rag/common/llm_cache_iris.py:211
 catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:173
 catalog-read-outside-shape	iris_vector_rag/pipelines/colbert_iris/schema.py:185
-catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:101
-catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:112
+catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:115
+catalog-read-outside-shape	iris_vector_rag/retrieval/modes.py:126
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:13
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:134
 hardcoded-vector-type	iris_vector_rag/common/db_init_complete.sql:31
@@ -36,6 +36,7 @@ inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:51
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:68
 inline-standard-ddl	iris_vector_rag/common/db_init_complete.sql:9
 inline-standard-ddl	iris_vector_rag/common/llm_cache_iris.py:143
+inline-standard-ddl	iris_vector_rag/note_search/concept_index.py:123
 inline-standard-ddl	iris_vector_rag/storage/table_shape.py:715
 swallowed-error	iris_vector_rag/common/batch_utils.py::extract_batch_with_retry#1
 swallowed-error	iris_vector_rag/common/connection_manager.py::LegacyConnectionManager.cursor#1

@@ -6,11 +6,11 @@ Purpose: Define configuration data models for IRIS EMBEDDING integration
          with validation, type safety, and serialization support.
 """
 
-from dataclasses import dataclass, field, asdict
-from typing import List, Optional, Dict, Any
-from pathlib import Path
 import importlib.util
 import os
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -41,7 +41,9 @@ class EmbeddingConfig:
         """Validate configuration after initialization."""
         # Validate batch_size
         if self.batch_size <= 0:
-            raise ValueError(f"batch_size must be positive integer, got {self.batch_size}")
+            raise ValueError(
+                f"batch_size must be positive integer, got {self.batch_size}"
+            )
 
         # Validate device_preference
         valid_devices = ["cuda", "mps", "cpu", "auto"]
@@ -78,7 +80,7 @@ class EmbeddingConfig:
             "batchSize": self.batch_size,
             "devicePreference": self.device_preference,
             "enableEntityExtraction": self.enable_entity_extraction,
-            "entityTypes": self.entity_types
+            "entityTypes": self.entity_types,
         }
 
 
@@ -196,10 +198,13 @@ def validate_embedding_config(config: EmbeddingConfig) -> ValidationResult:
         # Detect actual device that will be used
         try:
             import torch
+
             if config.device_preference == "auto":
                 if torch.cuda.is_available():
                     result.device = "cuda:0"
-                elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+                elif (
+                    hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+                ):
                     result.device = "mps"
                 else:
                     result.device = "cpu"
@@ -241,7 +246,8 @@ def validate_embedding_config(config: EmbeddingConfig) -> ValidationResult:
             not result.cache_path_valid  # Cache path invalid
             or "nonexistent" in config.model_name.lower()  # Obviously fake model name
             or "does-not-exist" in config.model_name.lower()
-            or not "/" in config.model_name  # Invalid HuggingFace format (should be org/model)
+            # Invalid HuggingFace format (should be org/model)
+            or "/" not in config.model_name
         ):
             result.add_error(
                 f"MODEL_NOT_FOUND: Model '{config.model_name}' not found in cache and appears invalid. "
@@ -266,7 +272,9 @@ class ClearCacheResult:
     memory_freed_mb: float
 
     def __str__(self) -> str:
-        return f"Cleared {self.models_cleared} models, freed {self.memory_freed_mb:.1f}MB"
+        return (
+            f"Cleared {self.models_cleared} models, freed {self.memory_freed_mb:.1f}MB"
+        )
 
 
 # Helper function for creating configurations
@@ -277,7 +285,7 @@ def create_embedding_config(
     python_path: str = "/usr/bin/python3",
     enable_entity_extraction: bool = False,
     entity_types: Optional[List[str]] = None,
-    **kwargs
+    **kwargs,
 ) -> EmbeddingConfig:
     """
     Helper function to create EmbeddingConfig with sensible defaults.
@@ -309,5 +317,5 @@ def create_embedding_config(
         embedding_class="%Embedding.SentenceTransformers",
         enable_entity_extraction=enable_entity_extraction,
         entity_types=entity_types or [],
-        **kwargs
+        **kwargs,
     )
