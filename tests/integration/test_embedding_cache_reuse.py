@@ -108,36 +108,42 @@ class TestActualModelCaching:
         for i, t in enumerate(times, start=1):
             assert t < 0.05, f"Manager {i} took {t:.3f}s, expected <0.05s with caching"
 
-    def test_cache_persistence_across_embeddings(self):
+    def test_cache_persistence_across_embeddings(self, monkeypatch):
         """
         Verify cache persists across multiple embedding operations.
 
         Given: Cached model from first manager
         When: Create second manager and generate multiple embeddings
-        Then: All operations are fast, model not reloaded
+        Then: The model is not loaded again, and the second manager gives the
+              first one's vector for the same text
+
+        Counted, not timed: a wall-clock bound (it was <0.1s) failed on a busy CI
+        runner at 0.105s with the cache working.
         """
+        import sentence_transformers
+
         # First manager loads model
         config1 = ConfigurationManager()
         manager1 = EmbeddingManager(config1)
-        _ = manager1.embed_text("initial load")
+        first = manager1.embed_text("initial load")
+
+        loads = []
+        real = sentence_transformers.SentenceTransformer
+
+        def counting(*args, **kwargs):
+            loads.append(args[:1])
+            return real(*args, **kwargs)
+
+        monkeypatch.setattr(sentence_transformers, "SentenceTransformer", counting)
 
         # Second manager should use cache
         config2 = ConfigurationManager()
-        start = time.time()
         manager2 = EmbeddingManager(config2)
-
-        # Generate multiple embeddings
         for i in range(10):
             _ = manager2.embed_text(f"test {i}")
 
-        total_time = time.time() - start
-
-        # All 10 embeddings + manager init should be fast (<100ms total)
-        # This will FAIL before caching because manager init alone takes 400ms
-        print(f"\nTotal time for manager2 + 10 embeddings: {total_time:.3f}s")
-        assert (
-            total_time < 0.1
-        ), f"Expected <0.1s for cached manager + 10 embeddings, got {total_time:.3f}s"
+        assert loads == [], f"the model was loaded again: {loads}"
+        assert manager2.embed_text("initial load") == pytest.approx(first)
 
 
 class TestCacheBehaviorIntegration:
