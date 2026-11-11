@@ -265,3 +265,14 @@ def test_the_gate_reports_a_stale_entry_in_the_needs_key_list(tmp_path, monkeypa
     findings = gate.stale_deselect_entry()
 
     assert [f.location for f in findings] == ["tests/contract/ci_needs_llm_key.txt:1"]
+
+
+def test_the_key_is_checked_before_the_integration_tests_run(ci):
+    steps = ci["jobs"]["integration-tests"]["steps"]
+    runs = [s.get("run", "") for s in steps]
+    check = next(i for i, r in enumerate(runs) if "check-llm-key.sh" in r)
+    tests = next(i for i, r in enumerate(runs) if "tests/integration" in r)
+    assert check < tests
+    env = steps[check]["env"]
+    assert "secrets.OPENAI_API_KEY" in env["OPENAI_API_KEY"]
+    assert "secrets.OPENAI_API_KEY" in env["HAS_LLM_KEY"]
