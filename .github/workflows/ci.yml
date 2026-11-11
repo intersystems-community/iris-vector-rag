@@ -153,23 +153,33 @@ jobs:
           RAG_LLM__MAX_RETRIES: "1"
         run: |
           DESELECT=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_known_failures.txt | sed 's/^/--deselect=/' | tr '\n' ' ')
-          if [ "$HAS_LLM_KEY" != "true" ]; then
-            NEEDS_KEY=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_needs_llm_key.txt | sed 's/^/--deselect=/' | tr '\n' ' ')
-            echo "::notice::No OPENAI_API_KEY secret: $(echo $NEEDS_KEY | wc -w | tr -d ' ') tests that need a real key were skipped"
-            DESELECT="$DESELECT $NEEDS_KEY"
-          fi
+          NEEDS_KEY=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_needs_llm_key.txt)
+          status=0
           # -m 'not aihub': the AI Hub tests (spec 093) need an internal image GitHub cannot pull.
-          python -m pytest tests/integration/ $DESELECT -m 'not aihub' \
+          python -m pytest tests/integration/ $DESELECT $(printf -- '--deselect=%s ' $NEEDS_KEY) -m 'not aihub' \
             --timeout=120 \
             --timeout-method=signal \
             --tb=short \
             --junit-xml=test-results-integration.xml \
-            -q
+            -q || status=$?
+          if [ "$HAS_LLM_KEY" = "true" ]; then
+            # A process of their own: the connections these tests leave open took the
+            # Community licences later tests needed, and they are released at exit.
+            python -m pytest $NEEDS_KEY \
+              --timeout=120 \
+              --timeout-method=signal \
+              --tb=short \
+              --junit-xml=test-results-integration-llm-key.xml \
+              -q || status=$?
+          else
+            echo "::notice::No OPENAI_API_KEY secret: $(echo $NEEDS_KEY | wc -w | tr -d ' ') tests that need a real key were skipped"
+          fi
+          exit $status
 
       - name: Upload test results
         uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results-integration
-          path: test-results-integration.xml
+          path: test-results-integration*.xml
           if-no-files-found: ignore

@@ -198,13 +198,16 @@ def test_integration_tests_use_the_api_key_secret_when_there_is_one(ci):
     assert "secrets.OPENAI_API_KEY" in env["HAS_LLM_KEY"]
 
 
-def _pytest_args(ci, tmp_path, has_key):
-    """Run the step's script with a stand-in `python` that records its arguments."""
+def _pytest_runs(ci, tmp_path, has_key, fail=False):
+    """Run the step's script with a stand-in `python`; one argument list per call."""
     import os
     import subprocess
 
     stub = tmp_path / "python"
-    stub.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$ARGS_OUT"\n')
+    stub.write_text(
+        '#!/bin/sh\nprintf "%s\\n" "$@" >> "$ARGS_OUT"\necho "---" >> "$ARGS_OUT"\n'
+        '[ "$STUB_FAIL" = "1" ] && exit 1\nexit 0\n'
+    )
     stub.chmod(0o755)
     out = tmp_path / "args"
     result = subprocess.run(
@@ -215,28 +218,46 @@ def _pytest_args(ci, tmp_path, has_key):
             "PATH": f"{tmp_path}:{os.environ['PATH']}",
             "ARGS_OUT": str(out),
             "HAS_LLM_KEY": has_key,
+            "STUB_FAIL": "1" if fail else "0",
         },
         capture_output=True,
         text=True,
-        check=True,
     )
-    return out.read_text().split(), result.stdout
+    runs = [r.split() for r in out.read_text().split("---\n") if r.strip()]
+    return runs, result
 
 
 def test_without_a_key_the_tests_that_need_one_are_skipped_and_said_so(ci, tmp_path):
     """Fork PRs and the private mirror have no secret; the run says what it left out."""
-    args, stdout = _pytest_args(ci, tmp_path, "false")
+    runs, result = _pytest_runs(ci, tmp_path, "false")
     needs_key = _ids(NEEDS_KEY)
     assert needs_key
-    assert all(f"--deselect={i}" in args for i in needs_key)
-    assert f"{len(needs_key)} tests that need a real key were skipped" in stdout
+    assert len(runs) == 1
+    assert all(f"--deselect={i}" in runs[0] for i in needs_key)
+    assert f"{len(needs_key)} tests that need a real key were skipped" in result.stdout
 
 
-def test_with_a_key_the_tests_that_need_one_run(ci, tmp_path):
-    args, stdout = _pytest_args(ci, tmp_path, "true")
-    assert not any(f"--deselect={i}" in args for i in _ids(NEEDS_KEY))
-    assert all(f"--deselect={i}" in args for i in _ids(KNOWN_FAILURES))
-    assert "skipped" not in stdout
+def test_with_a_key_the_tests_that_need_one_run_in_a_process_of_their_own(ci, tmp_path):
+    """Connections they leave open took the Community licences later tests needed.
+
+    A process's connections are released when it exits, so the main run sees the
+    licences a keyless run sees, and the key tests start from a fresh process.
+    """
+    runs, result = _pytest_runs(ci, tmp_path, "true")
+    needs_key = _ids(NEEDS_KEY)
+    assert len(runs) == 2
+    main, keyed = runs
+    assert all(f"--deselect={i}" in main for i in needs_key)
+    assert all(f"--deselect={i}" in main for i in _ids(KNOWN_FAILURES))
+    assert all(i in keyed for i in needs_key)
+    assert not any(a.startswith("--deselect") for a in keyed)
+    assert "skipped" not in result.stdout
+
+
+def test_a_failing_main_run_still_runs_the_key_tests_and_fails_the_step(ci, tmp_path):
+    runs, result = _pytest_runs(ci, tmp_path, "true", fail=True)
+    assert len(runs) == 2
+    assert result.returncode != 0
 
 
 def test_a_test_is_either_quarantined_or_waiting_for_a_key_not_both():

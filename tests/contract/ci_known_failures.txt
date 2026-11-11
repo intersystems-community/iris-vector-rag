@@ -68,10 +68,5 @@ tests/integration/test_ivg_bm25_upgrade_e2e.py::test_upgrading_again_changes_not
 tests/integration/test_ivg_bm25_upgrade_e2e.py::test_the_full_upgrade_previews_then_converts
 tests/integration/test_ivg_bm25_upgrade_e2e.py::test_the_backend_warns_about_schema_1_and_searches
 tests/integration/test_ivg_bm25_upgrade_e2e.py::test_max_df_fraction_skips_a_term_in_most_documents
-# ci-llm-key (2026-11-10): passes alone, but its 10 concurrent workers run out of Community licences after the tests in ci_needs_llm_key.txt have run and left connections open. Same fix as the BM25 file: tests that release their connections, or an enterprise key.
-tests/integration/test_iris_connection_integration.py::TestIRISConnectionPoolIntegration::test_pool_with_concurrent_acquire_release
-# ci-llm-key (2026-11-11): Community licences again: these ran out once the key tests ran in CI (passed locally with the key). Same fix as the BM25 file and the pool test.
-tests/integration/test_ivg_least_privilege.py::test_a_read_role_can_search_a_bm25_index
-tests/integration/test_ivg_least_privilege.py::test_class_method_calls_run_as_the_account_the_engine_was_given
 # ci-llm-key (2026-11-11): flaky. Hybrid (vector 0.9) and RRF gave the same top 3 in one of three CI runs with the key; it clears and loads its own corpus, so ties in the text ranking are the likely cause. Spec 065 (weighted RRF, text ranking) is the place to fix it.
 tests/integration/test_hybrid_rrf_modes.py::test_hybrid_vs_rrf_produce_different_rankings
