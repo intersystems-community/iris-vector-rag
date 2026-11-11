@@ -62,5 +62,3 @@ tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContrac
 tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logging_level_debug_shows_detailed_diagnostics
 # ci-llm-key (2026-11-11): flaky. Hybrid (vector 0.9) and RRF gave the same top 3 in one of three CI runs with the key; it clears and loads its own corpus, so ties in the text ranking are the likely cause. Spec 065 (weighted RRF, text ranking) is the place to fix it.
 tests/integration/test_hybrid_rrf_modes.py::test_hybrid_vs_rrf_produce_different_rankings
-# ci-llm-key (2026-11-11): flaky on Community IRIS. A pool of 3 opens up to 5 connections in this test: a worker gives its slot back but keeps its connection until its thread exits, and the next worker opens another in the meantime (measured from the IRIS side, 2026-11-11). It ran out of licences in about one CI run in three. Passes alone. The fix is in iris_vector_rag/common/connection_pool.py (deprecated), not in the fixtures.
-tests/integration/test_iris_connection_integration.py::TestIRISConnectionPoolIntegration::test_pool_with_concurrent_acquire_release

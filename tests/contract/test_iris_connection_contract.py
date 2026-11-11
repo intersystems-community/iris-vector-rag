@@ -360,7 +360,7 @@ class TestEditionDetection:
         error = ConnectionLimitError(
             current_limit=1,
             suggested_actions=[
-                "Use connection queuing with IRISConnectionPool",
+                "Run one connection at a time through session_for()",
                 "Run tests serially with pytest -n 0",
             ],
             message="IRIS Community Edition connection limit (1) reached.",
@@ -374,112 +374,9 @@ class TestEditionDetection:
         # Contract: __str__ includes suggestions
         error_str = str(error)
         assert "Suggested actions:" in error_str
-        assert "IRISConnectionPool" in error_str
+        assert "session_for()" in error_str
 
         print("✅ ConnectionLimitError structure validated")
-
-
-class TestConnectionPooling:
-    """Contract tests for the one pool left (User Story 3, revised by 083-iris-session).
-
-    There used to be two `IRISConnectionPool` classes -- one in `common/iris_connection.py`
-    with a free list of its own and edition-aware `max_connections`, one in
-    `common/connection_pool.py` for the HTTP API. 083 deleted the first and rebuilt the
-    second over the session, so the contract is now about bounding concurrent holders:
-    the connections themselves are the session's, one per thread, health-checked on a
-    cadence. What edition-aware sizing was protecting -- Community Edition's single
-    connection -- the session enforces by construction.
-    """
-
-    @pytest.fixture(autouse=True)
-    def fresh_sessions(self):
-        """The cadence belongs to whichever caller asked first, so start with none."""
-        from iris_vector_rag.session.registry import reset_sessions_for_tests
-
-        reset_sessions_for_tests()
-        yield
-        reset_sessions_for_tests()
-
-    def _pool(self, **overrides):
-        from iris_vector_rag.common.connection_pool import _session_pool
-
-        parameters = {
-            "host": "localhost",
-            "port": int(os.environ.get("IRIS_PORT", "1972")),
-            "namespace": "USER",
-            "username": "_SYSTEM",
-            "password": "SYS",
-        }
-        parameters.update(overrides)
-        return _session_pool(**parameters)
-
-    def test_the_pool_bounds_concurrent_holders(self):
-        """T055: capacity is `pool_size` plus `max_overflow`, and it is reported."""
-        pool = self._pool(pool_size=10, max_overflow=5)
-
-        assert pool.pool_size == 10
-        assert pool.max_overflow == 5
-        assert pool.get_stats()["capacity"] == 15
-
-        default = self._pool()
-        assert default.get_stats()["capacity"] >= 1
-
-        print("✅ IRISConnectionPool capacity validated")
-
-    def test_pool_acquire_returns_connection(self):
-        """T056: `acquire()` hands out a connection and the pool is a context manager."""
-        pool = self._pool(pool_size=2)
-
-        assert callable(pool.acquire)
-        assert hasattr(pool, "__enter__")
-        assert hasattr(pool, "__exit__")
-
-        print("✅ IRISConnectionPool.acquire() contract validated")
-
-    def test_pool_release_returns_the_slot(self):
-        """T057: `release()` frees the slot; the connection stays with its thread."""
-        pool = self._pool(pool_size=1)
-
-        assert callable(pool.release)
-        assert callable(pool.get_connection)
-
-        print("✅ IRISConnectionPool.release() contract validated")
-
-    def test_pool_acquire_raises_timeout_when_exhausted(self):
-        """T058: `acquire()` raises `TimeoutError` once every slot is taken."""
-        pool = self._pool(pool_size=1, max_overflow=0, pool_timeout=1)
-
-        # Take the only slot without asking the session for anything.
-        assert pool._slots.acquire(timeout=1)
-        try:
-            with pytest.raises(TimeoutError) as caught:
-                pool.acquire()
-        finally:
-            pool._slots.release()
-
-        assert "Timeout acquiring connection" in str(caught.value)
-
-        print("✅ IRISConnectionPool timeout contract validated")
-
-    def test_pool_recycle_becomes_the_sessions_health_interval(self):
-        """T059: what the recycle timer approximated, the health deadline now is."""
-        pool = self._pool(pool_recycle=45)
-
-        assert pool.pool_recycle == 45
-        assert pool.session.health_interval == 45.0
-
-        print("✅ Recycle-as-health-interval validated")
-
-    def test_the_pool_is_the_only_one_in_the_package(self):
-        """T060: one name, one class -- `common.iris_connection` has no pool of its own."""
-        import iris_vector_rag.common.iris_connection as conn_module
-        from iris_vector_rag.common import IRISConnectionPool
-        from iris_vector_rag.common.connection_pool import (
-            IRISConnectionPool as PoolFromItsModule,
-        )
-
-        assert IRISConnectionPool is PoolFromItsModule
-        assert not hasattr(conn_module, "IRISConnectionPool")
 
 
 # ---------------------------------------------------------------------------

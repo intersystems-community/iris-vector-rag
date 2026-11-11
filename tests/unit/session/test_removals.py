@@ -20,9 +20,6 @@ GONE = [
     ("iris_vector_rag.common.iris_connection", "IRISConnectionPool"),
     ("iris_vector_rag.common.iris_connection", "_PooledConnection"),
     ("iris_vector_rag.common.iris_connection_manager", "get_iris_connection_old"),
-    ("iris_vector_rag.common.connection_pool", "get_pool"),
-    ("iris_vector_rag.common.connection_pool", "initialize_pool"),
-    ("iris_vector_rag.common.connection_pool", "close_pool"),
     ("iris_vector_rag.common.connection_manager", "ConnectionManager"),
 ]
 
@@ -88,15 +85,19 @@ def test_no_two_connection_classes_share_a_name():
     assert collisions == {}, f"connection classes sharing a name: {collisions}"
 
 
-def test_the_pool_the_api_keeps_is_the_only_one_left():
-    from iris_vector_rag.common import connection_pool
+def test_the_deprecated_pool_is_gone():
+    """Deprecated in 0.15 for removal in 0.16; nothing in the package used it.
 
-    assert isinstance(connection_pool.IRISConnectionPool, type)
+    It also broke its own promise: a pool of 3 opened up to 5 connections, because a
+    worker gave back its slot but kept its connection until its thread exited. A
+    session (`session_for`) already gives each thread one connection.
+    """
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("iris_vector_rag.common.connection_pool")
 
-    exported = importlib.import_module("iris_vector_rag.common")
-    assert exported.IRISConnectionPool is connection_pool.IRISConnectionPool, (
-        "iris_vector_rag.common must re-export the pool that survives, not the "
-        "deleted one"
+    assert not (PACKAGE / "common" / "connection_pool.py").exists()
+    assert not hasattr(
+        importlib.import_module("iris_vector_rag.common"), "IRISConnectionPool"
     )
 
 

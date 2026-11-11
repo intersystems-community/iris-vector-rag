@@ -75,9 +75,8 @@ def test_the_first_callers_cadence_is_the_sessions_and_a_later_one_is_told(caplo
 def test_the_ignored_cadence_is_reported_once_not_per_call(caplog):
     """The pool asks on every request; a per-request warning is not a warning.
 
-    `IRISConnectionPool.session` resolves the session on each acquire and release, so
-    a caller whose `pool_recycle` lost the race would otherwise get two lines of log
-    per served request -- which is how a real warning gets filtered out (FR-002).
+    A caller that resolves the session on every request (as the HTTP API's pool did)
+    and whose cadence lost the race would otherwise get a line of log per request -- which is how a real warning gets filtered out (FR-002).
     """
     import logging
 

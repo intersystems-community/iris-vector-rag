@@ -332,8 +332,7 @@ filterwarnings = [
     # so delete the entry when the API is removed rather than adding to the list.
     #
     # tests/conftest.py's `connection_pool` fixture hands the deprecated testing
-    # pool to the contract tests that cover it. Its own message points at
-    # IRISConnectionPool, which 0.15 removed; the replacement is
+    # pool to the contract tests that cover it. Its message points at
     # iris_vector_rag.session.session_for().
     "ignore:ConnectionPool \\(testing module\\) is deprecated:DeprecationWarning",
     # tests/contract/test_iris_connection_contract.py is the contract for

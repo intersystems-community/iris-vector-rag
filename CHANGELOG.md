@@ -2,8 +2,19 @@
 
 ## Unreleased
 
+### Removed
+
+- **`IRISConnectionPool`** (`iris_vector_rag.common.connection_pool`), deprecated since
+  0.15. Nothing in the package used it, and it broke its own bound: a pool of 3 opened up
+  to 5 connections, enough to run a Community Edition licence out. Use `session_for()`,
+  which gives each thread one connection.
+
 ### Fixed
 
+- **BM25 upgrades and schema deploys no longer leave a connection open:** `SchemaManager`
+  built an iris-vector-graph engine per call, and ivg opens a connection of its own for
+  each engine that nothing closed. Repeated `upgrade_bm25_indexes()` calls stacked them up
+  until Community Edition refused a licence. The connection is now closed after each call.
 - **PyLate ColBERT answers with your own `llm_func`:** `query()` refused to run without
   `OPENAI_API_KEY` even when an `llm_func` was passed, including one from
   `configstore_llm`. The key is now needed only when no `llm_func` is given, as in BasicRAG

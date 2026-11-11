@@ -146,32 +146,6 @@ class TestEmbeddedModeSupport:
 
 
 # ---------------------------------------------------------------------------
-# T002 — connection_pool.py: importing the module must not raise even without iris
-# ---------------------------------------------------------------------------
-
-
-class TestConnectionPoolLazyImport:
-    """T002: connection_pool module import must not fail when iris is unavailable."""
-
-    def test_module_importable_without_iris(self):
-        """Importing connection_pool must not raise even when iris is not installed."""
-        saved = sys.modules.pop("iris_vector_rag.common.connection_pool", None)
-        saved_iris = sys.modules.pop("iris", None)
-        saved_iris_dbapi = sys.modules.pop("iris.dbapi", None)
-
-        try:
-            with patch.dict(sys.modules, {"iris": None, "iris.dbapi": None}):
-                import iris_vector_rag.common.connection_pool  # must not raise
-        finally:
-            if saved:
-                sys.modules["iris_vector_rag.common.connection_pool"] = saved
-            if saved_iris is not None:
-                sys.modules["iris"] = saved_iris
-            if saved_iris_dbapi is not None:
-                sys.modules["iris.dbapi"] = saved_iris_dbapi
-
-
-# ---------------------------------------------------------------------------
 # T004 — colbert _ensure_native_conn must route through the session
 # ---------------------------------------------------------------------------
 

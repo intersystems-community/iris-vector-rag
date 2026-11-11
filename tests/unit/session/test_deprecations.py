@@ -94,28 +94,6 @@ class TestOneWarningEach:
             "session" in str(deprecations[0].message).lower()
         ), f"{name} does not name the session as its replacement"
 
-    def test_the_pool_the_api_uses_warns_once_and_serves_the_session(
-        self, substituted, monkeypatch
-    ):
-        import iris_vector_rag.common.connection_pool as pool_module
-
-        monkeypatch.setattr(pool_module, "session_for", lambda *a, **k: substituted)
-
-        pool, deprecations = _warnings_from(
-            lambda: pool_module.IRISConnectionPool(
-                host="localhost",
-                port=1972,
-                namespace="USER",
-                username="_SYSTEM",
-                password="SYS",
-            )
-        )
-
-        assert len(deprecations) == 1
-        assert "session" in str(deprecations[0].message).lower()
-        with pool.get_connection() as connection:
-            assert connection is substituted.connection_for_adapter()
-
     def test_the_odbc_era_manager_warns_under_its_new_name(self, substituted):
         from iris_vector_rag.common.connection_manager import LegacyConnectionManager
 
@@ -130,7 +108,6 @@ class TestOneWarningEach:
             "iris_vector_rag.common.iris_connection",
             "iris_vector_rag.common.iris_connection_manager",
             "iris_vector_rag.common.iris_dbapi_connector",
-            "iris_vector_rag.common.connection_pool",
             "iris_vector_rag.common.connection_manager",
         ],
     )
@@ -189,14 +166,12 @@ class TestNoInternalCallerWarns:
         "get_iris_connection",
         "get_iris_dbapi_connection",
         "IRISConnectionManager",
-        "IRISConnectionPool",
         "LegacyConnectionManager",
     }
     DEFINING_MODULES = {
         "iris_vector_rag/common/iris_connection.py",
         "iris_vector_rag/common/iris_connection_manager.py",
         "iris_vector_rag/common/iris_dbapi_connector.py",
-        "iris_vector_rag/common/connection_pool.py",
         "iris_vector_rag/common/connection_manager.py",
     }
 
@@ -239,28 +214,6 @@ class TestNoInternalCallerWarns:
             connection, deprecations = _warnings_from(call)
             assert connection is substituted.connection_for_adapter()
             assert deprecations == []
-
-    def test_the_pool_the_api_builds_is_silent(self, substituted, monkeypatch):
-        import iris_vector_rag.common.connection_pool as pool_module
-
-        monkeypatch.setattr(pool_module, "session_for", lambda *a, **k: substituted)
-
-        pool, deprecations = _warnings_from(
-            lambda: pool_module._session_pool(
-                host="localhost",
-                port=1972,
-                namespace="USER",
-                username="_SYSTEM",
-                password="SYS",
-                pool_size=4,
-            )
-        )
-
-        assert deprecations == []
-        assert isinstance(pool, pool_module.IRISConnectionPool)
-        assert pool.get_stats()["pool_size"] == 4
-        with pool.get_connection() as connection:
-            assert connection is substituted.connection_for_adapter()
 
 
 class TestBehaviourIsUnchanged:

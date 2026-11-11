@@ -35,7 +35,7 @@ replacement. All of it is gone in 0.16.
 | `common.iris_dbapi_connector.get_iris_dbapi_connection()`              | same                                                         |
 | `common.iris_connection_manager.IRISConnectionManager()`               | `session_for()`                                              |
 | `common.connection_manager.ConnectionManager()`                        | `session_for()` (the class is now `LegacyConnectionManager`) |
-| `common.connection_pool.IRISConnectionPool()`                          | `session_for()`                                              |
+| `common.connection_pool.IRISConnectionPool()`                          | gone after 0.18.0 — `session_for()`                          |
 | `cursor = conn.cursor(); ...; cursor.close()`                          | `session.execute(...)`                                       |
 | `IRISConnectionPool.get_pool()` / `initialize_pool()` / `close_pool()` | gone in 0.15 — hold a session                                |
 | `common.iris_connector` (whole module)                                 | gone in 0.15 — `session_for()`                               |
@@ -198,20 +198,8 @@ A thread that just ends needs none of these.
 
 ## The pool
 
-`IRISConnectionPool` still exists for the HTTP API, and in 0.15 it is a pool over one
-session. The session already gives each thread its own connection, so what the pool
-adds is a capacity bound: `release()` closes a connection once more are held than the
-pool advertises.
-
-| Stat               | Means                                                   |
-| ------------------ | ------------------------------------------------------- |
-| `open_connections` | Connections held right now, across every thread.        |
-| `connected`        | `open_connections > 0` — some thread holds one **now**. |
-| `pool_size`        | The advertised capacity.                                |
-
-`connected` is `False` for an idle pool, and `True` inside a live `get_connection()`.
-That is a pool's question, not a thread's: the thread that reads a health route is
-never the thread that served a request.
-
-The pool is deprecated with everything else in this table — a new caller should hold a
-session.
+`IRISConnectionPool` is gone (removed after 0.18.0). Nothing in the package used it,
+and it did not keep its own bound: a pool of 3 opened up to 5 connections, because a
+worker gave back its slot but kept its connection until its thread exited. Hold a
+session instead; it gives each thread one connection and closes it when the thread
+ends.

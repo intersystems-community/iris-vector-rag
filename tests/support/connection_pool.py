@@ -7,7 +7,7 @@ using thread-safe semaphore-based pooling.
 Feature: 035-make-2-modes
 
 DEPRECATED: This module is deprecated as of Feature 051 (Simplify IRIS Connection).
-Use iris_vector_rag.common.IRISConnectionPool() for production connection pooling.
+Use iris_vector_rag.session.session_for() for production connections.
 See specs/051-simplify-iris-connection/quickstart.md for migration guide.
 """
 
@@ -31,7 +31,7 @@ class ConnectionPool:
     Community mode: Single connection (Semaphore(1))
     Enterprise mode: Many connections (Semaphore(999))
 
-    DEPRECATED: Use IRISConnectionPool from iris_vector_rag.common instead.
+    DEPRECATED: use iris_vector_rag.session.session_for() instead.
     """
 
     def __init__(
@@ -44,13 +44,13 @@ class ConnectionPool:
             mode: Backend mode (COMMUNITY or ENTERPRISE)
             connector: Optional factory for a real connection per acquired slot
 
-        DEPRECATED: Use IRISConnectionPool for production pooling:
-            from iris_vector_rag.common import IRISConnectionPool
-            pool = IRISConnectionPool(max_connections=20)
+        DEPRECATED: use a session for production connections:
+            from iris_vector_rag.session import session_for
+            session = session_for()
         """
         warnings.warn(
             "ConnectionPool (testing module) is deprecated as of Feature 051. "
-            "Use IRISConnectionPool from iris_vector_rag.common for production pooling. "
+            "Use iris_vector_rag.session.session_for() for production connections. "
             "See specs/051-simplify-iris-connection/quickstart.md for migration guide.",
             DeprecationWarning,
             stacklevel=2,

@@ -53,7 +53,7 @@ class ConnectionLimitError(RuntimeError):
         >>> raise ConnectionLimitError(
         ...     current_limit=1,
         ...     suggested_actions=[
-        ...         "Use connection queuing with IRISConnectionPool",
+        ...         "Run one connection at a time through session_for()",
         ...         "Run tests serially with pytest -n 0",
         ...         "Set IRIS_BACKEND_MODE=community explicitly"
         ...     ],
