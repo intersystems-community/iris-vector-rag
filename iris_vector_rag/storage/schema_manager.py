@@ -12,8 +12,9 @@ import os
 import re
 import time
 import warnings
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, cast
+from typing import Any, Dict, Iterable, Iterator, List, Optional, cast
 
 from iris_vector_rag.exceptions import DestructiveMigrationError, SchemaIndexError
 from iris_vector_rag.integrations.ivg import (
@@ -23,6 +24,7 @@ from iris_vector_rag.integrations.ivg import (
     InitializationResult,
     ValidationResult,
     assert_ivg_compatible,
+    close_graph_engine,
     create_graph_engine,
     get_ivg_version,
     pre_4_layout_tables,
@@ -591,7 +593,8 @@ class SchemaManager:
 
         connection = self.connection_manager.get_connection()
         if not dry_run:
-            self._graph_engine(connection).initialize_schema()
+            with self._one_job_engine(connection) as engine:
+                engine.initialize_schema()
         return upgrade_to_4_0_0(connection, dry_run=dry_run, **options)
 
     def upgrade_bm25_indexes(
@@ -615,10 +618,14 @@ class SchemaManager:
         Needs the 4.2.0 `Graph.KG.BM25Index` class on the server, which
         `initialize_schema()` (and so `upgrade_iris_vector_graph`) deploys.
         """
-        engine = self._graph_engine(self.connection_manager.get_connection())
-        return upgrade_bm25_indexes(
-            engine, names=names, dry_run=dry_run, continue_on_error=continue_on_error
-        )
+        connection = self.connection_manager.get_connection()
+        with self._one_job_engine(connection) as engine:
+            return upgrade_bm25_indexes(
+                engine,
+                names=names,
+                dry_run=dry_run,
+                continue_on_error=continue_on_error,
+            )
 
     def upgrade_iris_vector_graph(
         self,
@@ -668,10 +675,20 @@ class SchemaManager:
             }
         return create_graph_engine(connection, **options)
 
+    @contextmanager
+    def _one_job_engine(self, connection) -> Iterator[Any]:
+        """`_graph_engine` for one call, its own connection closed afterwards."""
+        engine = self._graph_engine(connection)
+        try:
+            yield engine
+        finally:
+            close_graph_engine(engine)
+
     def _initialize_ivg_schema(self) -> Dict[str, Any]:
         """Delegate Graph_KG schema creation to iris-vector-graph."""
         connection = self.connection_manager.get_connection()
-        status = self._graph_engine(connection).initialize_schema()
+        with self._one_job_engine(connection) as engine:
+            status = engine.initialize_schema()
         return status if isinstance(status, dict) else {"status": status}
 
     def _validate_configuration(self):

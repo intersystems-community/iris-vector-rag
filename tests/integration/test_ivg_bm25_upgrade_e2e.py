@@ -167,6 +167,37 @@ def test_upgrading_again_changes_nothing(engines, native, index_name, ivg_deploy
     assert again.ok
 
 
+def test_an_upgrade_closes_every_connection_it_opens(
+    native, index_name, ivg_deployed, monkeypatch
+):
+    """ivg opens a connection per engine for its class-method calls; each must close.
+
+    Before the fix every call left one open, and the Community licence's five ran out
+    a few tests into this file.
+    """
+    import iris.dbapi
+
+    opened = []
+    real_connect = iris.dbapi.connect
+
+    def recording_connect(*args, **kwargs):
+        connection = real_connect(*args, **kwargs)
+        opened.append(connection)
+        return connection
+
+    monkeypatch.setattr(iris.dbapi, "connect", recording_connect)
+    write_schema_1(native, index_name, DOCS)
+
+    for _ in range(3):
+        report = ivg_deployed.upgrade_bm25_indexes(names=[index_name])
+    preview = ivg_deployed.upgrade_iris_vector_graph(dry_run=True)
+
+    assert report.current == (index_name,)
+    assert index_name in preview.bm25.current
+    assert len(opened) >= 4, "ivg no longer opens its own connection: revisit the fix"
+    assert [c for c in opened if not c.isClosed()] == []
+
+
 def test_an_index_that_is_not_there_is_reported_not_created(ivg_deployed):
     report = ivg_deployed.upgrade_bm25_indexes(names=["ivr_no_such_index"])
 

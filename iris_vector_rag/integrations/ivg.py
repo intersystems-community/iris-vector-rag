@@ -207,6 +207,22 @@ def create_graph_engine(
     return engine
 
 
+def close_graph_engine(engine) -> None:
+    """Close the connection ivg opened for this engine's class-method calls.
+
+    With credentials remembered, ivg 4.2.0+ opens `_native_conn` on the first BM25,
+    vector or ledger call and keeps it for the engine's life; the engine has no
+    `close()`. An engine built for one job holds a licence slot until garbage
+    collection unless the caller closes it here. The connection the engine was built
+    on belongs to the caller and is left alone.
+    """
+    native = getattr(engine, "_native_conn", None)
+    if native is None:
+        return
+    engine._native_conn = None
+    native.close()
+
+
 def pre_4_layout_tables(
     columns_by_table: Mapping[str, Iterable[str]],
 ) -> List[str]:

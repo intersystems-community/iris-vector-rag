@@ -346,3 +346,103 @@ def test_named_bm25_indexes_reach_the_upgrade():
         result = manager.upgrade_iris_vector_graph(bm25_indexes=["b"])
 
     assert result.bm25.names == ("b",)
+
+
+# ---------------------------------------------------------------------------
+# SchemaManager closes the connection ivg opens for each engine
+# ---------------------------------------------------------------------------
+
+
+class FakeNativeConnection:
+    def __init__(self):
+        self.closed = False
+
+    def isClosed(self):
+        return self.closed
+
+    def close(self):
+        self.closed = True
+
+
+def _engine_holding_a_connection(indexes):
+    """ivg opens `_native_conn` for its class-method calls and never closes it."""
+    engine = FakeEngine(indexes)
+    engine._native_conn = FakeNativeConnection()
+    return engine
+
+
+def test_close_graph_engine_closes_the_connection_ivg_opened():
+    from iris_vector_rag.integrations.ivg import close_graph_engine
+
+    engine = _engine_holding_a_connection({})
+    native = engine._native_conn
+
+    close_graph_engine(engine)
+
+    assert native.closed
+    assert engine._native_conn is None
+
+
+def test_close_graph_engine_leaves_an_engine_with_no_connection_alone():
+    from iris_vector_rag.integrations.ivg import close_graph_engine
+
+    engine = FakeEngine({})
+    close_graph_engine(engine)  # no `_native_conn` at all
+    engine._native_conn = None
+    close_graph_engine(engine)
+
+    assert engine._native_conn is None
+
+
+def test_the_bm25_upgrade_closes_the_engine_connection():
+    from unittest.mock import patch
+
+    manager = _manager()
+    engine = _engine_holding_a_connection({"logs": _old()})
+    native = engine._native_conn
+
+    with patch.object(manager, "_graph_engine", return_value=engine):
+        report = manager.upgrade_bm25_indexes()
+
+    assert report.upgraded == ("logs",)
+    assert native.closed
+
+
+def test_a_failed_bm25_upgrade_still_closes_the_engine_connection():
+    from unittest.mock import patch
+
+    manager = _manager()
+    engine = _engine_holding_a_connection({"logs": _old()})
+    engine.fail_on = {"logs"}
+    native = engine._native_conn
+
+    with patch.object(manager, "_graph_engine", return_value=engine):
+        with pytest.raises(Bm25UpgradeError):
+            manager.upgrade_bm25_indexes()
+
+    assert native.closed
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda manager: manager._initialize_ivg_schema(),
+        lambda manager: manager.upgrade_iris_vector_graph_storage(),
+    ],
+    ids=["initialize", "storage-upgrade"],
+)
+def test_the_schema_deploy_closes_the_engine_connection(call, monkeypatch):
+    from unittest.mock import patch
+
+    import iris_vector_graph.migrations as migrations
+
+    monkeypatch.setattr(migrations, "upgrade_to_4_0_0", lambda *a, **k: "report")
+    manager = _manager()
+    engine = _engine_holding_a_connection({})
+    engine.initialize_schema = lambda: {"status": "ok"}
+    native = engine._native_conn
+
+    with patch.object(manager, "_graph_engine", return_value=engine):
+        call(manager)
+
+    assert native.closed
