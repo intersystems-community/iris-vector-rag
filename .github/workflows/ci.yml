@@ -147,6 +147,10 @@ jobs:
           # the placeholder lets the other fixtures construct an LLM func.
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-ci-placeholder' }}
           HAS_LLM_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
+          # A stalled call fails as an LLM timeout well inside --timeout=120;
+          # the client defaults (60 s, 2 retries) allow 180 s.
+          RAG_LLM__TIMEOUT: "30"
+          RAG_LLM__MAX_RETRIES: "1"
         run: |
           DESELECT=$(grep -vE '^(#|[[:space:]]*$)' tests/contract/ci_known_failures.txt | sed 's/^/--deselect=/' | tr '\n' ' ')
           if [ "$HAS_LLM_KEY" != "true" ]; then
@@ -157,7 +161,7 @@ jobs:
           # -m 'not aihub': the AI Hub tests (spec 093) need an internal image GitHub cannot pull.
           python -m pytest tests/integration/ $DESELECT -m 'not aihub' \
             --timeout=120 \
-            --timeout-method=thread \
+            --timeout-method=signal \
             --tb=short \
             --junit-xml=test-results-integration.xml \
             -q

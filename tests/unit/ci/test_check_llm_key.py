@@ -1,7 +1,7 @@
 """scripts/ci/check-llm-key.sh: a rejected LLM API key secret fails the job at once.
 
 Without it, a dead key makes the batch extraction tests retry until the per-test
-timeout, which with --timeout-method=thread ends the whole run with no summary.
+timeout; with --timeout-method=thread, as the job once ran, that ended the whole run.
 `curl` is replaced by a stub that answers with the HTTP status the test chooses.
 """
 

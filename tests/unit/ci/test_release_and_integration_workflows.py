@@ -276,3 +276,21 @@ def test_the_key_is_checked_before_the_integration_tests_run(ci):
     env = steps[check]["env"]
     assert "secrets.OPENAI_API_KEY" in env["OPENAI_API_KEY"]
     assert "secrets.OPENAI_API_KEY" in env["HAS_LLM_KEY"]
+
+
+def test_one_slow_llm_call_cannot_outlast_the_per_test_timeout(ci):
+    """The client defaults (60 s, 2 retries) allow 180 s per call, past the 120 s limit.
+
+    A stalled OpenAI call in a fixture then ran into the test timeout instead of
+    failing as an LLM timeout.
+    """
+    step = _integration_step(ci)
+    per_test = int(re.search(r"--timeout=(\d+)", step["run"]).group(1))
+    timeout = float(step["env"]["RAG_LLM__TIMEOUT"])
+    retries = int(step["env"]["RAG_LLM__MAX_RETRIES"])
+    assert timeout * (retries + 1) < per_test
+
+
+def test_a_test_that_times_out_fails_alone(ci):
+    """--timeout-method=thread ends the whole pytest process, so no test is reported."""
+    assert "--timeout-method=signal" in _integration_step(ci)["run"]
