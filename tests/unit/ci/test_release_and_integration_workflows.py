@@ -171,3 +171,97 @@ def test_the_deselect_command_survives_comments_in_the_known_failures_file(workf
     ).stdout.split()
     assert out, "no deselect arguments produced"
     assert all(a.startswith("--deselect=tests/") and "::" in a for a in out), out
+
+
+# -- the tests that need a real API key ---------------------------------------------
+
+NEEDS_KEY = WORKFLOWS.parents[1] / "tests" / "contract" / "ci_needs_llm_key.txt"
+KNOWN_FAILURES = WORKFLOWS.parents[1] / "tests" / "contract" / "ci_known_failures.txt"
+
+
+def _ids(path):
+    return [
+        l.strip()
+        for l in path.read_text().splitlines()
+        if l.strip() and not l.strip().startswith("#")
+    ]
+
+
+def _integration_step(ci):
+    job = ci["jobs"]["integration-tests"]
+    return next(s for s in job["steps"] if "tests/integration" in s.get("run", ""))
+
+
+def test_integration_tests_use_the_api_key_secret_when_there_is_one(ci):
+    env = _integration_step(ci)["env"]
+    assert "secrets.OPENAI_API_KEY" in env["OPENAI_API_KEY"]
+    assert "secrets.OPENAI_API_KEY" in env["HAS_LLM_KEY"]
+
+
+def _pytest_args(ci, tmp_path, has_key):
+    """Run the step's script with a stand-in `python` that records its arguments."""
+    import os
+    import subprocess
+
+    stub = tmp_path / "python"
+    stub.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$ARGS_OUT"\n')
+    stub.chmod(0o755)
+    out = tmp_path / "args"
+    result = subprocess.run(
+        ["bash", "-e", "-c", _integration_step(ci)["run"]],
+        cwd=WORKFLOWS.parents[1],
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+            "ARGS_OUT": str(out),
+            "HAS_LLM_KEY": has_key,
+        },
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return out.read_text().split(), result.stdout
+
+
+def test_without_a_key_the_tests_that_need_one_are_skipped_and_said_so(ci, tmp_path):
+    """Fork PRs and the private mirror have no secret; the run says what it left out."""
+    args, stdout = _pytest_args(ci, tmp_path, "false")
+    needs_key = _ids(NEEDS_KEY)
+    assert needs_key
+    assert all(f"--deselect={i}" in args for i in needs_key)
+    assert f"{len(needs_key)} tests that need a real key were skipped" in stdout
+
+
+def test_with_a_key_the_tests_that_need_one_run(ci, tmp_path):
+    args, stdout = _pytest_args(ci, tmp_path, "true")
+    assert not any(f"--deselect={i}" in args for i in _ids(NEEDS_KEY))
+    assert all(f"--deselect={i}" in args for i in _ids(KNOWN_FAILURES))
+    assert "skipped" not in stdout
+
+
+def test_a_test_is_either_quarantined_or_waiting_for_a_key_not_both():
+    assert not set(_ids(NEEDS_KEY)) & set(_ids(KNOWN_FAILURES))
+
+
+def test_the_gate_reports_a_stale_entry_in_the_needs_key_list(tmp_path, monkeypatch):
+    """pytest ignores a --deselect that matches nothing, so the gate must check both lists."""
+    import importlib.util
+    import sys
+
+    root = WORKFLOWS.parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "antipatterns", root / "scripts" / "gates" / "antipatterns.py"
+    )
+    gate = importlib.util.module_from_spec(spec)
+    # @dataclass looks its module up in sys.modules.
+    monkeypatch.setitem(sys.modules, "antipatterns", gate)
+    spec.loader.exec_module(gate)
+    (tmp_path / "tests" / "contract").mkdir(parents=True)
+    (tmp_path / "tests" / "contract" / "ci_needs_llm_key.txt").write_text(
+        "tests/integration/test_gone.py::test_was_here\n"
+    )
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+
+    findings = gate.stale_deselect_entry()
+
+    assert [f.location for f in findings] == ["tests/contract/ci_needs_llm_key.txt:1"]

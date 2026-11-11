@@ -389,13 +389,27 @@ def services_iris_container() -> list[Finding]:
     return out
 
 
+#: The --deselect lists CI reads: the quarantine, and the tests left out when the
+#: repository has no LLM API key secret.
+DESELECT_LISTS = (
+    "tests/contract/ci_known_failures.txt",
+    "tests/contract/ci_needs_llm_key.txt",
+)
+
+
 def stale_deselect_entry() -> list[Finding]:
-    """Guards the release gate itself: tests/contract/ci_known_failures.txt is a
-    --deselect list. An entry whose file or test function no longer exists is
-    silently ignored by pytest, so the list would rot without anyone noticing."""
-    p = ROOT / "tests/contract/ci_known_failures.txt"
-    if not p.is_file():
-        return []
+    """Guards the release gate itself: each of DESELECT_LISTS is a --deselect list.
+    An entry whose file or test function no longer exists is silently ignored by
+    pytest, so the list would rot without anyone noticing."""
+    out = []
+    for name in DESELECT_LISTS:
+        p = ROOT / name
+        if p.is_file():
+            out.extend(_stale_entries(p))
+    return out
+
+
+def _stale_entries(p: pathlib.Path) -> list[Finding]:
     out = []
     for n, line in enumerate(read(p).splitlines(), start=1):
         line = line.strip()
@@ -404,20 +418,13 @@ def stale_deselect_entry() -> list[Finding]:
         parts = line.split("::")
         path, func = parts[0], parts[-1]
         target = ROOT / path
+        message = None
         if not target.is_file():
-            out.append(
-                Finding(
-                    "stale-deselect-entry", f"{rel(p)}:{n}", f"{path} does not exist"
-                )
-            )
+            message = f"{path} does not exist"
         elif not re.search(rf"def {re.escape(func)}\b", read(target)):
-            out.append(
-                Finding(
-                    "stale-deselect-entry",
-                    f"{rel(p)}:{n}",
-                    f"{func} not defined in {path}",
-                )
-            )
+            message = f"{func} not defined in {path}"
+        if message:
+            out.append(Finding("stale-deselect-entry", f"{rel(p)}:{n}", message))
     return out
 
 
