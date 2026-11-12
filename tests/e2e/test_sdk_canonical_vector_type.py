@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import math
 import random
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -80,35 +79,12 @@ def _sdk_container():
 
 
 def _session(script: str) -> str:
-    """Run ObjectScript on the server and return everything the session printed."""
-    import iris
+    """Run ObjectScript on the private container and return what it printed.
 
-    port = int(os.environ.get("IRIS_PORT", "51972"))
-
-    # Execute over TCP (Cortex XDR blocks `iris session` pipes)
-    conn = iris.createConnection(
-        hostname="localhost",
-        port=port,
-        namespace="USER",
-        username="_SYSTEM",
-        password="SYS",
-    )
-    try:
-        native = iris.createIRIS(conn)
-        # Execute each line of the script
-        output = []
-        for line in script.strip().splitlines():
-            if not line.strip() or line.strip().lower() == "halt":
-                continue
-            try:
-                result = native.classMethodValue("%SYSTEM.OBJ", "ShowQualifiers", line)
-                if result:
-                    output.append(str(result))
-            except Exception as e:
-                output.append(f"ERROR: {e}")
-        return "\n".join(output)
-    finally:
-        conn.close()
+    Through the same TCP runner as test_objectscript_sdk_fix (Cortex XDR blocks
+    piping into `iris session`).
+    """
+    return Server(_container_name()).session(script)
 
 
 def _marker(output: str, marker: str) -> str:

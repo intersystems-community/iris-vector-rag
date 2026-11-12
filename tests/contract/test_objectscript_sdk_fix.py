@@ -16,10 +16,7 @@ Each test runs in a scratch schema of its own (`SDKFix...`), so none reaches `RA
 
 from __future__ import annotations
 
-import os
 import re
-import subprocess
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -60,10 +57,14 @@ class Server:
     """ObjectScript access to the ephemeral container over TCP (Cortex XDR blocks iris session)."""
 
     def __init__(self, container: str):
-        self.container = container
-        import os
+        from tests.support.iris_environment import docker_port
 
-        self.port = int(os.environ.get("IRIS_PORT", "51972"))
+        self.container = container
+        # The port Docker publishes for *this* container. IRIS_PORT (default 51972,
+        # the project container) would send the SDK classes to whatever it names.
+        self.port = docker_port(container)
+        if self.port is None:
+            raise RuntimeError(f"{container} publishes no port 1972")
 
     def _tcp_run(self, namespace: str, code: str) -> str:
         """Run ObjectScript code via IVRDev.Setup.Run helper."""
@@ -123,61 +124,11 @@ class Server:
 
 
 def _load(srv: Server) -> Server:
-    with tempfile.TemporaryDirectory() as tmp:
-        (Path(tmp) / "BM25Index.cls").write_text(BM25_STUB)
-        subprocess.run(
-            [
-                "docker",
-                "exec",
-                "-u",
-                "0",
-                srv.container,
-                "sh",
-                "-c",
-                "rm -rf /tmp/sdk /tmp/stub && mkdir -p /tmp/sdk /tmp/stub",
-            ],
-            check=True,
-        )
-        for name in COMPILED:
-            subprocess.run(
-                [
-                    "docker",
-                    "cp",
-                    str(SDK_DIR / f"{name}.cls"),
-                    f"{srv.container}:/tmp/sdk/{name}.cls",
-                ],
-                check=True,
-            )
-        subprocess.run(
-            [
-                "docker",
-                "cp",
-                str(Path(tmp) / "BM25Index.cls"),
-                f"{srv.container}:/tmp/stub/BM25Index.cls",
-            ],
-            check=True,
-        )
-    subprocess.run(
-        [
-            "docker",
-            "exec",
-            "-u",
-            "0",
-            srv.container,
-            "chmod",
-            "-R",
-            "a+rX",
-            "/tmp/sdk",
-            "/tmp/stub",
-        ],
-        check=True,
-    )
-    # LoadDir needs direct file access, cannot go through IVRDev.Setup.Run (file IO interference)
-    # Use LoadStream via Native API instead
+    """Compile the SDK classes (and the BM25 stub, if the class is absent) into
+    the container's USER namespace, streamed from the checkout over TCP."""
     import iris
 
-    port = int(os.environ.get("IRIS_PORT", "51972"))
-    conn = iris.createConnection("localhost", port, "USER", "_SYSTEM", "SYS")
+    conn = iris.createConnection("localhost", srv.port, "USER", "_SYSTEM", "SYS")
     try:
         native = iris.createIRIS(conn)
         # Load SDK classes

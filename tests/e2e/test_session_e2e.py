@@ -133,7 +133,12 @@ def _terminate_server_job(session):
 
     job = session.one("SELECT $JOB")[0]
     container = os.environ.get("IRIS_CONTAINER_NAME", "iris-vector-rag-iris")
-    port = int(os.environ.get("IRIS_PORT", "51972"))
+    from tests.support.iris_environment import docker_port
+
+    # The port of the container named, never IRIS_PORT: this kills a server job.
+    port = docker_port(container)
+    if port is None:
+        raise RuntimeError(f"{container} publishes no port 1972")
 
     # Terminate over TCP (Cortex XDR blocks `iris session` pipes)
     conn = iris.createConnection(
