@@ -653,6 +653,111 @@ def swallowed_error() -> list[Finding]:
     return out
 
 
+_SHELL_SESSION_PIPE = re.compile(
+    r"(docker|docker-compose).*exec.*iris\s+session", re.IGNORECASE
+)
+_PYTHON_SESSION_ARGS = re.compile(r'[\[\(].*"iris".*"session".*[\]\)]', re.IGNORECASE)
+
+
+def iris_session_pipes(path: str, source: str) -> list[Finding]:
+    """Piping input into `docker exec iris session` or subprocess with iris session args.
+    Cortex XDR kills these as malware. Detector covers: shell pipes, heredocs, and
+    Python subprocess calls with iris session in the args list."""
+    out = []
+    lines = source.splitlines()
+    in_docstring = False
+    docstring_delim = None
+
+    for n, line in enumerate(lines, start=1):
+        # Track docstrings to skip them
+        stripped = line.strip()
+        if stripped.startswith('"""') or stripped.startswith("'''"):
+            delim = '"""' if stripped.startswith('"""') else "'''"
+            if in_docstring and delim == docstring_delim:
+                in_docstring = False
+                docstring_delim = None
+                continue
+            elif not in_docstring:
+                # Check if docstring opens and closes on same line
+                if stripped.count(delim) >= 2:
+                    continue
+                in_docstring = True
+                docstring_delim = delim
+                continue
+
+        # Skip comments and docstrings
+        if in_docstring or stripped.startswith("#"):
+            continue
+
+        # Shell pattern: docker exec ... iris session
+        if _SHELL_SESSION_PIPE.search(line):
+            # Ignore if it's in a comment
+            if "#" in line:
+                comment_idx = line.index("#")
+                if not _SHELL_SESSION_PIPE.search(line[:comment_idx]):
+                    continue
+            # Ignore if it's in a string literal (logger.error, etc.)
+            if (
+                "logger." in line
+                or "print(" in line
+                or ".error(" in line
+                or ".info(" in line
+                or ".debug(" in line
+                or "assert " in line
+            ):
+                continue
+            out.append(
+                Finding(
+                    "iris-session-pipe",
+                    f"{path}:{n}",
+                    f"pipes input into iris session (Cortex XDR block): {line.strip()[:70]}",
+                )
+            )
+            continue
+
+        # Python pattern: ["docker", "exec", ..., "iris", "session", ...]
+        if _PYTHON_SESSION_ARGS.search(line):
+            # Same string literal check
+            if (
+                "logger." in line
+                or "print(" in line
+                or ".error(" in line
+                or ".info(" in line
+                or ".debug(" in line
+                or "assert " in line
+            ):
+                continue
+            out.append(
+                Finding(
+                    "iris-session-pipe",
+                    f"{path}:{n}",
+                    f"pipes input into iris session (Cortex XDR block): {line.strip()[:70]}",
+                )
+            )
+    return out
+
+
+def iris_session_pipe() -> list[Finding]:
+    """Shipped: piping ObjectScript into `docker exec iris session` from shell scripts
+    and Python subprocess calls. Cortex XDR kills this pattern as malware (blocked twice
+    2026-11-11, would become a SOC ticket on third block). Fixed by TCP setup over
+    the Native API (scripts/dev/tcp_setup.py)."""
+    out = []
+    # Shell scripts
+    for p in files("scripts/", ".sh"):
+        out.extend(iris_session_pipes(rel(p), read(p)))
+    for p in files(".github/", ".sh"):
+        out.extend(iris_session_pipes(rel(p), read(p)))
+
+    # Python files
+    for p in files("tests/", ".py"):
+        out.extend(iris_session_pipes(rel(p), read(p)))
+    for p in files("iris_vector_rag/", ".py"):
+        out.extend(iris_session_pipes(rel(p), read(p)))
+
+    return out
+
+
 CHECKS: dict[str, Callable[[], list[Finding]]] = {
     "legacy-fk-target": legacy_fk_target,
     "inline-standard-ddl": inline_standard_ddl,
@@ -666,6 +771,7 @@ CHECKS: dict[str, Callable[[], list[Finding]]] = {
     "catalog-read-outside-shape": catalog_read_outside_shape,
     "hardcoded-vector-type": hardcoded_vector_type,
     "swallowed-error": swallowed_error,
+    "iris-session-pipe": iris_session_pipe,
 }
 
 # Checks that carry no baseline and must stay at zero: each fails open when
@@ -676,6 +782,7 @@ NO_BASELINE = {
     "positional-load-documents",
     "stale-deselect-entry",
     "legacy-fk-target",
+    "iris-session-pipe",
 }
 
 
