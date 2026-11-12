@@ -16,6 +16,7 @@ Each test runs in a scratch schema of its own (`SDKFix...`), so none reaches `RA
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import tempfile
@@ -171,14 +172,37 @@ def _load(srv: Server) -> Server:
         ],
         check=True,
     )
-    out = srv.session(
-        'set sc=$system.OBJ.LoadDir("/tmp/sdk","ck",.err,1)\n'
-        'write "LOAD:",sc,!\n'
-        'if \'##class(%Dictionary.CompiledClass).%ExistsId("Graph.KG.BM25Index") '
-        '{ set sc=$system.OBJ.LoadDir("/tmp/stub","ck",.err2,1) write "STUB:",sc,! }'
-    )
-    assert "LOAD:1" in out, f"SDK classes did not compile:\n{out}"
-    assert "ERROR" not in out, out
+    # LoadDir needs direct file access, cannot go through IVRDev.Setup.Run (file IO interference)
+    # Use LoadStream via Native API instead
+    import iris
+
+    port = int(os.environ.get("IRIS_PORT", "51972"))
+    conn = iris.createConnection("localhost", port, "USER", "_SYSTEM", "SYS")
+    try:
+        native = iris.createIRIS(conn)
+        # Load SDK classes
+        for name in COMPILED:
+            cls_path = SDK_DIR / f"{name}.cls"
+            stream = native.classMethodObject("%Stream.GlobalCharacter", "%New")
+            stream.invoke("Write", cls_path.read_text())
+            stream.invoke("Rewind")
+            sc = native.classMethodValue("%SYSTEM.OBJ", "LoadStream", stream, "ck-d")
+            if not (sc == 1 or str(sc) == "1"):
+                text = native.classMethodValue("%SYSTEM.Status", "GetErrorText", sc)
+                raise RuntimeError(f"LoadStream {name} failed: {text}")
+        # Load BM25 stub if needed
+        if not native.classMethodValue(
+            "%Dictionary.CompiledClass", "%ExistsId", "Graph.KG.BM25Index"
+        ):
+            stream = native.classMethodObject("%Stream.GlobalCharacter", "%New")
+            stream.invoke("Write", BM25_STUB)
+            stream.invoke("Rewind")
+            sc = native.classMethodValue("%SYSTEM.OBJ", "LoadStream", stream, "ck-d")
+            if not (sc == 1 or str(sc) == "1"):
+                text = native.classMethodValue("%SYSTEM.Status", "GetErrorText", sc)
+                raise RuntimeError(f"LoadStream BM25 stub failed: {text}")
+    finally:
+        conn.close()
     return srv
 
 

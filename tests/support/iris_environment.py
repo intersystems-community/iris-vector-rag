@@ -229,13 +229,15 @@ def start_ephemeral(env: Mapping[str, str] = os.environ):
     container = EphemeralContainer(name)
     try:
         port = _wait_for_port(name)
-        # CPF merge unexpires passwords at startup; no manual step needed
+        # CPF merge unexpires passwords at startup; wait for IRIS to be fully ready
+        target = IrisTarget(name, "localhost", port, ephemeral=True, **_credentials({}))
+        # Warmup: try to connect, which waits for IRIS to be ready
+        conn = connect(target)
+        conn.close()
     except BaseException:
         container.stop()
         raise
-    return container, IrisTarget(
-        name, "localhost", port, ephemeral=True, **_credentials({})
-    )
+    return container, target
 
 
 def _wait_for_port(name: str, attempts: int = 30, delay: float = 2.0) -> int:
