@@ -32,12 +32,20 @@ class TestPyLateColBERTErrorHandling:
         """
         # Mock environment to remove API key
         mocker.patch.dict(os.environ, {}, clear=True)
+        # The scenario is "no key and no LLM to fall back on": an injected
+        # llm_func needs no key (eb58f164), so the pipeline under test has none.
+        mocker.patch.object(pylate_colbert_pipeline, "llm_func", None)
 
         # Attempt query - should raise configuration error
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             pylate_colbert_pipeline.query(sample_query)
 
         error_msg = str(exc_info.value).lower()
+
+        # MUST name both fixes: the key, or an llm_func of the caller's own
+        assert (
+            "openai_api_key" in error_msg and "llm_func" in error_msg
+        ), f"Error message must name OPENAI_API_KEY and llm_func. Got: {exc_info.value}"
 
         # MUST mention specific env var
         assert (
@@ -86,10 +94,11 @@ class TestPyLateColBERTErrorHandling:
         When: Error is raised
         Then: Message includes "Fix:" or similar actionable guidance
         """
-        # Mock critical config to be missing
+        # Mock critical config to be missing: no key and no llm_func
         mocker.patch.dict(os.environ, {}, clear=True)
+        mocker.patch.object(pylate_colbert_pipeline, "llm_func", None)
 
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             pylate_colbert_pipeline.query("test query")
 
         error_msg = str(exc_info.value).lower()
