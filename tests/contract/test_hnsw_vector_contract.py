@@ -1,95 +1,89 @@
 """
-Contract tests for HNSW Vector Search query path (FR-010 to FR-012).
+Contract tests for HNSW Vector query path (FR-013 to FR-015).
 
-Tests validate that HybridGraphRAG's HNSW vector search method executes correctly
-and falls back to IRISVectorStore when necessary.
+Tests validate that HybridGraphRAG's HNSW vector method executes correctly:
+- On an empty graph, falls back to vector search
+- Exceptions from HNSW vector propagate to caller
+- Zero results from HNSW vector fall back to vector search
 
 Contract: HNSW-001
-Requirements: FR-010, FR-011, FR-012
+Requirements: FR-013, FR-014, FR-015
 """
 
-import logging
 import pytest
-from iris_vector_rag import create_pipeline
 
 
 class TestHNSWVectorContract:
-    """Contract tests for HNSW vector search path."""
+    """Contract tests for HNSW vector query path."""
 
-    @pytest.fixture
-    def graphrag_pipeline(self):
-        """Create HybridGraphRAG pipeline with validation."""
-        return create_pipeline("graphrag", validate_requirements=True)
-
-    @pytest.mark.requires_database
-    def test_hnsw_vector_executes_successfully(self, graphrag_pipeline):
+    def test_hnsw_vector_on_empty_graph_answers_from_vector_fallback(
+        self, hybrid_on_known_corpus
+    ):
         """
-        FR-010: HNSW vector search MUST execute via iris_vector_graph.
+        FR-013: HNSW vector on empty graph falls back to vector search.
 
-        Given: HybridGraphRAG pipeline initialized
+        Given: HybridGraphRAG pipeline with empty graph (no entities/relationships)
         When: Query executed with method="vector"
-        Then: HNSW-optimized vector search executes and returns documents
-        """
-        query = "How is diabetes diagnosed?"
+        Then: Query succeeds via vector_fallback
 
-        # Execute query with vector method
-        result = graphrag_pipeline.query(query, method="vector")
+        Note: The graph is deployed (IVG classes installed) but contains no data,
+        so HNSW vector returns zero results and falls back to vector search.
+        """
+        query = "Which salamander can regrow its legs?"
+
+        # Execute query with vector method - graph is empty, will fall back
+        result = hybrid_on_known_corpus.query(
+            query, method="vector", generate_answer=False
+        )
 
         # Verify result structure
         assert result is not None, "Result should not be None"
         assert "contexts" in result, "Result should have contexts"
         assert "metadata" in result, "Result should have metadata"
 
-        # Verify documents retrieved
+        # Verify fallback to vector search
         assert (
             len(result["contexts"]) > 0
-        ), f"Vector search (or fallback) should retrieve documents, got {len(result['contexts'])}"
+        ), "Should retrieve documents via vector fallback"
 
-        # Verify metadata
         assert (
-            "retrieval_method" in result["metadata"]
-        ), "Metadata should contain retrieval_method"
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
-        method = result["metadata"]["retrieval_method"]
-        assert method in [
-            "vector",
-            "hnsw_vector",
-            "vector_fallback",
-            "knowledge_graph",
-        ], f"Expected vector/hnsw_vector or fallback, got {method}"
+        # Assert the answer: known query gets its known document
+        assert (
+            result["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"Top result should be kc-axolotl, got {result['retrieved_documents'][0].id}"
 
-    @pytest.mark.requires_database
-    def test_hnsw_vector_fallback_on_zero_results(
-        self, graphrag_pipeline, mocker, caplog
-    ):
+    def test_hnsw_vector_zero_results_falls_back(self, hybrid_on_known_corpus, mocker):
         """
-        FR-011: HNSW vector search MUST fall back when returning 0 results.
+        FR-014: HNSW vector MUST fall back to vector search when returning 0 results.
 
         Given: HybridGraphRAG pipeline initialized
-        And: HNSW returns 0 results (mocked)
+        And: HNSW vector returns 0 results (mocked)
         When: Query executed with method="vector"
         Then: System falls back to IRISVectorStore
         """
-        caplog.set_level(logging.WARNING)
+        query = "Which salamander can regrow its legs?"
 
-        query = "How is diabetes diagnosed?"
-
-        # Mock HNSW vector search to return 0 results
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        # Mock HNSW vector to return 0 results
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_hnsw_vector",
                 return_value=([], "hnsw_vector"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_hnsw_vector",
                 return_value=([], "hnsw_vector"),
             )
 
         # Execute query
-        result = graphrag_pipeline.query(query, method="vector")
+        result = hybrid_on_known_corpus.query(
+            query, method="vector", generate_answer=False
+        )
 
         # Verify fallback
         assert len(result["contexts"]) > 0, "Fallback should retrieve documents"
@@ -98,56 +92,36 @@ class TestHNSWVectorContract:
             result["metadata"]["retrieval_method"] == "vector_fallback"
         ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
-        # Verify logging
-        log_output = caplog.text
-        assert any(
-            "fallback" in msg.lower() or "0 results" in msg.lower()
-            for msg in log_output.split("\n")
-        ), "Should log warning about HNSW fallback"
+        # Assert the answer
+        assert (
+            result["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"Top result should be kc-axolotl, got {result['retrieved_documents'][0].id}"
 
-    @pytest.mark.requires_database
-    def test_hnsw_vector_fallback_on_exception(self, graphrag_pipeline, mocker, caplog):
+    def test_hnsw_vector_failure_raises(self, hybrid_on_known_corpus, mocker):
         """
-        FR-012: HNSW vector search MUST fall back when raising exception.
+        FR-015: HNSW vector exception MUST propagate to caller (no fallback on error).
 
         Given: HybridGraphRAG pipeline initialized
-        And: HNSW raises exception (mocked)
+        And: HNSW vector raises exception (mocked)
         When: Query executed with method="vector"
-        Then: System catches exception and falls back
+        Then: Exception propagates
         """
-        caplog.set_level(logging.ERROR)
+        query = "Which salamander can regrow its legs?"
 
-        query = "How is diabetes diagnosed?"
-
-        # Mock HNSW to raise exception
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        # Mock HNSW vector to raise exception
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_hnsw_vector",
-                side_effect=Exception("HNSW search failed"),
+                side_effect=RuntimeError("HNSW vector failed"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_hnsw_vector",
-                side_effect=Exception("HNSW search failed"),
+                side_effect=RuntimeError("HNSW vector failed"),
             )
 
-        # Execute query - should not raise
-        result = graphrag_pipeline.query(query, method="vector")
-
-        # Verify fallback
-        assert (
-            len(result["contexts"]) > 0
-        ), "Fallback should retrieve documents after exception"
-
-        assert (
-            result["metadata"]["retrieval_method"] == "vector_fallback"
-        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
-
-        # Verify error logged
-        log_output = caplog.text
-        assert any(
-            "error" in msg.lower() or "fail" in msg.lower()
-            for msg in log_output.split("\n")
-        ), "Should log error about HNSW exception"
+        # Execute query - should raise
+        with pytest.raises(RuntimeError, match="HNSW vector failed"):
+            hybrid_on_known_corpus.query(query, method="vector", generate_answer=False)

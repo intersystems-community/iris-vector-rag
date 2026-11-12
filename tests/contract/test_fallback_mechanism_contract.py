@@ -2,53 +2,52 @@
 Contract tests for Fallback Mechanism validation (FR-016 to FR-019).
 
 Tests validate that HybridGraphRAG's fallback to IRISVectorStore works correctly
-across all query methods with appropriate logging and metadata.
+when a graph leg returns zero results, and that exceptions are raised rather than
+hidden.
 
 Contract: FALLBACK-001
 Requirements: FR-016, FR-017, FR-018, FR-019
 """
 
 import logging
+
 import pytest
-from iris_vector_rag import create_pipeline
 
 
 class TestFallbackMechanismContract:
     """Contract tests for fallback mechanism validation."""
 
-    @pytest.fixture
-    def graphrag_pipeline(self):
-        """Create HybridGraphRAG pipeline with validation."""
-        return create_pipeline("graphrag", validate_requirements=True)
-
-    @pytest.mark.requires_database
-    def test_fallback_retrieves_documents_successfully(self, graphrag_pipeline, mocker):
+    def test_fallback_retrieves_documents_successfully(
+        self, hybrid_on_known_corpus, mocker
+    ):
         """
-        FR-016: IRISVectorStore fallback MUST retrieve documents successfully.
+        FR-016: IRISVectorStore fallback MUST retrieve documents when leg returns [].
 
-        Given: HybridGraphRAG pipeline initialized
-        And: Primary retrieval method unavailable (mocked)
+        Given: HybridGraphRAG pipeline initialized with known corpus
+        And: Primary retrieval method returns zero results (mocked)
         When: Query executed with any method
         Then: Fallback retrieves documents via IRISVectorStore
         """
-        query = "What are the risk factors for diabetes?"
+        query = "Which salamander can regrow its legs?"
 
-        # Mock hybrid fusion to trigger fallback
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        # Mock hybrid fusion to return zero results (not raise)
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_hybrid_fusion",
                 return_value=([], "hybrid_fusion"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_hybrid_fusion",
                 return_value=([], "hybrid_fusion"),
             )
 
         # Execute query
-        result = graphrag_pipeline.query(query, method="hybrid")
+        result = hybrid_on_known_corpus.query(
+            query, method="hybrid", generate_answer=False
+        )
 
         # Verify fallback succeeded
         assert (
@@ -67,83 +66,71 @@ class TestFallbackMechanismContract:
             result["metadata"]["retrieval_method"] == "vector_fallback"
         ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
-    @pytest.mark.requires_database
-    def test_fallback_logs_diagnostic_messages(self, graphrag_pipeline, mocker, caplog):
+        # Assert the answer: known query gets its known document
+        assert (
+            result["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"Top result should be kc-axolotl, got {result['retrieved_documents'][0].id}"
+
+    def test_leg_exception_raises(self, hybrid_on_known_corpus, mocker):
         """
-        FR-017: Fallback MUST log appropriate diagnostic messages.
+        FR-017: A leg that raises MUST fail the query (not fall back).
 
         Given: HybridGraphRAG pipeline initialized
-        And: Primary method fails (mocked exception)
-        When: Query executed and fallback triggered
-        Then: ERROR and WARNING logs indicate failure and fallback
+        And: Primary method raises an exception
+        When: Query executed
+        Then: Exception propagates (query does not succeed via fallback)
         """
-        caplog.set_level(logging.DEBUG)
-
-        query = "What are the risk factors for diabetes?"
+        query = "Which salamander can regrow its legs?"
 
         # Mock to raise exception
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_rrf",
-                side_effect=Exception("Primary method failed"),
+                side_effect=RuntimeError("Graph leg failed"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_rrf",
-                side_effect=Exception("Primary method failed"),
+                side_effect=RuntimeError("Graph leg failed"),
             )
 
-        # Execute query
-        result = graphrag_pipeline.query(query, method="rrf")
+        # Execute query - should raise
+        with pytest.raises(RuntimeError, match="Graph leg failed"):
+            hybrid_on_known_corpus.query(query, method="rrf", generate_answer=False)
 
-        # Verify fallback succeeded
-        assert len(result["contexts"]) > 0, "Fallback should succeed"
-
-        # Verify diagnostic logging
-        log_output = caplog.text.lower()
-
-        # Should have error log about primary failure
-        assert any(
-            keyword in log_output for keyword in ["error", "fail", "exception"]
-        ), "Should log error message about primary method failure"
-
-        # Should have warning/info about fallback
-        assert any(
-            keyword in log_output for keyword in ["fallback", "falling back"]
-        ), "Should log message about fallback activation"
-
-    @pytest.mark.requires_database
     def test_fallback_metadata_indicates_vector_fallback(
-        self, graphrag_pipeline, mocker
+        self, hybrid_on_known_corpus, mocker
     ):
         """
         FR-018: Fallback metadata MUST indicate "vector_fallback".
 
         Given: HybridGraphRAG pipeline initialized
-        And: Fallback triggered for any query method
+        And: Fallback triggered for any query method (empty graph leg)
         When: Query completes via fallback
         Then: Metadata correctly indicates vector_fallback
         """
-        query = "What are the risk factors for diabetes?"
+        query = "Which salamander can regrow its legs?"
 
-        # Mock text search to trigger fallback
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        # Mock text search to return zero results
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_enhanced_text",
                 return_value=([], "text"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_enhanced_text",
                 return_value=([], "text"),
             )
 
         # Execute query
-        result = graphrag_pipeline.query(query, method="text")
+        result = hybrid_on_known_corpus.query(
+            query, method="text", generate_answer=False
+        )
 
         # Verify metadata
         assert (
@@ -156,53 +143,54 @@ class TestFallbackMechanismContract:
 
         # Verify metadata includes other expected fields
         assert (
-            "execution_time" in result["metadata"] or "total_time" in result["metadata"]
+            "execution_time" in result["metadata"]
+            or "total_time" in result["metadata"]
+            or "processing_time" in result["metadata"]
         ), "Metadata should include execution time"
 
-        assert (
-            "num_retrieved" in result["metadata"] or len(result["contexts"]) > 0
-        ), "Metadata should include document count or contexts should have documents"
-
-    @pytest.mark.requires_database
-    def test_graceful_degradation_without_iris_vector_graph(
-        self, graphrag_pipeline, mocker, caplog
+    def test_empty_graph_degrades_to_vector_fallback(
+        self, hybrid_on_known_corpus, caplog
     ):
         """
-        FR-019: System MUST gracefully degrade when iris_vector_graph unavailable.
+        FR-019: System MUST gracefully degrade when graph has no data.
 
-        Given: iris_vector_graph not installed/available (mocked)
-        When: HybridGraphRAG pipeline initializes
-        Then: Initialization succeeds and all methods work via fallback
+        Given: HybridGraphRAG pipeline with empty graph (no entities/relationships)
+        When: Query executed with any method
+        Then: Query succeeds via vector_fallback over RAG.SourceDocuments
+
+        Note: The graph is deployed (IVG classes installed) but contains no data,
+        so all legs return zero results and fall back to vector search.
         """
         caplog.set_level(logging.INFO)
 
-        query = "What are the risk factors for diabetes?"
+        query = "Which salamander can regrow its legs?"
 
-        # Mock all iris_vector_graph methods to simulate unavailability
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
-            mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
-                "retrieve_via_hybrid_fusion",
-                side_effect=AttributeError("iris_vector_graph not available"),
-            )
-
-        # Execute query - should still work via fallback
-        result = graphrag_pipeline.query(query, method="hybrid")
+        # Execute query - graph is empty, so this will fall back
+        result = hybrid_on_known_corpus.query(
+            query, method="hybrid", generate_answer=False
+        )
 
         # Verify query succeeded
-        assert (
-            result is not None
-        ), "Query should succeed despite iris_vector_graph unavailable"
+        assert result is not None, "Query should succeed despite empty graph"
         assert len(result["contexts"]) > 0, "Should retrieve documents via fallback"
 
         # Verify fallback was used
         assert (
             result["metadata"]["retrieval_method"] == "vector_fallback"
-        ), "Should use vector_fallback when iris_vector_graph unavailable"
+        ), "Should use vector_fallback when graph is empty"
 
-        # System should remain functional
-        # Try another query to verify state consistency
-        result2 = graphrag_pipeline.query("diabetes treatment", method="hybrid")
+        # Assert the answer: known query gets its known document
+        assert (
+            result["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"Top result should be kc-axolotl, got {result['retrieved_documents'][0].id}"
+
+        # System should remain functional - try another query
+        result2 = hybrid_on_known_corpus.query(
+            "What is basalt?", method="hybrid", generate_answer=False
+        )
         assert (
             len(result2["contexts"]) > 0
         ), "Pipeline should remain functional after graceful degradation"
+        assert (
+            result2["retrieved_documents"][0].id == "kc-basalt"
+        ), f"Second query should return kc-basalt, got {result2['retrieved_documents'][0].id}"

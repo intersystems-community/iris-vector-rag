@@ -1,40 +1,6 @@
-tests/contract/test_error_handling_contract.py::TestErrorHandlingContract::test_iris_vector_graph_connection_failure_handled
-tests/contract/test_error_handling_contract.py::TestErrorHandlingContract::test_missing_required_tables_handled
-tests/contract/test_error_handling_contract.py::TestErrorHandlingContract::test_system_continues_after_fallback
-tests/contract/test_fallback_mechanism_contract.py::TestFallbackMechanismContract::test_fallback_logs_diagnostic_messages
-tests/contract/test_fallback_mechanism_contract.py::TestFallbackMechanismContract::test_fallback_metadata_indicates_vector_fallback
-tests/contract/test_fallback_mechanism_contract.py::TestFallbackMechanismContract::test_fallback_retrieves_documents_successfully
-tests/contract/test_fallback_mechanism_contract.py::TestFallbackMechanismContract::test_graceful_degradation_without_iris_vector_graph
-tests/contract/test_hnsw_vector_contract.py::TestHNSWVectorContract::test_hnsw_vector_executes_successfully
-tests/contract/test_hnsw_vector_contract.py::TestHNSWVectorContract::test_hnsw_vector_fallback_on_exception
-tests/contract/test_hnsw_vector_contract.py::TestHNSWVectorContract::test_hnsw_vector_fallback_on_zero_results
-tests/contract/test_hybrid_fusion_contract.py::TestHybridFusionContract::test_hybrid_fusion_executes_successfully
-tests/contract/test_hybrid_fusion_contract.py::TestHybridFusionContract::test_hybrid_fusion_fallback_on_exception
-tests/contract/test_hybrid_fusion_contract.py::TestHybridFusionContract::test_hybrid_fusion_fallback_on_zero_results
-tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_executes_successfully
-tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_fallback_on_exception
-tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_fallback_on_zero_results
-tests/contract/test_text_search_contract.py::TestTextSearchContract::test_text_search_executes_successfully
-tests/contract/test_text_search_contract.py::TestTextSearchContract::test_text_search_fallback_on_exception
-tests/contract/test_text_search_contract.py::TestTextSearchContract::test_text_search_fallback_on_zero_results
-tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_returns_documents
-tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_returns_relevant_documents
-tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_works_with_384d_embeddings
-tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_results_have_scores
-tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_results_sorted_descending
 # pipelines-fix leftovers (first honest integration run; the pipelines' response shape and retrieval against the real store)
 # entity-services-fix leftovers (batch extraction tests that need an LLM or the removed batch surface)
 # test-environment leftovers (DAT fixtures, the deleted devtools bridge, connection and cache tests)
 # mcp-stdio-server follow-up (order-dependent: the tests read tables an earlier test may have dropped, so the failing subset differs run to run)
-# test-environment leftovers: these tests query RAG.SourceDocuments without creating it, so they fail on a fresh IRIS (identical on remediation/integrated before ci-honesty stage 2); release.yml would have failed on them at the next tag.
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_zero_results_message
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_query_embedding_dimensions
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_total_documents
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_documents_with_embeddings
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_sql_query_executed
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_top_k_parameter
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_similarity_scores_when_zero_results
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logging_level_info_shows_high_level_status
-tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logging_level_debug_shows_detailed_diagnostics
 # ci-llm-key (2026-11-11): flaky. Hybrid (vector 0.9) and RRF gave the same top 3 in one of three CI runs with the key; it clears and loads its own corpus, so ties in the text ranking are the likely cause. Spec 065 (weighted RRF, text ranking) is the place to fix it.
 tests/integration/test_hybrid_rrf_modes.py::test_hybrid_vs_rrf_produce_different_rankings

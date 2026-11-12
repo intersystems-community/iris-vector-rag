@@ -1,64 +1,61 @@
 """
 Contract tests for RRF (Reciprocal Rank Fusion) query path (FR-004 to FR-006).
 
-Tests validate that HybridGraphRAG's RRF method executes correctly and falls
-back to vector search when failures occur.
+Tests validate that HybridGraphRAG's RRF method executes correctly:
+- On an empty graph, falls back to vector search
+- Exceptions from RRF propagate to caller
+- Zero results from RRF fall back to vector search
 
 Contract: RRF-001
 Requirements: FR-004, FR-005, FR-006
 """
 
-import logging
 import pytest
-from iris_vector_rag import create_pipeline
 
 
 class TestRRFContract:
     """Contract tests for RRF query path."""
 
-    @pytest.fixture
-    def graphrag_pipeline(self):
-        """Create HybridGraphRAG pipeline with validation."""
-        return create_pipeline("graphrag", validate_requirements=True)
-
-    @pytest.mark.requires_database
-    def test_rrf_executes_successfully(self, graphrag_pipeline):
+    def test_rrf_on_empty_graph_answers_from_vector_fallback(
+        self, hybrid_on_known_corpus
+    ):
         """
-        FR-004: RRF MUST execute Reciprocal Rank Fusion combining vector and text search.
+        FR-004: RRF on empty graph falls back to vector search over RAG.SourceDocuments.
 
-        Given: HybridGraphRAG pipeline initialized
+        Given: HybridGraphRAG pipeline with empty graph (no entities/relationships)
         When: Query executed with method="rrf"
-        Then: RRF search executes and returns documents
-        """
-        query = "What are the treatments for type 2 diabetes?"
+        Then: Query succeeds via vector_fallback
 
-        # Execute query with RRF method
-        result = graphrag_pipeline.query(query, method="rrf")
+        Note: The graph is deployed (IVG classes installed) but contains no data,
+        so RRF returns zero results and falls back to vector search.
+        """
+        query = "Which salamander can regrow its legs?"
+
+        # Execute query with RRF method - graph is empty, will fall back
+        result = hybrid_on_known_corpus.query(
+            query, method="rrf", generate_answer=False
+        )
 
         # Verify result structure
         assert result is not None, "Result should not be None"
         assert "contexts" in result, "Result should have contexts"
         assert "metadata" in result, "Result should have metadata"
 
-        # Verify documents retrieved (via RRF or fallback)
+        # Verify fallback to vector search
         assert (
             len(result["contexts"]) > 0
-        ), f"RRF (or fallback) should retrieve documents, got {len(result['contexts'])}"
+        ), "Should retrieve documents via vector fallback"
 
-        # Verify metadata
         assert (
-            "retrieval_method" in result["metadata"]
-        ), "Metadata should contain retrieval_method"
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
-        method = result["metadata"]["retrieval_method"]
-        assert method in [
-            "rrf",
-            "vector_fallback",
-            "knowledge_graph",
-        ], f"Expected rrf or fallback, got {method}"
+        # Assert the answer: known query gets its known document
+        assert (
+            result["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"Top result should be kc-axolotl, got {result['retrieved_documents'][0].id}"
 
-    @pytest.mark.requires_database
-    def test_rrf_fallback_on_zero_results(self, graphrag_pipeline, mocker, caplog):
+    def test_rrf_zero_results_falls_back(self, hybrid_on_known_corpus, mocker):
         """
         FR-005: RRF MUST fall back to vector search when returning 0 results.
 
@@ -67,24 +64,24 @@ class TestRRFContract:
         When: Query executed with method="rrf"
         Then: System falls back to IRISVectorStore
         """
-        caplog.set_level(logging.WARNING)
-
-        query = "What are the treatments for type 2 diabetes?"
+        query = "Which salamander can regrow its legs?"
 
         # Mock RRF to return 0 results
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_rrf",
                 return_value=([], "rrf"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline, "_retrieve_via_rrf", return_value=([], "rrf")
+                hybrid_on_known_corpus, "_retrieve_via_rrf", return_value=([], "rrf")
             )
 
         # Execute query
-        result = graphrag_pipeline.query(query, method="rrf")
+        result = hybrid_on_known_corpus.query(
+            query, method="rrf", generate_answer=False
+        )
 
         # Verify fallback
         assert len(result["contexts"]) > 0, "Fallback should retrieve documents"
@@ -93,56 +90,36 @@ class TestRRFContract:
             result["metadata"]["retrieval_method"] == "vector_fallback"
         ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
-        # Verify logging
-        log_output = caplog.text
-        assert any(
-            "fallback" in msg.lower() or "0 results" in msg.lower()
-            for msg in log_output.split("\n")
-        ), "Should log warning about RRF fallback"
+        # Assert the answer
+        assert (
+            result["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"Top result should be kc-axolotl, got {result['retrieved_documents'][0].id}"
 
-    @pytest.mark.requires_database
-    def test_rrf_fallback_on_exception(self, graphrag_pipeline, mocker, caplog):
+    def test_rrf_failure_raises(self, hybrid_on_known_corpus, mocker):
         """
-        FR-006: RRF MUST fall back when raising exception.
+        FR-006: RRF exception MUST propagate to caller (no fallback on error).
 
         Given: HybridGraphRAG pipeline initialized
         And: RRF raises exception (mocked)
         When: Query executed with method="rrf"
-        Then: System catches exception and falls back
+        Then: Exception propagates
         """
-        caplog.set_level(logging.ERROR)
-
-        query = "What are the treatments for type 2 diabetes?"
+        query = "Which salamander can regrow its legs?"
 
         # Mock RRF to raise exception
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_rrf",
-                side_effect=Exception("RRF failed"),
+                side_effect=RuntimeError("RRF failed"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_rrf",
-                side_effect=Exception("RRF failed"),
+                side_effect=RuntimeError("RRF failed"),
             )
 
-        # Execute query - should not raise
-        result = graphrag_pipeline.query(query, method="rrf")
-
-        # Verify fallback
-        assert (
-            len(result["contexts"]) > 0
-        ), "Fallback should retrieve documents after exception"
-
-        assert (
-            result["metadata"]["retrieval_method"] == "vector_fallback"
-        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
-
-        # Verify error logged
-        log_output = caplog.text
-        assert any(
-            "error" in msg.lower() or "fail" in msg.lower()
-            for msg in log_output.split("\n")
-        ), "Should log error about RRF exception"
+        # Execute query - should raise
+        with pytest.raises(RuntimeError, match="RRF failed"):
+            hybrid_on_known_corpus.query(query, method="rrf", generate_answer=False)

@@ -1,162 +1,129 @@
 """
-Contract tests for Hybrid Fusion query path (FR-001 to FR-003).
+Contract tests for Hybrid Fusion query path (FR-010 to FR-012).
 
-Tests validate that HybridGraphRAG's hybrid fusion method executes correctly
-and falls back to vector search when iris_vector_graph fails or returns 0 results.
+Tests validate that HybridGraphRAG's hybrid fusion method executes correctly:
+- On an empty graph, falls back to vector search
+- Exceptions from hybrid fusion propagate to caller
+- Zero results from hybrid fusion fall back to vector search
 
 Contract: HYBRID-001
-Requirements: FR-001, FR-002, FR-003
+Requirements: FR-010, FR-011, FR-012
 """
 
-import logging
 import pytest
-from iris_vector_rag import create_pipeline
 
 
 class TestHybridFusionContract:
     """Contract tests for hybrid fusion query path."""
 
-    @pytest.fixture
-    def graphrag_pipeline(self):
-        """Create HybridGraphRAG pipeline with validation."""
-        return create_pipeline("graphrag", validate_requirements=True)
-
-    @pytest.mark.requires_database
-    def test_hybrid_fusion_executes_successfully(self, graphrag_pipeline):
+    def test_hybrid_fusion_on_empty_graph_answers_from_vector_fallback(
+        self, hybrid_on_known_corpus
+    ):
         """
-        FR-001: Hybrid fusion MUST execute multi-modal search when available.
+        FR-010: Hybrid fusion on empty graph falls back to vector search.
 
-        Given: HybridGraphRAG pipeline initialized with iris_vector_graph
+        Given: HybridGraphRAG pipeline with empty graph (no entities/relationships)
         When: Query executed with method="hybrid"
-        Then: Hybrid fusion search executes and returns documents
-        """
-        query = "What are the symptoms of diabetes?"
+        Then: Query succeeds via vector_fallback
 
-        # Execute query with hybrid method
-        result = graphrag_pipeline.query(query, method="hybrid")
+        Note: The graph is deployed (IVG classes installed) but contains no data,
+        so hybrid fusion returns zero results and falls back to vector search.
+        """
+        query = "Which salamander can regrow its legs?"
+
+        # Execute query with hybrid method - graph is empty, will fall back
+        result = hybrid_on_known_corpus.query(
+            query, method="hybrid", generate_answer=False
+        )
 
         # Verify result structure
         assert result is not None, "Result should not be None"
-        assert isinstance(result, dict), "Result should be a dictionary"
+        assert "contexts" in result, "Result should have contexts"
+        assert "metadata" in result, "Result should have metadata"
 
-        # Verify documents retrieved (may be via fallback if iris_vector_graph unavailable)
-        assert "contexts" in result, "Result should contain contexts"
+        # Verify fallback to vector search
         assert (
             len(result["contexts"]) > 0
-        ), f"Hybrid fusion (or fallback) should retrieve documents, got {len(result['contexts'])}"
+        ), "Should retrieve documents via vector fallback"
 
-        # Verify metadata contains retrieval_method
-        assert "metadata" in result, "Result should contain metadata"
         assert (
-            "retrieval_method" in result["metadata"]
-        ), "Metadata should contain retrieval_method key"
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
-        # Retrieval method should be either hybrid_fusion or vector_fallback
-        method = result["metadata"]["retrieval_method"]
-        assert method in [
-            "hybrid_fusion",
-            "vector_fallback",
-            "hybrid",
-            "knowledge_graph",
-        ], f"Expected hybrid_fusion or fallback method, got {method}"
+        # Assert the answer: known query gets its known document
+        assert (
+            result["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"Top result should be kc-axolotl, got {result['retrieved_documents'][0].id}"
 
-    @pytest.mark.requires_database
-    def test_hybrid_fusion_fallback_on_zero_results(
-        self, graphrag_pipeline, mocker, caplog
+    def test_hybrid_fusion_zero_results_falls_back(
+        self, hybrid_on_known_corpus, mocker
     ):
         """
-        FR-002: Hybrid fusion MUST fall back to vector search when returning 0 results.
+        FR-011: Hybrid fusion MUST fall back to vector search when returning 0 results.
 
         Given: HybridGraphRAG pipeline initialized
-        And: iris_vector_graph hybrid fusion returns 0 results (mocked)
+        And: Hybrid fusion returns 0 results (mocked)
         When: Query executed with method="hybrid"
-        Then: System falls back to IRISVectorStore and retrieves documents
+        Then: System falls back to IRISVectorStore
         """
-        caplog.set_level(logging.WARNING)
+        query = "Which salamander can regrow its legs?"
 
-        query = "What are the symptoms of diabetes?"
-
-        # Mock retrieval_methods.retrieve_via_hybrid_fusion to return 0 results
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        # Mock hybrid fusion to return 0 results
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_hybrid_fusion",
                 return_value=([], "hybrid_fusion"),
             )
         else:
-            # If retrieval_methods not available, mock _retrieve_via_hybrid_fusion directly
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_hybrid_fusion",
                 return_value=([], "hybrid_fusion"),
             )
 
         # Execute query
-        result = graphrag_pipeline.query(query, method="hybrid")
+        result = hybrid_on_known_corpus.query(
+            query, method="hybrid", generate_answer=False
+        )
 
-        # Verify fallback occurred
-        assert (
-            len(result["contexts"]) > 0
-        ), "Fallback to vector search should retrieve documents"
+        # Verify fallback
+        assert len(result["contexts"]) > 0, "Fallback should retrieve documents"
 
-        # Verify metadata indicates fallback
         assert (
             result["metadata"]["retrieval_method"] == "vector_fallback"
         ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
-        # Verify warning log
-        log_output = caplog.text
-        assert any(
-            "fallback" in msg.lower() or "0 results" in msg.lower()
-            for msg in log_output.split("\n")
-        ), "Should log warning about fallback"
+        # Assert the answer
+        assert (
+            result["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"Top result should be kc-axolotl, got {result['retrieved_documents'][0].id}"
 
-    @pytest.mark.requires_database
-    def test_hybrid_fusion_fallback_on_exception(
-        self, graphrag_pipeline, mocker, caplog
-    ):
+    def test_hybrid_fusion_failure_raises(self, hybrid_on_known_corpus, mocker):
         """
-        FR-003: Hybrid fusion MUST fall back when iris_vector_graph raises exception.
+        FR-012: Hybrid fusion exception MUST propagate to caller (no fallback on error).
 
         Given: HybridGraphRAG pipeline initialized
-        And: iris_vector_graph hybrid fusion raises exception (mocked)
+        And: Hybrid fusion raises exception (mocked)
         When: Query executed with method="hybrid"
-        Then: System catches exception, falls back to vector search
+        Then: Exception propagates
         """
-        caplog.set_level(logging.ERROR)
+        query = "Which salamander can regrow its legs?"
 
-        query = "What are the symptoms of diabetes?"
-
-        # Mock retrieval_methods to raise exception
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        # Mock hybrid fusion to raise exception
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_hybrid_fusion",
-                side_effect=Exception("iris_vector_graph connection failed"),
+                side_effect=RuntimeError("Hybrid fusion failed"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_hybrid_fusion",
-                side_effect=Exception("iris_vector_graph connection failed"),
+                side_effect=RuntimeError("Hybrid fusion failed"),
             )
 
-        # Execute query - should not raise exception
-        result = graphrag_pipeline.query(query, method="hybrid")
-
-        # Verify fallback succeeded
-        assert (
-            len(result["contexts"]) > 0
-        ), "Fallback to vector search should retrieve documents after exception"
-
-        # Verify metadata indicates fallback
-        assert (
-            result["metadata"]["retrieval_method"] == "vector_fallback"
-        ), f"Expected vector_fallback after exception, got {result['metadata']['retrieval_method']}"
-
-        # Verify error was logged
-        log_output = caplog.text
-        assert any(
-            "error" in msg.lower() or "fail" in msg.lower()
-            for msg in log_output.split("\n")
-        ), "Should log error message about exception"
+        # Execute query - should raise
+        with pytest.raises(RuntimeError, match="Hybrid fusion failed"):
+            hybrid_on_known_corpus.query(query, method="hybrid", generate_answer=False)

@@ -1,185 +1,148 @@
 """
 Contract tests for Error Handling and Edge Cases (FR-023 to FR-025).
 
-Tests validate that HybridGraphRAG handles error conditions correctly when
-required tables are missing, connections fail, or other exceptional scenarios occur.
+Tests validate that HybridGraphRAG handles error conditions correctly:
+- Exceptions from graph legs now propagate (no silent fallback)
+- Zero-result legs fall back to vector search
+- Pipeline remains functional after fallback
 
 Contract: ERROR-001
 Requirements: FR-023, FR-024, FR-025
 """
 
 import logging
+
 import pytest
-from iris_vector_rag import create_pipeline
 
 
 class TestErrorHandlingContract:
     """Contract tests for error handling and edge cases."""
 
-    @pytest.fixture
-    def graphrag_pipeline(self):
-        """Create HybridGraphRAG pipeline with validation."""
-        try:
-            return create_pipeline("graphrag", validate_requirements=False)
-        except Exception as e:
-            pytest.skip(f"GraphRAG pipeline unavailable: {e}")
-
-    @pytest.mark.requires_database
-    def test_missing_required_tables_handled(self, graphrag_pipeline, mocker, caplog):
+    def test_missing_required_tables_raises(self, hybrid_on_known_corpus, mocker):
         """
-        FR-023: System MUST handle missing required tables gracefully.
+        FR-023: A leg that fails due to missing tables MUST raise (not fall back).
 
         Given: iris_vector_graph expects tables (RDF_EDGES, kg_NodeEmbeddings_optimized)
-        And: Tables do not exist in database
+        And: Tables do not exist (simulated)
         When: Query executed via iris_vector_graph methods
-        Then: System detects missing tables and falls back
+        Then: Exception propagates to caller
         """
-        caplog.set_level(logging.ERROR)
-
-        query = "What are the complications of untreated diabetes?"
+        query = "Which salamander can regrow its legs?"
 
         # Mock to simulate table not found error
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_hnsw_vector",
                 side_effect=Exception("Table 'kg_NodeEmbeddings_optimized' not found"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_hnsw_vector",
                 side_effect=Exception("Table 'kg_NodeEmbeddings_optimized' not found"),
             )
 
-        # Execute query - should not raise exception
-        result = graphrag_pipeline.query(query, method="vector")
+        # Execute query - should raise exception
+        with pytest.raises(Exception, match="not found"):
+            hybrid_on_known_corpus.query(query, method="vector", generate_answer=False)
 
-        # Verify fallback succeeded
-        assert (
-            len(result["contexts"]) > 0
-        ), "Should fall back to IRISVectorStore when tables missing"
-
-        assert (
-            result["metadata"]["retrieval_method"] == "vector_fallback"
-        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
-
-        # Verify error was logged
-        log_output = caplog.text.lower()
-        assert any(
-            keyword in log_output for keyword in ["error", "table", "not found"]
-        ), "Should log error about missing table"
-
-        # Verify no exception propagated to caller
-        assert result is not None, "Query should complete without raising exception"
-
-    @pytest.mark.requires_database
-    def test_iris_vector_graph_connection_failure_handled(
-        self, graphrag_pipeline, mocker, caplog
+    def test_iris_vector_graph_connection_failure_raises(
+        self, hybrid_on_known_corpus, mocker
     ):
         """
-        FR-024: System MUST handle iris_vector_graph connection failures.
+        FR-024: A leg that fails due to connection error MUST raise (not fall back).
 
         Given: HybridGraphRAG pipeline initialized
         And: iris_vector_graph connection fails (mocked exception)
         When: Query executed
-        Then: Connection exception caught, logged, and fallback succeeds
+        Then: ConnectionError propagates to caller
         """
-        caplog.set_level(logging.ERROR)
-
-        query = "What are the complications of untreated diabetes?"
+        query = "Which salamander can regrow its legs?"
 
         # Mock to simulate connection failure
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_hybrid_fusion",
                 side_effect=ConnectionError("Failed to connect to iris_vector_graph"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
+                hybrid_on_known_corpus,
                 "_retrieve_via_hybrid_fusion",
                 side_effect=ConnectionError("Failed to connect to iris_vector_graph"),
             )
 
-        # Execute query - should not raise
-        result = graphrag_pipeline.query(query, method="hybrid")
+        # Execute query - should raise
+        with pytest.raises(ConnectionError, match="Failed to connect"):
+            hybrid_on_known_corpus.query(query, method="hybrid", generate_answer=False)
 
-        # Verify fallback succeeded
-        assert len(result["contexts"]) > 0, "Should fall back after connection failure"
-
-        assert (
-            result["metadata"]["retrieval_method"] == "vector_fallback"
-        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
-
-        # Verify connection error was logged
-        log_output = caplog.text.lower()
-        assert any(
-            keyword in log_output for keyword in ["error", "fail", "connection"]
-        ), "Should log error about connection failure"
-
-        # Verify no exception propagated
-        assert result is not None, "Query should complete despite connection error"
-
-    @pytest.mark.requires_database
-    def test_system_continues_after_fallback(self, graphrag_pipeline, mocker):
+    def test_system_continues_after_fallback(self, hybrid_on_known_corpus, mocker):
         """
         FR-025: System MUST continue functioning after fallback invocation.
 
-        Given: HybridGraphRAG pipeline initialized
+        Given: HybridGraphRAG pipeline initialized with known corpus
         And: Multiple queries executed
-        When: First query triggers fallback (iris_vector_graph fails)
+        When: First query triggers fallback (leg returns zero results)
         And: Second query executed on same pipeline instance
         Then: Both queries succeed, pipeline state remains consistent
         """
-        query1 = "What are the complications of untreated diabetes?"
-        query2 = "How to prevent diabetes complications?"
+        query1 = "Which salamander can regrow its legs?"
+        query2 = "What is basalt?"
 
-        # Mock first query to trigger fallback
-        if hasattr(graphrag_pipeline, "retrieval_methods"):
+        # Mock first query to trigger fallback (zero results, not exception)
+        if hasattr(hybrid_on_known_corpus, "retrieval_methods"):
             mock_method = mocker.patch.object(
-                graphrag_pipeline.retrieval_methods,
+                hybrid_on_known_corpus.retrieval_methods,
                 "retrieve_via_rrf",
                 return_value=([], "rrf"),
             )
         else:
             mock_method = mocker.patch.object(
-                graphrag_pipeline, "_retrieve_via_rrf", return_value=([], "rrf")
+                hybrid_on_known_corpus, "_retrieve_via_rrf", return_value=([], "rrf")
             )
 
         # Execute first query
-        result1 = graphrag_pipeline.query(query1, method="rrf")
+        result1 = hybrid_on_known_corpus.query(
+            query1, method="rrf", generate_answer=False
+        )
 
         # Verify first query used fallback
         assert len(result1["contexts"]) > 0, "First query should succeed via fallback"
         assert (
             result1["metadata"]["retrieval_method"] == "vector_fallback"
         ), "First query should use fallback"
+        assert (
+            result1["retrieved_documents"][0].id == "kc-axolotl"
+        ), f"First query should return kc-axolotl, got {result1['retrieved_documents'][0].id}"
 
-        # Remove mock for second query (or keep it - both should work)
+        # Remove mock for second query
         mock_method.stop()
 
         # Execute second query on same pipeline instance
-        result2 = graphrag_pipeline.query(query2, method="rrf")
+        result2 = hybrid_on_known_corpus.query(
+            query2, method="rrf", generate_answer=False
+        )
 
         # Verify second query succeeded
         assert (
             len(result2["contexts"]) > 0
         ), "Second query should succeed after first query fallback"
+        assert (
+            result2["retrieved_documents"][0].id == "kc-basalt"
+        ), f"Second query should return kc-basalt, got {result2['retrieved_documents'][0].id}"
 
         # Verify pipeline state is consistent
         assert result2 is not None, "Pipeline should remain functional"
 
-        # Verify no degradation in results
-        assert (
-            len(result2["contexts"]) >= len(result1["contexts"]) * 0.5
-        ), "Second query should retrieve similar number of documents (within 50%)"
-
         # Execute third query to verify sustained functionality
-        result3 = graphrag_pipeline.query(
-            "diabetes prevention strategies", method="hybrid"
+        result3 = hybrid_on_known_corpus.query(
+            "medieval trade league", method="hybrid", generate_answer=False
         )
         assert (
             len(result3["contexts"]) > 0
         ), "Third query should also succeed - pipeline fully functional"
+        assert (
+            result3["retrieved_documents"][0].id == "kc-hanseatic"
+        ), f"Third query should return kc-hanseatic, got {result3['retrieved_documents'][0].id}"
