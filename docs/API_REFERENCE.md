@@ -249,7 +249,6 @@ def query(
         "rerank_degraded": bool,             # True if reranking fell back due to error
         "weights": dict | None,              # Fusion weights applied
         "context_count": int,                # Number of contexts
-        "sources": List[Dict],               # Also in metadata
         # Pipeline-specific fields...
     }
 }

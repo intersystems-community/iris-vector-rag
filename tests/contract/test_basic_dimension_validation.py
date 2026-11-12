@@ -140,7 +140,7 @@ class TestBasicRAGDimensionValidation:
 
         # Attempt to load documents
         try:
-            result = basic_rag_pipeline.load_documents(sample_documents)
+            result = basic_rag_pipeline.load_documents(documents=sample_documents)
 
             # If loading succeeded, check if any documents failed
             if "documents_failed" in result:

@@ -103,7 +103,10 @@ class TestBasicRerankRAGContract:
             "retrieval_method" in metadata
         ), "Metadata must include 'retrieval_method'"
         assert "context_count" in metadata, "Metadata must include 'context_count'"
-        assert "sources" in metadata, "Metadata must include 'sources'"
+        # Sources sit at the top level only (FR-006), not in metadata.
+        assert isinstance(
+            result.get("sources"), list
+        ), "Response must have a top-level 'sources' list"
 
         # Verify data types
         assert isinstance(result["answer"], str), "Answer must be string"
@@ -154,7 +157,7 @@ class TestBasicRerankRAGContract:
         When: load_documents() executed
         Then: Response has documents_loaded, embeddings_generated, etc.
         """
-        result = basic_rerank_pipeline.load_documents(sample_documents)
+        result = basic_rerank_pipeline.load_documents(documents=sample_documents)
 
         # Verify response structure
         assert (

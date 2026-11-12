@@ -140,7 +140,7 @@ class TestCRAGDimensionValidation:
 
         # Attempt to load documents
         try:
-            result = crag_pipeline.load_documents(sample_documents)
+            result = crag_pipeline.load_documents(documents=sample_documents)
 
             # If loading succeeded, check if any documents failed
             if "documents_failed" in result:
