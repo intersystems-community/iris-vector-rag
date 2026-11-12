@@ -390,165 +390,97 @@ class CRAGPipeline(RAGPipeline):
         retrieval_method = kwargs.get("method", "crag_corrective")
         effective_retrieval_method = retrieval_method
 
+        # Stage 1: Initial retrieval. A failure raises: CRAG used to answer from
+        # a stand-in document holding the query text, which read as a context.
+        initial_docs = self._initial_retrieval(query_text, top_k, where=where)
+        # Stage 2: Evaluate retrieval quality
         try:
-            # Stage 1: Initial retrieval
-            try:
-                initial_docs = self._initial_retrieval(query_text, top_k, where=where)
-            except FilterError:
-                raise
-            except Exception as exc:
-                logger.warning(
-                    "CRAG initial retrieval failed; falling back to empty vector results: %s",
-                    exc,
-                )
-                if self.evaluator:
-                    try:
-                        self.evaluator.evaluate(query_text, [])
-                    except Exception as eval_exc:
-                        logger.warning(
-                            "CRAG evaluator failed during fallback: %s",
-                            eval_exc,
-                        )
-                initial_docs = []
-                retrieval_status = "fallback_vector"
-                corrected_docs = [
-                    Document(
-                        id="fallback_context",
-                        page_content=query_text,
-                        metadata={
-                            "retrieval_method": "vector_fallback",
-                            "source": "fallback",
-                        },
-                    )
-                ]
-                effective_retrieval_method = "vector_fallback"
-            else:
-                # Stage 2: Evaluate retrieval quality
-                try:
-                    retrieval_status = self.evaluator.evaluate(query_text, initial_docs)
-                    logger.info(f"CRAG: Retrieval status: {retrieval_status}")
+            retrieval_status = self.evaluator.evaluate(query_text, initial_docs)
+            logger.info(f"CRAG: Retrieval status: {retrieval_status}")
 
-                    # Stage 3: Apply corrective actions based on evaluation
-                    corrected_docs = self._apply_corrective_actions(
-                        query_text, initial_docs, retrieval_status, top_k, where=where
-                    )
-                except FilterError:
-                    raise
-                except Exception as exc:
-                    logger.warning(
-                        "CRAG evaluator failed; falling back to vector search: %s",
-                        exc,
-                    )
-                    retrieval_status = "fallback_vector"
-                    corrected_docs = initial_docs
-                    effective_retrieval_method = "vector_fallback"
-                    if not corrected_docs:
-                        corrected_docs = [
-                            Document(
-                                id="fallback_context",
-                                page_content=query_text,
-                                metadata={
-                                    "retrieval_method": "vector_fallback",
-                                    "source": "fallback",
-                                },
-                            )
-                        ]
-
-            # Stage 4: Generate answer if requested
-            answer = None
-            if generate_answer:
-                if self.llm_func:
-                    try:
-                        answer = self._generate_answer(
-                            query_text, corrected_docs, retrieval_status
-                        )
-                    except Exception as e:
-                        logger.warning(f"Answer generation failed: {e}")
-                        answer = "Error generating answer"
-                else:
-                    answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
-
-                # Ensure answer is always a string when generate_answer=True
-                if answer is None:
-                    answer = "No relevant documents found to answer the query."
-
-            # FR-007: apply query-time reranking after corrective retrieval
-            rerank_degraded = False
-            if opts.rerank:
-                from iris_vector_rag.core.composable_query import ComposableQueryMixin
-
-                corrected_docs, rerank_degraded = ComposableQueryMixin._maybe_rerank(
-                    self, corrected_docs, opts
-                )
-
-            execution_time = time.time() - start_time
-
-            # Extract sources for metadata
-            sources = [
-                {
-                    "doc_id": doc.metadata.get("doc_id", "unknown"),
-                    "source": doc.metadata.get("source", "unknown"),
-                }
-                for doc in corrected_docs
-            ]
-            contexts_list = [doc.page_content for doc in corrected_docs]
-
-            result = {
-                "query": query_text,
-                "answer": answer,
-                "retrieved_documents": corrected_docs,
-                "contexts": contexts_list,
-                "sources": sources,  # Top-level sources as per spec
-                "execution_time": execution_time,
-                "error": None,
-                "metadata": {
-                    "num_retrieved": len(corrected_docs),
-                    "pipeline_type": "crag",
-                    "generated_answer": generate_answer and answer is not None,
-                    "retrieval_status": retrieval_status,
-                    "correction_applied": retrieval_status != "confident",
-                    **(
-                        {"correction_strategy": strategy}
-                        if (strategy := self._correction_strategy(retrieval_status))
-                        else {}
-                    ),
-                    "initial_doc_count": len(initial_docs),
-                    "final_doc_count": len(corrected_docs),
-                    "retrieval_method": effective_retrieval_method,  # FR-003: Include retrieval method
-                    "context_count": len(contexts_list),
-                    "processing_time": execution_time,
-                },
-            }
-
-            logger.info(f"CRAG: Completed in {execution_time:.2f}s")
-            return result
-
+            # Stage 3: Apply corrective actions based on evaluation
+            corrected_docs = self._apply_corrective_actions(
+                query_text, initial_docs, retrieval_status, top_k, where=where
+            )
         except FilterError:
             raise
-        except Exception as e:
-            logger.error(f"CRAG pipeline failed: {e}")
-            # Ensure answer is a string even in error case
-            answer = (
-                "Error: Pipeline execution failed. Please check configuration and database connection."
-                if generate_answer
-                else None
+        except Exception as exc:
+            logger.warning(
+                "CRAG evaluator failed; falling back to vector search: %s",
+                exc,
             )
-            return {
-                "query": query_text,
-                "answer": answer,
-                "retrieved_documents": [],
-                "contexts": [],
-                "sources": [],
-                "execution_time": 0.0,
-                "error": str(e),
-                "metadata": {
-                    "num_retrieved": 0,
-                    "pipeline_type": "crag",
-                    "generated_answer": False,
-                    "retrieval_method": effective_retrieval_method,
-                    "context_count": 0,
-                },
+            retrieval_status = "fallback_vector"
+            corrected_docs = initial_docs
+            effective_retrieval_method = "vector_fallback"
+
+        # Stage 4: Generate answer if requested
+        answer = None
+        if generate_answer:
+            if self.llm_func:
+                try:
+                    answer = self._generate_answer(
+                        query_text, corrected_docs, retrieval_status
+                    )
+                except Exception as e:
+                    logger.warning(f"Answer generation failed: {e}")
+                    answer = "Error generating answer"
+            else:
+                answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
+
+            # Ensure answer is always a string when generate_answer=True
+            if answer is None:
+                answer = "No relevant documents found to answer the query."
+
+        # FR-007: apply query-time reranking after corrective retrieval
+        rerank_degraded = False
+        if opts.rerank:
+            from iris_vector_rag.core.composable_query import ComposableQueryMixin
+
+            corrected_docs, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                self, corrected_docs, opts
+            )
+
+        execution_time = time.time() - start_time
+
+        # Extract sources for metadata
+        sources = [
+            {
+                "doc_id": doc.metadata.get("doc_id", "unknown"),
+                "source": doc.metadata.get("source", "unknown"),
             }
+            for doc in corrected_docs
+        ]
+        contexts_list = [doc.page_content for doc in corrected_docs]
+
+        result = {
+            "query": query_text,
+            "answer": answer,
+            "retrieved_documents": corrected_docs,
+            "contexts": contexts_list,
+            "sources": sources,  # Top-level sources as per spec
+            "execution_time": execution_time,
+            "error": None,
+            "metadata": {
+                "num_retrieved": len(corrected_docs),
+                "pipeline_type": "crag",
+                "generated_answer": generate_answer and answer is not None,
+                "retrieval_status": retrieval_status,
+                "correction_applied": retrieval_status != "confident",
+                **(
+                    {"correction_strategy": strategy}
+                    if (strategy := self._correction_strategy(retrieval_status))
+                    else {}
+                ),
+                "initial_doc_count": len(initial_docs),
+                "final_doc_count": len(corrected_docs),
+                "retrieval_method": effective_retrieval_method,  # FR-003: Include retrieval method
+                "context_count": len(contexts_list),
+                "processing_time": execution_time,
+            },
+        }
+
+        logger.info(f"CRAG: Completed in {execution_time:.2f}s")
+        return result
 
     def _validate_embedding_dimension(self, embedding: List[float]) -> None:
         """Validate embedding dimension matches expected model output."""

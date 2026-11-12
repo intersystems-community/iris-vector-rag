@@ -201,16 +201,10 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
             vector_store=self.mock_vector_store,
         )
 
-        # Pipeline catches exceptions and returns graceful error response
+        # A retrieval failure raises from query(), it is not swallowed into a field
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-ci"}):
-            result = pipeline.query("Test query")
-
-        # Should still return a response; retrieval error is captured in error key
-        self.assertIsInstance(result, dict)
-        self.assertIn("answer", result)
-        self.assertIsNone(result["answer"])
-        self.assertIsNotNone(result["error"])
-        self.assertEqual(result["error"]["type"], "RetrievalError")
+            with self.assertRaisesRegex(Exception, "Vector store error"):
+                pipeline.query("Test query")
 
     def test_error_handling_llm_error(self):
         """Test error handling when LLM fails."""

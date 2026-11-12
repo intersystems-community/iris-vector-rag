@@ -15,13 +15,7 @@ from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..core.models import Document, coerce_documents
 from ..embeddings.manager import EmbeddingManager
-from ..exceptions import (
-    GenerationError,
-    IngestionError,
-    RetrievalError,
-    TextIndexMissingError,
-    VectorStoreConfigurationError,
-)
+from ..exceptions import GenerationError, IngestionError, RetrievalError
 
 logger = logging.getLogger(__name__)
 
@@ -576,63 +570,38 @@ class BasicRAGPipeline(RAGPipeline):
                 "Fix: initialize the pipeline with a vector store or check configuration."
             )
 
-        # Step 1: Retrieve relevant documents
-        retrieval_error = None
+        # Step 1: Retrieve relevant documents. A retrieval failure raises with its
+        # own type (a dimension mismatch stays a DimensionMismatchError): returned
+        # in a field, it read as "nothing matched" to a caller who did not look.
+        generation_error = None
         engine_applied_threshold = False
-        try:
-            # FR-010: dispatch via RetrievalEngine when retrieval mode is explicitly set
-            # A threshold goes through the engine too: the plain store search returns
-            # documents without their scores, so only the engine can apply it.
-            if (
-                (
-                    (opts.retrieval and opts.retrieval != "vector")
-                    or similarity_threshold > 0.0
-                )
-                and hasattr(self, "vector_store")
-                and self.vector_store
+        # FR-010: dispatch via RetrievalEngine when retrieval mode is explicitly set
+        # A threshold goes through the engine too: the plain store search returns
+        # documents without their scores, so only the engine can apply it.
+        if (
+            opts.retrieval and opts.retrieval != "vector"
+        ) or similarity_threshold > 0.0:
+            from iris_vector_rag.retrieval.engine import RetrievalEngine
+
+            engine = RetrievalEngine(
+                vector_store=self.vector_store,
+                connection=self._retrieval_connection(),
+            )
+            retrieved_documents = engine.retrieve(opts)
+            engine_applied_threshold = True
+        else:
+            # FR-016: native EMBEDDING path when configured and no explicit embedding_func
+            if self._iris_embedding_applies(
+                where=opts.where, embedding_func=kwargs.get("embedding_func")
             ):
-                from iris_vector_rag.retrieval.engine import RetrievalEngine
-
-                engine = RetrievalEngine(
-                    vector_store=self.vector_store,
-                    connection=self._retrieval_connection(),
+                raw = self.vector_store.search_with_embedding(
+                    query, top_k=top_k, filter=metadata_filter
                 )
-                retrieved_documents = engine.retrieve(opts)
-                engine_applied_threshold = True
-            elif hasattr(self, "vector_store") and self.vector_store:
-                # FR-016: native EMBEDDING path when configured and no explicit embedding_func
-                if self._iris_embedding_applies(
-                    where=opts.where, embedding_func=kwargs.get("embedding_func")
-                ):
-                    raw = self.vector_store.search_with_embedding(
-                        query, top_k=top_k, filter=metadata_filter
-                    )
-                    retrieved_documents = [doc for doc, _ in raw]
-                else:
-                    retrieved_documents = self._search_text(
-                        query, top_k, metadata_filter, opts.where
-                    )
+                retrieved_documents = [doc for doc, _ in raw]
             else:
-                logger.warning("No vector store available")
-                retrieved_documents = []
-        except VectorStoreConfigurationError:
-            # FR-003: surface invalid/unsupported filter keys (and non-scalar values)
-            # with a clear error instead of silently returning unfiltered/empty results.
-            raise
-        except Exception as e:
-            from iris_vector_rag.retrieval.modes import RetrievalPrerequisiteError
-
-            # A missing text index is an unmet prerequisite too: an empty result would
-            # read as "nothing matches".
-            if isinstance(e, (RetrievalPrerequisiteError, TextIndexMissingError)):
-                raise
-            logger.warning(f"Document retrieval failed: {e}")
-            retrieval_error = {
-                "type": "RetrievalError",
-                "message": str(e),
-                "error_class": type(e).__name__,
-            }
-            retrieved_documents = []
+                retrieved_documents = self._search_text(
+                    query, top_k, metadata_filter, opts.where
+                )
 
         # FR-002: apply similarity threshold post-retrieval. Scores are attached to
         # each Document's metadata by the vector store ("score"/"similarity").
@@ -665,12 +634,7 @@ class BasicRAGPipeline(RAGPipeline):
             )
 
         # Step 2: Generate answer using LLM (if enabled and LLM available)
-        if (
-            generate_answer
-            and self.llm_func
-            and retrieved_documents
-            and not retrieval_error
-        ):
+        if generate_answer and self.llm_func and retrieved_documents:
             try:
                 answer = self._generate_answer(
                     query, retrieved_documents, custom_prompt
@@ -678,14 +642,12 @@ class BasicRAGPipeline(RAGPipeline):
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = None
-                retrieval_error = {
+                generation_error = {
                     "type": "GenerationError",
                     "message": str(e),
                     "error_class": type(e).__name__,
                 }
         elif not generate_answer:
-            answer = None
-        elif retrieval_error:
             answer = None
         elif not retrieved_documents:
             answer = "No relevant documents found to answer the query."
@@ -706,7 +668,7 @@ class BasicRAGPipeline(RAGPipeline):
             "retrieved_documents": retrieved_documents,
             "contexts": contexts_list,  # String contexts for RAGAS
             "execution_time": execution_time,  # Required for RAGAS debug harness
-            "error": retrieval_error,  # AUD-002: None on success, dict on retrieval failure
+            "error": generation_error,  # None on success, dict on generation failure
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
                 "processing_time": execution_time,

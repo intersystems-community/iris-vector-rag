@@ -145,9 +145,6 @@ swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.load_documents#1
 swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.load_documents#2
 swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.query#1
 swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.query#2
-swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.query#3
-swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.query#4
-swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.query#5
 swallowed-error	iris_vector_rag/pipelines/graphrag.py::GraphRAGPipeline._get_documents_from_entities#1
 swallowed-error	iris_vector_rag/pipelines/graphrag.py::GraphRAGPipeline._validate_knowledge_graph#1
 swallowed-error	iris_vector_rag/pipelines/graphrag.py::GraphRAGPipeline.load_documents#1

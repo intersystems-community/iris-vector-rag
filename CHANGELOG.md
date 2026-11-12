@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Changed (breaking)
+
+- **`query()` raises when retrieval fails** in BasicRAG, Rerank, CRAG and PyLate ColBERT.
+  BasicRAG and Rerank caught every retrieval exception and returned `answer=None` with the
+  error in `result["error"]`. CRAG answered from a stand-in "fallback_context" document
+  that held the query text. A caller who did not check the field read a failure as
+  "nothing matched". The exception now propagates with its own type: a query embedded at
+  the wrong width is a `DimensionMismatchError` that names both widths and the fix, and
+  an unreachable IRIS is a `VectorStoreConnectionError`. `result["error"]` still reports a
+  failed answer generation.
+
 ### Removed
 
 - **`IRISConnectionPool`** (`iris_vector_rag.common.connection_pool`), deprecated since

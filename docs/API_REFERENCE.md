@@ -259,6 +259,9 @@ def query(
 - Query cannot be empty or whitespace-only
 - top_k must be between 1 and 100 (inclusive)
 - Raises `ValueError` with 5-part error message on validation failure
+- Raises when retrieval fails, with the error's own type: `DimensionMismatchError` for a
+  query embedded at the wrong width, `VectorStoreConnectionError` when IRIS cannot be
+  reached. `result["error"]` is `None` unless answer generation failed.
 
 **Error Message Format:**
 

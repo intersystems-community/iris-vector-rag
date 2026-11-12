@@ -13,6 +13,12 @@ import os
 
 import pytest
 
+from iris_vector_rag.exceptions import (
+    DimensionMismatchError,
+    VectorStoreConnectionError,
+)
+from tests.contract.conftest import assert_names_the_mismatch
+
 
 @pytest.mark.contract
 @pytest.mark.error_handling
@@ -145,29 +151,23 @@ class TestPyLateColBERTErrorHandling:
             len(error_messages) > 0
         ), "At least one error should be logged at ERROR level"
 
-    def test_fail_fast_on_critical_config_missing(self, mocker):
+    def test_fail_fast_on_critical_config_missing(self, unreachable_iris):
+        """
+        FR-009: An unreachable IRIS MUST fail the query, not return an empty answer.
+
+        Given: Every connection the store asks for fails
+        When: PyLate ColBERT queries
+        Then: VectorStoreConnectionError, naming the connection
+        """
         from iris_vector_rag import create_pipeline
 
-        mocker.patch(
-            "iris_vector_rag.common.iris_connection._session_connection",
-            side_effect=ConnectionError(
-                "IRIS connection failed (simulated missing config)"
-            ),
-        )
+        pipeline = create_pipeline("pylate_colbert", validate_requirements=False)
+        unreachable_iris(pipeline)
 
-        try:
-            pipeline = create_pipeline("pylate_colbert", validate_requirements=False)
-            with pytest.raises(Exception) as exc_info:
-                pipeline.query("test query")
-            error_msg = str(exc_info.value).lower()
-            assert any(
-                k in error_msg for k in ("config", "key", "missing", "connect")
-            ), f"Error should mention missing configuration, got: {error_msg}"
-        except Exception as e:
-            error_msg = str(e).lower()
-            assert any(
-                k in error_msg for k in ("config", "requirement", "missing", "connect")
-            ), f"Initialization error should mention configuration, got: {error_msg}"
+        with pytest.raises(VectorStoreConnectionError) as exc_info:
+            pipeline.query("test query", generate_answer=False)
+
+        assert "iris connection" in str(exc_info.value).lower()
 
     def test_colbert_model_loading_error(
         self, pylate_colbert_pipeline, mocker, sample_query

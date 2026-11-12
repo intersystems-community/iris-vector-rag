@@ -13,6 +13,12 @@ import os
 
 import pytest
 
+from iris_vector_rag.exceptions import (
+    DimensionMismatchError,
+    VectorStoreConnectionError,
+)
+from tests.contract.conftest import assert_names_the_mismatch
+
 
 @pytest.mark.contract
 @pytest.mark.error_handling
@@ -129,39 +135,21 @@ class TestBasicRAGErrorHandling:
         # (This is a guideline - implementation may vary)
 
     def test_dimension_mismatch_error_actionable(
-        self, basic_rag_pipeline, mocker, sample_query
+        self, basic_rag_pipeline, wrong_width_queries, sample_query
     ):
         """
         FR-009, FR-010: Dimension mismatch error MUST be actionable.
 
-        Given: Query embedding has wrong dimensions
-        When: Dimension validation occurs
-        Then: Error message includes expected (384) and actual dimensions with fix guidance
+        Given: Query embedding at 768 dimensions against a 384 column
+        When: BasicRAG queries
+        Then: The error gives expected and actual widths and how to fix it
         """
-        # Mock embedding to return wrong dimensions
-        if hasattr(basic_rag_pipeline, "embedding_manager"):
-            corrupt_embedding = [0.1] * 768  # Wrong dimension (BERT-base)
+        wrong_width_queries(basic_rag_pipeline)
 
-            mocker.patch.object(
-                basic_rag_pipeline.embedding_manager,
-                "generate_embedding",
-                return_value=corrupt_embedding,
-            )
+        with pytest.raises(DimensionMismatchError) as exc_info:
+            basic_rag_pipeline.query(sample_query)
 
-            with pytest.raises(Exception) as exc_info:
-                basic_rag_pipeline.query(sample_query)
-
-            error_msg = str(exc_info.value).lower()
-
-            # Error message SHOULD include both dimensions
-            # (May not be implemented yet - this documents expected behavior)
-            if "dimension" in error_msg:
-                # Dimension validation exists
-                assert True
-            else:
-                pytest.skip("Dimension validation not yet implemented")
-        else:
-            pytest.skip("Pipeline does not have embedding_manager")
+        assert_names_the_mismatch(exc_info.value)
 
     def test_error_message_suggests_fix(self, basic_rag_pipeline, mocker):
         """
@@ -264,26 +252,20 @@ class TestBasicRAGErrorHandling:
             len(error_messages) > 0
         ), "At least one error should be logged at ERROR level"
 
-    def test_fail_fast_on_critical_config_missing(self, mocker):
+    def test_fail_fast_on_critical_config_missing(self, unreachable_iris):
+        """
+        FR-009: An unreachable IRIS MUST fail the query, not return an empty answer.
+
+        Given: Every connection the store asks for fails
+        When: BasicRAG queries
+        Then: VectorStoreConnectionError, naming the connection
+        """
         from iris_vector_rag import create_pipeline
 
-        mocker.patch(
-            "iris_vector_rag.common.iris_connection._session_connection",
-            side_effect=ConnectionError(
-                "IRIS connection failed (simulated missing config)"
-            ),
-        )
+        pipeline = create_pipeline("basic", validate_requirements=False)
+        unreachable_iris(pipeline)
 
-        try:
-            pipeline = create_pipeline("basic", validate_requirements=False)
-            with pytest.raises(Exception) as exc_info:
-                pipeline.query("test query")
-            error_msg = str(exc_info.value).lower()
-            assert any(
-                k in error_msg for k in ("config", "key", "missing", "connect")
-            ), f"Error should mention missing configuration, got: {error_msg}"
-        except Exception as e:
-            error_msg = str(e).lower()
-            assert any(
-                k in error_msg for k in ("config", "requirement", "missing", "connect")
-            ), f"Initialization error should mention configuration, got: {error_msg}"
+        with pytest.raises(VectorStoreConnectionError) as exc_info:
+            pipeline.query("test query", generate_answer=False)
+
+        assert "iris connection" in str(exc_info.value).lower()

@@ -3,7 +3,7 @@ Unit tests for AUD-002 bug fix: proper error handling for embedding and retrieva
 
 Tests verify that:
 1. Embedding failures raise EmbeddingError (not zero vectors)
-2. Retrieval failures are captured in response.error (not empty list)
+2. Retrieval failures raise from query() (not an empty list, not an error field)
 3. Generation failures are captured in response.error (not placeholder strings)
 """
 
@@ -74,16 +74,14 @@ class TestEmbeddingErrorHandling:
 class TestRetrievalErrorHandling:
     """Tests for proper retrieval error handling (Part B)."""
 
-    def test_retrieval_failure_captured_in_response_error(self):
+    def test_retrieval_failure_raises_from_query(self):
         """
-        Test that retrieval failure is captured in response["error"]
-        instead of being swallowed to an empty list.
+        A retrieval failure raises from query(): neither an empty list nor an
+        error field the caller has to remember to check.
         """
-        # Setup
         config_manager = ConfigurationManager()
         connection_manager = ConnectionManager(config_manager)
 
-        # Create pipeline with mocked vector store that raises
         pipeline = BasicRAGPipeline(
             connection_manager=connection_manager,
             config_manager=config_manager,
@@ -95,15 +93,8 @@ class TestRetrievalErrorHandling:
         )
         pipeline.vector_store = mock_vector_store
 
-        # Execute query
-        result = pipeline.query("What is diabetes?", generate_answer=False)
-
-        # Assert: error is captured, retrieved_documents is empty, error != None
-        assert result["retrieved_documents"] == []
-        assert result["error"] is not None
-        assert result["error"]["type"] == "RetrievalError"
-        assert "Database connection failed" in result["error"]["message"]
-        assert result["error"]["error_class"] == "RuntimeError"
+        with pytest.raises(RuntimeError, match="Database connection failed"):
+            pipeline.query("What is diabetes?", generate_answer=False)
 
     def test_empty_result_has_no_error(self):
         """
@@ -243,8 +234,7 @@ class TestComprehensiveErrorScenarios:
 
     def test_retrieval_error_prevents_generation_attempt(self):
         """
-        Test that if retrieval fails, generation is not attempted,
-        and both errors are not present.
+        If retrieval fails, query() raises before generation is attempted.
         """
         config_manager = ConfigurationManager()
         connection_manager = ConnectionManager(config_manager)
@@ -269,17 +259,9 @@ class TestComprehensiveErrorScenarios:
 
         pipeline.llm_func = tracking_llm
 
-        # Execute query — provide a dummy API key so the env-check doesn't
-        # short-circuit before retrieval is attempted
-        import os
+        with pytest.raises(RuntimeError, match="Vector DB offline"):
+            pipeline.query("Query", generate_answer=True)
 
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-ci"}):
-            result = pipeline.query("Query", generate_answer=True)
-
-        # Assert: only retrieval error, generation not attempted
-        assert result["error"] is not None
-        assert result["error"]["type"] == "RetrievalError"
-        assert result["answer"] is None
         assert gen_call_count == 0  # LLM never called
 
     def test_successful_path_has_no_error(self):

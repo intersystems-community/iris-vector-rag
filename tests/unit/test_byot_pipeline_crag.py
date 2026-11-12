@@ -184,15 +184,16 @@ def test_a_filter_error_from_the_search_is_not_turned_into_a_fallback():
         pipeline.query("q", generate_answer=False, where=WHERE)
 
 
-def test_any_other_search_failure_still_falls_back():
+def test_any_other_search_failure_raises_too():
+    """No fallback for a failed search: CRAG used to answer from a stand-in context."""
     pipeline, cursor = scoped_pipeline()
 
     def fail(*args, **kwargs):
         raise RuntimeError("connection reset")
 
     pipeline.vector_store.similarity_search = fail
-    result = pipeline.query("q", generate_answer=False, where=WHERE)
-    assert result["metadata"]["retrieval_status"] == "fallback_vector"
+    with pytest.raises(RuntimeError, match="connection reset"):
+        pipeline.query("q", generate_answer=False, where=WHERE)
 
 
 def test_a_store_that_cannot_take_where_refuses_it():

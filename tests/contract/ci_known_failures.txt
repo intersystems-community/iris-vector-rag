@@ -1,9 +1,3 @@
-tests/contract/test_basic_dimension_validation.py::TestBasicRAGDimensionValidation::test_dimension_mismatch_raises_clear_error
-tests/contract/test_basic_error_handling.py::TestBasicRAGErrorHandling::test_dimension_mismatch_error_actionable
-tests/contract/test_basic_error_handling.py::TestBasicRAGErrorHandling::test_fail_fast_on_critical_config_missing
-tests/contract/test_basic_rerank_dimension_validation.py::TestBasicRerankRAGDimensionValidation::test_dimension_mismatch_raises_clear_error
-tests/contract/test_basic_rerank_error_handling.py::TestBasicRerankRAGErrorHandling::test_dimension_mismatch_error_actionable
-tests/contract/test_basic_rerank_error_handling.py::TestBasicRerankRAGErrorHandling::test_fail_fast_on_critical_config_missing
 tests/contract/test_common_imports.py::test_old_top_level_common_removed
 tests/contract/test_dimension_validation_contract.py::TestDimensionValidationContract::test_document_embedding_dimension_check
 tests/contract/test_error_handling_contract.py::TestErrorHandlingContract::test_iris_vector_graph_connection_failure_handled
@@ -21,7 +15,6 @@ tests/contract/test_hybrid_fusion_contract.py::TestHybridFusionContract::test_hy
 tests/contract/test_hybrid_fusion_contract.py::TestHybridFusionContract::test_hybrid_fusion_fallback_on_zero_results
 tests/contract/test_pipeline_behavior.py::TestPipelineBehavior::test_all_retrieval_methods_available
 tests/contract/test_pipeline_behavior.py::TestPipelineBehavior::test_no_fallback_methods_exist
-tests/contract/test_pylate_colbert_error_handling.py::TestPyLateColBERTErrorHandling::test_fail_fast_on_critical_config_missing
 tests/contract/test_relation_embedding_store_contract.py::test_search_calls_vector_similarity_search_with_cosine
 tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_executes_successfully
 tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_fallback_on_exception
@@ -39,10 +32,6 @@ tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_ve
 # entity-services-fix leftovers (batch extraction tests that need an LLM or the removed batch surface)
 # test-environment leftovers (DAT fixtures, the deleted devtools bridge, connection and cache tests)
 # mcp-stdio-server follow-up (order-dependent: the tests read tables an earlier test may have dropped, so the failing subset differs run to run)
-# pipelines-fix leftovers: the CRAG contract files release.yml used to --ignore. CRAG swallows retrieval and generation errors into an `error` field (dimension mismatch, missing config) and its query result lacks the documented structure.
-tests/contract/test_crag_error_handling.py::TestCRAGErrorHandling::test_dimension_mismatch_error_actionable
-tests/contract/test_crag_error_handling.py::TestCRAGErrorHandling::test_fail_fast_on_critical_config_missing
-tests/contract/test_crag_dimension_validation.py::TestCRAGDimensionValidation::test_dimension_mismatch_raises_clear_error
 # test-environment leftovers: these tests query RAG.SourceDocuments without creating it, so they fail on a fresh IRIS (identical on remediation/integrated before ci-honesty stage 2); release.yml would have failed on them at the next tag.
 tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_zero_results_message
 tests/contract/test_diagnostic_logging_contract.py::TestDiagnosticLoggingContract::test_logs_query_embedding_dimensions

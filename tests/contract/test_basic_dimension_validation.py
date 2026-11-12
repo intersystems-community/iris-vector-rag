@@ -10,6 +10,12 @@ Requirements: FR-021, FR-022, FR-023, FR-024
 
 import pytest
 
+from iris_vector_rag.exceptions import (
+    DimensionMismatchError,
+    VectorStoreConnectionError,
+)
+from tests.contract.conftest import assert_names_the_mismatch
+
 
 @pytest.mark.contract
 @pytest.mark.dimension
@@ -37,39 +43,22 @@ class TestBasicRAGDimensionValidation:
             len(embedding) == 384
         ), f"BasicRAG embedding must have 384 dimensions, got {len(embedding)}"
 
-    def test_dimension_mismatch_raises_clear_error(self, basic_rag_pipeline, mocker):
+    def test_dimension_mismatch_raises_clear_error(
+        self, basic_rag_pipeline, wrong_width_queries
+    ):
         """
         FR-022: Dimension mismatch MUST raise clear diagnostic error.
 
-        Given: Query embedding with wrong dimensions
-        When: Dimension validation occurs
-        Then: Error message includes expected (384) and actual dimensions
+        Given: Query embedding at 768 dimensions against a 384 column
+        When: BasicRAG queries
+        Then: DimensionMismatchError names both widths and the fix
         """
-        if not hasattr(basic_rag_pipeline, "embedding_manager"):
-            pytest.skip("Pipeline does not expose embedding_manager")
+        wrong_width_queries(basic_rag_pipeline)
 
-        # Mock embedding to return wrong dimensions (768D - BERT-base)
-        corrupt_embedding = [0.1] * 768
+        with pytest.raises(DimensionMismatchError) as exc_info:
+            basic_rag_pipeline.query("test query", generate_answer=False)
 
-        mocker.patch.object(
-            basic_rag_pipeline.embedding_manager,
-            "generate_embedding",
-            return_value=corrupt_embedding,
-        )
-
-        with pytest.raises(Exception) as exc_info:
-            basic_rag_pipeline.query("test query")
-
-        error_msg = str(exc_info.value).lower()
-
-        # Error message SHOULD include both dimensions
-        if "dimension" in error_msg:
-            # Dimension validation exists - verify message quality
-            assert (
-                "384" in error_msg or "expected" in error_msg
-            ), "Error should mention expected dimension (384)"
-        else:
-            pytest.skip("Dimension validation not yet implemented")
+        assert_names_the_mismatch(exc_info.value)
 
     def test_dimension_error_message_is_actionable(self, basic_rag_pipeline, mocker):
         """
@@ -229,60 +218,22 @@ class TestBasicRAGDimensionValidation:
                 "dimension" not in error_msg or "384" not in error_msg
             ), f"Correct 384D embedding should not trigger dimension error: {e}"
 
-    def test_dimension_validation_early_in_pipeline(self, basic_rag_pipeline, mocker):
+    def test_dimension_validation_early_in_pipeline(
+        self, basic_rag_pipeline, wrong_width_queries, mocker
+    ):
         """
         FR-023: Dimension validation MUST occur before expensive operations.
 
-        Given: Query with wrong dimension embedding
-        When: Pipeline processes query
-        Then: Dimension error raised before LLM call or database query
+        Given: Query embedding at 768 dimensions against a 384 column
+        When: BasicRAG queries with an answer asked for
+        Then: DimensionMismatchError, and the LLM never ran
         """
-        if not hasattr(basic_rag_pipeline, "embedding_manager"):
-            pytest.skip("Pipeline does not expose embedding_manager")
-
-        # Track if expensive operations were called
-        llm_called = False
-        db_called = False
-
-        def track_llm_call(*args, **kwargs):
-            nonlocal llm_called
-            llm_called = True
-            raise Exception("LLM should not be called with dimension errors")
-
-        def track_db_call(*args, **kwargs):
-            nonlocal db_called
-            db_called = True
-            raise Exception("Database should not be queried with dimension errors")
-
-        # Mock embedding to return wrong dimensions
-        corrupt_embedding = [0.1] * 256
-
-        mocker.patch.object(
-            basic_rag_pipeline.embedding_manager,
-            "generate_embedding",
-            return_value=corrupt_embedding,
+        wrong_width_queries(basic_rag_pipeline)
+        llm = mocker.patch.object(
+            basic_rag_pipeline, "llm_func", mocker.Mock(name="llm")
         )
 
-        # Mock expensive operations
-        if hasattr(basic_rag_pipeline, "llm"):
-            mocker.patch.object(basic_rag_pipeline, "llm", track_llm_call)
+        with pytest.raises(DimensionMismatchError):
+            basic_rag_pipeline.query("test query", generate_answer=True)
 
-        if hasattr(basic_rag_pipeline, "vector_store"):
-            if hasattr(basic_rag_pipeline.vector_store, "search"):
-                mocker.patch.object(
-                    basic_rag_pipeline.vector_store, "search", track_db_call
-                )
-
-        try:
-            basic_rag_pipeline.query("test query")
-        except Exception as e:
-            error_msg = str(e).lower()
-
-            # If dimension validation exists, verify it ran before expensive ops
-            if "dimension" in error_msg:
-                assert (
-                    not llm_called
-                ), "LLM should not be called before dimension validation"
-                assert (
-                    not db_called
-                ), "Database should not be queried before dimension validation"
+        llm.assert_not_called()
