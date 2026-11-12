@@ -17,6 +17,13 @@
   `VectorStoreConnectionError`. An LLM failure is the provider's own error.
   `result["error"]` is always `None` now; it stays so code that reads it keeps working.
 
+- **HybridGraphRAG: a graph leg that fails makes `query()` raise.** A failure in the hybrid
+  fusion, RRF, text or HNSW leg was logged and answered from plain vector search,
+  labelled `vector_fallback`: an iris-vector-graph never set up in the namespace looked
+  like a graph that matched nothing. A leg that finds nothing still falls back, and says
+  so. GraphRAG raises a database error while reading an entity's documents, where it
+  returned none.
+
 ### Removed
 
 - **`IRISConnectionPool`** (`iris_vector_rag.common.connection_pool`), deprecated since
@@ -26,6 +33,12 @@
 
 ### Fixed
 
+- **HybridGraphRAG's vector fallback reports the store's similarity.** It dropped the
+  scores and then gave every document a `similarity_score` of 1.0, so every fallback hit
+  looked like a perfect match.
+- **GraphRAG on an attached table finds the entities' documents without a `where`.** The
+  unscoped lookup joined `<attached schema>.Entities`, which does not exist; the
+  knowledge graph is the library's, in `RAG`.
 - **CRAG honours `include_sources=False`, and its sources name their documents.** It
   returned every source whatever was asked, labelled `doc_id: "unknown"` unless the
   metadata carried a `doc_id`.
