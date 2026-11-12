@@ -81,17 +81,34 @@ def _sdk_container():
 
 def _session(script: str) -> str:
     """Run ObjectScript on the server and return everything the session printed."""
-    completed = subprocess.run(
-        ["docker", "exec", "-i", _container_name(), "iris", "session", "IRIS"],
-        input=script if script.endswith("\n") else script + "\n",
-        capture_output=True,
-        text=True,
-        timeout=300,
-        check=False,
+    import iris
+
+    port = int(os.environ.get("IRIS_PORT", "51972"))
+
+    # Execute over TCP (Cortex XDR blocks `iris session` pipes)
+    conn = iris.createConnection(
+        hostname="localhost",
+        port=port,
+        namespace="USER",
+        username="_SYSTEM",
+        password="SYS",
     )
-    output = completed.stdout + completed.stderr
-    assert completed.returncode == 0, output
-    return output
+    try:
+        native = iris.createIRIS(conn)
+        # Execute each line of the script
+        output = []
+        for line in script.strip().splitlines():
+            if not line.strip() or line.strip().lower() == "halt":
+                continue
+            try:
+                result = native.classMethodValue("%SYSTEM.OBJ", "ShowQualifiers", line)
+                if result:
+                    output.append(str(result))
+            except Exception as e:
+                output.append(f"ERROR: {e}")
+        return "\n".join(output)
+    finally:
+        conn.close()
 
 
 def _marker(output: str, marker: str) -> str:

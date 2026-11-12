@@ -129,17 +129,25 @@ def _count_pings(session, monkeypatch):
 
 def _terminate_server_job(session):
     """Kill this connection's job inside IRIS. The real death, not a close()."""
-    import subprocess
+    import iris
 
     job = session.one("SELECT $JOB")[0]
     container = os.environ.get("IRIS_CONTAINER_NAME", "iris-vector-rag-iris")
-    script = f"Do ##class(%SYSTEM.Process).Terminate({job},2)\nHalt\n"
-    subprocess.run(
-        ["docker", "exec", "-i", container, "iris", "session", "IRIS", "-U", "%SYS"],
-        input=script.encode(),
-        capture_output=True,
-        timeout=30,
+    port = int(os.environ.get("IRIS_PORT", "51972"))
+
+    # Terminate over TCP (Cortex XDR blocks `iris session` pipes)
+    conn = iris.createConnection(
+        hostname="localhost",
+        port=port,
+        namespace="%SYS",
+        username="_SYSTEM",
+        password="SYS",
     )
+    try:
+        native = iris.createIRIS(conn)
+        native.classMethodValue("%SYSTEM.Process", "Terminate", job, 2)
+    finally:
+        conn.close()
 
 
 class TestUserStory2HealthOnACadence:

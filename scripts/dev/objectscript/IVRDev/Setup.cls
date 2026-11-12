@@ -24,41 +24,57 @@ ClassMethod UnExpireUserPasswords(pPattern As %String = "*") As %String
 }
 
 /// Run ObjectScript lines in pNamespace: each line with Xecute, errors written inline.
-/// Returns: "" on success, "FAIL <step>: <detail>" on setup error.
-/// The output (what the lines wrote, with errors) is written to pOutputGlobal as a stream.
-ClassMethod RunLines(pLines As %String, pNamespace As %String, pOutputGlobal As %String) As %String
+/// Returns: "OK^<output>" or "FAIL^<error>". Output is what the lines wrote (including errors).
+/// Output is captured by redirecting the current device to a global, then reading it back.
+ClassMethod RunLines(pLines As %String, pNamespace As %String) As %String
 {
     If pNamespace = "" {
-        Return "FAIL: namespace required"
+        Return "FAIL^namespace required"
     }
 
-    // Create output stream
-    Set tStream = ##class(%Stream.GlobalCharacter).%New()
-    Set tStream.Name = pOutputGlobal
-
-    // Try to switch to the namespace
+    // Switch to the target namespace
+    New $NAMESPACE
+    Set tOldNS = $NAMESPACE
     Try {
-        New $NAMESPACE
         Set $NAMESPACE = pNamespace
     } Catch ex {
-        Return "FAIL ns: "_ex.DisplayString()
+        Return "FAIL^"_ex.DisplayString()
     }
 
+    // Capture output by redirecting IO
+    Set tOutputGlobal = "^IVRDev.RunOutput."_$JOB
+    Kill @tOutputGlobal
+    Set tOldIO = $IO
+    Open tOutputGlobal:("":0) Use tOutputGlobal
+
     // Execute each line
+    Set tHadError = 0
     For i=1:1:$Length(pLines, $Char(10)) {
         Set tLine = $Piece(pLines, $Char(10), i)
         If tLine = "" Continue
         If $ZStrip(tLine, "<>W") = "" Continue
+        If $ZCVT(tLine, "L") = "halt" Continue
 
         Try {
             Xecute tLine
         } Catch ex {
-            Do tStream.WriteLine("ERROR line "_i_": "_ex.DisplayString())
+            Write "ERROR line "_i_": "_ex.DisplayString(),!
+            Set tHadError = 1
         }
     }
 
-    Do tStream.%Save()
-    Return ""
+    // Restore IO and collect output
+    Use tOldIO
+    Close tOutputGlobal
+    Set tOutput = ""
+    Set tKey = $Order(@tOutputGlobal@(""))
+    While tKey '= "" {
+        Set tOutput = tOutput_@tOutputGlobal@(tKey)
+        Set tKey = $Order(@tOutputGlobal@(tKey))
+    }
+    Kill @tOutputGlobal
+
+    Return "OK^"_tOutput
 }
 
 }

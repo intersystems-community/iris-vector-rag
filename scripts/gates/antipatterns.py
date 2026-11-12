@@ -749,8 +749,10 @@ def iris_session_pipe() -> list[Finding]:
     for p in files(".github/", ".sh"):
         out.extend(iris_session_pipes(rel(p), read(p)))
 
-    # Python files
+    # Python files (exclude the detector's own test file)
     for p in files("tests/", ".py"):
+        if rel(p) == "tests/unit/test_iris_session_pipe_detector.py":
+            continue
         out.extend(iris_session_pipes(rel(p), read(p)))
     for p in files("iris_vector_rag/", ".py"):
         out.extend(iris_session_pipes(rel(p), read(p)))

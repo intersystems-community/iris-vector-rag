@@ -198,10 +198,12 @@ def start_ephemeral(env: Mapping[str, str] = os.environ):
     Started with the docker CLI on a port Docker picks, the way scripts/ci/start-iris.sh does:
     iris-devtester's `IRISContainer.start()` waits on the Docker log stream, which times out
     here. IRIS 2026.1's post-start init (irissqlcli via embedded Python) crashes on amd64 and
-    takes IRIS down, so it is skipped with IRIS_INIT=1 and the passwords are unexpired below.
+    takes IRIS down, so it is skipped with IRIS_INIT=1 and passwords are unexpired by CPF merge.
     """
     name = f"ivr-test-{os.getpid()}-{uuid.uuid4().hex[:6]}"
     image = env.get("IRIS_IMAGE") or DEFAULT_IMAGE
+    repo_root = Path(__file__).resolve().parents[2]
+    cpf_merge = repo_root / "scripts/ci/iris-merge.cpf"
     run = subprocess.run(
         [
             "docker",
@@ -211,6 +213,10 @@ def start_ephemeral(env: Mapping[str, str] = os.environ):
             name,
             "-p",
             "0:1972",
+            "-v",
+            f"{cpf_merge}:/tmp/iris-merge.cpf:ro",
+            "-e",
+            "ISC_CPF_MERGE_FILE=/tmp/iris-merge.cpf",
             "-e",
             "IRIS_INIT=1",
             image,
@@ -239,34 +245,6 @@ def _wait_for_port(name: str, attempts: int = 30, delay: float = 2.0) -> int:
             return port
         time.sleep(delay)
     raise IrisUnreachable(f"Ephemeral container {name} never published port 1972.")
-
-
-def _unexpire_passwords(name: str, attempts: int = 36, delay: float = 5.0) -> None:
-    """Unexpire passwords over TCP (Cortex XDR kills `iris session` pipes)."""
-    repo_root = Path(__file__).resolve().parents[2]
-    tcp_setup = repo_root / "scripts/dev/tcp_setup.py"
-    port = docker_port(name)
-    if port is None:
-        raise IrisUnreachable(f"Container {name} did not publish port 1972")
-
-    for _ in range(attempts):
-        out = subprocess.run(
-            ["python3", str(tcp_setup), "unexpire"],
-            env={
-                **os.environ,
-                "IRIS_PORT": str(port),
-                "IRIS_USERNAME": "_SYSTEM",
-                "IRIS_PASSWORD": "SYS",
-            },
-            capture_output=True,
-            text=True,
-        )
-        if out.returncode == 0 and "passwords unexpired" in out.stdout:
-            return
-        time.sleep(delay)
-    raise IrisUnreachable(
-        f"Ephemeral container {name} never accepted the password unexpire step."
-    )
 
 
 def main(

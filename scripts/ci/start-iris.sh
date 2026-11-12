@@ -104,6 +104,9 @@ if $DRY_RUN; then
     exit 0
 fi
 
+REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+CPF_MERGE="${REPO_ROOT}/scripts/ci/iris-merge.cpf"
+
 case "$ACTION" in
     reuse)
         echo "IRIS already running: container=${NAME} port=${PORT} (not recreated)"
@@ -118,10 +121,14 @@ case "$ACTION" in
         echo "Recreating ${NAME} from ${IMAGE} — its current database is deleted."
         docker rm -f "$NAME" >/dev/null 2>&1 || true
         docker run --detach --name "$NAME" -p "${PORT}:1972" \
+            -v "${CPF_MERGE}:/tmp/iris-merge.cpf:ro" \
+            -e ISC_CPF_MERGE_FILE=/tmp/iris-merge.cpf \
             -e IRIS_INIT=1 "$IMAGE" >/dev/null
         ;;
     create)
         docker run --detach --name "$NAME" -p "${PORT}:1972" \
+            -v "${CPF_MERGE}:/tmp/iris-merge.cpf:ro" \
+            -e ISC_CPF_MERGE_FILE=/tmp/iris-merge.cpf \
             -e IRIS_INIT=1 "$IMAGE" >/dev/null
         ;;
 esac
@@ -130,11 +137,10 @@ echo "Waiting for IRIS on port ${PORT}..."
 timeout 120 bash -c "until nc -z localhost ${PORT}; do sleep 2; done"
 sleep 5
 
-# Unexpire passwords over TCP (Cortex XDR kills `iris session` pipes)
-REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+# CPF merge unexpires passwords at startup, but IRIS needs time to fully initialize.
+# Poll with qlist (no pipe, Cortex XDR safe) until it responds.
 for attempt in $(seq 1 24); do
-    if IRIS_PORT="${PORT}" IRIS_USERNAME=_SYSTEM IRIS_PASSWORD=SYS \
-       python3 "${REPO_ROOT}/scripts/dev/tcp_setup.py" unexpire 2>&1 | grep -q "passwords unexpired"; then
+    if docker exec "$NAME" iris qlist >/dev/null 2>&1; then
         echo "IRIS ready: container=${NAME} port=${PORT} (attempt ${attempt})"
         exit 0
     fi
