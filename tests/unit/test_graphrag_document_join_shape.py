@@ -21,6 +21,8 @@ import json
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
+
 from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 from iris_vector_rag.storage.catalog import RecordedCatalog
 from iris_vector_rag.storage.shape_resolver import TableShapeResolver
@@ -159,3 +161,16 @@ def test_the_top_k_limit_still_holds():
     )
 
     assert [doc.id for doc in docs] == ["DOC-1"]
+
+
+class FailingCursor(RecordingCursor):
+    def execute(self, sql, params=None):
+        raise RuntimeError("SQLCODE -29: field not found")
+
+
+def test_a_database_error_raises_instead_of_returning_no_documents():
+    """It was logged and the entities' documents came back as an empty list."""
+    with pytest.raises(RuntimeError, match="SQLCODE -29"):
+        pipeline_for("canonical", FailingCursor())._get_documents_from_entities(
+            {"E1"}, top_k=5
+        )

@@ -520,8 +520,6 @@ class GraphRAGPipeline(RAGPipeline):
                 )
                 if len(docs) >= top_k:
                     break
-        except Exception as e:
-            logger.error(f"Database error getting docs: {e}")
         finally:
             cursor.close()
         return docs

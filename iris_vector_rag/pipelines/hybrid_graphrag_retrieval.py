@@ -121,23 +121,19 @@ class ScopedRetrievalMixin:
 
         The engine names entities, never documents; each one is turned into text by
         `_get_document_content_for_entity`, which is where the scope applies. When it
-        leaves nothing, or the leg fails, the vector store answers in the same scope.
+        leaves nothing, the vector store answers in the same scope. A leg that fails
+        raises: answered from vectors, the failure read as a graph that matched
+        nothing (an IVG never set up in the namespace looked like that).
         """
         where = kwargs.get("where")
         scoped = bool(self._where_scope(where)[0])
         fetch_k = top_k * self.SCOPED_OVERFETCH if scoped else top_k
-        try:
-            documents, method = getattr(self.retrieval_methods, f"retrieve_via_{leg}")(
-                query_text, fetch_k, self._content_getter(where), **kwargs
-            )
-            if documents:
-                return documents[:top_k], method
-            logger.warning("%s returned 0 results. Falling back to vector search.", leg)
-        except FilterError:
-            raise
-        except Exception as e:
-            logger.error(f"{leg} retrieval failed: {e}")
-            logger.info("Falling back to IRISVectorStore vector search")
+        documents, method = getattr(self.retrieval_methods, f"retrieve_via_{leg}")(
+            query_text, fetch_k, self._content_getter(where), **kwargs
+        )
+        if documents:
+            return documents[:top_k], method
+        logger.warning("%s returned 0 results. Falling back to vector search.", leg)
         return self._fallback_to_vector_search(query_text, top_k, where), (
             "vector_fallback"
         )

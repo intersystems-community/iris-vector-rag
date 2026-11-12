@@ -310,6 +310,46 @@ class TestHybridGraphRAGPipeline:
 
             mock_fallback.assert_called_once()
 
+    def test_a_failing_graph_leg_raises(self):
+        """A leg that raises fails the query (Tom, 2026-11-12).
+
+        It used to be logged and answered from plain vector search, labelled
+        vector_fallback, which hid an IVG that was never set up in the namespace.
+        """
+        pipeline = self._build()
+        pipeline.retrieval_methods = Mock()
+        pipeline.retrieval_methods.retrieve_via_hybrid_fusion.side_effect = (
+            RuntimeError("Namespace USER has never been set up for IVG")
+        )
+
+        with patch.object(pipeline, "_validate_knowledge_graph"), patch.object(
+            pipeline, "_fallback_to_vector_search"
+        ) as fallback:
+            with pytest.raises(RuntimeError, match="never been set up for IVG"):
+                pipeline.query("test query", method="hybrid", generate_answer=False)
+
+        fallback.assert_not_called()
+
+    def test_an_empty_graph_leg_falls_back_to_vector_search(self):
+        """A leg that finds nothing still falls back, and says so."""
+        pipeline = self._build()
+        pipeline.retrieval_methods = Mock()
+        pipeline.retrieval_methods.retrieve_via_hybrid_fusion.return_value = (
+            [],
+            "hybrid_fusion",
+        )
+        vector_docs = [Document(id="v1", page_content="from vectors", metadata={})]
+
+        with patch.object(pipeline, "_validate_knowledge_graph"), patch.object(
+            pipeline, "_fallback_to_vector_search", return_value=vector_docs
+        ):
+            result = pipeline.query(
+                "test query", method="hybrid", generate_answer=False
+            )
+
+        assert [d.id for d in result["retrieved_documents"]] == ["v1"]
+        assert result["metadata"]["retrieval_method"] == "vector_fallback"
+
     def test_query_with_hybrid_methods(self):
         """Test query routing to different hybrid methods."""
         pipeline = self._build()
