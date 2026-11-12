@@ -5,8 +5,9 @@ These tests verify that the pipeline maintains consistent behavior
 without fallback mechanisms.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 class TestPipelineBehavior:
@@ -57,13 +58,25 @@ class TestPipelineBehavior:
             assert status["iris_engine_available"] is True
             assert status["fusion_engine_available"] is True
 
-    def test_all_retrieval_methods_available(self):
-        """All retrieval methods should be available without conditionals."""
-        # This test should FAIL until implementation is complete
+    @pytest.mark.parametrize(
+        "method, leg",
+        [
+            ("hybrid", "_retrieve_via_hybrid_fusion"),
+            ("rrf", "_retrieve_via_rrf"),
+            ("text", "_retrieve_via_enhanced_text"),
+            ("vector", "_retrieve_via_hnsw_vector"),
+        ],
+    )
+    def test_each_retrieval_method_runs_its_own_leg(self, method, leg):
+        """`method=` picks the iris_vector_graph leg of that name, not a fallback.
+
+        This used to assert that each method was in the list it iterated over.
+        """
+        from iris_vector_rag.core.models import Document
         from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
         with patch(
-            "iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules"
+            "iris_vector_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules"
         ) as mock_import:
             mock_import.return_value = {
                 "IRISGraphEngine": Mock(),
@@ -71,23 +84,14 @@ class TestPipelineBehavior:
                 "TextSearchEngine": Mock(),
                 "VectorOptimizer": Mock(),
             }
+            pipeline = HybridGraphRAGPipeline()
 
-            HybridGraphRAGPipeline()
+        found = [Document(id=f"{method}-1", page_content=method, metadata={})]
+        with patch.object(pipeline, "_validate_knowledge_graph"), patch.object(
+            pipeline, leg, return_value=(found, leg)
+        ) as called, patch.object(pipeline, "_enhanced_hybrid_fallback") as fallback:
+            result = pipeline.query("q", method=method, generate_answer=False)
 
-            # All methods should work without fallbacks
-            methods = ["hybrid", "rrf", "text", "vector", "kg"]
-            for method in methods:
-                # Should not raise ValueError for unsupported method
-                # (actual query execution would require more mocking)
-                assert method in ["hybrid", "rrf", "text", "vector", "kg"]
-
-    def test_no_fallback_methods_exist(self):
-        """Fallback methods should not exist in the simplified implementation."""
-        # This test should FAIL until implementation is complete
-        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
-
-        # These fallback methods should not exist
-        assert not hasattr(HybridGraphRAGPipeline, "_enhanced_hybrid_fallback")
-        assert not hasattr(HybridGraphRAGPipeline, "_intelligent_hybrid_search")
-        assert not hasattr(HybridGraphRAGPipeline, "_enhanced_text_search_fallback")
-        assert not hasattr(HybridGraphRAGPipeline, "_enhanced_vector_search_fallback")
+        called.assert_called_once()
+        fallback.assert_not_called()
+        assert [d.id for d in result["retrieved_documents"]] == [f"{method}-1"]

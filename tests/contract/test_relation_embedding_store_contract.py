@@ -53,13 +53,11 @@ def test_search_calls_vector_similarity_search_with_cosine():
     mock_conn.cursor.return_value = mock_cursor
     store._conn_mgr.get_connection.return_value = mock_conn
 
+    # search() imports the name from db_vector_utils, which re-exports ivg's
+    # function: patch it where it is looked up, not where it is defined.
     with patch(
-        "iris_vector_rag.storage.relation_embedding_store.RelationEmbeddingStore.search"
-    ) as _:
-        pass  # just verifying the patch path exists
-
-    with patch(
-        "iris_vector_graph.dbapi_utils.vector_similarity_search", return_value=[]
+        "iris_vector_rag.common.db_vector_utils.vector_similarity_search",
+        return_value=[],
     ) as mock_vss:
         results = store.search(query_vec, top_k=5)
 

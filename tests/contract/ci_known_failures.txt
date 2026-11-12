@@ -1,5 +1,3 @@
-tests/contract/test_common_imports.py::test_old_top_level_common_removed
-tests/contract/test_dimension_validation_contract.py::TestDimensionValidationContract::test_document_embedding_dimension_check
 tests/contract/test_error_handling_contract.py::TestErrorHandlingContract::test_iris_vector_graph_connection_failure_handled
 tests/contract/test_error_handling_contract.py::TestErrorHandlingContract::test_missing_required_tables_handled
 tests/contract/test_error_handling_contract.py::TestErrorHandlingContract::test_system_continues_after_fallback
@@ -13,9 +11,6 @@ tests/contract/test_hnsw_vector_contract.py::TestHNSWVectorContract::test_hnsw_v
 tests/contract/test_hybrid_fusion_contract.py::TestHybridFusionContract::test_hybrid_fusion_executes_successfully
 tests/contract/test_hybrid_fusion_contract.py::TestHybridFusionContract::test_hybrid_fusion_fallback_on_exception
 tests/contract/test_hybrid_fusion_contract.py::TestHybridFusionContract::test_hybrid_fusion_fallback_on_zero_results
-tests/contract/test_pipeline_behavior.py::TestPipelineBehavior::test_all_retrieval_methods_available
-tests/contract/test_pipeline_behavior.py::TestPipelineBehavior::test_no_fallback_methods_exist
-tests/contract/test_relation_embedding_store_contract.py::test_search_calls_vector_similarity_search_with_cosine
 tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_executes_successfully
 tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_fallback_on_exception
 tests/contract/test_rrf_contract.py::TestRRFContract::test_rrf_fallback_on_zero_results
@@ -25,7 +20,6 @@ tests/contract/test_text_search_contract.py::TestTextSearchContract::test_text_s
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_returns_documents
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_returns_relevant_documents
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_works_with_384d_embeddings
-tests/contract/test_graphrag_fixtures.py::TestGraphRAGStorageContracts::test_entity_insertion_respects_fk_constraints
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_results_have_scores
 tests/contract/test_vector_search_contract.py::TestVectorSearchContract::test_vector_search_results_sorted_descending
 # pipelines-fix leftovers (first honest integration run; the pipelines' response shape and retrieval against the real store)

@@ -6,9 +6,10 @@ Requirements: FR-005
 """
 
 import pytest
+
 from iris_vector_rag import create_pipeline
-from iris_vector_rag.embeddings.manager import EmbeddingManager
 from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.embeddings.manager import EmbeddingManager
 
 
 class DimensionMismatchError(Exception):
@@ -136,31 +137,38 @@ class TestDimensionValidationContract:
         """
         FR-005: System MUST validate document embedding dimensions.
 
-        Given: Documents in RAG.SourceDocuments
-        When: Vector search initializes
-        Then: Document embeddings are validated to be 384D
+        Given: A document stored through the pipeline's vector store
+        When: Its embedding is read back from RAG.SourceDocuments
+        Then: It has 384 dimensions
+
+        It used to read any row with `LIMIT 1` (not IRIS SQL) through a
+        `graphrag_pipeline.config` that does not exist, skip when the table was
+        empty, and take len() of the string the driver returns for a VECTOR.
         """
-        # Sample a document embedding from database
-        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.core.models import Document
 
-        conn = ConnectionManager(graphrag_pipeline.config).get_connection()
-        cursor = conn.cursor()
+        doc_id = "contract-dim-check-1"
+        store = graphrag_pipeline.vector_store
+        store.add_documents(
+            [Document(id=doc_id, page_content="Insulin lowers blood glucose.")]
+        )
+        cursor = graphrag_pipeline.connection_manager.get_connection().cursor()
+        try:
+            cursor.execute(
+                "SELECT TOP 1 embedding FROM RAG.SourceDocuments WHERE doc_id = ?",
+                [doc_id],
+            )
+            row = cursor.fetchone()
+            stored = None if row is None else str(row[0])
+        finally:
+            cursor.execute("DELETE FROM RAG.SourceDocuments WHERE doc_id = ?", [doc_id])
+            cursor.close()
 
-        cursor.execute("""
-            SELECT embedding FROM RAG.SourceDocuments
-            WHERE embedding IS NOT NULL
-            LIMIT 1
-        """)
-        result = cursor.fetchone()
-
-        if result is None:
-            pytest.skip("No documents with embeddings in database")
-
-        document_embedding = result[0]
-
-        # Document embedding MUST be 384D
-        assert len(document_embedding) == 384, (
-            f"Document embedding dimension mismatch: {len(document_embedding)} != 384. "
+        assert stored, f"{doc_id} was not stored with an embedding"
+        # The driver reports a VECTOR as its comma-separated text.
+        width = len(stored.strip("[]").split(","))
+        assert width == 384, (
+            f"Document embedding dimension mismatch: {width} != 384. "
             f"Database may contain embeddings from different model. Re-indexing required."
         )
 

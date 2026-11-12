@@ -72,10 +72,10 @@ def test_common_module_location():
     BEFORE FIX: common is top-level module
     AFTER FIX: common is at iris_vector_rag.common
     """
-    from iris_vector_rag import common
-
     # Verify common is a module
     import types
+
+    from iris_vector_rag import common
 
     assert isinstance(
         common, types.ModuleType
@@ -97,17 +97,21 @@ def test_old_top_level_common_removed():
     NOTE: This test may pass even before fix if no conflicting common module exists.
     The important test is test_connection_manager_imports() which tests actual usage.
     """
-    # Try to import common module
-    try:
-        import common
+    import importlib.util
+    from pathlib import Path
 
-        # If it exists, verify it's NOT from iris-vector-rag
-        assert not common.__file__.startswith(
-            "iris_vector_rag"
-        ), "Top-level common should not be provided by iris-vector-rag package"
-    except ModuleNotFoundError:
-        # This is expected - no top-level common module provided
-        pass
+    import iris_vector_rag
+
+    spec = importlib.util.find_spec("common")
+    if spec is None or spec.origin is None:
+        return  # no top-level common at all
+    # Our package's install root (site-packages, or the checkout when editable).
+    # It used to compare an absolute __file__ with startswith("iris_vector_rag"),
+    # which no path satisfies, so the test could not fail.
+    our_root = Path(iris_vector_rag.__file__).resolve().parent.parent
+    assert (
+        Path(spec.origin).resolve().parent.parent != our_root
+    ), f"a top-level 'common' sits beside iris_vector_rag: {spec.origin}"
 
 
 def test_connection_manager_can_create_connection_mock():
@@ -118,6 +122,7 @@ def test_connection_manager_can_create_connection_mock():
     Uses mocking to avoid needing real IRIS database.
     """
     from unittest.mock import MagicMock, patch
+
     from iris_vector_rag.core.connection import ConnectionManager
 
     # Mock the IRIS connection functions

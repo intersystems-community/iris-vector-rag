@@ -231,7 +231,7 @@ class TestGraphRAGStorageContracts:
         for doc in fixture.source_documents:
             cursor.execute(
                 """
-                INSERT INTO RAG.SourceDocuments (doc_id, title, content, metadata)
+                INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, metadata)
                 VALUES (?, ?, ?, ?)
             """,
                 [doc.doc_id, doc.title, doc.content, json.dumps(doc.metadata)],
