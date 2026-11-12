@@ -130,14 +130,11 @@ echo "Waiting for IRIS on port ${PORT}..."
 timeout 120 bash -c "until nc -z localhost ${PORT}; do sleep 2; done"
 sleep 5
 
-# The port opens before IRIS accepts terminal sessions; retry until the
-# ObjectScript call actually runs (up to ~2 minutes).
-unexpire() {
-    printf 'do ##class(Security.Users).UnExpireUserPasswords("*")\nwrite "PASSWORDS_UNEXPIRED",!\nhalt\n' \
-        | docker exec -i "$NAME" iris session IRIS -U%SYS 2>&1 | grep -q PASSWORDS_UNEXPIRED
-}
+# Unexpire passwords over TCP (Cortex XDR kills `iris session` pipes)
+REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 for attempt in $(seq 1 24); do
-    if unexpire; then
+    if IRIS_PORT="${PORT}" IRIS_USERNAME=_SYSTEM IRIS_PASSWORD=SYS \
+       python3 "${REPO_ROOT}/scripts/dev/tcp_setup.py" unexpire 2>&1 | grep -q "passwords unexpired"; then
         echo "IRIS ready: container=${NAME} port=${PORT} (attempt ${attempt})"
         exit 0
     fi

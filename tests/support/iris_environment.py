@@ -242,18 +242,26 @@ def _wait_for_port(name: str, attempts: int = 30, delay: float = 2.0) -> int:
 
 
 def _unexpire_passwords(name: str, attempts: int = 36, delay: float = 5.0) -> None:
-    script = (
-        'do ##class(Security.Users).UnExpireUserPasswords("*")\n'
-        'write "PASSWORDS_UNEXPIRED",!\nhalt\n'
-    )
+    """Unexpire passwords over TCP (Cortex XDR kills `iris session` pipes)."""
+    repo_root = Path(__file__).resolve().parents[2]
+    tcp_setup = repo_root / "scripts/dev/tcp_setup.py"
+    port = docker_port(name)
+    if port is None:
+        raise IrisUnreachable(f"Container {name} did not publish port 1972")
+
     for _ in range(attempts):
         out = subprocess.run(
-            ["docker", "exec", "-i", name, "iris", "session", "IRIS", "-U%SYS"],
-            input=script,
+            ["python3", str(tcp_setup), "unexpire"],
+            env={
+                **os.environ,
+                "IRIS_PORT": str(port),
+                "IRIS_USERNAME": "_SYSTEM",
+                "IRIS_PASSWORD": "SYS",
+            },
             capture_output=True,
             text=True,
         )
-        if "PASSWORDS_UNEXPIRED" in out.stdout:
+        if out.returncode == 0 and "passwords unexpired" in out.stdout:
             return
         time.sleep(delay)
     raise IrisUnreachable(
