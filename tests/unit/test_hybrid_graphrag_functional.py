@@ -304,7 +304,10 @@ class TestHybridGraphRAGPipeline:
         with patch.object(pipeline, "_validate_knowledge_graph"), patch.object(
             pipeline, "_enhanced_hybrid_fallback"
         ) as mock_fallback:
-            mock_fallback.return_value = ([Mock()], "fallback")
+            mock_fallback.return_value = (
+                [Document(id="kg-1", page_content="from the graph", metadata={})],
+                "fallback",
+            )
 
             pipeline.query("test query", method="hybrid", generate_answer=False)
 
@@ -349,6 +352,46 @@ class TestHybridGraphRAGPipeline:
 
         assert [d.id for d in result["retrieved_documents"]] == ["v1"]
         assert result["metadata"]["retrieval_method"] == "vector_fallback"
+
+    def test_the_vector_fallback_reports_the_stores_scores(self):
+        """Fallback documents carry the store's similarity, not a made-up 1.0.
+
+        `_fallback_to_vector_search` dropped the scores and `_ensure_similarity_scores`
+        then gave every document 1.0, so a fallback ranking looked like perfect matches.
+        """
+        pipeline = self._build()
+        pipeline.retrieval_methods = Mock()
+        pipeline.retrieval_methods.retrieve_via_hybrid_fusion.return_value = ([], "x")
+        pipeline.embedding_manager = Mock()
+        pipeline.embedding_manager.embed_text.return_value = [0.1] * 384
+        near = Document(id="near", page_content="axolotl", metadata={})
+        far = Document(id="far", page_content="basalt", metadata={})
+        pipeline.vector_store = Mock()
+        pipeline.vector_store.search_by_vector.return_value = [(near, 0.7), (far, 0.2)]
+
+        with patch.object(pipeline, "_validate_knowledge_graph"):
+            result = pipeline.query("q", method="hybrid", generate_answer=False)
+
+        scores = [
+            (d.id, d.metadata.get("similarity_score"))
+            for d in result["retrieved_documents"]
+        ]
+        assert scores == [("near", 0.7), ("far", 0.2)]
+
+    def test_a_path_that_returns_no_document_is_a_type_error(self):
+        """It used to become a "fallback_context" document scored 1.0."""
+        pipeline = self._build()
+
+        with pytest.raises(TypeError, match="not a Document"):
+            pipeline._ensure_similarity_scores(["a bare string"])
+
+    def test_a_document_without_a_score_is_not_given_one(self):
+        pipeline = self._build()
+        unscored = Document(id="kg-1", page_content="from the graph", metadata={})
+
+        (out,) = pipeline._ensure_similarity_scores([unscored])
+
+        assert "similarity_score" not in out.metadata
 
     def test_query_with_hybrid_methods(self):
         """Test query routing to different hybrid methods."""

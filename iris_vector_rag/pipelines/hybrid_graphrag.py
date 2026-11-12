@@ -535,29 +535,28 @@ class HybridGraphRAGPipeline(GraphRAGPipeline, ScopedRetrievalMixin):
         return response
 
     def _ensure_similarity_scores(self, documents: List[Any]) -> List[Document]:
-        """Ensure all documents carry a similarity_score for contract tests."""
+        """The documents, each score a float where the path gave one.
+
+        A document without a score keeps none: the 1.0 this used to fill in made
+        every vector-fallback hit look like a perfect match. Anything that is not a
+        Document is a bug in the path that returned it, and fails here; it used to
+        become a "fallback_context" document scored 1.0.
+        """
         normalized: List[Document] = []
         for doc in documents:
-            if isinstance(doc, Document):
-                score = (
-                    doc.metadata.get("similarity_score")
-                    if hasattr(doc, "metadata")
-                    else None
+            if not isinstance(doc, Document):
+                raise TypeError(
+                    f"a retrieval path returned {type(doc).__name__}, not a Document"
                 )
-                score_value = float(score) if score is not None else 1.0
+            score = doc.metadata.get("similarity_score")
+            if score is None:
+                normalized.append(doc)
+            else:
                 normalized.append(
                     Document(
                         id=doc.id,
                         page_content=doc.page_content,
-                        metadata={**doc.metadata, "similarity_score": score_value},
-                    )
-                )
-            else:
-                normalized.append(
-                    Document(
-                        id="fallback_context",
-                        page_content=str(doc),
-                        metadata={"similarity_score": 1.0},
+                        metadata={**doc.metadata, "similarity_score": float(score)},
                     )
                 )
         return normalized

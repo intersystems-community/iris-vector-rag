@@ -144,14 +144,22 @@ class ScopedRetrievalMixin:
         top_k: int,
         where: Optional[Dict[str, Any]] = None,
     ) -> List[Document]:
-        """The vector store's nearest chunks, inside ``where`` when one is given."""
+        """The vector store's nearest chunks, inside ``where`` when one is given,
+        each with the store's similarity as ``similarity_score``."""
         if not self.vector_store:
             return []
         query_embedding = self.embedding_manager.embed_text(query_text)
         results = self.vector_store.search_by_vector(
             query_embedding, top_k=top_k, **where_kwargs(where)
         )
-        return [r[0] for r in results]
+        return [
+            Document(
+                id=doc.id,
+                page_content=doc.page_content,
+                metadata={**doc.metadata, "similarity_score": float(score)},
+            )
+            for doc, score in results
+        ]
 
     def _source_doc_ids(self, entity_ids: Set[str]) -> List[str]:
         """The documents the entities were extracted from, in id order."""
