@@ -14,7 +14,26 @@ WRONG_WIDTH = 768
 
 
 @pytest.fixture
-def wrong_width_queries(mocker):
+def source_documents_table():
+    """RAG.SourceDocuments, recreated if an earlier test dropped it.
+
+    The schema-reset and schema-manager contract tests drop the RAG tables, and the
+    pipeline fixtures are session-scoped. A query on a dropped table raises
+    TableNotFound (it used to be swallowed into an empty answer), so a test that
+    queries a shared pipeline asks for the table first.
+    """
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
+    from iris_vector_rag.storage.schema_manager import SchemaManager
+
+    config = ConfigurationManager()
+    assert SchemaManager(ConnectionManager(config), config).ensure_table_schema(
+        "SourceDocuments"
+    ), "RAG.SourceDocuments could not be created"
+
+
+@pytest.fixture
+def wrong_width_queries(mocker, source_documents_table):
     """Make a pipeline embed its queries at 768 dimensions against a 384 table.
 
     Patches the embedder the search really calls. BasicRAG and Rerank search

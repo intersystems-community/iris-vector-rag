@@ -82,6 +82,7 @@ class TestBasicRerankRAGContract:
         ), "Error message must mention top_k parameter"
 
     @pytest.mark.requires_database
+    @pytest.mark.usefixtures("source_documents_table")
     def test_query_returns_valid_structure(self, basic_rerank_pipeline, sample_query):
         """
         FR-003: Query MUST return valid response structure.
