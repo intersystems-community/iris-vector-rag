@@ -186,6 +186,17 @@ def test_entity_documents_are_looked_up_in_the_library_graph_not_the_attached_sc
     assert "FROM RAG.Entities" in sql and "BYOTStf" not in sql, sql
 
 
+def test_unscoped_entity_documents_are_also_read_from_the_library_graph(shape):
+    """Without `where` too: the join named `<attached schema>.Entities`, which does
+    not exist, and the error was swallowed into "the graph found nothing"."""
+    pipeline = pipeline_for(ScopedStore(shape), doc_ids=list(CHUNKS))
+    pipeline._where_scope = lambda where: ("", [])  # a table with no required filter
+    response = pipeline.query("q", top_k=5, generate_answer=False)
+    sql, _ = pipeline._executor.statements[0]
+    assert "FROM RAG.Entities" in sql and "BYOTStf" not in sql, sql
+    assert response["metadata"]["retrieval_method"] != "vector_fallback"
+
+
 def test_a_scoped_hit_carries_its_retrieval_method(shape):
     response = pipeline_for(ScopedStore(shape), doc_ids=list(CHUNKS)).query(
         "q", top_k=5, generate_answer=False, where=WHERE

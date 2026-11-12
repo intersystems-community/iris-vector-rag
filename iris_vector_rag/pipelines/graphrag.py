@@ -482,11 +482,14 @@ class GraphRAGPipeline(RAGPipeline):
         if not entity_ids:
             return []
         where_sql, where_params = self._where_scope(where)
-        if where_sql:
+        shape = self._document_shape()
+        # An attached table is read through the store even unscoped: the graph is
+        # the library's, in RAG, so a join on `<attached schema>.Entities` names a
+        # table that does not exist.
+        if where_sql or shape.attached:
             return self._scoped_documents_from_entities(
                 entity_ids, top_k, where_sql, where_params
             )
-        shape = self._document_shape()
         identifier = shape.column_for(ColumnRole.IDENTIFIER).name
         text = shape.column_for(ColumnRole.TEXT).name
         metadata_column = shape.optional_column_for(ColumnRole.METADATA)
