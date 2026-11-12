@@ -108,6 +108,12 @@ def unexpire_passwords(native, pattern: str = "*") -> None:
     _call(native, "UnExpireUserPasswords", pattern)
 
 
+def run(native, namespace: str, code: str) -> str:
+    """Run ObjectScript code in namespace and return captured output."""
+    result = _call(native, "Run", namespace, code, what=f"run/{namespace}")
+    return result
+
+
 def main(argv: list) -> int:
     if argv[:1] == ["unexpire"] and len(argv) <= 2:
         pattern = argv[1] if len(argv) == 2 else "*"
@@ -115,7 +121,30 @@ def main(argv: list) -> int:
             unexpire_passwords(native, pattern)
         print(f"passwords unexpired: {pattern}")
         return 0
+
+    if argv[:1] == ["run"]:
+        # tcp_setup.py run [--namespace NS] [code]
+        # Reads code from stdin if not provided as args
+        namespace = "USER"
+        args_rest = argv[1:]
+
+        if len(args_rest) >= 2 and args_rest[0] == "--namespace":
+            namespace = args_rest[1]
+            args_rest = args_rest[2:]
+
+        if args_rest:
+            code = " ".join(args_rest)
+        else:
+            code = sys.stdin.read()
+
+        with sys_native() as native:
+            output = run(native, namespace, code)
+        print(output, end="")
+        return 0
+
     print("usage: tcp_setup.py unexpire [pattern]")
+    print("       tcp_setup.py run [--namespace NS] [code]")
+    print("                    (reads code from stdin if not provided)")
     print(f"refused: {argv}")
     return 2
 

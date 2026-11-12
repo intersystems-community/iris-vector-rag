@@ -23,58 +23,61 @@ ClassMethod UnExpireUserPasswords(pPattern As %String = "*") As %String
     Return ""
 }
 
-/// Run ObjectScript lines in pNamespace: each line with Xecute, errors written inline.
-/// Returns: "OK^<output>" or "FAIL^<error>". Output is what the lines wrote (including errors).
-/// Output is captured by redirecting the current device to a global, then reading it back.
-ClassMethod RunLines(pLines As %String, pNamespace As %String) As %String
+/// Run ObjectScript code in pNamespace and return its captured output.
+/// Executes each line with Xecute, errors written inline as they would appear in a session.
+/// Output is captured to a temp file. Returns "" on success, "FAIL: <detail>" on setup error.
+ClassMethod Run(pNamespace As %String, pCode As %String) As %String
 {
     If pNamespace = "" {
-        Return "FAIL^namespace required"
+        Return "FAIL: namespace required"
     }
 
     // Switch to the target namespace
     New $NAMESPACE
-    Set tOldNS = $NAMESPACE
     Try {
         Set $NAMESPACE = pNamespace
     } Catch ex {
-        Return "FAIL^"_ex.DisplayString()
+        Return "FAIL: "_ex.DisplayString()
     }
 
-    // Capture output by redirecting IO
-    Set tOutputGlobal = "^IVRDev.RunOutput."_$JOB
-    Kill @tOutputGlobal
-    Set tOldIO = $IO
-    Open tOutputGlobal:("":0) Use tOutputGlobal
+    // Open temp file for output capture
+    Set tFile = ##class(%File).TempFilename("txt")
+    Open tFile:("WNS"):5
+    If '$Test {
+        Return "FAIL: could not open temp file"
+    }
+    Use tFile
 
-    // Execute each line
-    Set tHadError = 0
-    For i=1:1:$Length(pLines, $Char(10)) {
-        Set tLine = $Piece(pLines, $Char(10), i)
+    // Execute each line, catching errors
+    For i=1:1:$Length(pCode, $Char(10)) {
+        Set tLine = $Piece(pCode, $Char(10), i)
         If tLine = "" Continue
         If $ZStrip(tLine, "<>W") = "" Continue
         If $ZCVT(tLine, "L") = "halt" Continue
+        If $ZCVT(tLine, "L") = "h" Continue
 
         Try {
             Xecute tLine
         } Catch ex {
-            Write "ERROR line "_i_": "_ex.DisplayString(),!
-            Set tHadError = 1
+            Write ex.DisplayString(),!
         }
     }
 
-    // Restore IO and collect output
-    Use tOldIO
-    Close tOutputGlobal
-    Set tOutput = ""
-    Set tKey = $Order(@tOutputGlobal@(""))
-    While tKey '= "" {
-        Set tOutput = tOutput_@tOutputGlobal@(tKey)
-        Set tKey = $Order(@tOutputGlobal@(tKey))
+    // Close file (restores principal device), read contents, delete
+    Close tFile
+    Set tStream = ##class(%Stream.FileCharacter).%New()
+    Set tSC = tStream.LinkToFile(tFile)
+    If $$$ISERR(tSC) {
+        Do ##class(%File).Delete(tFile)
+        Return "FAIL: "_$System.Status.GetErrorText(tSC)
     }
-    Kill @tOutputGlobal
+    Set tOutput = ""
+    While 'tStream.AtEnd {
+        Set tOutput = tOutput_tStream.Read(32000)
+    }
+    Do ##class(%File).Delete(tFile)
 
-    Return "OK^"_tOutput
+    Return tOutput
 }
 
 }

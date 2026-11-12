@@ -229,7 +229,7 @@ def start_ephemeral(env: Mapping[str, str] = os.environ):
     container = EphemeralContainer(name)
     try:
         port = _wait_for_port(name)
-        _unexpire_passwords(name)
+        # CPF merge unexpires passwords at startup; no manual step needed
     except BaseException:
         container.stop()
         raise

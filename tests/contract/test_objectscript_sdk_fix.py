@@ -64,95 +64,46 @@ class Server:
 
         self.port = int(os.environ.get("IRIS_PORT", "51972"))
 
-    def _native(self, namespace: str = "USER"):
-        """Get a Native API handle in the specified namespace."""
+    def _tcp_run(self, namespace: str, code: str) -> str:
+        """Run ObjectScript code via IVRDev.Setup.Run helper."""
+        import sys
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parents[2]
+        sys.path.insert(0, str(repo_root / "scripts/dev"))
+        # Get Native API connection in %SYS for the helper
         import iris
+        import tcp_setup
 
         conn = iris.createConnection(
             hostname="localhost",
             port=self.port,
-            namespace=namespace,
+            namespace="%SYS",
             username="_SYSTEM",
             password="SYS",
         )
-        return conn, iris.createIRIS(conn)
+        try:
+            native = iris.createIRIS(conn)
+            tcp_setup.ensure_helper(native)
+            return tcp_setup.run(native, namespace, code)
+        finally:
+            conn.close()
 
     def session(self, script: str) -> str:
-        """Run ObjectScript lines via LoadDir; return mock output."""
-        # Most session() calls are in _load() which compiles .cls files via LoadDir
-        # This is a simplified version that just returns empty (the real work is in _load)
-        return "LOAD:1"
+        """Run ObjectScript lines and return captured output."""
+        # Old code prepended zn "USER", now handled by namespace arg
+        return self._tcp_run("USER", script)
 
     def run(self, code: str) -> str:
         """Run ObjectScript lines; return what the lines wrote after the `R:` marker."""
-        conn, native = self._native()
-        try:
-            # Parse ClassMethod calls and other statements
-            output_lines = []
-            for line in code.strip().splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                # Look for write "R:" pattern
-                if 'write "R:' in line.lower() or 'write "R:' in line:
-                    # Extract what's being written
-                    import re
-
-                    match = re.search(r'write\s+"R:"[,\s]*(.+?)(?:,!|\s*$)', line, re.I)
-                    if match:
-                        expr = match.group(1).strip()
-                        result = self._eval_expr(native, expr)
-                        return result
-                # Execute other lines (do statements, set variables, etc.)
-                try:
-                    # Use global to pass data between lines
-                    if line.lower().startswith("set "):
-                        var_expr = line[4:].strip()
-                        # Store in global for later lines
-                        native.set(var_expr, "^IVRTest", "expr")
-                    elif line.lower().startswith("do "):
-                        # Execute a do statement
-                        method_call = line[3:].strip()
-                        self._eval_expr(native, method_call)
-                except:
-                    pass
-            return ""
-        finally:
-            conn.close()
-
-    def _eval_expr(self, native, expr: str) -> str:
-        """Evaluate an ObjectScript expression."""
-        import re
-
-        # Parse ##class(Foo.Bar).Method(...) pattern
-        class_match = re.match(r"##class\(([^)]+)\)\.(\w+)\((.*)\)", expr)
-        if class_match:
-            class_name = class_match.group(1)
-            method_name = class_match.group(2)
-            args_str = class_match.group(3)
-            # Parse arguments (simplified - assumes string literals or numbers)
-            args = []
-            if args_str:
-                for arg in args_str.split(","):
-                    arg = arg.strip()
-                    if arg.startswith('"') and arg.endswith('"'):
-                        args.append(arg[1:-1])
-                    elif arg.isdigit():
-                        args.append(int(arg))
-                    else:
-                        args.append(arg)
-            result = native.classMethodValue(class_name, method_name, *args)
-            return str(result) if result is not None else ""
-        # Try evaluating as simple expression
-        return str(expr)
+        out = self.session(code)
+        for line in out.splitlines():
+            if "R:" in line:
+                return line.split("R:", 1)[1].strip()
+        raise AssertionError(f"no R: marker in session output:\n{out}")
 
     def call(self, expr: str) -> str:
-        """Evaluate ObjectScript expression and return result."""
-        conn, native = self._native()
-        try:
-            return self._eval_expr(native, expr)
-        finally:
-            conn.close()
+        return self.run(f'write "R:",{expr},!')
 
     def json(self, expr: str) -> dict | list:
         import json
@@ -160,21 +111,14 @@ class Server:
         text = self.call(expr)
         try:
             return json.loads(text)
-        except ValueError as exc:
+        except ValueError as exc:  # pragma: no cover
             raise AssertionError(f"{expr} did not return JSON: {text!r}") from exc
 
     def sql_scalar(self, sql: str) -> str:
-        """Execute SQL and return first column of first row."""
-        conn, native = self._native()
-        try:
-            stmt = native.classMethodObject("%SQL.Statement", "%New")
-            rs = stmt.invoke("%ExecDirect", None, sql)
-            if rs.invoke("%Next"):
-                result = rs.invoke("%GetData", 1)
-                return str(result) if result is not None else "none"
-            return "none"
-        finally:
-            conn.close()
+        return self.run(
+            f'set rs=##class(%SQL.Statement).%ExecDirect(,"{sql}")\n'
+            'if rs.%Next() { write "R:",rs.%GetData(1),! } else { write "R:none",! }'
+        )
 
 
 def _load(srv: Server) -> Server:
