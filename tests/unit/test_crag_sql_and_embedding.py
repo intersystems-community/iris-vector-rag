@@ -190,8 +190,9 @@ def test_crag_sources_follow_include_sources(include_sources, expected):
     ]
     store = MagicMock()
     store.similarity_search.return_value = [(doc, 0.9) for doc in docs]
+    # A stub, not None: None builds the default LLM, which needs an API key.
     pipeline = CRAGPipeline(
-        connection_manager=Mock(), vector_store=store, llm_func=None
+        connection_manager=Mock(), vector_store=store, llm_func=lambda prompt: ""
     )
 
     result = pipeline.query("q", generate_answer=False, include_sources=include_sources)
