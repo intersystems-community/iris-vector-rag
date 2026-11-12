@@ -124,32 +124,12 @@ def hybrid_on_known_corpus(ivg_deployed_for_contracts, iris_target):
     connection = connect(iris_target)
     try:
         cursor = connection.cursor()
+        # By doc_id: %ID is the row id, so a delete on it removed nothing and the
+        # corpus piled up across runs.
         cursor.execute(
-            "DELETE FROM RAG.SourceDocuments WHERE %ID IN (?, ?, ?)",
+            "DELETE FROM RAG.SourceDocuments WHERE doc_id IN (?, ?, ?)",
             ["kc-axolotl", "kc-basalt", "kc-hanseatic"],
         )
         connection.commit()
     finally:
         connection.close()
-
-
-@pytest.fixture
-def hybrid_on_empty_corpus(ivg_deployed_for_contracts):
-    """HybridGraphRAG pipeline with empty graph and empty RAG.SourceDocuments.
-
-    For tests that need to assert behavior on an empty result or to isolate
-    diagnostic logging that only occurs when 0 results are returned.
-
-    Does NOT add or clean up any documents.
-    """
-    from iris_vector_rag import create_pipeline
-
-    # Stub LLM function
-    def stub_llm(prompt, **kwargs):
-        return "This is a stub answer for testing purposes."
-
-    pipeline = create_pipeline(
-        "graphrag", validate_requirements=False, llm_func=stub_llm
-    )
-
-    return pipeline

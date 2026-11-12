@@ -1,6 +1,2 @@
-# pipelines-fix leftovers (first honest integration run; the pipelines' response shape and retrieval against the real store)
-# entity-services-fix leftovers (batch extraction tests that need an LLM or the removed batch surface)
-# test-environment leftovers (DAT fixtures, the deleted devtools bridge, connection and cache tests)
-# mcp-stdio-server follow-up (order-dependent: the tests read tables an earlier test may have dropped, so the failing subset differs run to run)
 # ci-llm-key (2026-11-11): flaky. Hybrid (vector 0.9) and RRF gave the same top 3 in one of three CI runs with the key; it clears and loads its own corpus, so ties in the text ranking are the likely cause. Spec 065 (weighted RRF, text ranking) is the place to fix it.
 tests/integration/test_hybrid_rrf_modes.py::test_hybrid_vs_rrf_produce_different_rankings
