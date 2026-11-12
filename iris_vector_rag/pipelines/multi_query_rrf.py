@@ -406,7 +406,6 @@ Return only the alternative queries, one per line, without numbering.
 
         # Step 4: Generate answer (if requested)
         answer = None
-        generation_error = None
         if generate_answer and fused_results:
             context = "\n\n".join([doc.page_content for doc in fused_results[:5]])
 
@@ -417,21 +416,11 @@ Context:
 
 Answer:"""
 
-            try:
-                if not self.llm:
-                    self.llm = get_llm_func(model_name=self.llm_model)
+            if not self.llm:
+                self.llm = get_llm_func(model_name=self.llm_model)
 
-                answer = self.llm(prompt)
-                logger.info("Generated answer from top 5 results")
-
-            except Exception as e:
-                logger.error(f"Answer generation failed: {e}")
-                answer = None
-                generation_error = {
-                    "type": "GenerationError",
-                    "message": str(e),
-                    "error_class": type(e).__name__,
-                }
+            answer = self.llm(prompt)
+            logger.info("Generated answer from top 5 results")
 
         # Build response
         execution_time = time.time() - start_time
@@ -445,7 +434,7 @@ Answer:"""
             "retrieved_documents": fused_results,
             "contexts": [doc.page_content for doc in fused_results],
             "sources": sources,
-            "error": generation_error,
+            "error": None,
             "metadata": {
                 "pipeline": "multi_query_rrf",
                 "queries": queries,

@@ -230,18 +230,13 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 logger.debug(f"No reranker available, returning top {top_k} documents")
 
         # Now generate answer if requested (using reranked documents)
+        answer = None
         if generate_answer and self.llm_func and final_documents:
-            try:
-                custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(query, final_documents, custom_prompt)
-            except Exception as e:
-                logger.warning(f"Answer generation failed: {e}")
-                answer = "Error generating answer"
-        elif not generate_answer:
-            answer = None
-        elif not final_documents:
+            custom_prompt = kwargs.get("custom_prompt")
+            answer = self._generate_answer(query, final_documents, custom_prompt)
+        elif not final_documents and generate_answer:
             answer = "No relevant documents found to answer the query."
-        else:
+        elif generate_answer and not self.llm_func:
             answer = "No LLM function provided. Retrieved documents only."
 
         # Build complete response (matching parent format exactly)

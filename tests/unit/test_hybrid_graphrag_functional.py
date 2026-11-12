@@ -264,6 +264,23 @@ class TestHybridGraphRAGPipeline:
         with pytest.raises(ImportError, match="iris-vector-graph"):
             HybridGraphRAGPipeline(self.mock_conn_mgr, self.mock_config_mgr)
 
+    def test_a_generation_failure_raises_instead_of_a_stand_in_answer(self):
+        """query() used to answer "Error generating answer" when the LLM failed."""
+        pipeline = self._build()
+        docs = [Document(id="d1", page_content="Diabetes causes thirst.", metadata={})]
+
+        def llm_down(prompt):
+            raise RuntimeError("LLM endpoint returned 401")
+
+        pipeline.llm_func = llm_down
+        with patch.object(pipeline, "_validate_knowledge_graph"), patch.object(
+            pipeline,
+            "_retrieve_via_hybrid_fusion",
+            return_value=(docs, "hybrid_fusion"),
+        ):
+            with pytest.raises(RuntimeError, match="401"):
+                pipeline.query("What causes thirst?", method="hybrid")
+
     def test_pipeline_initialization_with_graph_core(self):
         """With iris_vector_graph available the engines are built and hybrid is on."""
         pipeline = self._build()

@@ -342,20 +342,13 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
         # Generate answer if requested (same as BasicRAGReranking)
         generate_answer = kwargs.get("generate_answer", True)
+        answer = None
         if generate_answer and self.llm_func and final_documents:
-            try:
-                custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(
-                    query_text, final_documents, custom_prompt
-                )
-            except Exception as e:
-                logger.warning(f"Answer generation failed: {e}")
-                answer = "Error generating answer"
-        elif not generate_answer:
-            answer = None
-        elif not final_documents:
+            custom_prompt = kwargs.get("custom_prompt")
+            answer = self._generate_answer(query_text, final_documents, custom_prompt)
+        elif not final_documents and generate_answer:
             answer = "No relevant documents found to answer the query."
-        else:
+        elif generate_answer and not self.llm_func:
             answer = "No LLM function provided. Retrieved documents only."
 
         # Build response with consistent format

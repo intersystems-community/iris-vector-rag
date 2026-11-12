@@ -220,19 +220,12 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
             vector_store=self.mock_vector_store,
         )
 
-        # Pipeline catches LLM exceptions and returns graceful error response
+        # A generation failure raises from query(), it is not swallowed into a field
         from unittest.mock import patch as _patch
 
         with _patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
-            result = pipeline.query("Test query")
-
-        # Should still return a response; generation error is captured in error key
-        self.assertIsInstance(result, dict)
-        self.assertIn("answer", result)
-        self.assertIsNone(result["answer"])
-        self.assertIsNotNone(result["error"])
-        self.assertEqual(result["error"]["type"], "GenerationError")
-        self.assertIn("LLM error", result["error"]["message"])
+            with self.assertRaisesRegex(Exception, "LLM error"):
+                pipeline.query("Test query")
 
     def test_get_pipeline_info(self):
         """Test getting pipeline information."""

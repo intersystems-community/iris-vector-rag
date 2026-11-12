@@ -172,3 +172,28 @@ def test_enhance_retrieval_binds_the_query_vector(monkeypatch):
     assert "TO_VECTOR(?, FLOAT, 4)" in sql
     assert "'[" not in sql
     assert len(params) == 1 and params[0].startswith("[0.25")
+
+
+@pytest.mark.usefixtures("use_test_embedder")
+@pytest.mark.parametrize("include_sources, expected", [(True, 2), (False, 0)])
+def test_crag_sources_follow_include_sources(include_sources, expected):
+    """include_sources=False gives no sources, as in every other pipeline, and a
+    source names its document even when the metadata has no doc_id."""
+    from unittest.mock import MagicMock, Mock
+
+    from iris_vector_rag.core.models import Document
+    from iris_vector_rag.pipelines.crag import CRAGPipeline
+
+    docs = [
+        Document(id=f"d{i}", page_content=f"text {i}", metadata={"source": "s"})
+        for i in range(2)
+    ]
+    store = MagicMock()
+    store.similarity_search.return_value = [(doc, 0.9) for doc in docs]
+    pipeline = CRAGPipeline(
+        connection_manager=Mock(), vector_store=store, llm_func=None
+    )
+
+    result = pipeline.query("q", generate_answer=False, include_sources=include_sources)
+
+    assert [s["doc_id"] for s in result["sources"]] == ["d0", "d1"][:expected]

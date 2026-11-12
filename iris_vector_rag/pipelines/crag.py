@@ -324,6 +324,7 @@ class CRAGPipeline(RAGPipeline):
                     "similarity_threshold",
                     "custom_prompt",
                     "where",
+                    "include_sources",
                 )
             },
         )
@@ -415,21 +416,12 @@ class CRAGPipeline(RAGPipeline):
 
         # Stage 4: Generate answer if requested
         answer = None
-        if generate_answer:
-            if self.llm_func:
-                try:
-                    answer = self._generate_answer(
-                        query_text, corrected_docs, retrieval_status
-                    )
-                except Exception as e:
-                    logger.warning(f"Answer generation failed: {e}")
-                    answer = "Error generating answer"
-            else:
-                answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
-
-            # Ensure answer is always a string when generate_answer=True
+        if generate_answer and self.llm_func:
+            answer = self._generate_answer(query_text, corrected_docs, retrieval_status)
             if answer is None:
                 answer = "No relevant documents found to answer the query."
+        elif generate_answer and not self.llm_func:
+            answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
 
         # FR-007: apply query-time reranking after corrective retrieval
         rerank_degraded = False
@@ -443,13 +435,17 @@ class CRAGPipeline(RAGPipeline):
         execution_time = time.time() - start_time
 
         # Extract sources for metadata
-        sources = [
-            {
-                "doc_id": doc.metadata.get("doc_id", "unknown"),
-                "source": doc.metadata.get("source", "unknown"),
-            }
-            for doc in corrected_docs
-        ]
+        sources = (
+            [
+                {
+                    "doc_id": doc.metadata.get("doc_id") or doc.id or "unknown",
+                    "source": doc.metadata.get("source", "unknown"),
+                }
+                for doc in corrected_docs
+            ]
+            if opts.include_sources
+            else []
+        )
         contexts_list = [doc.page_content for doc in corrected_docs]
 
         result = {

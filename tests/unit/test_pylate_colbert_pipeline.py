@@ -797,7 +797,7 @@ class TestPyLateColBERTPipeline:
                 assert result["answer"] == "Custom answer based on custom prompt"
 
     def test_query_answer_generation_error(self, test_pipeline, sample_documents):
-        """Test query handles answer generation errors gracefully."""
+        """A generation failure raises; no "Error generating answer" stand-in."""
         test_pipeline.vector_store.search_by_text = Mock(
             return_value=sample_documents[:2]
         )
@@ -813,9 +813,8 @@ class TestPyLateColBERTPipeline:
             with patch.object(test_pipeline, "_generate_answer") as mock_generate:
                 mock_generate.side_effect = Exception("LLM API error")
 
-                result = test_pipeline.query("Test query")
-
-                assert result["answer"] == "Error generating answer"
+                with pytest.raises(Exception, match="LLM API error"):
+                    test_pipeline.query("Test query")
 
     def test_query_include_sources_false(self, test_pipeline, sample_documents):
         """Test query with include_sources=False omits sources."""

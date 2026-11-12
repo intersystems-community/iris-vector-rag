@@ -687,6 +687,19 @@ def mock_connection_failure(mocker):
 # ============================================================================
 
 
+def _stub_llm_unless_integration(request) -> dict:
+    """`llm_func=` for a shared pipeline fixture: a stub outside tests/integration.
+
+    Contract tests run with a placeholder key (release.yml), so a real LLM call
+    could only fail with 401. That failure used to be swallowed into the answer;
+    a generation failure now raises, so they get a deterministic stand-in LLM
+    instead. Integration tests keep the configured LLM.
+    """
+    if "integration" in str(request.node.fspath):
+        return {}
+    return {"llm_func": lambda prompt: "stub answer (contract tests call no LLM)"}
+
+
 @pytest.fixture(scope="session")
 def basic_rag_pipeline(request):
     """Session-scoped BasicRAG pipeline — skips if IRIS unavailable."""
@@ -702,7 +715,11 @@ def basic_rag_pipeline(request):
     validate = "integration" in str(request.node.fspath)
 
     try:
-        return create_pipeline("basic", validate_requirements=validate)
+        return create_pipeline(
+            "basic",
+            validate_requirements=validate,
+            **_stub_llm_unless_integration(request),
+        )
     except Exception as e:
         pytest.skip(f"BasicRAG pipeline unavailable: {e}")
 
@@ -714,7 +731,11 @@ def crag_pipeline(request):
 
     validate = "integration" in str(request.node.fspath)
     try:
-        return create_pipeline("crag", validate_requirements=validate)
+        return create_pipeline(
+            "crag",
+            validate_requirements=validate,
+            **_stub_llm_unless_integration(request),
+        )
     except Exception as e:
         pytest.skip(f"CRAG pipeline unavailable: {e}")
 
@@ -726,7 +747,11 @@ def basic_rerank_pipeline(request):
 
     validate = "integration" in str(request.node.fspath)
     try:
-        return create_pipeline("basic_rerank", validate_requirements=validate)
+        return create_pipeline(
+            "basic_rerank",
+            validate_requirements=validate,
+            **_stub_llm_unless_integration(request),
+        )
     except Exception as e:
         pytest.skip(f"BasicRerank pipeline unavailable: {e}")
 
@@ -738,7 +763,11 @@ def pylate_colbert_pipeline(request):
 
     validate = "integration" in str(request.node.fspath)
     try:
-        return create_pipeline("pylate_colbert", validate_requirements=validate)
+        return create_pipeline(
+            "pylate_colbert",
+            validate_requirements=validate,
+            **_stub_llm_unless_integration(request),
+        )
     except Exception as e:
         pytest.skip(f"PyLateColBERT pipeline unavailable: {e}")
 

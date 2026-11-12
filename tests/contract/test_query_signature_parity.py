@@ -65,20 +65,23 @@ def _make_basic():
 
 
 def _make_crag():
+    """A CRAG built by its real constructor, on stubs.
+
+    It used to be built with `__init__` patched out, which left it without
+    `embedding_func` or an evaluator: every query failed, and passed only because
+    CRAG returned the failure as an error dict.
+    """
     from iris_vector_rag.pipelines.crag import CRAGPipeline
 
-    with patch.object(CRAGPipeline, "__init__", lambda self, *a, **kw: None):
-        p = CRAGPipeline.__new__(CRAGPipeline)
-    p.connection_manager = MagicMock()
-    p.vector_store = MagicMock()
-    p.vector_store.similarity_search.return_value = STUB_DOCS
-    p.vector_store.search_by_text.return_value = STUB_DOCS
-    p.llm_func = None
-    p.config_manager = MagicMock()
-    p.top_k = 5
-    p.correction_threshold = 0.5
-    p.max_web_results = 3
-    return p
+    store = MagicMock()
+    # The store's similarity_search answers (document, score) pairs.
+    store.similarity_search.return_value = [(doc, 0.9) for doc in STUB_DOCS]
+    return CRAGPipeline(
+        connection_manager=MagicMock(),
+        vector_store=store,
+        llm_func=None,
+        embedding_func=lambda texts: [[0.1] * 384 for _ in texts],
+    )
 
 
 def _make_multi_query_rrf():

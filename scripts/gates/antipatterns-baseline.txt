@@ -123,12 +123,9 @@ swallowed-error	iris_vector_rag/pipelines/basic.py::BasicRAGPipeline.__init__#2
 swallowed-error	iris_vector_rag/pipelines/basic.py::BasicRAGPipeline._generate_and_store_embeddings#1
 swallowed-error	iris_vector_rag/pipelines/basic.py::BasicRAGPipeline._load_documents_from_path#1
 swallowed-error	iris_vector_rag/pipelines/basic.py::BasicRAGPipeline.ingest_documents#1
-swallowed-error	iris_vector_rag/pipelines/basic.py::BasicRAGPipeline.query#1
-swallowed-error	iris_vector_rag/pipelines/basic_rerank.py::BasicRAGRerankingPipeline.query#1
 swallowed-error	iris_vector_rag/pipelines/colbert_iris/ingest.py::ColBERTIngestor.ingest_documents#1
 swallowed-error	iris_vector_rag/pipelines/colbert_iris/maxsim_indb.py::MaxSimInDB._parse_vec#1
 swallowed-error	iris_vector_rag/pipelines/colbert_iris/pipeline.py::IRISColBERTPipeline._fetch_docs_by_ids#1
-swallowed-error	iris_vector_rag/pipelines/colbert_iris/pipeline.py::IRISColBERTPipeline.query#1
 swallowed-error	iris_vector_rag/pipelines/colbert_iris/plaid.py::PLAIDSearcher._centroids_built#1
 swallowed-error	iris_vector_rag/pipelines/colbert_iris/plaid.py::PLAIDSearcher._total_doc_count#1
 swallowed-error	iris_vector_rag/pipelines/colbert_iris/schema.py::ColBERTSchema.create_doc_index#1
@@ -139,12 +136,10 @@ swallowed-error	iris_vector_rag/pipelines/colbert_iris/schema.py::ColBERTSchema.
 swallowed-error	iris_vector_rag/pipelines/colbert_iris/vecindex_phase2.py::VecIndexSearcher.info#1
 swallowed-error	iris_vector_rag/pipelines/colbert_pylate/pylate_pipeline.py::PyLateColBERTPipeline._import_pylate#1
 swallowed-error	iris_vector_rag/pipelines/colbert_pylate/pylate_pipeline.py::PyLateColBERTPipeline.query#1
-swallowed-error	iris_vector_rag/pipelines/colbert_pylate/pylate_pipeline.py::PyLateColBERTPipeline.query#2
 swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline._ensure_crag_tables#1
 swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.load_documents#1
 swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.load_documents#2
 swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.query#1
-swallowed-error	iris_vector_rag/pipelines/crag.py::CRAGPipeline.query#2
 swallowed-error	iris_vector_rag/pipelines/graphrag.py::GraphRAGPipeline._get_documents_from_entities#1
 swallowed-error	iris_vector_rag/pipelines/graphrag.py::GraphRAGPipeline._validate_knowledge_graph#1
 swallowed-error	iris_vector_rag/pipelines/graphrag.py::GraphRAGPipeline.load_documents#1
@@ -159,7 +154,6 @@ swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipe
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline._intelligent_hybrid_search#2
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline.attach_existing_corpus#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::ScopedRetrievalMixin._graph_leg#1
-swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag.py::HybridGraphRAGPipeline.query#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::HybridRetrievalMethods.benchmark_search_methods#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::HybridRetrievalMethods.check_hnsw_optimization#1
 swallowed-error	iris_vector_rag/pipelines/hybrid_graphrag_retrieval.py::HybridRetrievalMethods.get_performance_statistics#1
@@ -169,7 +163,6 @@ swallowed-error	iris_vector_rag/pipelines/iris_global_graphrag.py::IRISGlobalGra
 swallowed-error	iris_vector_rag/pipelines/iris_global_graphrag.py::IRISGlobalGraphRAGPipeline.query#1
 swallowed-error	iris_vector_rag/pipelines/multi_query_rrf.py::MultiQueryRRFPipeline._generate_llm_variations#1
 swallowed-error	iris_vector_rag/pipelines/multi_query_rrf.py::MultiQueryRRFPipeline.query#1
-swallowed-error	iris_vector_rag/pipelines/multi_query_rrf.py::MultiQueryRRFPipeline.query#2
 swallowed-error	iris_vector_rag/retrieval/engine.py::RetrievalEngine._retrieve_mix#1
 swallowed-error	iris_vector_rag/retrieval/engine.py::RetrievalEngine._retrieve_mix#2
 swallowed-error	iris_vector_rag/retrieval/keyword_extractor.py::KeywordExtractor.extract#1

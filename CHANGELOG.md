@@ -4,14 +4,18 @@
 
 ### Changed (breaking)
 
-- **`query()` raises when retrieval fails** in BasicRAG, Rerank, CRAG and PyLate ColBERT.
+- **`query()` raises when answer generation fails, in every pipeline, and when retrieval
+  fails in BasicRAG, Rerank, CRAG and PyLate ColBERT.**
   BasicRAG and Rerank caught every retrieval exception and returned `answer=None` with the
   error in `result["error"]`. CRAG answered from a stand-in "fallback_context" document
-  that held the query text. A caller who did not check the field read a failure as
-  "nothing matched". The exception now propagates with its own type: a query embedded at
-  the wrong width is a `DimensionMismatchError` that names both widths and the fix, and
-  an unreachable IRIS is a `VectorStoreConnectionError`. `result["error"]` still reports a
-  failed answer generation.
+  that held the query text. For a failed LLM call, Rerank, CRAG, PyLate, ColBERT-IRIS and
+  HybridGraphRAG answered the string "Error generating answer". BasicRAG and
+  MultiQueryRRF returned `answer=None` with the error in the field. A caller who did not
+  check read a failure as an answer, or as "nothing matched". The exception now
+  propagates with its own type. A query embedded at the wrong width is a
+  `DimensionMismatchError` that names both widths and the fix. An unreachable IRIS is a
+  `VectorStoreConnectionError`. An LLM failure is the provider's own error.
+  `result["error"]` is always `None` now; it stays so code that reads it keeps working.
 
 ### Removed
 
@@ -22,6 +26,9 @@
 
 ### Fixed
 
+- **CRAG honours `include_sources=False`, and its sources name their documents.** It
+  returned every source whatever was asked, labelled `doc_id: "unknown"` unless the
+  metadata carried a `doc_id`.
 - **BM25 upgrades and schema deploys no longer leave a connection open:** `SchemaManager`
   built an iris-vector-graph engine per call, and ivg opens a connection of its own for
   each engine that nothing closed. Repeated `upgrade_bm25_indexes()` calls stacked them up

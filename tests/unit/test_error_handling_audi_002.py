@@ -4,7 +4,7 @@ Unit tests for AUD-002 bug fix: proper error handling for embedding and retrieva
 Tests verify that:
 1. Embedding failures raise EmbeddingError (not zero vectors)
 2. Retrieval failures raise from query() (not an empty list, not an error field)
-3. Generation failures are captured in response.error (not placeholder strings)
+3. Generation failures raise from query() (not placeholder strings, not an error field)
 """
 
 from typing import List
@@ -140,12 +140,11 @@ class TestRetrievalErrorHandling:
 class TestGenerationErrorHandling:
     """Tests for proper generation error handling (Part B)."""
 
-    def test_generation_failure_captured_in_response_error(self):
+    def test_generation_failure_raises_from_query(self):
         """
-        Test that generation failure is captured in response["error"]
-        instead of returning "Error generating answer" placeholder.
+        A generation failure raises from query(): neither a placeholder answer
+        nor an error field the caller has to remember to check.
         """
-        # Setup
         config_manager = ConfigurationManager()
         connection_manager = ConnectionManager(config_manager)
 
@@ -154,30 +153,19 @@ class TestGenerationErrorHandling:
             config_manager=config_manager,
         )
 
-        # Mock LLM that raises
         def failing_llm(text):
             raise RuntimeError("OpenAI API timeout")
 
         pipeline.llm_func = failing_llm
 
-        # Mock vector store that returns docs
         mock_vector_store = MagicMock()
         mock_vector_store.search_by_text.return_value = [
             Document(page_content="Retrieved content", metadata={})
         ]
         pipeline.vector_store = mock_vector_store
 
-        # Execute query with generation enabled (patch API key to bypass env check)
-        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
-            result = pipeline.query("What is diabetes?", generate_answer=True)
-
-        # Assert: error is captured, answer is None (not placeholder string)
-        assert result["answer"] is None
-        assert result["error"] is not None
-        assert result["error"]["type"] == "GenerationError"
-        assert "OpenAI API timeout" in result["error"]["message"]
-        assert result["error"]["error_class"] == "RuntimeError"
-        # Key: answer is None, not "Error generating answer"
+        with pytest.raises(RuntimeError, match="OpenAI API timeout"):
+            pipeline.query("What is diabetes?", generate_answer=True)
 
     def test_generation_with_docs_but_no_error(self):
         """

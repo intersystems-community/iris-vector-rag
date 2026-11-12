@@ -471,18 +471,12 @@ class HybridGraphRAGPipeline(GraphRAGPipeline, ScopedRetrievalMixin):
         # Generate answer if requested
         answer = None
         if generate_answer and self.llm_func and retrieved_documents:
-            try:
-                answer = self._generate_answer(
-                    query_text, retrieved_documents, custom_prompt
-                )
-            except Exception as e:
-                logger.error(f"Answer generation failed: {e}")
-                answer = "Error generating answer"
-        elif not generate_answer:
-            answer = None
-        elif not retrieved_documents:
+            answer = self._generate_answer(
+                query_text, retrieved_documents, custom_prompt
+            )
+        elif not retrieved_documents and generate_answer:
             answer = "No relevant documents found to answer the query."
-        else:
+        elif generate_answer and not self.llm_func:
             answer = "No LLM function provided. Retrieved documents only."
 
         # FR-007: apply query-time reranking after retrieval

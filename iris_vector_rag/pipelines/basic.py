@@ -15,7 +15,7 @@ from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..core.models import Document, coerce_documents
 from ..embeddings.manager import EmbeddingManager
-from ..exceptions import GenerationError, IngestionError, RetrievalError
+from ..exceptions import IngestionError, RetrievalError
 
 logger = logging.getLogger(__name__)
 
@@ -573,7 +573,6 @@ class BasicRAGPipeline(RAGPipeline):
         # Step 1: Retrieve relevant documents. A retrieval failure raises with its
         # own type (a dimension mismatch stays a DimensionMismatchError): returned
         # in a field, it read as "nothing matched" to a caller who did not look.
-        generation_error = None
         engine_applied_threshold = False
         # FR-010: dispatch via RetrievalEngine when retrieval mode is explicitly set
         # A threshold goes through the engine too: the plain store search returns
@@ -634,24 +633,12 @@ class BasicRAGPipeline(RAGPipeline):
             )
 
         # Step 2: Generate answer using LLM (if enabled and LLM available)
+        answer = None
         if generate_answer and self.llm_func and retrieved_documents:
-            try:
-                answer = self._generate_answer(
-                    query, retrieved_documents, custom_prompt
-                )
-            except Exception as e:
-                logger.warning(f"Answer generation failed: {e}")
-                answer = None
-                generation_error = {
-                    "type": "GenerationError",
-                    "message": str(e),
-                    "error_class": type(e).__name__,
-                }
-        elif not generate_answer:
-            answer = None
-        elif not retrieved_documents:
+            answer = self._generate_answer(query, retrieved_documents, custom_prompt)
+        elif not retrieved_documents and generate_answer:
             answer = "No relevant documents found to answer the query."
-        else:
+        elif generate_answer and not self.llm_func:
             answer = "No LLM function provided. Retrieved documents only."
 
         # Calculate execution time
@@ -668,7 +655,8 @@ class BasicRAGPipeline(RAGPipeline):
             "retrieved_documents": retrieved_documents,
             "contexts": contexts_list,  # String contexts for RAGAS
             "execution_time": execution_time,  # Required for RAGAS debug harness
-            "error": generation_error,  # None on success, dict on generation failure
+            # Always None: a failure raises. Kept so callers reading it still work.
+            "error": None,
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
                 "processing_time": execution_time,

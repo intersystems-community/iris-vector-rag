@@ -249,30 +249,17 @@ def test_weights_shift_hybrid_ranking(loaded_corpus):
     )
 
 
-def test_unknown_mode_returns_empty_with_warning(loaded_corpus, caplog):
-    """FR-012: unknown mode surfaces a clear error message (not silent).
+def test_an_unknown_mode_raises_naming_the_modes(loaded_corpus):
+    """FR-012: an unknown mode is the caller's error, raised with the valid modes.
 
-    The pipeline catches and logs the ValueError from RetrievalEngine so that
-    callers receive an empty-result response rather than an unhandled exception.
-    The error must be named — the mode name must appear in the log output.
+    It used to be caught and logged, and the caller got an empty result that read
+    as "nothing matched".
     """
-    import logging
-
     pipeline, _ = loaded_corpus
-    with caplog.at_level(logging.WARNING, logger="iris_vector_rag.pipelines.basic"):
-        result = pipeline.query(
-            "test", top_k=1, retrieval="bogus_mode", generate_answer=False
-        )
+    with pytest.raises(ValueError, match="bogus_mode") as exc_info:
+        pipeline.query("test", top_k=1, retrieval="bogus_mode", generate_answer=False)
 
-    # Empty results (not a crash)
-    assert (
-        result["retrieved_documents"] == []
-    ), "unknown mode must return empty docs, not crash"
-
-    # Error is named — the mode name appears in the warning
-    assert any(
-        "bogus_mode" in record.message for record in caplog.records
-    ), f"mode name must appear in logged warning. Got: {[r.message for r in caplog.records]}"
+    assert "'hybrid'" in str(exc_info.value) and "'rrf'" in str(exc_info.value)
 
 
 def test_a_document_findable_only_by_keyword_is_returned_by_text_rrf_and_hybrid(
