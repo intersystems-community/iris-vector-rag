@@ -47,7 +47,6 @@ Performance metrics (representative)
 Database health improvements
 
 - IRIS service now reports healthy status via Docker health checks and internal probes
-  - Health check: [scripts/docker/health-check.sh](scripts/docker/health-check.sh)
   - State probe: [scripts/check_database_state.py](scripts/check_database_state.py)
 - Connection Manager stabilized: uses utility connector and caches connections
   - Source: [iris_rag/core/connection.py](iris_rag/core/connection.py)

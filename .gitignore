@@ -147,6 +147,8 @@ test_*_integration.py
 
 # IRIS configuration files
 *.cpf
+# The CI merge file holds no secret: service and user flags only.
+!scripts/ci/iris-merge.cpf
 iris.key
 
 # Active ingestion data

@@ -51,7 +51,7 @@ Provision IRIS with Docker
 Option A — Minimal, IRIS only:
 
 - docker compose -f docker-compose.iris-only.yml up -d
-- Verify container health: scripts/docker/health-check.sh
+- Verify container health: `docker compose -f docker-compose.iris-only.yml ps` (the STATUS column shows `healthy`)
 - Optional state probe: scripts/check_database_state.py
 
 Option B — Full stack (dev/prod profiles):
@@ -116,13 +116,13 @@ Troubleshooting
 IRIS unhealthy or not reachable
 
 - docker compose -f docker-compose.iris-only.yml ps
-- scripts/docker/health-check.sh
+- docker compose -f docker-compose.iris-only.yml logs
 - Ensure ports 1972/52773 free and Docker daemon is running
 
 COMMUNICATION LINK ERROR / connection closed
 
 - Ensure IRIS is healthy before running tests
-- Add a small delay after container up or run health-check.sh until healthy
+- Add a small delay after container up, or wait until `docker compose ps` shows `healthy`
 
 No results from vector search
 
@@ -153,7 +153,6 @@ Exit codes and markers
 
 Useful scripts
 
-- IRIS health checker: [scripts/docker/health-check.sh](scripts/docker/health-check.sh)
 - Database state probe: [scripts/check_database_state.py](scripts/check_database_state.py)
 
 Appendix: File references

@@ -113,7 +113,7 @@ Source of truth for criteria and scope: [`docs/testing/E2E_TEST_STRATEGY.md`](do
 - IRIS container running and healthy; quick start: [`docker-compose.iris-only.yml`](docker-compose.iris-only.yml)
 - Configured credentials and ports; see [`iris_rag/config/default_config.yaml`](iris_rag/config/default_config.yaml)
 - E2E fixtures expect PMC XMLs under [`data/sample_10_docs/`](data/sample_10_docs/); will fallback to built‑in biomedical texts
-- Health and data probes: [`scripts/docker/health-check.sh`](scripts/docker/health-check.sh), [`scripts/check_database_state.py`](scripts/check_database_state.py)
+- Health and data probes: Docker health status (`docker compose ps`), [`scripts/check_database_state.py`](scripts/check_database_state.py)
 
 ---
 
