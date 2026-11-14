@@ -10,6 +10,7 @@ from .config.manager import ConfigurationManager
 from .core.base import RAGPipeline
 from .core.connection import ConnectionManager
 from .core.engine import IRISVectorEngine
+from .core.exceptions import AnswerModelNotConfiguredError
 from .pipelines.basic import BasicRAGPipeline
 from .pipelines.crag import CRAGPipeline
 
@@ -171,15 +172,27 @@ def _answer_model(
 
 
 def _yaml_answer_model(config_manager: ConfigurationManager) -> Callable[[str], str]:
-    """The answer model the YAML ``llm:`` settings describe."""
+    """The answer model the YAML ``llm:`` settings describe.
+
+    With no ``llm.provider``, openai if a key is set; otherwise a model that raises
+    `AnswerModelNotConfiguredError` when asked for an answer, so retrieval still works.
+    """
     import os
 
-    default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
+    provider = config_manager.get("llm:provider")
+    if provider is None:
+        if not os.environ.get("OPENAI_API_KEY"):
+            return _no_answer_model
+        provider = "openai"
     return get_llm_func(
-        provider=config_manager.get("llm.provider", default_provider),
-        model_name=config_manager.get("llm.model_name", "gpt-4.1-mini"),
+        provider=provider,
+        model_name=config_manager.get("llm:model_name", "gpt-4.1-mini"),
         **llm_limits_from_config(config_manager),
     )
+
+
+def _no_answer_model(prompt: str) -> str:
+    raise AnswerModelNotConfiguredError()
 
 
 def _create_pipeline_legacy(
@@ -352,6 +365,7 @@ class ExternalConnectionWrapper:
 
 __all__ = [
     "create_pipeline",
+    "AnswerModelNotConfiguredError",
     "validate_pipeline",
     "setup_pipeline",
     "get_pipeline_status",

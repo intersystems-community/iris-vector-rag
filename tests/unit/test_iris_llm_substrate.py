@@ -112,17 +112,14 @@ def test_get_llm_func_iris_llm_missing_key_raises_value_error():
 # ---------------------------------------------------------------------------
 
 
-def test_get_llm_func_for_embedded_falls_back_to_stub():
-    """When iris_llm is absent, get_llm_func_for_embedded returns a stub callable."""
+def test_get_llm_func_for_embedded_raises_without_iris_llm():
+    """With iris_llm absent it raises, naming the wheel. It used to hand back a stub
+    whose "answers" read "Stub LLM response for prompt: ..."."""
     with patch.dict(sys.modules, {"iris_llm": None, "iris_llm.langchain": None}):
         from iris_vector_rag.common.utils import get_llm_func_for_embedded
 
-        fn = get_llm_func_for_embedded()
-
-    assert callable(fn)
-    result = fn("hello")
-    assert isinstance(result, str)
-    assert len(result) > 0
+        with pytest.raises(ImportError, match="iris_llm"):
+            get_llm_func_for_embedded()
 
 
 # ---------------------------------------------------------------------------

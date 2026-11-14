@@ -21,6 +21,7 @@ from ..exceptions import (
 )
 
 __all__ = [
+    "AnswerModelNotConfiguredError",
     "RAGException",
     "PipelineConfigurationError",
     "PipelineNotFoundError",
@@ -43,6 +44,21 @@ class PipelineConfigurationError(Exception):
     - Configuration schema validation fails
     - Invalid parameter values are provided
     """
+
+
+class AnswerModelNotConfiguredError(PipelineConfigurationError):
+    """Raised when a pipeline is asked for an answer and no answer model was chosen.
+
+    The pipeline is still built, since retrieval needs no model: the error comes when
+    an answer is generated.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            "No answer model is configured. Pass llm_func= or llm_config= (a ConfigStore "
+            "entry) to create_pipeline, set llm.provider in the YAML config, or set "
+            "OPENAI_API_KEY. Retrieval works without one: query(..., generate_answer=False)."
+        )
 
 
 class PipelineNotFoundError(Exception):

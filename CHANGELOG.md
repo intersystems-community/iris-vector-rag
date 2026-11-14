@@ -24,6 +24,15 @@
   so. GraphRAG raises a database error while reading an entity's documents, where it
   returned none.
 
+- **`create_pipeline()` no longer answers with a stub when no answer model is chosen.**
+  With no `llm_func`, no `llm_config`, no `llm.provider` in the YAML and no
+  `OPENAI_API_KEY`, the pipeline's answers read `"Stub LLM response for prompt: ..."`,
+  with no error or warning. The pipeline is still built, since retrieval needs no model,
+  but generating an answer raises `AnswerModelNotConfiguredError`, which lists the four
+  ways to choose one. `llm.provider: stub` still gives the stub when asked for.
+  `get_llm_func_for_embedded()` raises `ImportError` when the `iris_llm` wheel is
+  missing, where it returned the stub.
+
 ### Removed
 
 - **`IRISConnectionPool`** (`iris_vector_rag.common.connection_pool`), deprecated since
@@ -32,6 +41,12 @@
   which gives each thread one connection.
 
 ### Fixed
+
+- **The YAML `llm:` section is read.** `create_pipeline()` asked the configuration for
+  `llm.provider`, `llm.model_name`, `llm.timeout` and `llm.max_retries`, but
+  `ConfigurationManager` splits keys on `:`, so none of them was ever found: the provider
+  came from whether `OPENAI_API_KEY` was set, the model was always `gpt-4.1-mini`, and
+  the timeout and retries came only from the environment.
 
 - **HybridGraphRAG's vector fallback reports the store's similarity.** It dropped the
   scores and then gave every document a `similarity_score` of 1.0, so every fallback hit

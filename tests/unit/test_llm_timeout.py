@@ -95,19 +95,24 @@ def test_bad_retries_are_refused(bad):
         utils_mod.get_llm_func("openai", "m", max_retries=bad)
 
 
-def test_limits_come_from_the_llm_config_section():
-    class Config:
-        def __init__(self, values):
-            self.values = values
+def test_limits_come_from_the_llm_config_section(tmp_path, monkeypatch):
+    """Read through a real ConfigurationManager: a stand-in that answered "llm.timeout"
+    hid that the real one, which splits keys on ":", never did."""
+    import yaml
 
-        def get(self, key, default=None):
-            return self.values.get(key, default)
+    from iris_vector_rag.config.manager import ConfigurationManager
 
-    got = utils_mod.llm_limits_from_config(
-        Config({"llm.timeout": 12, "llm.max_retries": 3})
-    )
+    for name in ("RAG_LLM__TIMEOUT", "RAG_LLM__MAX_RETRIES"):
+        monkeypatch.delenv(name, raising=False)
+    with_limits = tmp_path / "limits.yaml"
+    with_limits.write_text(yaml.safe_dump({"llm": {"timeout": 12, "max_retries": 3}}))
+    without = tmp_path / "none.yaml"
+    without.write_text(yaml.safe_dump({"llm": {}}))
+
+    got = utils_mod.llm_limits_from_config(ConfigurationManager(str(with_limits)))
+
     assert got == {"timeout": 12, "max_retries": 3}
-    assert utils_mod.llm_limits_from_config(Config({})) == {}
+    assert utils_mod.llm_limits_from_config(ConfigurationManager(str(without))) == {}
 
 
 @pytest.mark.parametrize(

@@ -66,6 +66,10 @@ def create_pipeline(
 - `ValueError`: If pipeline_type is unknown
 - `PipelineValidationError`: If validation fails and auto_setup is False
 
+With no answer model chosen (no `llm_func`, `llm_config`, `llm.provider` or
+`OPENAI_API_KEY`), the pipeline is built and retrieves, but `query()` raises
+`AnswerModelNotConfiguredError` when it is asked to generate an answer.
+
 **Example:**
 
 ```python

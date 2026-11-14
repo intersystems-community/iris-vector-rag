@@ -9,9 +9,11 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 import pytest
+import yaml
 
 import iris_vector_rag
 from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.exceptions import AnswerModelNotConfiguredError
 
 
 def explicit(prompt: str) -> str:
@@ -44,8 +46,16 @@ def recorder(monkeypatch):
     )
     monkeypatch.setattr(iris_vector_rag, "configstore_llm", from_configstore)
     monkeypatch.setattr(iris_vector_rag, "get_llm_func", from_yaml)
-    monkeypatch.delenv("RAG_LLM__CONFIG_NAME", raising=False)
+    for name in ("RAG_LLM__CONFIG_NAME", "RAG_LLM__PROVIDER", "RAG_LLM__MODEL_NAME"):
+        monkeypatch.delenv(name, raising=False)
     return calls
+
+
+def config_with_llm(tmp_path, llm):
+    """A real YAML file whose `llm:` section is `llm`, read by ConfigurationManager."""
+    path = tmp_path / "config.yaml"
+    path.write_text(yaml.safe_dump({"llm": llm}))
+    return str(path)
 
 
 class FakeEngine:
@@ -124,19 +134,59 @@ def test_entry_is_read_over_the_pipeline_connection_manager(recorder):
     assert recorder["configstore"] == [("opsreview", "engine-connections")]
 
 
-def test_nothing_set_calls_get_llm_func_exactly_as_before(recorder, monkeypatch):
-    """FR-010: provider, model and limits as the YAML gives them; no entry is read."""
+def test_nothing_set_with_a_key_uses_the_default_openai_model(recorder, monkeypatch):
+    """FR-010: no entry is read; with a key and no `llm:` section, the default model."""
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
 
     iris_vector_rag.create_pipeline("basic")
 
     assert recorder["configstore"] == []
     assert recorder["built"] == ["yaml"]
-    kwargs = recorder["yaml"][0]
-    assert kwargs["provider"] == ConfigurationManager().get("llm.provider", "openai")
-    assert kwargs["model_name"] == ConfigurationManager().get(
-        "llm.model_name", "gpt-4.1-mini"
+    assert recorder["yaml"] == [{"provider": "openai", "model_name": "gpt-4.1-mini"}]
+
+
+def test_the_yaml_llm_section_reaches_get_llm_func(recorder, tmp_path, monkeypatch):
+    """Provider, model and limits come from `llm:` as written. The keys were once
+    asked for as "llm.provider", which ConfigurationManager (it splits on ":") never
+    resolves, so the section was ignored."""
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    llm = {
+        "provider": "stub",
+        "model_name": "my-model",
+        "timeout": 12,
+        "max_retries": 3,
+    }
+
+    iris_vector_rag.create_pipeline("basic", config_path=config_with_llm(tmp_path, llm))
+
+    assert recorder["yaml"] == [llm]
+
+
+def test_no_answer_model_raises_when_an_answer_is_asked_for(
+    recorder, tmp_path, monkeypatch
+):
+    """No llm_func, entry, `llm.provider` or key: the pipeline is built (retrieval
+    needs no model) but answering raises. It used to answer "Stub LLM response..."."""
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    iris_vector_rag.create_pipeline("basic", config_path=config_with_llm(tmp_path, {}))
+
+    assert recorder["yaml"] == []
+    [answer] = recorder["built"]
+    with pytest.raises(AnswerModelNotConfiguredError) as raised:
+        answer("What causes thirst?")
+    for option in ("llm_func", "llm_config", "llm.provider", "OPENAI_API_KEY"):
+        assert option in str(raised.value)
+
+
+def test_a_stub_provider_is_still_used_when_asked_for(recorder, tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    iris_vector_rag.create_pipeline(
+        "basic", config_path=config_with_llm(tmp_path, {"provider": "stub"})
     )
+
+    assert recorder["yaml"][0]["provider"] == "stub"
 
 
 def test_nothing_set_with_validation_passes_no_llm_func_as_before(recorder):
@@ -146,7 +196,9 @@ def test_nothing_set_with_validation_passes_no_llm_func_as_before(recorder):
     assert recorder["configstore"] == []
 
 
-def test_nothing_set_through_an_engine_calls_get_llm_func(recorder):
+def test_nothing_set_through_an_engine_calls_get_llm_func(recorder, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+
     iris_vector_rag.create_pipeline("basic", engine=FakeEngine())
 
     assert recorder["built"] == ["yaml"]

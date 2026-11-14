@@ -110,7 +110,7 @@ def llm_limits_from_config(config_manager: Any) -> Dict[str, Any]:
     """
     limits: Dict[str, Any] = {}
     for key in ("timeout", "max_retries"):
-        value = config_manager.get(f"llm.{key}", None)
+        value = config_manager.get(f"llm:{key}", None)
         if value is not None:
             limits[key] = value
     return limits
@@ -587,7 +587,7 @@ def get_llm_func_for_embedded(
     """
     Return an LLM callable for use inside IRIS embedded Python (``%SYS.Python``).
 
-    Tries ``iris_llm`` first; falls back to the stub provider if the wheel is absent.
+    Raises ImportError if the ``iris_llm`` wheel is absent.
     """
     try:
         from iris_llm import Provider  # type: ignore[import]
@@ -603,12 +603,11 @@ def get_llm_func_for_embedded(
 
         return _embedded_call
 
-    except ImportError:
-        logger.warning(
-            "iris_llm not available for embedded mode; falling back to stub LLM. "
-            "Install the iris_llm wheel for full embedded support."
-        )
-        return get_llm_func(provider="stub")
+    except ImportError as exc:
+        raise ImportError(
+            "get_llm_func_for_embedded needs the iris_llm wheel, which is not "
+            "installed in this Python. Install it, or pass llm_func= instead."
+        ) from exc
 
 
 if __name__ == "__main__":
