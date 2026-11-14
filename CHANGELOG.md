@@ -35,6 +35,11 @@
 
 ### Removed
 
+- **`LegacyConnectionManager`** (`iris_vector_rag.common.connection_manager`) and
+  **`IRISConnectionManager`** (`iris_vector_rag.common.iris_connection_manager`),
+  deprecated in 0.15 with "removed in 0.16" in their warnings, and still shipped through
+  0.18.0. Nothing in the package used them. Use `session_for()`.
+
 - **`IRISConnectionPool`** (`iris_vector_rag.common.connection_pool`), deprecated since
   0.15. Nothing in the package used it, and it broke its own bound: a pool of 3 opened up
   to 5 connections, enough to run a Community Edition licence out. Use `session_for()`,

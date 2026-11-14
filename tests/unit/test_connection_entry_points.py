@@ -273,20 +273,6 @@ def test_the_dbapi_wrapper_honours_its_config(monkeypatch, no_subprocess):
     )
 
 
-def test_the_connection_manager_honours_its_config(monkeypatch, no_subprocess):
-    from iris_vector_rag.common import iris_connection_manager
-
-    asked = _capture_identity(monkeypatch)
-    with pytest.warns(DeprecationWarning):
-        manager = iris_connection_manager.IRISConnectionManager()
-    manager.get_connection({"host": "mgr-host", "port": "4002", "username": "mgr"})
-    assert (asked[0].host, asked[0].port, asked[0].username) == (
-        "mgr-host",
-        4002,
-        "mgr",
-    )
-
-
 def test_the_env_scanner_and_its_duplicate_are_gone():
     from iris_vector_rag.common import iris_connection
 

@@ -56,20 +56,6 @@ DEPRECATED_CONNECTION_CALLS = [
             "iris_vector_rag.common.iris_dbapi_connector", fromlist=["x"]
         ).get_iris_dbapi_connection(),
     ),
-    (
-        "common.iris_connection_manager.get_iris_dbapi_connection",
-        lambda: __import__(
-            "iris_vector_rag.common.iris_connection_manager", fromlist=["x"]
-        ).get_iris_dbapi_connection(),
-    ),
-    (
-        "common.iris_connection_manager.IRISConnectionManager",
-        lambda: (
-            __import__("iris_vector_rag.common.iris_connection_manager", fromlist=["x"])
-            .IRISConnectionManager()
-            .get_connection()
-        ),
-    ),
 ]
 
 
@@ -94,21 +80,11 @@ class TestOneWarningEach:
             "session" in str(deprecations[0].message).lower()
         ), f"{name} does not name the session as its replacement"
 
-    def test_the_odbc_era_manager_warns_under_its_new_name(self, substituted):
-        from iris_vector_rag.common.connection_manager import LegacyConnectionManager
-
-        _, deprecations = _warnings_from(lambda: LegacyConnectionManager())
-
-        assert len(deprecations) == 1
-        assert "session" in str(deprecations[0].message).lower()
-
     @pytest.mark.parametrize(
         "module_name",
         [
             "iris_vector_rag.common.iris_connection",
-            "iris_vector_rag.common.iris_connection_manager",
             "iris_vector_rag.common.iris_dbapi_connector",
-            "iris_vector_rag.common.connection_manager",
         ],
     )
     def test_importing_a_deprecated_module_is_silent(self, module_name):
@@ -165,14 +141,10 @@ class TestNoInternalCallerWarns:
     WARNING_CALLS = {
         "get_iris_connection",
         "get_iris_dbapi_connection",
-        "IRISConnectionManager",
-        "LegacyConnectionManager",
     }
     DEFINING_MODULES = {
         "iris_vector_rag/common/iris_connection.py",
-        "iris_vector_rag/common/iris_connection_manager.py",
         "iris_vector_rag/common/iris_dbapi_connector.py",
-        "iris_vector_rag/common/connection_manager.py",
     }
 
     def test_no_module_in_the_library_calls_a_deprecated_name(self):

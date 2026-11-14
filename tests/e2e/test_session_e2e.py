@@ -360,9 +360,7 @@ class TestUserStory5TheOldNamesStillWork:
     def test_every_superseded_name_answers_from_the_one_session(self, session):
         import warnings as _warnings
 
-        from iris_vector_rag.common.connection_manager import LegacyConnectionManager
         from iris_vector_rag.common.iris_connection import get_iris_connection
-        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
         from iris_vector_rag.common.iris_dbapi_connector import (
             get_iris_dbapi_connection,
         )
@@ -371,8 +369,6 @@ class TestUserStory5TheOldNamesStillWork:
         calls = {
             "get_iris_connection": get_iris_connection,
             "get_iris_dbapi_connection": get_iris_dbapi_connection,
-            "IRISConnectionManager": lambda: IRISConnectionManager().get_connection(),
-            "LegacyConnectionManager": lambda: LegacyConnectionManager().connect(),
         }
 
         for name, call in calls.items():

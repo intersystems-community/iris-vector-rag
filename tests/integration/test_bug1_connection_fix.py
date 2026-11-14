@@ -118,31 +118,6 @@ class TestBug1ConnectionAPIFix:
             else:
                 os.environ.pop("IRIS_PORT", None)
 
-    def test_connection_manager_integration(self):
-        """T022: Verify ConnectionManager works after line 210 fix"""
-        from iris_vector_rag.common.connection_manager import LegacyConnectionManager
-
-        # Given: the manager initialized with dbapi connection type. Since
-        # 083-iris-session it is `LegacyConnectionManager`, deprecated in 0.15, and
-        # every connection type it accepts resolves to the session.
-        with pytest.warns(DeprecationWarning):
-            connection_manager = LegacyConnectionManager(connection_type="dbapi")
-
-        # When: Connection is established
-        conn = connection_manager.connect()
-
-        # Then: Connection succeeds without AttributeError
-        assert conn is not None
-
-        # And: Connection is usable
-        with connection_manager.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            assert result is not None
-
-        connection_manager.close()
-        print("✅ Bug 1 Fix: ConnectionManager integration successful")
-
     def test_multiple_sequential_connections(self):
         """T022: Verify multiple connections work without errors"""
         # Test that we can create multiple connections sequentially

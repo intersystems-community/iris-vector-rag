@@ -29,21 +29,6 @@ def test_import_iris_dbapi_connector():
     ), "get_iris_dbapi_connection should be a callable function"
 
 
-def test_import_iris_connection_manager():
-    """
-    Verify iris_connection_manager can be imported without namespace conflict.
-
-    BEFORE FIX: ImportError or ModuleNotFoundError (wrong common module loaded)
-    AFTER FIX: Should import successfully
-    """
-    from iris_vector_rag.common.iris_connection_manager import get_iris_connection
-
-    # Verify function is callable
-    assert callable(
-        get_iris_connection
-    ), "get_iris_connection should be a callable function"
-
-
 def test_connection_manager_imports():
     """
     Verify ConnectionManager can import its dependencies.
@@ -125,19 +110,11 @@ def test_connection_manager_can_create_connection_mock():
 
     from iris_vector_rag.core.connection import ConnectionManager
 
-    # Mock the IRIS connection functions
-    with (
-        patch(
-            "iris_vector_rag.common.iris_dbapi_connector.get_iris_dbapi_connection"
-        ) as mock_dbapi,
-        patch(
-            "iris_vector_rag.common.iris_connection_manager.get_iris_connection"
-        ) as mock_iris,
-    ):
-
-        # Setup mocks
+    # Mock the IRIS connection function
+    with patch(
+        "iris_vector_rag.common.iris_dbapi_connector.get_iris_dbapi_connection"
+    ) as mock_dbapi:
         mock_dbapi.return_value = MagicMock()
-        mock_iris.return_value = MagicMock()
 
         # Create ConnectionManager instance
         config = {

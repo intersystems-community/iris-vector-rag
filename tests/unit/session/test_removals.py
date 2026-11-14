@@ -19,8 +19,6 @@ PACKAGE = Path(__file__).resolve().parents[3] / "iris_vector_rag"
 GONE = [
     ("iris_vector_rag.common.iris_connection", "IRISConnectionPool"),
     ("iris_vector_rag.common.iris_connection", "_PooledConnection"),
-    ("iris_vector_rag.common.iris_connection_manager", "get_iris_connection_old"),
-    ("iris_vector_rag.common.connection_manager", "ConnectionManager"),
 ]
 
 
@@ -43,10 +41,17 @@ def test_the_third_get_iris_connection_module_is_gone():
     assert not (PACKAGE / "common" / "iris_connector.py").exists()
 
 
-def test_the_legacy_manager_is_reachable_under_its_new_name():
-    from iris_vector_rag.common import connection_manager
+OVERDUE_MODULES = ["connection_manager", "iris_connection_manager"]
 
-    assert isinstance(connection_manager.LegacyConnectionManager, type)
+
+@pytest.mark.parametrize("module", OVERDUE_MODULES)
+def test_the_connection_managers_deprecated_in_0_15_are_gone(module):
+    """Both said "removed in 0.16" and were still shipping in 0.18. Only tests used
+    them; `session_for()` replaces both."""
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module(f"iris_vector_rag.common.{module}")
+
+    assert not (PACKAGE / "common" / f"{module}.py").exists()
 
 
 def _classes_in_package():

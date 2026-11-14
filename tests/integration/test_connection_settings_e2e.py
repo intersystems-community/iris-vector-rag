@@ -80,14 +80,6 @@ def test_the_deprecated_dbapi_wrapper_connects_with_a_config_mapping(env_only):
     assert _select_one(connection) == 1
 
 
-def test_the_deprecated_connection_manager_connects(env_only):
-    from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
-
-    with pytest.warns(DeprecationWarning):
-        manager = IRISConnectionManager()
-    assert _select_one(manager.get_connection()) == 1
-
-
 def test_the_resolved_settings_are_logged_once_and_are_the_ones_used(env_only, caplog):
     with caplog.at_level(logging.INFO, logger=cs.logger.name):
         session_for().one("SELECT 1")

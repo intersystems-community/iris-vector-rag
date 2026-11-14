@@ -58,9 +58,7 @@ class CRAGPipeline(RAGPipeline):
         """
         # Handle new architecture first, then backward compatibility
         if connection_manager is None and iris_connector is not None:
-            # Legacy mode: the caller brought its own connection. Named for what
-            # it is rather than "LegacyConnectionManager", which is a real class in
-            # common/connection_manager.py (SC-001: one name, one class).
+            # Legacy mode: the caller brought its own connection.
             class _CallerConnectionManager:
                 def __init__(self, connection):
                     self._connection = connection

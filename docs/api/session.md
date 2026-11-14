@@ -29,16 +29,16 @@ The session is the one way in, so a protection added once applies everywhere.
 Everything in the left column still works in 0.15 and warns once, naming its
 replacement. All of it is gone in 0.16.
 
-| Before                                                                 | Now                                                          |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `common.iris_connection.get_iris_connection()`                         | `session_for().connection_for_adapter()`                     |
-| `common.iris_dbapi_connector.get_iris_dbapi_connection()`              | same                                                         |
-| `common.iris_connection_manager.IRISConnectionManager()`               | `session_for()`                                              |
-| `common.connection_manager.ConnectionManager()`                        | `session_for()` (the class is now `LegacyConnectionManager`) |
-| `common.connection_pool.IRISConnectionPool()`                          | gone after 0.18.0 — `session_for()`                          |
-| `cursor = conn.cursor(); ...; cursor.close()`                          | `session.execute(...)`                                       |
-| `IRISConnectionPool.get_pool()` / `initialize_pool()` / `close_pool()` | gone in 0.15 — hold a session                                |
-| `common.iris_connector` (whole module)                                 | gone in 0.15 — `session_for()`                               |
+| Before                                                                 | Now                                      |
+| ---------------------------------------------------------------------- | ---------------------------------------- |
+| `common.iris_connection.get_iris_connection()`                         | `session_for().connection_for_adapter()` |
+| `common.iris_dbapi_connector.get_iris_dbapi_connection()`              | same                                     |
+| `common.iris_connection_manager.IRISConnectionManager()`               | gone after 0.18.0 — `session_for()`      |
+| `common.connection_manager.LegacyConnectionManager()`                  | gone after 0.18.0 — `session_for()`      |
+| `common.connection_pool.IRISConnectionPool()`                          | gone after 0.18.0 — `session_for()`      |
+| `cursor = conn.cursor(); ...; cursor.close()`                          | `session.execute(...)`                   |
+| `IRISConnectionPool.get_pool()` / `initialize_pool()` / `close_pool()` | gone in 0.15 — hold a session            |
+| `common.iris_connector` (whole module)                                 | gone in 0.15 — `session_for()`           |
 
 Three things to know while migrating:
 

@@ -46,7 +46,9 @@ class IRISConnectivityTest:
         """Test IRIS DBAPI connector from common utilities."""
         try:
             logger.info("Testing IRIS DBAPI connector...")
-            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection  # noqa: F401
+            from iris_vector_rag.common.iris_dbapi_connector import (  # noqa: F401
+                get_iris_dbapi_connection,
+            )
 
             logger.info("✓ IRIS DBAPI connector imported successfully")
             return True
@@ -57,27 +59,13 @@ class IRISConnectivityTest:
             logger.error(f"✗ Unexpected error with IRIS DBAPI connector: {e}")
             return False
 
-    def test_iris_connection_manager(self) -> bool:
-        """Test IRIS connection manager."""
-        try:
-            logger.info("Testing IRIS connection manager...")
-            from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
-
-            IRISConnectionManager()
-            logger.info("✓ IRIS connection manager initialized successfully")
-            return True
-        except ImportError as e:
-            logger.error(f"✗ Failed to import IRIS connection manager: {e}")
-            return False
-        except Exception as e:
-            logger.error(f"✗ Unexpected error with IRIS connection manager: {e}")
-            return False
-
     def test_iris_connection(self) -> bool:
         """Test actual IRIS database connection."""
         try:
             logger.info("Testing actual IRIS database connection...")
-            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import (
+                get_iris_dbapi_connection,
+            )
 
             # Attempt connection
             self.connection = get_iris_dbapi_connection()
@@ -176,7 +164,6 @@ class IRISConnectivityTest:
         tests = [
             ("iris_import", self.test_iris_import),
             ("iris_dbapi_connector", self.test_iris_dbapi_connector),
-            ("iris_connection_manager", self.test_iris_connection_manager),
             ("iris_connection", self.test_iris_connection),
             ("pipeline_targets", self.test_pipeline_targets),
         ]

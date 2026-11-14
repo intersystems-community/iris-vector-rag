@@ -68,7 +68,6 @@ class CoverageTracker:
         "iris_rag.validation",
         "iris_rag.core",
         "common.db_vector_utils",
-        "common.iris_connection_manager",
     ]
 
     def __init__(self, db_path: Optional[Path] = None):
